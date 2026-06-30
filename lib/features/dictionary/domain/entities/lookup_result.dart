@@ -1,0 +1,34 @@
+// lib/features/dictionary/domain/entities/lookup_result.dart
+import 'input_type.dart';
+
+sealed class LookupResult {
+  const LookupResult();
+}
+
+final class WordPhraseResult extends LookupResult {
+  const WordPhraseResult({
+    required this.headword,
+    required this.inputType,
+    required this.ipa,
+    required this.meaning,
+    required this.examples,
+    required this.suggestedTopics,
+  });
+
+  final String headword;
+  final InputType inputType; // word or phrase only — never sentence
+  final String ipa;
+  final String meaning;
+  final List<String> examples;
+  final List<String> suggestedTopics;
+}
+
+final class SentenceResult extends LookupResult {
+  const SentenceResult({
+    required this.original,
+    required this.translation,
+  });
+
+  final String original;
+  final String translation;
+}

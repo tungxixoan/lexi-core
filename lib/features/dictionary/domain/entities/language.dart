@@ -1,0 +1,34 @@
+// lib/features/dictionary/domain/entities/language.dart
+enum Language {
+  vietnamese,
+  english,
+  chinese,
+  korean,
+  japanese;
+
+  String get code => switch (this) {
+        Language.vietnamese => 'vi',
+        Language.english => 'en',
+        Language.chinese => 'zh',
+        Language.korean => 'ko',
+        Language.japanese => 'ja',
+      };
+
+  String get ttsLocale => switch (this) {
+        Language.vietnamese => 'vi-VN',
+        Language.english => 'en-US',
+        Language.chinese => 'zh-CN',
+        Language.korean => 'ko-KR',
+        Language.japanese => 'ja-JP',
+      };
+
+  String get label => switch (this) {
+        Language.vietnamese => 'Tiếng Việt',
+        Language.english => 'English',
+        Language.chinese => '中文',
+        Language.korean => '한국어',
+        Language.japanese => '日本語',
+      };
+
+  bool get requiresAi => this != Language.english;
+}
