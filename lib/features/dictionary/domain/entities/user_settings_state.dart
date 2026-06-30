@@ -31,7 +31,7 @@ final class UserSettingsState {
   static const defaults = UserSettingsState(
     targetLanguage: Language.english,
     activeContext: AppContext.general,
-    aiEnabled: true,
+    aiEnabled: false,
     geminiApiKey: '',
   );
 }

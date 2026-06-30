@@ -1,0 +1,4 @@
+Status: DONE_WITH_CONCERNS
+Commits: 805f10b
+Tests: 2/2 passed — flutter test test/features/dictionary/data/sources/gemini_dictionary_source_test.dart
+Concerns: GenerativeModel is a `final` class in google_generative_ai 0.4.7 and cannot be mocked by Mockito. The task brief called for `@GenerateMocks([GenerativeModel])` and a `.withModel(MockGenerativeModel)` constructor, but that approach fails at build_runner time with "Mockito cannot mock a final class". Resolution: introduced a thin `abstract interface class GenerativeModelClient` in the source file, wrapping `generateContent`. Tests use a `FakeGenerativeModelClient` that implements this interface directly — no code generation needed. The production constructor still creates a real `GenerativeModel`; the `.withModel(GenerativeModelClient)` constructor is used by tests. All behaviour and assertions from the brief are preserved; only the injection mechanism differs.

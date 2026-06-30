@@ -24,7 +24,7 @@ class GeminiDictionarySource {
   GeminiDictionarySource({required String apiKey})
       : _client = _RealModelClient(
           GenerativeModel(
-            model: 'gemini-1.5-flash',
+            model: 'gemini-2.5-flash',
             apiKey: apiKey,
             generationConfig: GenerationConfig(
               responseMimeType: 'application/json',
