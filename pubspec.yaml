@@ -25,6 +25,7 @@ dev_dependencies:
   riverpod_generator: ^2.6.1
   build_runner: ^2.4.13
   mocktail: ^1.0.0
+  mockito: ^5.4.4
 
 flutter:
   uses-material-design: true
