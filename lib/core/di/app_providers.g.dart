@@ -129,5 +129,149 @@ final lookupUseCaseProvider = AutoDisposeProvider<LookupUseCase>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef LookupUseCaseRef = AutoDisposeProviderRef<LookupUseCase>;
+String _$vocabRepositoryHash() => r'aeb458d0df2997aa05dbf426a9110f25bac8fd9c';
+
+/// See also [vocabRepository].
+@ProviderFor(vocabRepository)
+final vocabRepositoryProvider = AutoDisposeProvider<VocabRepository>.internal(
+  vocabRepository,
+  name: r'vocabRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$vocabRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef VocabRepositoryRef = AutoDisposeProviderRef<VocabRepository>;
+String _$saveVocabUseCaseHash() => r'24b01b69ab280fdf53e33daddeb16434c0aa1650';
+
+/// See also [saveVocabUseCase].
+@ProviderFor(saveVocabUseCase)
+final saveVocabUseCaseProvider = AutoDisposeProvider<SaveVocabUseCase>.internal(
+  saveVocabUseCase,
+  name: r'saveVocabUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$saveVocabUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef SaveVocabUseCaseRef = AutoDisposeProviderRef<SaveVocabUseCase>;
+String _$getVocabListUseCaseHash() =>
+    r'4cad07b98e33c7947bf0d40e6a875067c993b82f';
+
+/// See also [getVocabListUseCase].
+@ProviderFor(getVocabListUseCase)
+final getVocabListUseCaseProvider =
+    AutoDisposeProvider<GetVocabListUseCase>.internal(
+  getVocabListUseCase,
+  name: r'getVocabListUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$getVocabListUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GetVocabListUseCaseRef = AutoDisposeProviderRef<GetVocabListUseCase>;
+String _$updateVocabUseCaseHash() =>
+    r'a777e5e76ea832fdb2b25f878f7e5b75d4d3fb08';
+
+/// See also [updateVocabUseCase].
+@ProviderFor(updateVocabUseCase)
+final updateVocabUseCaseProvider =
+    AutoDisposeProvider<UpdateVocabUseCase>.internal(
+  updateVocabUseCase,
+  name: r'updateVocabUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$updateVocabUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef UpdateVocabUseCaseRef = AutoDisposeProviderRef<UpdateVocabUseCase>;
+String _$deleteVocabUseCaseHash() =>
+    r'c8a2734bc66feea4c30a7a16985346f2588fab98';
+
+/// See also [deleteVocabUseCase].
+@ProviderFor(deleteVocabUseCase)
+final deleteVocabUseCaseProvider =
+    AutoDisposeProvider<DeleteVocabUseCase>.internal(
+  deleteVocabUseCase,
+  name: r'deleteVocabUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$deleteVocabUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef DeleteVocabUseCaseRef = AutoDisposeProviderRef<DeleteVocabUseCase>;
+String _$getTopicsUseCaseHash() => r'3f30ac5739a26cc3952ba0e0d2858e350bbce207';
+
+/// See also [getTopicsUseCase].
+@ProviderFor(getTopicsUseCase)
+final getTopicsUseCaseProvider = AutoDisposeProvider<GetTopicsUseCase>.internal(
+  getTopicsUseCase,
+  name: r'getTopicsUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$getTopicsUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GetTopicsUseCaseRef = AutoDisposeProviderRef<GetTopicsUseCase>;
+String _$addTopicUseCaseHash() => r'76300262f61b84607836c05bcd67dfc641148e93';
+
+/// See also [addTopicUseCase].
+@ProviderFor(addTopicUseCase)
+final addTopicUseCaseProvider = AutoDisposeProvider<AddTopicUseCase>.internal(
+  addTopicUseCase,
+  name: r'addTopicUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$addTopicUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef AddTopicUseCaseRef = AutoDisposeProviderRef<AddTopicUseCase>;
+String _$deleteTopicUseCaseHash() =>
+    r'8549a737dcd437e478ca224b8d9d5eb7209ca14b';
+
+/// See also [deleteTopicUseCase].
+@ProviderFor(deleteTopicUseCase)
+final deleteTopicUseCaseProvider =
+    AutoDisposeProvider<DeleteTopicUseCase>.internal(
+  deleteTopicUseCase,
+  name: r'deleteTopicUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$deleteTopicUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef DeleteTopicUseCaseRef = AutoDisposeProviderRef<DeleteTopicUseCase>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

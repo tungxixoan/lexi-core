@@ -9,6 +9,16 @@ import '../../features/dictionary/domain/repositories/dictionary_repository.dart
 import '../../features/dictionary/domain/use_cases/lookup_use_case.dart';
 import '../../features/dictionary/presentation/providers/user_settings_provider.dart';
 import '../../services/tts_service.dart';
+// --- Vocabulary DI (Plan 2) ---
+import '../../features/vocabulary/data/repositories/vocab_repository_impl.dart';
+import '../../features/vocabulary/domain/repositories/vocab_repository.dart';
+import '../../features/vocabulary/domain/use_cases/add_topic_use_case.dart';
+import '../../features/vocabulary/domain/use_cases/delete_topic_use_case.dart';
+import '../../features/vocabulary/domain/use_cases/delete_vocab_use_case.dart';
+import '../../features/vocabulary/domain/use_cases/get_topics_use_case.dart';
+import '../../features/vocabulary/domain/use_cases/get_vocab_list_use_case.dart';
+import '../../features/vocabulary/domain/use_cases/save_vocab_use_case.dart';
+import '../../features/vocabulary/domain/use_cases/update_vocab_use_case.dart';
 
 part 'app_providers.g.dart';
 
@@ -49,3 +59,35 @@ DictionaryRepository dictionaryRepository(DictionaryRepositoryRef ref) =>
 @riverpod
 LookupUseCase lookupUseCase(LookupUseCaseRef ref) =>
     LookupUseCase(ref.watch(dictionaryRepositoryProvider));
+
+@riverpod
+VocabRepository vocabRepository(VocabRepositoryRef ref) =>
+    const VocabRepositoryImpl();
+
+@riverpod
+SaveVocabUseCase saveVocabUseCase(SaveVocabUseCaseRef ref) =>
+    SaveVocabUseCase(ref.watch(vocabRepositoryProvider));
+
+@riverpod
+GetVocabListUseCase getVocabListUseCase(GetVocabListUseCaseRef ref) =>
+    GetVocabListUseCase(ref.watch(vocabRepositoryProvider));
+
+@riverpod
+UpdateVocabUseCase updateVocabUseCase(UpdateVocabUseCaseRef ref) =>
+    UpdateVocabUseCase(ref.watch(vocabRepositoryProvider));
+
+@riverpod
+DeleteVocabUseCase deleteVocabUseCase(DeleteVocabUseCaseRef ref) =>
+    DeleteVocabUseCase(ref.watch(vocabRepositoryProvider));
+
+@riverpod
+GetTopicsUseCase getTopicsUseCase(GetTopicsUseCaseRef ref) =>
+    GetTopicsUseCase(ref.watch(vocabRepositoryProvider));
+
+@riverpod
+AddTopicUseCase addTopicUseCase(AddTopicUseCaseRef ref) =>
+    AddTopicUseCase(ref.watch(vocabRepositoryProvider));
+
+@riverpod
+DeleteTopicUseCase deleteTopicUseCase(DeleteTopicUseCaseRef ref) =>
+    DeleteTopicUseCase(ref.watch(vocabRepositoryProvider));
