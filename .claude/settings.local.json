@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"d:/Flutter/lexi-core/docs/superpowers/specs\")",
+      "Bash(mkdir -p \"d:/Flutter/lexi-core/.superpowers/sdd\")",
+      "Bash(mkdir -p \"d:/Flutter/lexi-core/docs/superpowers/plans/tasks/reports\")"
+    ],
+    "additionalDirectories": [
+      "d:\\Flutter\\lexi-core\\docs\\superpowers"
+    ]
+  }
+}
