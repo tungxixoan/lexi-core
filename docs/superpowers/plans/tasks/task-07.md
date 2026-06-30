@@ -12,7 +12,7 @@
 ## What This Task Delivers
 Gemini Flash API client for AI-powered lookups. Supports word/phrase (returns `WordPhraseResult`) and sentence (returns `SentenceResult`). Also has `discoverWord` for the Discover feature.
 
-Uses `google_generative_ai` package. Model: `gemini-1.5-flash`.
+Uses `google_generative_ai` package. Model: `gemini-2.5-flash`.
 
 ## Files
 - Create: `lib/features/dictionary/data/sources/gemini_dictionary_source.dart`
@@ -156,7 +156,7 @@ import '../../domain/entities/lookup_result.dart';
 class GeminiDictionarySource {
   GeminiDictionarySource({required String apiKey})
       : _model = GenerativeModel(
-          model: 'gemini-1.5-flash',
+          model: 'gemini-2.5-flash',
           apiKey: apiKey,
           generationConfig: GenerationConfig(
             responseMimeType: 'application/json',
