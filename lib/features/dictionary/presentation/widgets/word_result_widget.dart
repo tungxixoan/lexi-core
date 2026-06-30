@@ -2,8 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../features/vocabulary/presentation/providers/vocab_bank_provider.dart';
 import '../../domain/entities/lookup_result.dart';
 import '../providers/user_settings_provider.dart';
+import 'save_vocab_sheet.dart';
 
 class WordResultWidget extends ConsumerWidget {
   const WordResultWidget({super.key, required this.result});
@@ -87,8 +89,54 @@ class WordResultWidget extends ConsumerWidget {
                     .toList(),
               ),
             ],
+            const SizedBox(height: 8),
+            _SaveButton(result: result),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SaveButton extends ConsumerWidget {
+  const _SaveButton({required this.result});
+  final WordPhraseResult result;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vocabAsync = ref.watch(vocabBankNotifierProvider);
+    final settings = ref.read(userSettingsNotifierProvider);
+
+    final isSaved = vocabAsync.valueOrNull?.any(
+          (r) =>
+              r.headword.toLowerCase() == result.headword.toLowerCase() &&
+              r.targetLanguage == settings.targetLanguage,
+        ) ??
+        false;
+
+    if (isSaved) {
+      return const Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Icon(Icons.check_circle_outline, size: 16, color: Colors.green),
+          SizedBox(width: 4),
+          Text('Saved', style: TextStyle(color: Colors.green, fontSize: 13)),
+        ],
+      );
+    }
+
+    return Align(
+      alignment: Alignment.centerRight,
+      child: OutlinedButton.icon(
+        icon: const Icon(Icons.bookmark_add_outlined, size: 16),
+        label: const Text('Save'),
+        onPressed: () async {
+          await showModalBottomSheet<bool>(
+            context: context,
+            isScrollControlled: true,
+            builder: (_) => SaveVocabSheet(result: result),
+          );
+        },
       ),
     );
   }
