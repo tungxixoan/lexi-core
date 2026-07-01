@@ -62,7 +62,7 @@ class PracticeSessionNotifier extends _$PracticeSessionNotifier {
       const AsyncValue.data(PracticeSessionState.empty);
 
   Future<void> startSession(SessionConfig config) async {
-    final words = List<VocabRecord>.from(config.words)..shuffle(_random);
+    final words = List<VocabRecord>.from(config.words);
     final exercises = List<Exercise?>.filled(words.length, null);
     state = AsyncValue.data(PracticeSessionState(
       words: words,

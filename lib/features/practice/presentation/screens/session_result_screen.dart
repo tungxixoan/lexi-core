@@ -25,12 +25,11 @@ class _SessionResultScreenState extends ConsumerState<SessionResultScreen> {
     final updateUseCase = ref.read(updateVocabUseCaseProvider);
 
     for (final result in widget.result.results) {
-      final word = widget.result.words.firstWhere(
-        (w) => w.id == result.vocabRecordId,
-        orElse: () => throw StateError('Word not found: ${result.vocabRecordId}'),
-      );
-      final updated = computeUseCase.compute(word, result.quality);
       try {
+        final word = widget.result.words.firstWhere(
+          (w) => w.id == result.vocabRecordId,
+        );
+        final updated = computeUseCase.compute(word, result.quality);
         await updateUseCase.execute(updated);
       } catch (_) {
         // best-effort: don't crash result screen on SM-2 update failure

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../../vocabulary/presentation/providers/topics_provider.dart';
+import '../../../vocabulary/domain/entities/vocab_record.dart';
 import '../../domain/entities/exercise_result.dart';
 
 class PracticeHomeScreen extends ConsumerStatefulWidget {
@@ -31,9 +32,8 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
       }
       return;
     }
-    final limited = _wordLimit == null
-        ? words
-        : (words..shuffle()).take(_wordLimit!).toList();
+    final shuffled = List<VocabRecord>.from(words)..shuffle();
+    final limited = _wordLimit == null ? shuffled : shuffled.take(_wordLimit!).toList();
     if (mounted) {
       context.go('/practice/session', extra: SessionConfig(words: limited));
     }
