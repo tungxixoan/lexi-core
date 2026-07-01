@@ -8,6 +8,7 @@ class AppShell extends StatelessWidget {
   int _selectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/vocab')) return 1;
+    if (location.startsWith('/practice')) return 2;
     return 0;
   }
 
@@ -19,10 +20,9 @@ class AppShell extends StatelessWidget {
         selectedIndex: _selectedIndex(context),
         onDestinationSelected: (index) {
           switch (index) {
-            case 0:
-              context.go('/');
-            case 1:
-              context.go('/vocab');
+            case 0: context.go('/');
+            case 1: context.go('/vocab');
+            case 2: context.go('/practice');
           }
         },
         destinations: const [
@@ -35,6 +35,11 @@ class AppShell extends StatelessWidget {
             icon: Icon(Icons.menu_book_outlined),
             selectedIcon: Icon(Icons.menu_book),
             label: 'Vocab Bank',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.school_outlined),
+            selectedIcon: Icon(Icons.school),
+            label: 'Luyện tập',
           ),
         ],
       ),

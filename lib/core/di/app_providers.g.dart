@@ -273,5 +273,63 @@ final deleteTopicUseCaseProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef DeleteTopicUseCaseRef = AutoDisposeProviderRef<DeleteTopicUseCase>;
+String _$exerciseGeneratorSourceHash() =>
+    r'8a67bd7095354f757a9b65485f7976cd58990c19';
+
+/// See also [exerciseGeneratorSource].
+@ProviderFor(exerciseGeneratorSource)
+final exerciseGeneratorSourceProvider =
+    AutoDisposeProvider<ExerciseGeneratorSource>.internal(
+  exerciseGeneratorSource,
+  name: r'exerciseGeneratorSourceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$exerciseGeneratorSourceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ExerciseGeneratorSourceRef
+    = AutoDisposeProviderRef<ExerciseGeneratorSource>;
+String _$generateExerciseUseCaseHash() =>
+    r'0e4622860b5a0d537a72dac518a8a7ee7c663c38';
+
+/// See also [generateExerciseUseCase].
+@ProviderFor(generateExerciseUseCase)
+final generateExerciseUseCaseProvider =
+    AutoDisposeProvider<GenerateExerciseUseCase>.internal(
+  generateExerciseUseCase,
+  name: r'generateExerciseUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$generateExerciseUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GenerateExerciseUseCaseRef
+    = AutoDisposeProviderRef<GenerateExerciseUseCase>;
+String _$computeSm2UseCaseHash() => r'0290154a463939b355df9dbfeeaba6f9e9391218';
+
+/// See also [computeSm2UseCase].
+@ProviderFor(computeSm2UseCase)
+final computeSm2UseCaseProvider =
+    AutoDisposeProvider<ComputeSm2UseCase>.internal(
+  computeSm2UseCase,
+  name: r'computeSm2UseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$computeSm2UseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ComputeSm2UseCaseRef = AutoDisposeProviderRef<ComputeSm2UseCase>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

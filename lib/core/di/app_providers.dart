@@ -19,6 +19,10 @@ import '../../features/vocabulary/domain/use_cases/get_topics_use_case.dart';
 import '../../features/vocabulary/domain/use_cases/get_vocab_list_use_case.dart';
 import '../../features/vocabulary/domain/use_cases/save_vocab_use_case.dart';
 import '../../features/vocabulary/domain/use_cases/update_vocab_use_case.dart';
+// --- Practice DI (Plan 3) ---
+import '../../features/practice/data/sources/exercise_generator_source.dart';
+import '../../features/practice/domain/use_cases/compute_sm2_use_case.dart';
+import '../../features/practice/domain/use_cases/generate_exercise_use_case.dart';
 
 part 'app_providers.g.dart';
 
@@ -91,3 +95,19 @@ AddTopicUseCase addTopicUseCase(AddTopicUseCaseRef ref) =>
 @riverpod
 DeleteTopicUseCase deleteTopicUseCase(DeleteTopicUseCaseRef ref) =>
     DeleteTopicUseCase(ref.watch(vocabRepositoryProvider));
+
+@riverpod
+ExerciseGeneratorSource exerciseGeneratorSource(ExerciseGeneratorSourceRef ref) {
+  final apiKey = ref.watch(
+    userSettingsNotifierProvider.select((s) => s.geminiApiKey),
+  );
+  return ExerciseGeneratorSource(apiKey: apiKey);
+}
+
+@riverpod
+GenerateExerciseUseCase generateExerciseUseCase(GenerateExerciseUseCaseRef ref) =>
+    GenerateExerciseUseCase(ref.watch(exerciseGeneratorSourceProvider));
+
+@riverpod
+ComputeSm2UseCase computeSm2UseCase(ComputeSm2UseCaseRef ref) =>
+    const ComputeSm2UseCase();
