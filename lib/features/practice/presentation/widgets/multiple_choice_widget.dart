@@ -1,0 +1,74 @@
+import 'package:flutter/material.dart';
+import '../../domain/entities/exercise.dart';
+import '../../domain/entities/exercise_result.dart';
+
+class MultipleChoiceWidget extends StatefulWidget {
+  const MultipleChoiceWidget({super.key, required this.exercise, required this.onResult});
+  final MultipleChoiceExercise exercise;
+  final void Function(ExerciseResult) onResult;
+
+  @override
+  State<MultipleChoiceWidget> createState() => _MultipleChoiceWidgetState();
+}
+
+class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
+  int? _selected;
+
+  void _select(int index) {
+    if (_selected != null) return;
+    setState(() => _selected = index);
+    final isCorrect = index == widget.exercise.correctIndex;
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) {
+        widget.onResult(ExerciseResult(
+          vocabRecordId: widget.exercise.vocabRecord.id,
+          quality: isCorrect ? 5 : 1,
+          isCorrect: isCorrect,
+        ));
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(widget.exercise.question, style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
+        const SizedBox(height: 24),
+        ...widget.exercise.options.asMap().entries.map((entry) {
+          final i = entry.key;
+          final option = entry.value;
+          Color? bgColor;
+          if (_selected != null) {
+            if (i == widget.exercise.correctIndex) {
+              bgColor = Colors.green.shade100;
+            } else if (i == _selected) {
+              bgColor = Colors.red.shade100;
+            }
+          }
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: bgColor != null
+                      ? (bgColor == Colors.green.shade100 ? Colors.green : Colors.red)
+                      : theme.colorScheme.outline,
+                ),
+              ),
+              child: ListTile(
+                title: Text(option),
+                onTap: _selected == null ? () => _select(i) : null,
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+}
