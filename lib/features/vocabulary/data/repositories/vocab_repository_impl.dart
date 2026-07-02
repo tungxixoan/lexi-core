@@ -1,6 +1,7 @@
 // lib/features/vocabulary/data/repositories/vocab_repository_impl.dart
 import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../../domain/entities/cefr_level.dart';
 import '../../domain/entities/topic.dart';
 import '../../domain/entities/vocab_record.dart';
 import '../../domain/repositories/vocab_repository.dart';
@@ -26,6 +27,7 @@ class VocabRepositoryImpl implements VocabRepository {
     String? topicId,
     InputType? inputType,
     Language? language,
+    CEFRLevel? maxCefrLevel,
   }) async {
     var records = _vocabBox.values
         .map((s) => VocabRecord.fromJson(jsonDecode(s) as Map<String, dynamic>))
@@ -38,6 +40,11 @@ class VocabRepositoryImpl implements VocabRepository {
     }
     if (language != null) {
       records = records.where((r) => r.targetLanguage == language).toList();
+    }
+    if (maxCefrLevel != null) {
+      records = records
+          .where((r) => r.cefrLevel.index <= maxCefrLevel.index)
+          .toList();
     }
     records.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return records;

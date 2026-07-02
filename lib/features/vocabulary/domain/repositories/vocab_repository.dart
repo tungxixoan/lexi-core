@@ -1,6 +1,7 @@
 // lib/features/vocabulary/domain/repositories/vocab_repository.dart
 import '../../../dictionary/domain/entities/input_type.dart';
 import '../../../dictionary/domain/entities/language.dart';
+import '../entities/cefr_level.dart';
 import '../entities/topic.dart';
 import '../entities/vocab_record.dart';
 
@@ -22,6 +23,7 @@ abstract interface class VocabRepository {
     String? topicId,
     InputType? inputType,
     Language? language,
+    CEFRLevel? maxCefrLevel,
   });
 
   Future<VocabRecord?> getById(String id);

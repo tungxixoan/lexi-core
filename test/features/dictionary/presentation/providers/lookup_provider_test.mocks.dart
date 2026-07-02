@@ -15,6 +15,8 @@ import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart
     as _i4;
 import 'package:lexi_core/features/dictionary/domain/use_cases/lookup_use_case.dart'
     as _i2;
+import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart'
+    as _i12;
 import 'package:lexi_core/features/vocabulary/domain/entities/topic.dart'
     as _i11;
 import 'package:lexi_core/features/vocabulary/domain/entities/vocab_record.dart'
@@ -104,6 +106,7 @@ class MockVocabRepository extends _i1.Mock implements _i8.VocabRepository {
     String? topicId,
     _i10.InputType? inputType,
     _i5.Language? language,
+    _i12.CEFRLevel? maxCefrLevel,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -113,6 +116,7 @@ class MockVocabRepository extends _i1.Mock implements _i8.VocabRepository {
             #topicId: topicId,
             #inputType: inputType,
             #language: language,
+            #maxCefrLevel: maxCefrLevel,
           },
         ),
         returnValue:
