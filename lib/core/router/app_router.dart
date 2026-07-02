@@ -7,6 +7,7 @@ import '../../features/practice/presentation/screens/practice_home_screen.dart';
 import '../../features/practice/presentation/screens/practice_session_screen.dart';
 import '../../features/practice/presentation/screens/session_result_screen.dart';
 import '../../features/practice/domain/entities/exercise_result.dart';
+import '../../features/settings/presentation/screens/settings_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -46,6 +47,10 @@ final appRouter = GoRouter(
               ],
             ),
           ],
+        ),
+        GoRoute(
+          path: '/settings',
+          builder: (context, state) => const SettingsScreen(),
         ),
       ],
     ),
