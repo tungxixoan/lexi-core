@@ -2,13 +2,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/dictionary/presentation/widgets/context_selector_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  late SharedPreferences prefs;
+
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    prefs = await SharedPreferences.getInstance();
+  });
+
   testWidgets('renders a chip for every AppContext', (tester) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
+      ProviderScope(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        child: const MaterialApp(
           home: Scaffold(body: ContextSelectorWidget()),
         ),
       ),
@@ -31,8 +41,9 @@ void main() {
 
   testWidgets('tapping a chip marks it selected', (tester) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
+      ProviderScope(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        child: const MaterialApp(
           home: Scaffold(body: ContextSelectorWidget()),
         ),
       ),

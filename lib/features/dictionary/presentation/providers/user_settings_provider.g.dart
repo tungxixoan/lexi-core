@@ -24,12 +24,12 @@ final sharedPreferencesProvider = Provider<SharedPreferences>.internal(
 // ignore: unused_element
 typedef SharedPreferencesRef = ProviderRef<SharedPreferences>;
 String _$userSettingsNotifierHash() =>
-    r'fb4b490cd0be8c1eac87c7ceea32c79e67bf6879';
+    r'16d5098b774e8b6e7591b7b8ff32f2d3f22dc07b';
 
 /// See also [UserSettingsNotifier].
 @ProviderFor(UserSettingsNotifier)
-final userSettingsNotifierProvider = AutoDisposeNotifierProvider<
-    UserSettingsNotifier, UserSettingsState>.internal(
+final userSettingsNotifierProvider =
+    NotifierProvider<UserSettingsNotifier, UserSettingsState>.internal(
   UserSettingsNotifier.new,
   name: r'userSettingsNotifierProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -39,6 +39,6 @@ final userSettingsNotifierProvider = AutoDisposeNotifierProvider<
   allTransitiveDependencies: null,
 );
 
-typedef _$UserSettingsNotifier = AutoDisposeNotifier<UserSettingsState>;
+typedef _$UserSettingsNotifier = Notifier<UserSettingsState>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

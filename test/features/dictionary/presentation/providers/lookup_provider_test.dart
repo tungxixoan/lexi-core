@@ -8,7 +8,9 @@ import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart';
 import 'package:lexi_core/features/dictionary/domain/use_cases/lookup_use_case.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/lookup_provider.dart';
+import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/vocabulary/domain/repositories/vocab_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'lookup_provider_test.mocks.dart';
 
@@ -41,15 +43,20 @@ void main() {
         .thenAnswer((_) async => null);
   });
 
-  ProviderContainer makeContainer() => ProviderContainer(
-        overrides: [
-          lookupUseCaseProvider.overrideWithValue(mockUseCase),
-          vocabRepositoryProvider.overrideWith((ref) => mockVocabRepo),
-        ],
-      );
+  Future<ProviderContainer> makeContainer() async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    return ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        lookupUseCaseProvider.overrideWithValue(mockUseCase),
+        vocabRepositoryProvider.overrideWith((ref) => mockVocabRepo),
+      ],
+    );
+  }
 
-  test('initial state is AsyncData(null)', () {
-    final c = makeContainer();
+  test('initial state is AsyncData(null)', () async {
+    final c = await makeContainer();
     addTearDown(c.dispose);
     expect(
       c.read(lookupNotifierProvider),
@@ -58,7 +65,7 @@ void main() {
   });
 
   test('lookup → loading → data', () async {
-    final c = makeContainer();
+    final c = await makeContainer();
     addTearDown(c.dispose);
     final notifier = c.read(lookupNotifierProvider.notifier);
     final future = notifier.lookup('follow');
@@ -72,7 +79,7 @@ void main() {
   });
 
   test('clear → AsyncData(null)', () async {
-    final c = makeContainer();
+    final c = await makeContainer();
     addTearDown(c.dispose);
     final notifier = c.read(lookupNotifierProvider.notifier);
     await notifier.lookup('follow');
