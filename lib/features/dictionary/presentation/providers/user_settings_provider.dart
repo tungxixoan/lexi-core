@@ -1,10 +1,16 @@
 // lib/features/dictionary/presentation/providers/user_settings_provider.dart
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/app_context.dart';
 import '../../domain/entities/language.dart';
 import '../../domain/entities/user_settings_state.dart';
 
 part 'user_settings_provider.g.dart';
+
+// Overridden in main.dart with the real SharedPreferences instance.
+@Riverpod(keepAlive: true)
+SharedPreferences sharedPreferences(SharedPreferencesRef ref) =>
+    throw UnimplementedError('sharedPreferencesProvider must be overridden in main.dart');
 
 @riverpod
 class UserSettingsNotifier extends _$UserSettingsNotifier {
