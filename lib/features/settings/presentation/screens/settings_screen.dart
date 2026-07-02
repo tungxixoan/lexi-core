@@ -114,33 +114,13 @@ class SettingsScreen extends ConsumerWidget {
 
   void _showApiKeyDialog(
       BuildContext context, WidgetRef ref, String currentKey) {
-    final ctrl = TextEditingController(text: currentKey);
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Gemini API Key'),
-        content: TextField(
-          controller: ctrl,
-          obscureText: true,
-          decoration: const InputDecoration(
-            hintText: 'AIza...',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Huỷ')),
-          FilledButton(
-            onPressed: () {
-              ref
-                  .read(userSettingsNotifierProvider.notifier)
-                  .setGeminiApiKey(ctrl.text.trim());
-              Navigator.pop(ctx);
-            },
-            child: const Text('Lưu'),
-          ),
-        ],
+      builder: (ctx) => _ApiKeyDialog(
+        currentKey: currentKey,
+        onSave: (key) => ref
+            .read(userSettingsNotifierProvider.notifier)
+            .setGeminiApiKey(key),
       ),
     );
   }
@@ -280,6 +260,58 @@ class _SignedInSection extends StatelessWidget {
             SyncStatus.syncing => 'Đang đồng bộ...',
             SyncStatus.error => 'Lỗi đồng bộ',
           }),
+        ),
+      ],
+    );
+  }
+}
+
+class _ApiKeyDialog extends StatefulWidget {
+  const _ApiKeyDialog({required this.currentKey, required this.onSave});
+  final String currentKey;
+  final void Function(String) onSave;
+
+  @override
+  State<_ApiKeyDialog> createState() => _ApiKeyDialogState();
+}
+
+class _ApiKeyDialogState extends State<_ApiKeyDialog> {
+  late final TextEditingController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: widget.currentKey);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Gemini API Key'),
+      content: TextField(
+        controller: _ctrl,
+        obscureText: true,
+        decoration: const InputDecoration(
+          hintText: 'AIza...',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Huỷ')),
+        FilledButton(
+          onPressed: () {
+            widget.onSave(_ctrl.text.trim());
+            Navigator.pop(context);
+          },
+          child: const Text('Lưu'),
         ),
       ],
     );

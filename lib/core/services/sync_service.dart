@@ -86,7 +86,15 @@ class SyncService {
           final id = change.doc.id;
           if (change.type == DocumentChangeType.removed) {
             _firestoreUpdatingVocab.add(id);
-            vocabBox.delete(id).then((_) => _firestoreUpdatingVocab.remove(id));
+            () async {
+              try {
+                await vocabBox.delete(id);
+              } catch (e) {
+                dev.log('SyncService: Hive vocab delete failed: $e');
+              } finally {
+                _firestoreUpdatingVocab.remove(id);
+              }
+            }();
           } else {
             final remoteMap = change.doc.data()!;
             final localRaw = vocabBox.get(id);
@@ -138,7 +146,15 @@ class SyncService {
           final id = change.doc.id;
           if (change.type == DocumentChangeType.removed) {
             _firestoreUpdatingTopic.add(id);
-            topicsBox.delete(id).then((_) => _firestoreUpdatingTopic.remove(id));
+            () async {
+              try {
+                await topicsBox.delete(id);
+              } catch (e) {
+                dev.log('SyncService: Hive topic delete failed: $e');
+              } finally {
+                _firestoreUpdatingTopic.remove(id);
+              }
+            }();
           } else {
             final localRaw = topicsBox.get(id);
             if (localRaw == null) {

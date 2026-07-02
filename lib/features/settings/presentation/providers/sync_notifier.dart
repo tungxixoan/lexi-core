@@ -13,6 +13,10 @@ class SyncNotifier extends _$SyncNotifier {
 
   @override
   SyncStatus build() {
+    final initialUser = ref.read(authNotifierProvider).valueOrNull;
+    if (initialUser != null) {
+      Future.microtask(() => _startSync(initialUser.uid));
+    }
     ref.listen<AsyncValue<User?>>(authNotifierProvider, (_, next) {
       final user = next.valueOrNull;
       if (user != null) {
