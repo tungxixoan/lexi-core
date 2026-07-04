@@ -19,6 +19,7 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
   String? _selectedTopicId;
   int? _wordLimit = 10; // null = All
   CEFRLevel? _maxCefrLevel; // null = show all levels
+  int _dueCount = 0;
 
   static const _limits = [5, 10, 20, null];
   static const _limitLabels = ['5', '10', '20', 'Tất cả'];
@@ -26,11 +27,15 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize CEFR filter from the user's default setting
+    // Initialize CEFR filter from the user's default setting, and load due count
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final settings = ref.read(userSettingsNotifierProvider);
-      setState(() => _maxCefrLevel = settings.targetCefrLevel);
+      final stats = ref.read(statsServiceProvider).computeStats();
+      setState(() {
+        _maxCefrLevel = settings.targetCefrLevel;
+        _dueCount = stats.dueCount;
+      });
     });
   }
 
@@ -52,6 +57,24 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
         _wordLimit == null ? shuffled : shuffled.take(_wordLimit!).toList();
     if (mounted) {
       context.go('/practice/session', extra: SessionConfig(words: limited));
+    }
+  }
+
+  Future<void> _startDueSession() async {
+    final words = await ref
+        .read(getVocabListUseCaseProvider)
+        .execute(dueOnly: true);
+    if (words.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không có từ nào cần ôn hôm nay.')),
+        );
+      }
+      return;
+    }
+    final shuffled = List<VocabRecord>.from(words)..shuffle();
+    if (mounted) {
+      context.go('/practice/session', extra: SessionConfig(words: shuffled));
     }
   }
 
@@ -145,6 +168,20 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
             ),
 
             const Spacer(),
+
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _dueCount == 0 ? null : _startDueSession,
+                icon: const Icon(Icons.today_outlined),
+                label: Text(
+                  _dueCount == 0
+                      ? 'Hôm nay đã ôn xong ✓'
+                      : 'Ôn hôm nay ($_dueCount từ)',
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
 
             SizedBox(
               width: double.infinity,

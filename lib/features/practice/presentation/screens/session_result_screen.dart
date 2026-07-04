@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../domain/entities/exercise_result.dart';
+import '../providers/notification_notifier.dart';
 
 class SessionResultScreen extends ConsumerStatefulWidget {
   const SessionResultScreen({super.key, required this.result});
@@ -34,6 +35,15 @@ class _SessionResultScreenState extends ConsumerState<SessionResultScreen> {
       } catch (_) {
         // best-effort: don't crash result screen on SM-2 update failure
       }
+    }
+
+    try {
+      await ref
+          .read(statsServiceProvider)
+          .recordPracticeSession(widget.result.totalCount);
+      await ref.read(notificationNotifierProvider.notifier).reschedule();
+    } catch (_) {
+      // best-effort: don't crash on stats/notification failure
     }
   }
 
