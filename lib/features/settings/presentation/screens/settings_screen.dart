@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/sync_service.dart';
 import '../../../../features/dictionary/domain/entities/language.dart';
+import '../../../../features/dictionary/domain/entities/user_settings_state.dart';
 import '../../../../features/dictionary/presentation/providers/user_settings_provider.dart';
 import '../../../../features/vocabulary/domain/entities/cefr_level.dart';
 import '../providers/auth_notifier.dart';
@@ -107,6 +108,25 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => _showCefrPicker(
                 context, ref, settings.targetCefrLevel),
           ),
+
+          // ── Thông báo ─────────────────────────────────────────
+          _SectionHeader('Thông báo'),
+          SwitchListTile(
+            title: const Text('Nhắc nhở hàng ngày'),
+            subtitle: const Text('Thông báo khi có từ cần ôn'),
+            value: settings.reminderEnabled,
+            onChanged: (v) => notifier.setReminderEnabled(enabled: v),
+          ),
+          if (settings.reminderEnabled)
+            ListTile(
+              title: const Text('Giờ nhắc cố định'),
+              trailing: Text(
+                '${settings.reminderHour.toString().padLeft(2, '0')}:'
+                '${settings.reminderMinute.toString().padLeft(2, '0')}',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              onTap: () => _showTimePicker(context, ref, settings),
+            ),
         ],
       ),
     );
@@ -159,6 +179,22 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _showTimePicker(
+      BuildContext context, WidgetRef ref, UserSettingsState settings) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(
+          hour: settings.reminderHour, minute: settings.reminderMinute),
+    );
+    if (picked == null) return;
+    ref
+        .read(userSettingsNotifierProvider.notifier)
+        .setReminderHour(picked.hour);
+    ref
+        .read(userSettingsNotifierProvider.notifier)
+        .setReminderMinute(picked.minute);
   }
 }
 
