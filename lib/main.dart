@@ -7,11 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/data/latest.dart' as tz;
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/dictionary/presentation/providers/user_settings_provider.dart';
 
 void main() async {
+  tz.initializeTimeZones();
   WidgetsFlutterBinding.ensureInitialized();
   // TODO(plan4-task-01): Uncomment once firebase_options.dart is generated:
   // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
