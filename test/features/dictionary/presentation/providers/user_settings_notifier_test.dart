@@ -81,5 +81,35 @@ void main() {
           CEFRLevel.b2);
       expect(prefs.getString('target_cefr_level'), 'b2');
     });
+
+    group('reminder settings', () {
+      test('reminderEnabled defaults to false', () async {
+        SharedPreferences.setMockInitialValues({});
+        final container = await makeContainer();
+        addTearDown(container.dispose);
+        expect(container.read(userSettingsNotifierProvider).reminderEnabled, false);
+      });
+
+      test('setReminderEnabled persists to prefs and updates state', () async {
+        SharedPreferences.setMockInitialValues({});
+        final container = await makeContainer();
+        addTearDown(container.dispose);
+        container.read(userSettingsNotifierProvider.notifier).setReminderEnabled(enabled: true);
+        final prefs = container.read(sharedPreferencesProvider);
+        expect(prefs.getBool('reminder_enabled'), true);
+        expect(container.read(userSettingsNotifierProvider).reminderEnabled, true);
+      });
+
+      test('reminderHour defaults to 20 and setReminderHour persists', () async {
+        SharedPreferences.setMockInitialValues({});
+        final container = await makeContainer();
+        addTearDown(container.dispose);
+        expect(container.read(userSettingsNotifierProvider).reminderHour, 20);
+        container.read(userSettingsNotifierProvider.notifier).setReminderHour(8);
+        final prefs = container.read(sharedPreferencesProvider);
+        expect(prefs.getInt('reminder_hour'), 8);
+        expect(container.read(userSettingsNotifierProvider).reminderHour, 8);
+      });
+    });
   });
 }

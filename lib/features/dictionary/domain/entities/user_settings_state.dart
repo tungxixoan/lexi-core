@@ -10,6 +10,9 @@ final class UserSettingsState {
     required this.aiEnabled,
     required this.geminiApiKey,
     this.targetCefrLevel,
+    this.reminderEnabled = false,
+    this.reminderHour = 20,
+    this.reminderMinute = 0,
   });
 
   final Language targetLanguage;
@@ -17,6 +20,9 @@ final class UserSettingsState {
   final bool aiEnabled;
   final String geminiApiKey;
   final CEFRLevel? targetCefrLevel;
+  final bool reminderEnabled;
+  final int reminderHour;
+  final int reminderMinute;
 
   static const _absent = Object();
 
@@ -26,6 +32,9 @@ final class UserSettingsState {
     bool? aiEnabled,
     String? geminiApiKey,
     Object? targetCefrLevel = _absent,
+    bool? reminderEnabled,
+    int? reminderHour,
+    int? reminderMinute,
   }) =>
       UserSettingsState(
         targetLanguage: targetLanguage ?? this.targetLanguage,
@@ -35,6 +44,9 @@ final class UserSettingsState {
         targetCefrLevel: identical(targetCefrLevel, _absent)
             ? this.targetCefrLevel
             : targetCefrLevel as CEFRLevel?,
+        reminderEnabled: reminderEnabled ?? this.reminderEnabled,
+        reminderHour: reminderHour ?? this.reminderHour,
+        reminderMinute: reminderMinute ?? this.reminderMinute,
       );
 
   static const defaults = UserSettingsState(
@@ -43,5 +55,8 @@ final class UserSettingsState {
     aiEnabled: false,
     geminiApiKey: '',
     targetCefrLevel: null,
+    reminderEnabled: false,
+    reminderHour: 20,
+    reminderMinute: 0,
   );
 }

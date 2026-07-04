@@ -31,6 +31,9 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
       targetCefrLevel: prefs.containsKey('target_cefr_level')
           ? CEFRLevel.values.byName(prefs.getString('target_cefr_level')!)
           : null,
+      reminderEnabled: prefs.getBool('reminder_enabled') ?? false,
+      reminderHour: prefs.getInt('reminder_hour') ?? 20,
+      reminderMinute: prefs.getInt('reminder_minute') ?? 0,
     );
   }
 
@@ -61,5 +64,20 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
       _prefs.setString('target_cefr_level', level.name);
     }
     state = state.copyWith(targetCefrLevel: level);
+  }
+
+  void setReminderEnabled({required bool enabled}) {
+    _prefs.setBool('reminder_enabled', enabled);
+    state = state.copyWith(reminderEnabled: enabled);
+  }
+
+  void setReminderHour(int hour) {
+    _prefs.setInt('reminder_hour', hour);
+    state = state.copyWith(reminderHour: hour);
+  }
+
+  void setReminderMinute(int minute) {
+    _prefs.setInt('reminder_minute', minute);
+    state = state.copyWith(reminderMinute: minute);
   }
 }
