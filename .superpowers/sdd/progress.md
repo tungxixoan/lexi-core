@@ -26,3 +26,107 @@
 ## Minor Findings (for final review)
 
 - Task 12: ContextSelectorWidget test coverage weak — ListView lazy loading forced workaround: `findsWidgets` instead of verifying all 8 chip labels; chip selection test uses `.at(1)` index (brittle if AppContext.values order changes). Consider using `tester.pumpWidget` with a fixed widget size to force full render, or mock the provider to inject a small list.
+
+---
+
+# LexiCore Plan 2 — Vocabulary Bank + Topic System
+
+**BASE commit (Plan 2 start):** c917991
+**Plan file:** docs/superpowers/plans/2026-06-30-plan2-vocabulary-bank.md
+**Task files:** docs/superpowers/plans/tasks/plan2-task-{01..10}.md
+
+## Status
+
+- Task 01: ✅ complete (commit c442123, review clean)
+- Task 02: ✅ complete (commit 8827a37, review clean)
+- Task 03: ✅ complete (commit 4c166e7, review clean)
+- Task 04: ✅ complete (commit aa472fd, review clean)
+- Task 05: ✅ complete (commits aa472fd..9ccc664, review clean)
+- Task 06: ✅ complete (commits 2102353 + c1d9519 mockito fix, review clean)
+- Task 07: ✅ complete (commit 1746519, review clean)
+- Task 08: ✅ complete (commit 9c80e59, review clean)
+- Task 09: ✅ complete (commit 56076b9, review clean)
+- Task 10: ✅ complete (commit 94551f0, review clean)
+- Task 11: ✅ complete (commit 0c68971, review clean)
+
+## Minor Findings (for final review)
+
+---
+
+# LexiCore Plan 3 — Spaced Repetition + Auto Exercises
+
+**BASE commit (Plan 3 start):** d2210ca
+**Plan file:** docs/superpowers/plans/2026-07-01-plan3-spaced-repetition.md
+**Task files:** docs/superpowers/plans/tasks/plan3-task-{01..09}.md
+
+## Status
+
+- Task 01: ✅ complete (commit 1ab54d0, review clean)
+- Task 02: ✅ complete (commit 7954f52, 13/13 tests, review clean)
+
+## Minor Findings (for final review)
+- Task 03: ✅ complete (commit 74a9692, 3/3 tests, review clean)
+- Task 03: ✅ complete (commit 74a9692, 3/3 tests, review clean)
+- Task 04: ✅ complete (commit 9990bbf, review clean)
+- Task 05: complete (commit 8c74f88, review clean)
+- Task 06: complete (commit 7d33f92, review clean)
+- Task 07: ✅ complete (commit 220f8cd, review clean)
+- Task 08: ✅ complete (commit c0be867, review clean)
+- Task 09: ✅ complete (commit 4c51345, review clean)
+- Final fix: ✅ complete (commit 889944a — SM-2 try/catch scope, shuffle mutation, double-shuffle)
+
+## Minor Findings (for future reference)
+
+- `practice_session_screen.dart`: AutoDispose notifier drops session state if user taps nav bar mid-session (by design for v1)
+- `practice_session_screen.dart`: multiple `addPostFrameCallback` may accumulate on `isComplete` rebuilds — `mounted` guard handles it but a `_navigated` flag would be cleaner
+- `translation_exercise_widget.dart`: fragile hardcoded string strip `"Translate to Vietnamese: "` from Gemini prompt — consider separate display/source fields in `TranslationExercise`
+- `exercise_generator_source.dart`: no null-check before `json['question'] as String` — TypeError propagates to `GenerateExerciseUseCase` catch fallback (works, but cryptic stack trace)
+
+---
+
+# LexiCore Plan 4 — Firebase Sync + Settings Screen + Practice Level Filter
+
+**BASE commit (Plan 4 start):** 889944a
+**Spec:** docs/superpowers/specs/2026-07-02-plan4-firebase-settings-practice-filter-design.md (commit c3c1aac)
+**Plan file:** docs/superpowers/plans/2026-07-02-plan4-firebase-settings-practice-filter.md
+
+## Status
+
+- Task 01: ✅ complete (commit e5b4a60, review clean — Firebase deferred until user runs `flutterfire configure`)
+- Task 02: ✅ complete (commit cc1bcc3, 62/62 tests, review clean) + targetCefrLevel
+- Task 03: ✅ complete (commit bd61de9, 64/64 tests, review clean)
+- Task 04: ✅ complete (commit 165be09, 64/64 tests, review clean)
+- Task 05: ✅ complete (commit 0490599, 64/64 tests, review clean)
+- Task 06: ✅ complete (commit a402e34, 64/64 tests, review clean)
+- Task 07: ✅ complete (commit 0f0ed1e, 66/66 tests, review clean)
+  - Minor: vocab delete branch in Firestore snapshot handler missing `.catchError` — could leave stale guard key in `_firestoreUpdatingVocab` if `vocabBox.delete()` throws; topic delete branch has `.catchError` but swallows without logging. Fix in final review.
+- Task 08: ✅ complete (commit 12281ba, 66/66 tests, review clean)
+  - Minor: TextEditingController not disposed in `_showApiKeyDialog` (dialog-scoped, low risk)
+  - Minor: RadioListTile deprecation warnings (4 info-level) — spec-mandated, still functional
+
+---
+
+# LexiCore Plan 5 — Daily Review + Progress Dashboard
+
+**BASE commit (Plan 5 start):** 64a1038
+**Plan file:** docs/superpowers/plans/2026-07-02-plan5-daily-review-progress-dashboard.md
+**Task files:** docs/superpowers/plans/tasks/plan5-task-{01..08}.md
+
+## Status
+
+- Task 01: ✅ complete (commit 2ff3539, 66/66 tests, review clean)
+- Task 02: ✅ complete (commit d3a49c8, 69/69 tests, review clean)
+- Task 03: ✅ complete (commit 775eddb, 70/70 tests, review clean)
+- Task 04: ✅ complete (commit 3aff54f, 74/74 tests, review clean)
+  Minor: no same-day streak test; import order cosmetic
+- Task 05: ✅ complete (commits 5c9d078..b028476, 74/74 tests, review clean after fix)
+  Minor: dead getLearningStatsUseCaseProvider (0 callers); _dateKey duplicated vs StatsService; stats stale while screen open
+- Task 06: ✅ complete (commit aba8258, 76/76 tests, review clean)
+  Medium: initialize() fire-and-forget in build() — first-launch notifications may miss; mitigated by try/catch
+  Low: _computeNextDueAt no error handling on Hive/JSON; reschedule future discarded in lifecycle
+- Task 07: ✅ complete (commit 6e6380d, 76/76 tests, review clean)
+  Note: button placed after Spacer (before FilledButton) not before Spacer — correct layout; plan text was ambiguous
+- Task 08: ✅ complete (commit 896f021, 76/76 tests, review clean)
+- Final review fixes: ✅ complete (commit ac67e78, 76/76 tests)
+  Fixed: I1 ref.watch, I2 _computeNextDueAt try/catch, I3 atomic setReminderTime
+  Minor (for future): getLearningStatsUseCase dead layer; _dateKey dup; setReminderMinute untested
