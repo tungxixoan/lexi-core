@@ -191,10 +191,7 @@ class SettingsScreen extends ConsumerWidget {
     if (picked == null) return;
     ref
         .read(userSettingsNotifierProvider.notifier)
-        .setReminderHour(picked.hour);
-    ref
-        .read(userSettingsNotifierProvider.notifier)
-        .setReminderMinute(picked.minute);
+        .setReminderTime(picked.hour, picked.minute);
   }
 }
 

@@ -24,7 +24,7 @@ final sharedPreferencesProvider = Provider<SharedPreferences>.internal(
 // ignore: unused_element
 typedef SharedPreferencesRef = ProviderRef<SharedPreferences>;
 String _$userSettingsNotifierHash() =>
-    r'16d5098b774e8b6e7591b7b8ff32f2d3f22dc07b';
+    r'1620199e401f77b15520e1f835bf41390727a4a1';
 
 /// See also [UserSettingsNotifier].
 @ProviderFor(UserSettingsNotifier)

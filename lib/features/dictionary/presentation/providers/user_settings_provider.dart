@@ -80,4 +80,10 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
     _prefs.setInt('reminder_minute', minute);
     state = state.copyWith(reminderMinute: minute);
   }
+
+  void setReminderTime(int hour, int minute) {
+    _prefs.setInt('reminder_hour', hour);
+    _prefs.setInt('reminder_minute', minute);
+    state = state.copyWith(reminderHour: hour, reminderMinute: minute);
+  }
 }

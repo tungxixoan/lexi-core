@@ -7,7 +7,7 @@ part of 'practice_session_provider.dart';
 // **************************************************************************
 
 String _$practiceSessionNotifierHash() =>
-    r'1cf63f2d711e023e447be6f50f35fc0224889af1';
+    r'a050d6a26f9cab94d4c983787ca4644f5b40df39';
 
 /// See also [PracticeSessionNotifier].
 @ProviderFor(PracticeSessionNotifier)

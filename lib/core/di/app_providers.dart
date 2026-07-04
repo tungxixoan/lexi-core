@@ -130,4 +130,4 @@ GetLearningStatsUseCase getLearningStatsUseCase(
 
 @riverpod
 LearningStats learningStats(LearningStatsRef ref) =>
-    ref.read(statsServiceProvider).computeStats();
+    ref.watch(statsServiceProvider).computeStats();

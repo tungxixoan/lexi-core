@@ -6,7 +6,7 @@ part of 'vocab_bank_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$vocabBankNotifierHash() => r'c0a0a10981f260cfc222c1f01ea21635b91468d2';
+String _$vocabBankNotifierHash() => r'd9bbfd29d822aa5c250119baf75b5bdcaf35c23c';
 
 /// See also [VocabBankNotifier].
 @ProviderFor(VocabBankNotifier)

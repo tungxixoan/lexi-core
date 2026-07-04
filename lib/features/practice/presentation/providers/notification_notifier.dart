@@ -40,12 +40,16 @@ class NotificationNotifier extends _$NotificationNotifier {
     final now = DateTime.now();
     DateTime? earliest;
     for (final raw in box.values) {
-      final map = jsonDecode(raw) as Map<String, dynamic>;
-      final nextReviewRaw = map['nextReviewAt'] as String?;
-      if (nextReviewRaw == null) continue;
-      final dt = DateTime.parse(nextReviewRaw);
-      if (dt.isAfter(now)) {
-        if (earliest == null || dt.isBefore(earliest)) earliest = dt;
+      try {
+        final map = jsonDecode(raw) as Map<String, dynamic>;
+        final nextReviewRaw = map['nextReviewAt'] as String?;
+        if (nextReviewRaw == null) continue;
+        final dt = DateTime.parse(nextReviewRaw);
+        if (dt.isAfter(now)) {
+          if (earliest == null || dt.isBefore(earliest)) earliest = dt;
+        }
+      } catch (_) {
+        // Skip malformed records — don't abort the whole search
       }
     }
     return earliest;

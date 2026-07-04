@@ -367,7 +367,7 @@ final getLearningStatsUseCaseProvider =
 // ignore: unused_element
 typedef GetLearningStatsUseCaseRef
     = AutoDisposeProviderRef<GetLearningStatsUseCase>;
-String _$learningStatsHash() => r'd6ffccc7922e49e66974d3e40f70117087fd978a';
+String _$learningStatsHash() => r'b5fa1644d79e0b76772000725ac4a6a356a8d518';
 
 /// See also [learningStats].
 @ProviderFor(learningStats)
