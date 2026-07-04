@@ -72,4 +72,10 @@ void main() {
         )).called(1);
     expect(result, records);
   });
+
+  test('execute with dueOnly=true passes dueOnly to repository', () async {
+    when(() => repo.getAll(dueOnly: true)).thenAnswer((_) async => []);
+    await useCase.execute(dueOnly: true);
+    verify(() => repo.getAll(dueOnly: true)).called(1);
+  });
 }

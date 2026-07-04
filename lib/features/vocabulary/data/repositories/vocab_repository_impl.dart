@@ -28,6 +28,7 @@ class VocabRepositoryImpl implements VocabRepository {
     InputType? inputType,
     Language? language,
     CEFRLevel? maxCefrLevel,
+    bool dueOnly = false,
   }) async {
     var records = _vocabBox.values
         .map((s) => VocabRecord.fromJson(jsonDecode(s) as Map<String, dynamic>))
@@ -44,6 +45,12 @@ class VocabRepositoryImpl implements VocabRepository {
     if (maxCefrLevel != null) {
       records = records
           .where((r) => r.cefrLevel.index <= maxCefrLevel.index)
+          .toList();
+    }
+    if (dueOnly) {
+      final now = DateTime.now();
+      records = records
+          .where((r) => r.nextReviewAt == null || r.nextReviewAt!.isBefore(now))
           .toList();
     }
     records.sort((a, b) => b.createdAt.compareTo(a.createdAt));

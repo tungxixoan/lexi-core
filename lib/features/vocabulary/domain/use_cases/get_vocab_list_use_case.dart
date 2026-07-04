@@ -13,11 +13,13 @@ class GetVocabListUseCase {
     InputType? inputType,
     Language? language,
     CEFRLevel? maxCefrLevel,
+    bool dueOnly = false,
   }) =>
       _repo.getAll(
         topicId: topicId,
         inputType: inputType,
         language: language,
         maxCefrLevel: maxCefrLevel,
+        dueOnly: dueOnly,
       );
 }

@@ -24,6 +24,7 @@ abstract interface class VocabRepository {
     InputType? inputType,
     Language? language,
     CEFRLevel? maxCefrLevel,
+    bool dueOnly = false,
   });
 
   Future<VocabRecord?> getById(String id);

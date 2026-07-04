@@ -16,9 +16,9 @@ import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart
 import 'package:lexi_core/features/dictionary/domain/use_cases/lookup_use_case.dart'
     as _i2;
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart'
-    as _i12;
-import 'package:lexi_core/features/vocabulary/domain/entities/topic.dart'
     as _i11;
+import 'package:lexi_core/features/vocabulary/domain/entities/topic.dart'
+    as _i12;
 import 'package:lexi_core/features/vocabulary/domain/entities/vocab_record.dart'
     as _i9;
 import 'package:lexi_core/features/vocabulary/domain/repositories/vocab_repository.dart'
@@ -106,7 +106,8 @@ class MockVocabRepository extends _i1.Mock implements _i8.VocabRepository {
     String? topicId,
     _i10.InputType? inputType,
     _i5.Language? language,
-    _i12.CEFRLevel? maxCefrLevel,
+    _i11.CEFRLevel? maxCefrLevel,
+    bool dueOnly = false,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -117,6 +118,7 @@ class MockVocabRepository extends _i1.Mock implements _i8.VocabRepository {
             #inputType: inputType,
             #language: language,
             #maxCefrLevel: maxCefrLevel,
+            #dueOnly: dueOnly,
           },
         ),
         returnValue:
@@ -185,16 +187,16 @@ class MockVocabRepository extends _i1.Mock implements _i8.VocabRepository {
       ) as _i3.Future<_i9.VocabRecord?>);
 
   @override
-  _i3.Future<List<_i11.Topic>> getTopics() => (super.noSuchMethod(
+  _i3.Future<List<_i12.Topic>> getTopics() => (super.noSuchMethod(
         Invocation.method(
           #getTopics,
           [],
         ),
-        returnValue: _i3.Future<List<_i11.Topic>>.value(<_i11.Topic>[]),
-      ) as _i3.Future<List<_i11.Topic>>);
+        returnValue: _i3.Future<List<_i12.Topic>>.value(<_i12.Topic>[]),
+      ) as _i3.Future<List<_i12.Topic>>);
 
   @override
-  _i3.Future<void> addTopic(_i11.Topic? topic) => (super.noSuchMethod(
+  _i3.Future<void> addTopic(_i12.Topic? topic) => (super.noSuchMethod(
         Invocation.method(
           #addTopic,
           [topic],
