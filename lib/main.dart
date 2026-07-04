@@ -1,8 +1,6 @@
 // lib/main.dart
-// TODO(plan4-task-01): Once `flutterfire configure` has been run and
-// lib/firebase_options.dart exists, uncomment the two lines below:
-// import 'package:firebase_core/firebase_core.dart';
-// import 'firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -15,8 +13,7 @@ import 'features/dictionary/presentation/providers/user_settings_provider.dart';
 void main() async {
   tz.initializeTimeZones();
   WidgetsFlutterBinding.ensureInitialized();
-  // TODO(plan4-task-01): Uncomment once firebase_options.dart is generated:
-  // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await Hive.initFlutter();
   await Hive.openBox<String>('vocab_records');
   await Hive.openBox<String>('topics');
