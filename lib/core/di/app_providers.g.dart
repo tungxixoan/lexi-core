@@ -331,5 +331,58 @@ final computeSm2UseCaseProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ComputeSm2UseCaseRef = AutoDisposeProviderRef<ComputeSm2UseCase>;
+String _$statsServiceHash() => r'3b24bed980c79f059e05e5a42b2a35da37449792';
+
+/// See also [statsService].
+@ProviderFor(statsService)
+final statsServiceProvider = AutoDisposeProvider<StatsService>.internal(
+  statsService,
+  name: r'statsServiceProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$statsServiceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef StatsServiceRef = AutoDisposeProviderRef<StatsService>;
+String _$getLearningStatsUseCaseHash() =>
+    r'aa0d10e18d53e6e9b5727cf042320259dabc9d14';
+
+/// See also [getLearningStatsUseCase].
+@ProviderFor(getLearningStatsUseCase)
+final getLearningStatsUseCaseProvider =
+    AutoDisposeProvider<GetLearningStatsUseCase>.internal(
+  getLearningStatsUseCase,
+  name: r'getLearningStatsUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$getLearningStatsUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GetLearningStatsUseCaseRef
+    = AutoDisposeProviderRef<GetLearningStatsUseCase>;
+String _$learningStatsHash() => r'd6ffccc7922e49e66974d3e40f70117087fd978a';
+
+/// See also [learningStats].
+@ProviderFor(learningStats)
+final learningStatsProvider = AutoDisposeProvider<LearningStats>.internal(
+  learningStats,
+  name: r'learningStatsProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$learningStatsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef LearningStatsRef = AutoDisposeProviderRef<LearningStats>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

@@ -23,6 +23,11 @@ import '../../features/vocabulary/domain/use_cases/update_vocab_use_case.dart';
 import '../../features/practice/data/sources/exercise_generator_source.dart';
 import '../../features/practice/domain/use_cases/compute_sm2_use_case.dart';
 import '../../features/practice/domain/use_cases/generate_exercise_use_case.dart';
+// --- Stats DI (Plan 5) ---
+import 'package:hive/hive.dart';
+import '../services/stats_service.dart';
+import '../../features/practice/domain/entities/learning_stats.dart';
+import '../../features/practice/domain/use_cases/get_learning_stats_use_case.dart';
 
 part 'app_providers.g.dart';
 
@@ -111,3 +116,18 @@ GenerateExerciseUseCase generateExerciseUseCase(GenerateExerciseUseCaseRef ref) 
 @riverpod
 ComputeSm2UseCase computeSm2UseCase(ComputeSm2UseCaseRef ref) =>
     const ComputeSm2UseCase();
+
+@riverpod
+StatsService statsService(StatsServiceRef ref) => StatsService(
+      vocabBox: Hive.box<String>('vocab_records'),
+      prefs: ref.read(sharedPreferencesProvider),
+    );
+
+@riverpod
+GetLearningStatsUseCase getLearningStatsUseCase(
+        GetLearningStatsUseCaseRef ref) =>
+    GetLearningStatsUseCase(ref.read(statsServiceProvider));
+
+@riverpod
+LearningStats learningStats(LearningStatsRef ref) =>
+    ref.read(statsServiceProvider).computeStats();
