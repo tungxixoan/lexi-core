@@ -5,6 +5,7 @@ import '../../features/vocabulary/presentation/screens/vocab_bank_screen.dart';
 import '../../features/vocabulary/presentation/screens/vocab_detail_screen.dart';
 import '../../features/practice/presentation/screens/practice_home_screen.dart';
 import '../../features/practice/presentation/screens/practice_session_screen.dart';
+import '../../features/practice/presentation/screens/progress_screen.dart';
 import '../../features/practice/presentation/screens/session_result_screen.dart';
 import '../../features/practice/domain/entities/exercise_result.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
@@ -32,6 +33,10 @@ final appRouter = GoRouter(
           path: '/practice',
           builder: (context, state) => const PracticeHomeScreen(),
           routes: [
+            GoRoute(
+              path: 'progress',
+              builder: (context, state) => const ProgressScreen(),
+            ),
             GoRoute(
               path: 'session',
               builder: (context, state) => PracticeSessionScreen(
