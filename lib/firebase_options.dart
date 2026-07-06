@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -65,4 +62,15 @@ class DefaultFirebaseOptions {
     storageBucket: 'lexi-core.firebasestorage.app',
     iosBundleId: 'com.lexicore.lexicore',
   );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyBsAgOmBo9WroNzoz1h5IH915FhNxn8OYQ',
+    appId: '1:243190098866:web:0be910ac66637c3bddd2ab',
+    messagingSenderId: '243190098866',
+    projectId: 'lexi-core',
+    authDomain: 'lexi-core.firebaseapp.com',
+    storageBucket: 'lexi-core.firebasestorage.app',
+    measurementId: 'G-022E2HVV27',
+  );
+
 }
