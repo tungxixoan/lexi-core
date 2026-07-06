@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/sync_service.dart';
@@ -108,6 +109,15 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => _showCefrPicker(
                 context, ref, settings.targetCefrLevel),
           ),
+          if (!kIsWeb)
+            SwitchListTile(
+              title: const Text('Hiện tab Luyện đọc & gõ trên điện thoại'),
+              subtitle:
+                  const Text('Mặc định ẩn trên mobile — bật nếu bạn muốn dùng'),
+              value: settings.showReadingPracticeOnMobile,
+              onChanged: (v) =>
+                  notifier.setShowReadingPracticeOnMobile(v),
+            ),
 
           // ── Thông báo ─────────────────────────────────────────
           _SectionHeader('Thông báo'),

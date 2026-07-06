@@ -34,6 +34,8 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
       reminderEnabled: prefs.getBool('reminder_enabled') ?? false,
       reminderHour: prefs.getInt('reminder_hour') ?? 20,
       reminderMinute: prefs.getInt('reminder_minute') ?? 0,
+      showReadingPracticeOnMobile:
+          prefs.getBool('show_reading_mobile') ?? false,
     );
   }
 
@@ -85,5 +87,10 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
     _prefs.setInt('reminder_hour', hour);
     _prefs.setInt('reminder_minute', minute);
     state = state.copyWith(reminderHour: hour, reminderMinute: minute);
+  }
+
+  void setShowReadingPracticeOnMobile(bool show) {
+    _prefs.setBool('show_reading_mobile', show);
+    state = state.copyWith(showReadingPracticeOnMobile: show);
   }
 }

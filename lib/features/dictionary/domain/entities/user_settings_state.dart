@@ -13,6 +13,7 @@ final class UserSettingsState {
     this.reminderEnabled = false,
     this.reminderHour = 20,
     this.reminderMinute = 0,
+    this.showReadingPracticeOnMobile = false,
   });
 
   final Language targetLanguage;
@@ -23,6 +24,7 @@ final class UserSettingsState {
   final bool reminderEnabled;
   final int reminderHour;
   final int reminderMinute;
+  final bool showReadingPracticeOnMobile;
 
   static const _absent = Object();
 
@@ -35,6 +37,7 @@ final class UserSettingsState {
     bool? reminderEnabled,
     int? reminderHour,
     int? reminderMinute,
+    bool? showReadingPracticeOnMobile,
   }) =>
       UserSettingsState(
         targetLanguage: targetLanguage ?? this.targetLanguage,
@@ -47,6 +50,8 @@ final class UserSettingsState {
         reminderEnabled: reminderEnabled ?? this.reminderEnabled,
         reminderHour: reminderHour ?? this.reminderHour,
         reminderMinute: reminderMinute ?? this.reminderMinute,
+        showReadingPracticeOnMobile:
+            showReadingPracticeOnMobile ?? this.showReadingPracticeOnMobile,
       );
 
   static const defaults = UserSettingsState(
@@ -58,5 +63,6 @@ final class UserSettingsState {
     reminderEnabled: false,
     reminderHour: 20,
     reminderMinute: 0,
+    showReadingPracticeOnMobile: false,
   );
 }
