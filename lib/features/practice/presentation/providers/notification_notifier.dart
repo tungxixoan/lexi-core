@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:hive/hive.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/di/app_providers.dart';
@@ -13,12 +14,14 @@ class NotificationNotifier extends _$NotificationNotifier {
 
   @override
   void build() {
+    if (kIsWeb) return;
     _service.initialize();
     ref.listen(userSettingsNotifierProvider, (_, __) => reschedule());
     Future.microtask(reschedule);
   }
 
   Future<void> reschedule() async {
+    if (kIsWeb) return;
     final settings = ref.read(userSettingsNotifierProvider);
     if (!settings.reminderEnabled) {
       await _service.cancelAll();

@@ -1,4 +1,5 @@
 import 'dart:developer' as dev;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 
@@ -27,6 +28,7 @@ class NotificationService {
   ];
 
   Future<void> initialize() async {
+    if (kIsWeb) return;
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosInit = DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -45,6 +47,7 @@ class NotificationService {
     required int dueCount,
     required DateTime? nextDueAt,
   }) async {
+    if (kIsWeb) return;
     if (!enabled) {
       await cancelAll();
       return;
@@ -107,6 +110,7 @@ class NotificationService {
   }
 
   Future<void> cancelAll() async {
+    if (kIsWeb) return;
     await _plugin.cancel(_smartId);
     await _plugin.cancel(_fixedId);
   }
