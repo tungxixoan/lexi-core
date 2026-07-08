@@ -51,7 +51,7 @@ class ReadingPassageSource {
       targetLanguage: targetLanguage,
     );
     final response = await _client.generateContent([Content.text(prompt)]);
-    final text = response.text ?? '{}';
+    final text = response.text ?? '{"sentences":[]}';
     final json = jsonDecode(text) as Map<String, dynamic>;
     return _parse(json, wordMap, level, context, targetLanguage);
   }
@@ -82,7 +82,7 @@ class ReadingPassageSource {
     AppContext context,
     Language targetLanguage,
   ) {
-    final sentences = (json['sentences'] as List).map((s) {
+    final sentences = (json['sentences'] as List? ?? []).map((s) {
       final sm = s as Map<String, dynamic>;
       final vocabWords = List<String>.from(sm['vocabWords'] as List? ?? []);
       final vocabIds =
