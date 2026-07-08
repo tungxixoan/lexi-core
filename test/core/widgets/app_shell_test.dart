@@ -6,8 +6,9 @@ import 'package:lexi_core/core/widgets/app_shell.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 
-Widget _buildShell(double width) {
+Future<Widget> _buildShell(double width) async {
   SharedPreferences.setMockInitialValues({});
+  final prefs = await SharedPreferences.getInstance();
   final router = GoRouter(
     routes: [
       ShellRoute(
@@ -23,8 +24,7 @@ Widget _buildShell(double width) {
   );
   return ProviderScope(
     overrides: [
-      sharedPreferencesProvider
-          .overrideWith((_) => throw UnimplementedError()),
+      sharedPreferencesProvider.overrideWithValue(prefs),
     ],
     child: MaterialApp.router(routerConfig: router),
   );
@@ -37,7 +37,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(400, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(_buildShell(400));
+    await tester.pumpWidget(await _buildShell(400));
     await tester.pumpAndSettle();
 
     expect(find.byType(NavigationBar), findsOneWidget);
@@ -48,7 +48,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(800, 600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(_buildShell(800));
+    await tester.pumpWidget(await _buildShell(800));
     await tester.pumpAndSettle();
 
     expect(find.byType(NavigationRail), findsOneWidget);

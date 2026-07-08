@@ -9,6 +9,10 @@ import '../../features/practice/presentation/screens/progress_screen.dart';
 import '../../features/practice/presentation/screens/session_result_screen.dart';
 import '../../features/practice/domain/entities/exercise_result.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
+import '../../features/reading/presentation/screens/reading_home_screen.dart';
+import '../../features/reading/presentation/screens/reading_session_screen.dart';
+import '../../features/reading/presentation/screens/reading_result_screen.dart';
+import '../../features/reading/presentation/providers/reading_practice_provider.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -47,6 +51,24 @@ final appRouter = GoRouter(
                   path: 'result',
                   builder: (context, state) => SessionResultScreen(
                     result: state.extra as SessionResult,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        GoRoute(
+          path: '/reading',
+          builder: (context, state) => const ReadingHomeScreen(),
+          routes: [
+            GoRoute(
+              path: 'session',
+              builder: (context, state) => const ReadingSessionScreen(),
+              routes: [
+                GoRoute(
+                  path: 'result',
+                  builder: (context, state) => ReadingResultScreen(
+                    result: state.extra as ReadingSessionResult,
                   ),
                 ),
               ],

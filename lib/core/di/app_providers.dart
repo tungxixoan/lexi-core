@@ -28,6 +28,9 @@ import 'package:hive/hive.dart';
 import '../services/stats_service.dart';
 import '../../features/practice/domain/entities/learning_stats.dart';
 import '../../features/practice/domain/use_cases/get_learning_stats_use_case.dart';
+// --- Reading DI (Plan 7) ---
+import '../../features/reading/data/sources/reading_passage_source.dart';
+import '../../features/reading/domain/use_cases/generate_reading_passage_use_case.dart';
 
 part 'app_providers.g.dart';
 
@@ -131,3 +134,16 @@ GetLearningStatsUseCase getLearningStatsUseCase(
 @riverpod
 LearningStats learningStats(LearningStatsRef ref) =>
     ref.watch(statsServiceProvider).computeStats();
+
+@riverpod
+ReadingPassageSource readingPassageSource(ReadingPassageSourceRef ref) {
+  final apiKey = ref.watch(
+    userSettingsNotifierProvider.select((s) => s.geminiApiKey),
+  );
+  return ReadingPassageSource(apiKey: apiKey);
+}
+
+@riverpod
+GenerateReadingPassageUseCase generateReadingPassageUseCase(
+        GenerateReadingPassageUseCaseRef ref) =>
+    GenerateReadingPassageUseCase(ref.watch(readingPassageSourceProvider));

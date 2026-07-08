@@ -384,5 +384,44 @@ final learningStatsProvider = AutoDisposeProvider<LearningStats>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef LearningStatsRef = AutoDisposeProviderRef<LearningStats>;
+String _$readingPassageSourceHash() =>
+    r'3121ad75b038c9994a227621251f552f4f0f432a';
+
+/// See also [readingPassageSource].
+@ProviderFor(readingPassageSource)
+final readingPassageSourceProvider =
+    AutoDisposeProvider<ReadingPassageSource>.internal(
+  readingPassageSource,
+  name: r'readingPassageSourceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$readingPassageSourceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ReadingPassageSourceRef = AutoDisposeProviderRef<ReadingPassageSource>;
+String _$generateReadingPassageUseCaseHash() =>
+    r'5a4d1b76815f2779789f78a08c8bdb8b16944bf9';
+
+/// See also [generateReadingPassageUseCase].
+@ProviderFor(generateReadingPassageUseCase)
+final generateReadingPassageUseCaseProvider =
+    AutoDisposeProvider<GenerateReadingPassageUseCase>.internal(
+  generateReadingPassageUseCase,
+  name: r'generateReadingPassageUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$generateReadingPassageUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GenerateReadingPassageUseCaseRef
+    = AutoDisposeProviderRef<GenerateReadingPassageUseCase>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

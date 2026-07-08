@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/practice/presentation/providers/notification_notifier.dart';
+import '../../features/dictionary/presentation/providers/user_settings_provider.dart';
 
 class _Dest {
   const _Dest({
@@ -16,33 +17,6 @@ class _Dest {
   final IconData selectedIcon;
   final String label;
 }
-
-const _kDefaultDests = [
-  _Dest(
-    path: '/',
-    icon: Icons.search_outlined,
-    selectedIcon: Icons.search,
-    label: 'Dictionary',
-  ),
-  _Dest(
-    path: '/vocab',
-    icon: Icons.library_books_outlined,
-    selectedIcon: Icons.library_books,
-    label: 'Vocab Bank',
-  ),
-  _Dest(
-    path: '/practice',
-    icon: Icons.school_outlined,
-    selectedIcon: Icons.school,
-    label: 'Luyện tập',
-  ),
-  _Dest(
-    path: '/settings',
-    icon: Icons.settings_outlined,
-    selectedIcon: Icons.settings,
-    label: 'Cài đặt',
-  ),
-];
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.child});
@@ -73,7 +47,39 @@ class _AppShellState extends ConsumerState<AppShell>
     }
   }
 
-  List<_Dest> _destinations() => _kDefaultDests;
+  List<_Dest> _destinations(bool showReading) => [
+        const _Dest(
+          path: '/',
+          icon: Icons.search_outlined,
+          selectedIcon: Icons.search,
+          label: 'Dictionary',
+        ),
+        const _Dest(
+          path: '/vocab',
+          icon: Icons.library_books_outlined,
+          selectedIcon: Icons.library_books,
+          label: 'Vocab Bank',
+        ),
+        if (showReading)
+          const _Dest(
+            path: '/reading',
+            icon: Icons.menu_book_outlined,
+            selectedIcon: Icons.menu_book,
+            label: 'Đọc',
+          ),
+        const _Dest(
+          path: '/practice',
+          icon: Icons.school_outlined,
+          selectedIcon: Icons.school,
+          label: 'Luyện tập',
+        ),
+        const _Dest(
+          path: '/settings',
+          icon: Icons.settings_outlined,
+          selectedIcon: Icons.settings,
+          label: 'Cài đặt',
+        ),
+      ];
 
   int _selectedIndex(BuildContext context, List<_Dest> dests) {
     final location = GoRouterState.of(context).matchedLocation;
@@ -90,7 +96,12 @@ class _AppShellState extends ConsumerState<AppShell>
 
   @override
   Widget build(BuildContext context) {
-    final dests = _destinations();
+    final showReading = kIsWeb ||
+        ref.watch(
+          userSettingsNotifierProvider
+              .select((s) => s.showReadingPracticeOnMobile),
+        );
+    final dests = _destinations(showReading);
     final selectedIndex = _selectedIndex(context, dests);
 
     return LayoutBuilder(
