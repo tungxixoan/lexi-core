@@ -130,3 +130,69 @@
 - Final review fixes: ✅ complete (commit ac67e78, 76/76 tests)
   Fixed: I1 ref.watch, I2 _computeNextDueAt try/catch, I3 atomic setReminderTime
   Minor (for future): getLearningStatsUseCase dead layer; _dateKey dup; setReminderMinute untested
+
+---
+
+# LexiCore Plan 6 — Flutter Web Enablement + Adaptive Navigation
+
+**BASE commit (Plan 6 start):** 02cddfb
+**Plan file:** docs/superpowers/plans/2026-07-06-plan6-web-platform.md
+**Task files:** docs/superpowers/plans/tasks/plan6-task-{01..04}.md
+
+## Status
+
+- Task 01: ✅ complete (commit fb02fb5, review clean)
+- Task 02: ✅ complete (commits 73de321+5ceb3cc, 78/78 tests, review clean)
+- Task 03: ✅ complete (commit 1d7043a, 11/11 settings tests, review clean)
+
+## Minor Findings (for final review)
+
+---
+
+# LexiCore Plan 7 — "Luyện đọc & gõ" Bilingual Reading Feature
+
+**BASE commit (Plan 7 start):** e460799
+**Plan file:** docs/superpowers/plans/2026-07-06-plan7-bilingual-reading.md
+**Task files:** docs/superpowers/plans/tasks/plan7-task-{01..06}.md
+
+## Status
+
+- Task 01: ✅ complete (commits 381bd3b+5c7759b, 5/5 tests, review clean)
+  Minor: ReadingPassage.fromJson vocabIds not null-guarded (BilingualSentence is) — low risk
+- Task 02: ✅ complete (commits 295cd19+c63cf95, 8/8 tests, review clean)
+  Minor: duplicate headwords silently drop IDs (low risk); import style inconsistency
+- Task 03: ✅ complete (commit 37c600b, 91/91 tests, review clean)
+  Important: currentSentence getter is NOT safe after isComplete=true (index=sentences.length); T04-T06 must check isComplete before accessing currentSentence
+  Minor: notifier is Notifier<AsyncValue<T>> not AsyncNotifier<T> (brief label wrong, implementation correct)
+- Task 04: ✅ complete (commit cfdfd53, 94/94 tests, review clean)
+- Task 05: ✅ complete (commit 938d50e, 97/97 tests, review clean — 3 minor)
+- Task 06: ✅ complete (commit d944321, 99/99 tests, review clean)
+
+## Minor Findings (for final review)
+- Task 01: ReadingPassage.fromJson missing null guard on vocabIds (could throw if field absent)
+- Task 02: duplicate headwords in word list silently drops earlier ID (low risk in practice)
+- Task 02: relative import paths with ../../../../features prefix (cosmetic)
+- Task 03: currentSentence getter throws RangeError when isComplete=true — T04-T06 must gate on isComplete
+
+---
+
+## Final Whole-Branch Review
+
+**Commits reviewed:** 02cddfb..9689bc3 (14 commits)
+**Status:** ✅ Ready to merge
+
+**Must-fix applied (commit 9689bc3):**
+- F1: /reading/session/result redirect guard (state.extra null → /reading)
+- F2: ReadingPassage.fromJson vocabIds null-safe (as List? ?? [])
+- F3: _HighlightedText empty headword infinite loop guard
+- F4: Dead width param removed from _buildShell test helper
+
+**Global checks:**
+- kIsWeb consistency: ✅ all 5 locations guarded
+- geminiApiKey in Firestore: ✅ NEVER (excluded from sync_service.dart batch)
+- Reading tab visibility: ✅ kIsWeb || showReadingPracticeOnMobile
+- SM-2 impact: ✅ zero — reading sessions never touch SM-2 fields
+
+**Remaining minors (post-merge):**
+- M1: firebase_options.dart missing EOF newline
+- M2: duplicate headwords in ReadingPassageSource.generate silently drops earlier ID

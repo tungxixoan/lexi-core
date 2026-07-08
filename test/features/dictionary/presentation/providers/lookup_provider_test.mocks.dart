@@ -107,7 +107,7 @@ class MockVocabRepository extends _i1.Mock implements _i8.VocabRepository {
     _i10.InputType? inputType,
     _i5.Language? language,
     _i11.CEFRLevel? maxCefrLevel,
-    bool dueOnly = false,
+    bool? dueOnly = false,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
