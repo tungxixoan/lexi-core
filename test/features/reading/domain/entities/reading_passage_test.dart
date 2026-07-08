@@ -58,5 +58,33 @@ void main() {
     test('vocabIds contains all sentence vocab IDs', () {
       expect(passage.vocabIds, containsAll(['id1', 'id2']));
     });
+
+    test('fromJson round-trips through toJson', () {
+      final original = ReadingPassage(
+        id: 'p1',
+        sentences: const [
+          BilingualSentence(
+            target: 'Hello.',
+            vietnamese: 'Xin chào.',
+            vocabIds: ['id1'],
+          ),
+        ],
+        vocabIds: const ['id1'],
+        level: CEFRLevel.b1,
+        context: AppContext.general,
+        targetLanguage: Language.english,
+        generatedAt: DateTime(2026, 1, 1),
+      );
+      final json = original.toJson();
+      final restored = ReadingPassage.fromJson(json);
+      expect(restored.id, original.id);
+      expect(restored.sentences.length, 1);
+      expect(restored.sentences[0].target, 'Hello.');
+      expect(restored.vocabIds, ['id1']);
+      expect(restored.level, CEFRLevel.b1);
+      expect(restored.context, AppContext.general);
+      expect(restored.targetLanguage, Language.english);
+      expect(restored.generatedAt, original.generatedAt);
+    });
   });
 }

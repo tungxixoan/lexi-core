@@ -45,4 +45,26 @@ final class ReadingPassage {
   final AppContext context;
   final Language targetLanguage;
   final DateTime generatedAt;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'sentences': sentences.map((s) => s.toJson()).toList(),
+        'vocabIds': vocabIds,
+        'level': level.name,
+        'context': context.name,
+        'targetLanguage': targetLanguage.name,
+        'generatedAt': generatedAt.toIso8601String(),
+      };
+
+  factory ReadingPassage.fromJson(Map<String, dynamic> json) => ReadingPassage(
+        id: json['id'] as String,
+        sentences: (json['sentences'] as List)
+            .map((s) => BilingualSentence.fromJson(s as Map<String, dynamic>))
+            .toList(),
+        vocabIds: List<String>.from(json['vocabIds'] as List),
+        level: CEFRLevel.values.byName(json['level'] as String),
+        context: AppContext.values.byName(json['context'] as String),
+        targetLanguage: Language.values.byName(json['targetLanguage'] as String),
+        generatedAt: DateTime.parse(json['generatedAt'] as String),
+      );
 }
