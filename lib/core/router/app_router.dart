@@ -67,6 +67,10 @@ final appRouter = GoRouter(
               routes: [
                 GoRoute(
                   path: 'result',
+                  redirect: (context, state) {
+                    if (state.extra is! ReadingSessionResult) return '/reading';
+                    return null;
+                  },
                   builder: (context, state) => ReadingResultScreen(
                     result: state.extra as ReadingSessionResult,
                   ),

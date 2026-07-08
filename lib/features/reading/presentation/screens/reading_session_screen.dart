@@ -189,6 +189,7 @@ class _PassageDisplay extends StatelessWidget {
             .map((r) => r.headword)
             .firstOrNull)
         .whereType<String>()
+        .where((w) => w.isNotEmpty)
         .toList();
   }
 

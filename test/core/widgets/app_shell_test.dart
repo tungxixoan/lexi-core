@@ -6,7 +6,7 @@ import 'package:lexi_core/core/widgets/app_shell.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 
-Future<Widget> _buildShell(double width) async {
+Future<Widget> _buildShell() async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   final router = GoRouter(
@@ -37,7 +37,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(400, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(await _buildShell(400));
+    await tester.pumpWidget(await _buildShell());
     await tester.pumpAndSettle();
 
     expect(find.byType(NavigationBar), findsOneWidget);
@@ -48,7 +48,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(800, 600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(await _buildShell(800));
+    await tester.pumpWidget(await _buildShell());
     await tester.pumpAndSettle();
 
     expect(find.byType(NavigationRail), findsOneWidget);

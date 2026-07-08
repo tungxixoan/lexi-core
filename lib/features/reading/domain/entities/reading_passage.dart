@@ -61,7 +61,7 @@ final class ReadingPassage {
         sentences: (json['sentences'] as List)
             .map((s) => BilingualSentence.fromJson(s as Map<String, dynamic>))
             .toList(),
-        vocabIds: List<String>.from(json['vocabIds'] as List),
+        vocabIds: List<String>.from(json['vocabIds'] as List? ?? []),
         level: CEFRLevel.values.byName(json['level'] as String),
         context: AppContext.values.byName(json['context'] as String),
         targetLanguage: Language.values.byName(json['targetLanguage'] as String),
