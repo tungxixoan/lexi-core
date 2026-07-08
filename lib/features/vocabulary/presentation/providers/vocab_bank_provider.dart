@@ -1,4 +1,5 @@
 // lib/features/vocabulary/presentation/providers/vocab_bank_provider.dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../domain/entities/vocab_record.dart';
@@ -30,11 +31,11 @@ class VocabBankNotifier extends _$VocabBankNotifier {
 /// Simple provider that returns the vocab list data synchronously.
 /// Returns an empty list when loading or on error.
 @riverpod
-List<VocabRecord> vocabBank(ref) {
+List<VocabRecord> vocabBank(Ref ref) {
   final asyncValue = ref.watch(vocabBankNotifierProvider);
   return asyncValue.when(
     data: (data) => data,
-    loading: () => const [],
-    error: (_, __) => const [],
+    loading: () => <VocabRecord>[],
+    error: (_, __) => <VocabRecord>[],
   );
 }
