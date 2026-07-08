@@ -6,6 +6,25 @@ part of 'vocab_bank_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+String _$vocabBankHash() => r'af9ebcd21715fbb2db86956de86cf4b81da942a5';
+
+/// Simple provider that returns the vocab list data synchronously.
+/// Returns an empty list when loading or on error.
+///
+/// Copied from [vocabBank].
+@ProviderFor(vocabBank)
+final vocabBankProvider = AutoDisposeProvider<List<VocabRecord>>.internal(
+  vocabBank,
+  name: r'vocabBankProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$vocabBankHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef VocabBankRef = AutoDisposeProviderRef<List<VocabRecord>>;
 String _$vocabBankNotifierHash() => r'd9bbfd29d822aa5c250119baf75b5bdcaf35c23c';
 
 /// See also [VocabBankNotifier].

@@ -26,3 +26,15 @@ class VocabBankNotifier extends _$VocabBankNotifier {
     ref.invalidateSelf();
   }
 }
+
+/// Simple provider that returns the vocab list data synchronously.
+/// Returns an empty list when loading or on error.
+@riverpod
+List<VocabRecord> vocabBank(ref) {
+  final asyncValue = ref.watch(vocabBankNotifierProvider);
+  return asyncValue.when(
+    data: (data) => data,
+    loading: () => const [],
+    error: (_, __) => const [],
+  );
+}
