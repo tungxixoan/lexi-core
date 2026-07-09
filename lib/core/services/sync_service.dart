@@ -13,14 +13,30 @@ class SyncService {
   final Box<String> vocabBox;
   final Box<String> topicsBox;
 
-  // Keys being written from Firestore → Hive — prevents echo back to Firestore
   final _firestoreUpdatingVocab = <String>{};
   final _firestoreUpdatingTopic = <String>{};
+
+  // headword|language → local Hive id  (O(1) duplicate detection)
+  final Map<String, String> _headwordIndex = {};
+  // local Hive id → headword|language  (O(1) reverse lookup for deletes)
+  final Map<String, String> _idToHeadwordKey = {};
 
   StreamSubscription? _vocabHiveSub;
   StreamSubscription? _topicHiveSub;
   StreamSubscription? _firestoreVocabSub;
   StreamSubscription? _firestoreTopicSub;
+
+  void _buildHeadwordIndex() {
+    _headwordIndex.clear();
+    _idToHeadwordKey.clear();
+    for (final raw in vocabBox.values) {
+      final m = jsonDecode(raw) as Map<String, dynamic>;
+      final id = m['id'] as String;
+      final key = '${m['headword']}|${m['targetLanguage']}';
+      _headwordIndex[key] = id;
+      _idToHeadwordKey[id] = key;
+    }
+  }
 
   Future<void> startSync(
     String uid,
@@ -28,14 +44,16 @@ class SyncService {
     void Function(SyncStatus) onStatus,
   ) async {
     final db = FirebaseFirestore.instance;
-    final vocabCol = db.collection('users').doc(uid).collection('vocab_records');
+    final vocabCol =
+        db.collection('users').doc(uid).collection('vocab_records');
     final topicsCol = db.collection('users').doc(uid).collection('topics');
     final userDoc = db.collection('users').doc(uid);
 
     onStatus(SyncStatus.syncing);
 
+    _buildHeadwordIndex();
+
     try {
-      // Batch-push all local vocab to Firestore (local is authoritative at sign-in)
       var batch = db.batch();
       var count = 0;
 
@@ -50,7 +68,6 @@ class SyncService {
         }
       }
 
-      // Batch-push all local topics
       for (final raw in topicsBox.values) {
         final map = jsonDecode(raw) as Map<String, dynamic>;
         batch.set(topicsCol.doc(map['id'] as String), map);
@@ -62,7 +79,6 @@ class SyncService {
         }
       }
 
-      // Push settings doc (NEVER include geminiApiKey)
       batch.set(userDoc, {
         'targetLanguage': settings.targetLanguage.name,
         'activeContext': settings.activeContext.name,
@@ -79,37 +95,39 @@ class SyncService {
       return;
     }
 
-    // Subscribe: Firestore vocab → Hive (remote updates local if newer)
+    // Firestore vocab → Hive
     _firestoreVocabSub = vocabCol.snapshots().listen(
       (snapshot) {
         for (final change in snapshot.docChanges) {
           final id = change.doc.id;
+
           if (change.type == DocumentChangeType.removed) {
             _firestoreUpdatingVocab.add(id);
             () async {
               try {
                 await vocabBox.delete(id);
+                final hwKey = _idToHeadwordKey.remove(id);
+                if (hwKey != null) _headwordIndex.remove(hwKey);
               } catch (e) {
                 dev.log('SyncService: Hive vocab delete failed: $e');
               } finally {
                 _firestoreUpdatingVocab.remove(id);
               }
             }();
-          } else {
-            final remoteMap = change.doc.data()!;
-            final localRaw = vocabBox.get(id);
-            bool shouldUpdate;
-            if (localRaw == null) {
-              shouldUpdate = true;
-            } else {
-              final localMap = jsonDecode(localRaw) as Map<String, dynamic>;
-              final remoteUpdatedAt =
-                  DateTime.parse(remoteMap['updatedAt'] as String);
-              final localUpdatedAt =
-                  DateTime.parse(localMap['updatedAt'] as String);
-              shouldUpdate = remoteUpdatedAt.isAfter(localUpdatedAt);
-            }
-            if (shouldUpdate) {
+            continue;
+          }
+
+          final remoteMap = change.doc.data()!;
+          final localRaw = vocabBox.get(id);
+
+          if (localRaw != null) {
+            // Same id — keep newer version
+            final localMap = jsonDecode(localRaw) as Map<String, dynamic>;
+            final remoteAt =
+                DateTime.parse(remoteMap['updatedAt'] as String);
+            final localAt =
+                DateTime.parse(localMap['updatedAt'] as String);
+            if (remoteAt.isAfter(localAt)) {
               _firestoreUpdatingVocab.add(id);
               vocabBox.put(id, jsonEncode(remoteMap)).then((_) {
                 _firestoreUpdatingVocab.remove(id);
@@ -118,28 +136,93 @@ class SyncService {
                 dev.log('SyncService: Hive vocab write failed: $e');
               });
             }
+            continue;
           }
+
+          // Doc not in Hive by id — check headword collision
+          final hwKey =
+              '${remoteMap['headword']}|${remoteMap['targetLanguage']}';
+          final existingLocalId = _headwordIndex[hwKey];
+
+          if (existingLocalId != null) {
+            // Race-condition duplicate: same headword+language, different id
+            final existingRaw = vocabBox.get(existingLocalId);
+            if (existingRaw != null) {
+              final localMap =
+                  jsonDecode(existingRaw) as Map<String, dynamic>;
+              final localAt =
+                  DateTime.parse(localMap['updatedAt'] as String);
+              final remoteAt =
+                  DateTime.parse(remoteMap['updatedAt'] as String);
+
+              if (!remoteAt.isAfter(localAt)) {
+                // Local is newer or equal — discard the Firebase duplicate
+                vocabCol.doc(id).delete().catchError((e) =>
+                    dev.log('SyncService: dedup Firebase delete failed: $e'));
+              } else {
+                // Firebase is newer — replace local with Firebase version
+                _firestoreUpdatingVocab.add(id);
+                _firestoreUpdatingVocab.add(existingLocalId);
+                () async {
+                  try {
+                    // Remove old local entry from Hive + Firestore
+                    await vocabBox.delete(existingLocalId);
+                    _idToHeadwordKey.remove(existingLocalId);
+                    _headwordIndex.remove(hwKey);
+                    await vocabCol.doc(existingLocalId).delete();
+                    // Write Firebase version into Hive
+                    await vocabBox.put(id, jsonEncode(remoteMap));
+                    _headwordIndex[hwKey] = id;
+                    _idToHeadwordKey[id] = hwKey;
+                  } catch (e) {
+                    dev.log('SyncService: dedup replace failed: $e');
+                  } finally {
+                    _firestoreUpdatingVocab.remove(id);
+                    _firestoreUpdatingVocab.remove(existingLocalId);
+                  }
+                }();
+              }
+            }
+            continue;
+          }
+
+          // Genuinely new word from Firebase
+          _firestoreUpdatingVocab.add(id);
+          vocabBox.put(id, jsonEncode(remoteMap)).then((_) {
+            _headwordIndex[hwKey] = id;
+            _idToHeadwordKey[id] = hwKey;
+            _firestoreUpdatingVocab.remove(id);
+          }).catchError((e) {
+            _firestoreUpdatingVocab.remove(id);
+            dev.log('SyncService: Hive vocab write failed: $e');
+          });
         }
       },
-      onError: (e) => dev.log('SyncService: Firestore vocab stream error: $e'),
+      onError: (e) =>
+          dev.log('SyncService: Firestore vocab stream error: $e'),
     );
 
-    // Subscribe: Hive vocab → Firestore (skip keys being written from Firestore)
+    // Hive vocab → Firestore
     _vocabHiveSub = vocabBox.watch().listen((event) {
       final key = event.key as String;
       if (_firestoreUpdatingVocab.contains(key)) return;
       if (event.deleted) {
-        vocabCol.doc(key).delete().catchError(
-            (e) => dev.log('SyncService: Firestore vocab delete failed: $e'));
+        final hwKey = _idToHeadwordKey.remove(key);
+        if (hwKey != null) _headwordIndex.remove(hwKey);
+        vocabCol.doc(key).delete().catchError((e) =>
+            dev.log('SyncService: Firestore vocab delete failed: $e'));
       } else {
         final map =
             jsonDecode(event.value as String) as Map<String, dynamic>;
-        vocabCol.doc(key).set(map).catchError(
-            (e) => dev.log('SyncService: Firestore vocab write failed: $e'));
+        final hwKey = '${map['headword']}|${map['targetLanguage']}';
+        _headwordIndex[hwKey] = key;
+        _idToHeadwordKey[key] = hwKey;
+        vocabCol.doc(key).set(map).catchError((e) =>
+            dev.log('SyncService: Firestore vocab write failed: $e'));
       }
     });
 
-    // Subscribe: Firestore topics → Hive (remote wins if not in local)
+    // Firestore topics → Hive
     _firestoreTopicSub = topicsCol.snapshots().listen(
       (snapshot) {
         for (final change in snapshot.docChanges) {
@@ -158,7 +241,6 @@ class SyncService {
           } else {
             final localRaw = topicsBox.get(id);
             if (localRaw == null) {
-              // Only add topics that don't exist locally (topics have no updatedAt)
               _firestoreUpdatingTopic.add(id);
               topicsBox
                   .put(id, jsonEncode(change.doc.data()))
@@ -168,21 +250,22 @@ class SyncService {
           }
         }
       },
-      onError: (e) => dev.log('SyncService: Firestore topics stream error: $e'),
+      onError: (e) =>
+          dev.log('SyncService: Firestore topics stream error: $e'),
     );
 
-    // Subscribe: Hive topics → Firestore
+    // Hive topics → Firestore
     _topicHiveSub = topicsBox.watch().listen((event) {
       final key = event.key as String;
       if (_firestoreUpdatingTopic.contains(key)) return;
       if (event.deleted) {
-        topicsCol.doc(key).delete().catchError(
-            (e) => dev.log('SyncService: Firestore topic delete failed: $e'));
+        topicsCol.doc(key).delete().catchError((e) =>
+            dev.log('SyncService: Firestore topic delete failed: $e'));
       } else {
         final map =
             jsonDecode(event.value as String) as Map<String, dynamic>;
-        topicsCol.doc(key).set(map).catchError(
-            (e) => dev.log('SyncService: Firestore topic write failed: $e'));
+        topicsCol.doc(key).set(map).catchError((e) =>
+            dev.log('SyncService: Firestore topic write failed: $e'));
       }
     });
 
@@ -200,5 +283,7 @@ class SyncService {
     _firestoreTopicSub = null;
     _firestoreUpdatingVocab.clear();
     _firestoreUpdatingTopic.clear();
+    _headwordIndex.clear();
+    _idToHeadwordKey.clear();
   }
 }
