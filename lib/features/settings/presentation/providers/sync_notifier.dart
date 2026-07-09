@@ -7,6 +7,8 @@ import 'auth_notifier.dart';
 
 part 'sync_notifier.g.dart';
 
+const _kStoredUid = 'sync_last_uid';
+
 @Riverpod(keepAlive: true)
 class SyncNotifier extends _$SyncNotifier {
   SyncService? _service;
@@ -30,6 +32,17 @@ class SyncNotifier extends _$SyncNotifier {
 
   Future<void> _startSync(String uid) async {
     _service?.stopSync();
+
+    // Clear local data if signing in as a different account than last time.
+    // This prevents account A's data leaking into account B's Firestore.
+    final prefs = ref.read(sharedPreferencesProvider);
+    final lastUid = prefs.getString(_kStoredUid);
+    if (lastUid != null && lastUid != uid) {
+      await Hive.box<String>('vocab_records').clear();
+      await Hive.box<String>('topics').clear();
+    }
+    await prefs.setString(_kStoredUid, uid);
+
     _service = SyncService(
       vocabBox: Hive.box<String>('vocab_records'),
       topicsBox: Hive.box<String>('topics'),
@@ -42,5 +55,8 @@ class SyncNotifier extends _$SyncNotifier {
     _service?.stopSync();
     _service = null;
     state = SyncStatus.idle;
+    // Hive is intentionally NOT cleared here — local data is authoritative
+    // and may include offline changes not yet synced to Firestore.
+    // Account isolation is handled by the uid mismatch check in _startSync().
   }
 }
