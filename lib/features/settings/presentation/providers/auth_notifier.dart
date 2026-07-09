@@ -12,7 +12,9 @@ class AuthNotifier extends _$AuthNotifier {
 
   Future<void> signInWithGoogle() async {
     if (kIsWeb) {
-      await FirebaseAuth.instance.signInWithPopup(GoogleAuthProvider());
+      final provider = GoogleAuthProvider()
+        ..setCustomParameters({'prompt': 'select_account'});
+      await FirebaseAuth.instance.signInWithPopup(provider);
       return;
     }
     final googleUser = await GoogleSignIn().signIn();
