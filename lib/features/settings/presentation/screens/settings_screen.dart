@@ -1,8 +1,10 @@
+// lib/features/settings/presentation/screens/settings_screen.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/sync_service.dart';
+import '../../../../features/dictionary/domain/entities/ai_provider.dart';
 import '../../../../features/dictionary/domain/entities/language.dart';
 import '../../../../features/dictionary/domain/entities/user_settings_state.dart';
 import '../../../../features/dictionary/presentation/providers/user_settings_provider.dart';
@@ -62,23 +64,55 @@ class SettingsScreen extends ConsumerWidget {
           // ── AI ────────────────────────────────────────────────
           _SectionHeader('AI'),
           SwitchListTile(
-            title: const Text('Bật Gemini AI'),
-            subtitle: const Text('Tạo bài tập tự động khi luyện tập'),
+            title: const Text('Bật AI'),
+            subtitle: const Text('Tạo bài tập và nội dung tự động'),
             value: settings.aiEnabled,
             onChanged: (v) => notifier.setAiEnabled(enabled: v),
           ),
-          if (settings.aiEnabled)
+          if (settings.aiEnabled) ...[
+            // Provider picker
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Provider',
+                      style: theme.textTheme.labelMedium
+                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                  const SizedBox(height: 8),
+                  SegmentedButton<AiProvider>(
+                    segments: AiProvider.values
+                        .map((p) => ButtonSegment<AiProvider>(
+                              value: p,
+                              label: Text(p.label),
+                            ))
+                        .toList(),
+                    selected: {settings.activeProvider},
+                    onSelectionChanged: (s) {
+                      if (s.isNotEmpty) notifier.setActiveProvider(s.first);
+                    },
+                  ),
+                ],
+              ),
+            ),
+            // Model picker
+            _ModelTile(
+              settings: settings,
+              onModelChanged: notifier.setModelForActiveProvider,
+            ),
+            // API Key
             ListTile(
-              title: const Text('Gemini API Key'),
+              title: const Text('API Key'),
               subtitle: Text(
-                settings.geminiApiKey.isEmpty
+                settings.activeConfig.apiKey.isEmpty
                     ? 'Chưa cài đặt'
-                    : '••••••••${settings.geminiApiKey.length > 4 ? settings.geminiApiKey.substring(settings.geminiApiKey.length - 4) : settings.geminiApiKey}',
+                    : '••••••••${_lastFour(settings.activeConfig.apiKey)}',
               ),
               trailing: const Icon(Icons.edit_outlined),
-              onTap: () =>
-                  _showApiKeyDialog(context, ref, settings.geminiApiKey),
+              onTap: () => _showApiKeyDialog(
+                  context, ref, settings.activeConfig.apiKey),
             ),
+          ],
 
           // ── Học tập ───────────────────────────────────────────
           _SectionHeader('Học tập'),
@@ -142,6 +176,9 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
+  String _lastFour(String key) =>
+      key.length > 4 ? key.substring(key.length - 4) : key;
+
   void _showApiKeyDialog(
       BuildContext context, WidgetRef ref, String currentKey) {
     showDialog<void>(
@@ -150,7 +187,7 @@ class SettingsScreen extends ConsumerWidget {
         currentKey: currentKey,
         onSave: (key) => ref
             .read(userSettingsNotifierProvider.notifier)
-            .setGeminiApiKey(key),
+            .setApiKeyForActiveProvider(key),
       ),
     );
   }
@@ -204,6 +241,85 @@ class SettingsScreen extends ConsumerWidget {
         .setReminderTime(picked.hour, picked.minute);
   }
 }
+
+// ── Model tile with preset dropdown + free-text "Khác..." option ──────────
+
+class _ModelTile extends ConsumerWidget {
+  const _ModelTile({required this.settings, required this.onModelChanged});
+  final UserSettingsState settings;
+  final void Function(String) onModelChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final presets = settings.activeProvider.modelPresets;
+    final currentModel = settings.activeConfig.model.isEmpty
+        ? settings.activeProvider.defaultModel
+        : settings.activeConfig.model;
+    final isCustom = !presets.contains(currentModel);
+
+    return ListTile(
+      title: const Text('Model'),
+      subtitle: Text(currentModel),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => _showModelPicker(context, presets, currentModel, isCustom),
+    );
+  }
+
+  void _showModelPicker(
+    BuildContext context,
+    List<String> presets,
+    String currentModel,
+    bool isCustom,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isCustom)
+              RadioListTile<String>(
+                title: Text(currentModel),
+                subtitle: const Text('Tuỳ chỉnh'),
+                value: currentModel,
+                groupValue: currentModel,
+                onChanged: (_) => Navigator.pop(ctx),
+              ),
+            ...presets.map((model) => RadioListTile<String>(
+                  title: Text(model),
+                  value: model,
+                  groupValue: currentModel,
+                  onChanged: (v) {
+                    if (v != null) onModelChanged(v);
+                    Navigator.pop(ctx);
+                  },
+                )),
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('Khác...'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showCustomModelDialog(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCustomModelDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => _CustomModelDialog(
+        currentModel: settings.activeConfig.model,
+        onSave: onModelChanged,
+      ),
+    );
+  }
+}
+
+// ── Shared widgets ─────────────────────────────────────────────────────────
 
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader(this.title);
@@ -336,12 +452,12 @@ class _ApiKeyDialogState extends State<_ApiKeyDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Gemini API Key'),
+      title: const Text('API Key'),
       content: TextField(
         controller: _ctrl,
         obscureText: true,
         decoration: const InputDecoration(
-          hintText: 'AIza...',
+          hintText: 'Nhập API key...',
           border: OutlineInputBorder(),
         ),
       ),
@@ -352,6 +468,58 @@ class _ApiKeyDialogState extends State<_ApiKeyDialog> {
         FilledButton(
           onPressed: () {
             widget.onSave(_ctrl.text.trim());
+            Navigator.pop(context);
+          },
+          child: const Text('Lưu'),
+        ),
+      ],
+    );
+  }
+}
+
+class _CustomModelDialog extends StatefulWidget {
+  const _CustomModelDialog({required this.currentModel, required this.onSave});
+  final String currentModel;
+  final void Function(String) onSave;
+
+  @override
+  State<_CustomModelDialog> createState() => _CustomModelDialogState();
+}
+
+class _CustomModelDialogState extends State<_CustomModelDialog> {
+  late final TextEditingController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: widget.currentModel);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Tên model'),
+      content: TextField(
+        controller: _ctrl,
+        decoration: const InputDecoration(
+          hintText: 'vd: gemini-2.5-pro, llama-3.1-8b-instant...',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Huỷ')),
+        FilledButton(
+          onPressed: () {
+            final model = _ctrl.text.trim();
+            if (model.isNotEmpty) widget.onSave(model);
             Navigator.pop(context);
           },
           child: const Text('Lưu'),
