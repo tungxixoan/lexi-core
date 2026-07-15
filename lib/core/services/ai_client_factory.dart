@@ -14,7 +14,12 @@ class AiClientFactory {
   const AiClientFactory._();
 
   /// Builds the correct [GenerativeModelClient] for [settings.activeProvider].
-  static GenerativeModelClient buildClient(UserSettingsState settings) {
+  ///
+  /// [httpClient] is injected for testing; production code omits it.
+  static GenerativeModelClient buildClient(
+    UserSettingsState settings, {
+    http.Client? httpClient,
+  }) {
     final config = settings.activeConfig;
     return switch (settings.activeProvider) {
       AiProvider.gemini => _GeminiClient(
@@ -25,6 +30,7 @@ class AiClientFactory {
           apiKey: config.apiKey,
           model: config.model,
           baseUrl: settings.activeProvider.baseUrl,
+          httpClient: httpClient,
         ),
     };
   }
@@ -82,6 +88,7 @@ final class _OpenAiClient implements GenerativeModelClient {
         'messages': [
           {'role': 'user', 'content': text},
         ],
+        'response_format': {'type': 'json_object'},
       }),
     );
 
@@ -91,11 +98,28 @@ final class _OpenAiClient implements GenerativeModelClient {
     }
 
     final json = jsonDecode(response.body) as Map<String, dynamic>;
-    final content =
+    final raw =
         (json['choices'] as List).first['message']['content'] as String;
+    // Strip markdown fences defensively — some models ignore json_object mode.
+    final content = _stripFences(raw);
     return GenerateContentResponse(
       [Candidate(Content.text(content), null, null, null, null)],
       null,
     );
+  }
+
+  /// Strips ` ```json ` or ` ``` ` fences from [s] if present.
+  String _stripFences(String s) {
+    final trimmed = s.trim();
+    final String? start;
+    if (trimmed.startsWith('```json')) {
+      start = trimmed.substring(7);
+    } else if (trimmed.startsWith('```')) {
+      start = trimmed.substring(3);
+    } else {
+      return trimmed;
+    }
+    final end = start.lastIndexOf('```');
+    return end == -1 ? start.trim() : start.substring(0, end).trim();
   }
 }
