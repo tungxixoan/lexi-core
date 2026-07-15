@@ -1,36 +1,19 @@
+// lib/features/dictionary/data/sources/gemini_dictionary_source.dart
 import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
+import '../../../../core/services/ai_client_factory.dart';
 import '../../domain/entities/app_context.dart';
 import '../../domain/entities/input_type.dart';
 import '../../domain/entities/language.dart';
 import '../../domain/entities/lookup_result.dart';
+import '../../domain/entities/user_settings_state.dart';
 
-/// Thin interface over [GenerativeModel] so tests can inject a fake.
-abstract interface class GenerativeModelClient {
-  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt);
-}
-
-/// Wraps the real [GenerativeModel] to implement [GenerativeModelClient].
-final class _RealModelClient implements GenerativeModelClient {
-  _RealModelClient(this._model);
-  final GenerativeModel _model;
-
-  @override
-  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) =>
-      _model.generateContent(prompt);
-}
+// Re-export so existing test imports (from this file) continue to resolve.
+export '../../../../core/services/ai_client_factory.dart' show GenerativeModelClient;
 
 class GeminiDictionarySource {
-  GeminiDictionarySource({required String apiKey})
-      : _client = _RealModelClient(
-          GenerativeModel(
-            model: 'gemini-2.5-flash',
-            apiKey: apiKey,
-            generationConfig: GenerationConfig(
-              responseMimeType: 'application/json',
-            ),
-          ),
-        );
+  GeminiDictionarySource(UserSettingsState settings)
+      : _client = AiClientFactory.buildClient(settings);
 
   /// Constructor for testing — inject any [GenerativeModelClient] fake.
   GeminiDictionarySource.withModel(GenerativeModelClient client)

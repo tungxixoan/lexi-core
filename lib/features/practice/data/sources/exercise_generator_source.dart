@@ -1,39 +1,20 @@
+// lib/features/practice/data/sources/exercise_generator_source.dart
 import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
+import '../../../../core/services/ai_client_factory.dart';
+import '../../../dictionary/domain/entities/user_settings_state.dart';
 import '../../../vocabulary/domain/entities/vocab_record.dart';
 import '../../domain/entities/exercise.dart';
 
-/// Thin interface over GenerativeModel — keeps ExerciseGeneratorSource testable.
-abstract interface class ExerciseGeneratorClient {
-  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt);
-}
-
-final class _RealClient implements ExerciseGeneratorClient {
-  _RealClient(this._model);
-  final GenerativeModel _model;
-
-  @override
-  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) =>
-      _model.generateContent(prompt);
-}
-
 class ExerciseGeneratorSource {
-  ExerciseGeneratorSource({required String apiKey})
-      : _client = _RealClient(
-          GenerativeModel(
-            model: 'gemini-2.5-flash',
-            apiKey: apiKey,
-            generationConfig: GenerationConfig(
-              responseMimeType: 'application/json',
-            ),
-          ),
-        );
+  ExerciseGeneratorSource(UserSettingsState settings)
+      : _client = AiClientFactory.buildClient(settings);
 
-  /// For testing — inject any [ExerciseGeneratorClient].
-  ExerciseGeneratorSource.withClient(ExerciseGeneratorClient client)
+  /// For testing — inject any [GenerativeModelClient].
+  ExerciseGeneratorSource.withClient(GenerativeModelClient client)
       : _client = client;
 
-  final ExerciseGeneratorClient _client;
+  final GenerativeModelClient _client;
 
   Future<Exercise> generate(VocabRecord record) async {
     final prompt = _buildPrompt(record);

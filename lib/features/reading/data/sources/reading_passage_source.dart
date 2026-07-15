@@ -1,35 +1,21 @@
+// lib/features/reading/data/sources/reading_passage_source.dart
 import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
 import 'package:uuid/uuid.dart';
+import '../../../../core/services/ai_client_factory.dart';
 import '../../../../features/dictionary/domain/entities/app_context.dart';
 import '../../../../features/dictionary/domain/entities/language.dart';
+import '../../../../features/dictionary/domain/entities/user_settings_state.dart';
 import '../../../../features/vocabulary/domain/entities/cefr_level.dart';
 import '../../../../features/vocabulary/domain/entities/vocab_record.dart';
 import '../../domain/entities/reading_passage.dart';
 
-abstract interface class GenerativeModelClient {
-  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt);
-}
-
-final class _RealModelClient implements GenerativeModelClient {
-  _RealModelClient(this._model);
-  final GenerativeModel _model;
-  @override
-  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) =>
-      _model.generateContent(prompt);
-}
+// Re-export so existing test imports (from this file) continue to resolve.
+export '../../../../core/services/ai_client_factory.dart' show GenerativeModelClient;
 
 class ReadingPassageSource {
-  ReadingPassageSource({required String apiKey})
-      : _client = _RealModelClient(
-          GenerativeModel(
-            model: 'gemini-2.5-flash',
-            apiKey: apiKey,
-            generationConfig: GenerationConfig(
-              responseMimeType: 'application/json',
-            ),
-          ),
-        );
+  ReadingPassageSource(UserSettingsState settings)
+      : _client = AiClientFactory.buildClient(settings);
 
   ReadingPassageSource.withModel(GenerativeModelClient client)
       : _client = client;

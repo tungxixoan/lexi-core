@@ -74,7 +74,7 @@ final freeDictionarySourceProvider =
 // ignore: unused_element
 typedef FreeDictionarySourceRef = AutoDisposeProviderRef<FreeDictionarySource>;
 String _$geminiDictionarySourceHash() =>
-    r'19d2f7ab84a7de0af3d64cb3e237e47c943aca94';
+    r'b31598940e55b81822cbaf106fb7d57dfba2b299';
 
 /// See also [geminiDictionarySource].
 @ProviderFor(geminiDictionarySource)
@@ -274,7 +274,7 @@ final deleteTopicUseCaseProvider =
 // ignore: unused_element
 typedef DeleteTopicUseCaseRef = AutoDisposeProviderRef<DeleteTopicUseCase>;
 String _$exerciseGeneratorSourceHash() =>
-    r'8a67bd7095354f757a9b65485f7976cd58990c19';
+    r'8475106f5a156f7b641ab63b82633e14eae830c8';
 
 /// See also [exerciseGeneratorSource].
 @ProviderFor(exerciseGeneratorSource)
@@ -385,7 +385,7 @@ final learningStatsProvider = AutoDisposeProvider<LearningStats>.internal(
 // ignore: unused_element
 typedef LearningStatsRef = AutoDisposeProviderRef<LearningStats>;
 String _$readingPassageSourceHash() =>
-    r'3121ad75b038c9994a227621251f552f4f0f432a';
+    r'7476106924c848b50feb02085568427634ec40c2';
 
 /// See also [readingPassageSource].
 @ProviderFor(readingPassageSource)

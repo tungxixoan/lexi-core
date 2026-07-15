@@ -53,12 +53,9 @@ FreeDictionarySource freeDictionarySource(FreeDictionarySourceRef ref) =>
     FreeDictionarySource(ref.watch(httpClientProvider));
 
 @riverpod
-GeminiDictionarySource geminiDictionarySource(
-    GeminiDictionarySourceRef ref) {
-  final apiKey = ref.watch(
-    userSettingsNotifierProvider.select((s) => s.geminiApiKey),
-  );
-  return GeminiDictionarySource(apiKey: apiKey);
+GeminiDictionarySource geminiDictionarySource(GeminiDictionarySourceRef ref) {
+  final settings = ref.watch(userSettingsNotifierProvider);
+  return GeminiDictionarySource(settings);
 }
 
 @riverpod
@@ -106,10 +103,8 @@ DeleteTopicUseCase deleteTopicUseCase(DeleteTopicUseCaseRef ref) =>
 
 @riverpod
 ExerciseGeneratorSource exerciseGeneratorSource(ExerciseGeneratorSourceRef ref) {
-  final apiKey = ref.watch(
-    userSettingsNotifierProvider.select((s) => s.geminiApiKey),
-  );
-  return ExerciseGeneratorSource(apiKey: apiKey);
+  final settings = ref.watch(userSettingsNotifierProvider);
+  return ExerciseGeneratorSource(settings);
 }
 
 @riverpod
@@ -137,10 +132,8 @@ LearningStats learningStats(LearningStatsRef ref) =>
 
 @riverpod
 ReadingPassageSource readingPassageSource(ReadingPassageSourceRef ref) {
-  final apiKey = ref.watch(
-    userSettingsNotifierProvider.select((s) => s.geminiApiKey),
-  );
-  return ReadingPassageSource(apiKey: apiKey);
+  final settings = ref.watch(userSettingsNotifierProvider);
+  return ReadingPassageSource(settings);
 }
 
 @riverpod
