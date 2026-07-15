@@ -1,8 +1,11 @@
 // lib/features/dictionary/presentation/providers/user_settings_provider.dart
+import 'dart:convert';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../domain/entities/ai_provider.dart';
 import '../../domain/entities/app_context.dart';
 import '../../domain/entities/language.dart';
+import '../../domain/entities/provider_config.dart';
 import '../../domain/entities/user_settings_state.dart';
 import '../../../vocabulary/domain/entities/cefr_level.dart';
 
@@ -21,13 +24,40 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
   @override
   UserSettingsState build() {
     final prefs = ref.watch(sharedPreferencesProvider);
+
+    // One-time silent migration from old gemini_api_key to new ai_config_* keys.
+    if (!prefs.containsKey('ai_active_provider') &&
+        prefs.containsKey('gemini_api_key')) {
+      final oldKey = prefs.getString('gemini_api_key') ?? '';
+      prefs.setString(
+        'ai_config_gemini',
+        jsonEncode({'apiKey': oldKey, 'model': 'gemini-2.5-flash'}),
+      );
+      prefs.setString('ai_active_provider', 'gemini');
+      prefs.remove('gemini_api_key');
+    }
+
+    final activeProvider = AiProvider.values.byName(
+      prefs.getString('ai_active_provider') ?? AiProvider.gemini.name,
+    );
+
+    final providerConfigs = <AiProvider, ProviderConfig>{};
+    for (final provider in AiProvider.values) {
+      final raw = prefs.getString('ai_config_${provider.name}');
+      if (raw != null) {
+        providerConfigs[provider] =
+            ProviderConfig.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      }
+    }
+
     return UserSettingsState(
       targetLanguage: Language.values.byName(
           prefs.getString('target_language') ?? Language.english.name),
       activeContext: AppContext.values.byName(
           prefs.getString('active_context') ?? AppContext.general.name),
       aiEnabled: prefs.getBool('ai_enabled') ?? false,
-      geminiApiKey: prefs.getString('gemini_api_key') ?? '',
+      activeProvider: activeProvider,
+      providerConfigs: providerConfigs,
       targetCefrLevel: prefs.containsKey('target_cefr_level')
           ? CEFRLevel.values.byName(prefs.getString('target_cefr_level')!)
           : null,
@@ -54,9 +84,35 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
     state = state.copyWith(aiEnabled: enabled);
   }
 
-  void setGeminiApiKey(String key) {
-    _prefs.setString('gemini_api_key', key);
-    state = state.copyWith(geminiApiKey: key);
+  void setActiveProvider(AiProvider provider) {
+    _prefs.setString('ai_active_provider', provider.name);
+    state = state.copyWith(activeProvider: provider);
+  }
+
+  void setProviderConfig(AiProvider provider, ProviderConfig config) {
+    _prefs.setString(
+      'ai_config_${provider.name}',
+      jsonEncode(config.toJson()),
+    );
+    final updated = Map<AiProvider, ProviderConfig>.from(state.providerConfigs);
+    updated[provider] = config;
+    state = state.copyWith(providerConfigs: updated);
+  }
+
+  void setApiKeyForActiveProvider(String key) {
+    final current = state.activeConfig;
+    setProviderConfig(
+      state.activeProvider,
+      ProviderConfig(apiKey: key, model: current.model),
+    );
+  }
+
+  void setModelForActiveProvider(String model) {
+    final current = state.activeConfig;
+    setProviderConfig(
+      state.activeProvider,
+      ProviderConfig(apiKey: current.apiKey, model: model),
+    );
   }
 
   void setTargetCefrLevel(CEFRLevel? level) {
