@@ -6,7 +6,7 @@ part of 'vocab_bank_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$vocabBankHash() => r'af9ebcd21715fbb2db86956de86cf4b81da942a5';
+String _$vocabBankHash() => r'c832a4ab981016f6e0209e85943bc5f9d58e5c7c';
 
 /// Simple provider that returns the vocab list data synchronously.
 /// Returns an empty list when loading or on error.

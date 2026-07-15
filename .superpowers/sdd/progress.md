@@ -196,3 +196,30 @@
 **Remaining minors (post-merge):**
 - M1: firebase_options.dart missing EOF newline
 - M2: duplicate headwords in ReadingPassageSource.generate silently drops earlier ID
+
+---
+
+# LexiCore Plan 8 — Multi-Provider AI Settings
+
+**BASE commit (Plan 8 start):** fb23862
+**Plan file:** docs/superpowers/plans/2026-07-15-multi-provider-ai-settings.md
+
+## Status
+
+- Task 1: ✅ complete (commit d8dcc9d, 21/21 tests, review clean)
+- Task 2: ✅ complete (commit 682e199, 17/17 tests, review clean)
+  - Minor: defaults map has gemini config but fresh build() yields empty providerConfigs (harmless, activeConfig fallback handles it)
+  - Minor: AiProvider.values.byName() unguarded (consistent with existing Language/AppContext pattern)
+- Task 3: ✅ complete (commit 196e82b, 3/3 tests, review clean)
+  - Minor: _OpenAiClient response parsing unguarded (empty choices, missing keys) — acceptable for MVP
+- Task 4: ✅ complete (commit b1448d2, 129/129 tests, review clean)
+- Task 5: ✅ complete (commit b96f835, 129/129 tests, review clean)
+  - Minor: _ModelTile extends ConsumerWidget but ref unused (no functional impact)
+- Final fixes (commit 574cb22, 133/133 tests):
+  - Fixed: _OpenAiClient now sends response_format json_object + strips markdown fences
+  - Fixed: AiClientFactory.buildClient exposes httpClient for injection; 4 behavioral tests added
+
+## Minor Findings (for final review)
+
+- Task 2: `defaults` map non-empty while fresh `build()` yields empty `providerConfigs` — harmless (activeConfig falls back via ProviderConfig.empty)
+- Task 2: `AiProvider.values.byName()` unguarded — consistent with existing codebase risk tolerance
