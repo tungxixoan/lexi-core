@@ -50,3 +50,6 @@ ios/Runner/GoogleService-Info.plist
 
 # Flutter DevTools local config
 devtools_options.yaml
+
+# Firebase CLI local deploy cache
+.firebase/

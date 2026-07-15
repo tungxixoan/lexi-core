@@ -345,6 +345,30 @@ flutter build appbundle --release
 flutter build web --release
 ```
 
+### Deploy Web (Firebase Hosting)
+
+Web app được host trên Firebase Hosting (project `lexi-core`), cấu hình tại [firebase.json](firebase.json).
+
+```bash
+# 1. (tuỳ chọn) test nhanh trên trình duyệt trước khi build
+flutter run -d chrome
+
+# 2. Build bản release + deploy
+flutter build web --release
+firebase deploy --only hosting
+```
+
+Live tại: [lexi-core.web.app](https://lexi-core.web.app)
+
+**Preview trước khi lên live** (khuyến nghị cho thay đổi lớn) — deploy lên URL tạm, không ảnh hưởng bản chính thức:
+
+```bash
+flutter build web --release
+firebase hosting:channel:deploy preview
+```
+
+**Rollback**: Firebase Console → Hosting → Release history → chọn version cũ → Rollback (không cần build lại).
+
 ---
 
 ## Bảo mật
