@@ -96,16 +96,19 @@ class _AppShellState extends ConsumerState<AppShell>
 
   @override
   Widget build(BuildContext context) {
-    final showReading = kIsWeb ||
-        ref.watch(
-          userSettingsNotifierProvider
-              .select((s) => s.showReadingPracticeOnMobile),
-        );
-    final dests = _destinations(showReading);
-    final selectedIndex = _selectedIndex(context, dests);
+    final showReadingOnMobile = ref.watch(
+      userSettingsNotifierProvider.select((s) => s.showReadingPracticeOnMobile),
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        // "Mobile" means a phone-sized viewport, not the web/native platform —
+        // a phone browser and a narrow Chrome DevTools window are both
+        // kIsWeb == true, so that flag can't distinguish them from desktop.
+        final showReading = constraints.maxWidth >= 600 || showReadingOnMobile;
+        final dests = _destinations(showReading);
+        final selectedIndex = _selectedIndex(context, dests);
+
         if (constraints.maxWidth >= 600) {
           return Scaffold(
             body: Row(

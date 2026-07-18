@@ -1,6 +1,5 @@
 // lib/features/settings/presentation/screens/settings_screen.dart
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/sync_service.dart';
@@ -138,7 +137,9 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => _showCefrPicker(
                 context, ref, settings.targetCefrLevel),
           ),
-          if (!kIsWeb)
+          // "Mobile" means a phone-sized viewport, not the web/native platform —
+          // see the AppShell width check this toggle controls.
+          if (MediaQuery.sizeOf(context).width < 600)
             SwitchListTile(
               title: const Text('Hiện tab Luyện đọc & gõ trên điện thoại'),
               subtitle:
