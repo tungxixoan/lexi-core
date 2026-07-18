@@ -76,7 +76,20 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
               ? const Center(child: CircularProgressIndicator())
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
-                  child: _buildExerciseWidget(exercise),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0, 0.08),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    ),
+                    child: _buildExerciseWidget(exercise),
+                  ),
                 ),
         );
       },
@@ -84,11 +97,15 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
   }
 
   Widget _buildExerciseWidget(Exercise exercise) {
+    // Keyed by the word so each new exercise gets a fresh State — otherwise
+    // Flutter reuses the previous word's State (revealed/selected/submitted
+    // flags) since consecutive exercises share the same widget type.
+    final key = ValueKey(exercise.vocabRecord.id);
     return switch (exercise) {
-      FlashcardExercise e => FlashcardWidget(exercise: e, onResult: _onResult),
-      MultipleChoiceExercise e => MultipleChoiceWidget(exercise: e, onResult: _onResult),
-      FillInBlankExercise e => FillInBlankWidget(exercise: e, onResult: _onResult),
-      TranslationExercise e => TranslationExerciseWidget(exercise: e, onResult: _onResult),
+      FlashcardExercise e => FlashcardWidget(key: key, exercise: e, onResult: _onResult),
+      MultipleChoiceExercise e => MultipleChoiceWidget(key: key, exercise: e, onResult: _onResult),
+      FillInBlankExercise e => FillInBlankWidget(key: key, exercise: e, onResult: _onResult),
+      TranslationExercise e => TranslationExerciseWidget(key: key, exercise: e, onResult: _onResult),
     };
   }
 }

@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/widgets/filter_tile.dart';
+import '../../../../core/widgets/selection_sheets.dart';
 import '../../../../features/dictionary/presentation/providers/user_settings_provider.dart';
 import '../../../vocabulary/domain/entities/cefr_level.dart';
+import '../../../vocabulary/domain/entities/topic.dart';
 import '../../../vocabulary/domain/entities/vocab_record.dart';
 import '../../../vocabulary/presentation/providers/topics_provider.dart';
 import '../../domain/entities/exercise_result.dart';
@@ -37,6 +40,52 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
         _dueCount = stats.dueCount;
       });
     });
+  }
+
+  Future<void> _pickTopic(List<Topic> topics) async {
+    final result = await showSingleSelectSheet<String?>(
+      context: context,
+      title: 'Chủ đề',
+      options: [
+        const SelectOption<String?>(value: null, label: 'Tất cả'),
+        ...topics.map(
+            (t) => SelectOption(value: t.id, label: t.name, emoji: t.emoji)),
+      ],
+      selected: _selectedTopicId,
+    );
+    if (result != null) {
+      setState(() => _selectedTopicId = result.value);
+    }
+  }
+
+  Future<void> _pickLevel() async {
+    final result = await showSingleSelectSheet<CEFRLevel?>(
+      context: context,
+      title: 'Cấp độ',
+      options: [
+        ...CEFRLevel.values.map((l) => SelectOption(value: l, label: l.label)),
+        const SelectOption<CEFRLevel?>(value: null, label: 'Tất cả'),
+      ],
+      selected: _maxCefrLevel,
+    );
+    if (result != null) {
+      setState(() => _maxCefrLevel = result.value);
+    }
+  }
+
+  Future<void> _pickWordLimit() async {
+    final result = await showSingleSelectSheet<int?>(
+      context: context,
+      title: 'Số từ mỗi session',
+      options: List.generate(
+        _limits.length,
+        (i) => SelectOption(value: _limits[i], label: _limitLabels[i]),
+      ),
+      selected: _wordLimit,
+    );
+    if (result != null) {
+      setState(() => _wordLimit = result.value);
+    }
   }
 
   Future<void> _start() async {
@@ -81,15 +130,6 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final topicsAsync = ref.watch(topicsNotifierProvider);
-    final theme = Theme.of(context);
-
-    // CEFR segments: A1 A2 B1 B2 C1 C2 | Tất cả (null)
-    final cefrSegments = <ButtonSegment<CEFRLevel?>>[
-      ...CEFRLevel.values.map(
-        (l) => ButtonSegment<CEFRLevel?>(value: l, label: Text(l.label)),
-      ),
-      const ButtonSegment<CEFRLevel?>(value: null, label: Text('Tất cả')),
-    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -107,64 +147,33 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Topic filter ────────────────────────────────
-            Text('Chủ đề', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
             topicsAsync.when(
-              data: (topics) => Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilterChip(
-                    label: const Text('Tất cả'),
-                    selected: _selectedTopicId == null,
-                    onSelected: (_) =>
-                        setState(() => _selectedTopicId = null),
-                  ),
-                  ...topics.map(
-                    (t) => FilterChip(
-                      label: Text('${t.emoji} ${t.name}'),
-                      selected: _selectedTopicId == t.id,
-                      onSelected: (_) =>
-                          setState(() => _selectedTopicId = t.id),
-                    ),
-                  ),
-                ],
-              ),
-              loading: () => const CircularProgressIndicator(),
+              data: (topics) {
+                final selected =
+                    topics.where((t) => t.id == _selectedTopicId).toList();
+                return FilterTile(
+                  icon: Icons.sell_outlined,
+                  label: 'Chủ đề',
+                  value: selected.isEmpty
+                      ? 'Tất cả'
+                      : '${selected.first.emoji} ${selected.first.name}',
+                  onTap: () => _pickTopic(topics),
+                );
+              },
+              loading: () => const LinearProgressIndicator(),
               error: (e, _) => Text(e.toString()),
             ),
-
-            const SizedBox(height: 24),
-
-            // ── CEFR level filter ───────────────────────────
-            Text('Cấp độ', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SegmentedButton<CEFRLevel?>(
-                segments: cefrSegments,
-                selected: {_maxCefrLevel},
-                onSelectionChanged: (s) =>
-                    setState(() => _maxCefrLevel = s.first),
-              ),
+            FilterTile(
+              icon: Icons.school_outlined,
+              label: 'Cấp độ',
+              value: _maxCefrLevel?.label ?? 'Tất cả',
+              onTap: _pickLevel,
             ),
-
-            const SizedBox(height: 24),
-
-            // ── Word limit ──────────────────────────────────
-            Text('Số từ mỗi session', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            SegmentedButton<int?>(
-              segments: List.generate(
-                _limits.length,
-                (i) => ButtonSegment<int?>(
-                  value: _limits[i],
-                  label: Text(_limitLabels[i]),
-                ),
-              ),
-              selected: {_wordLimit},
-              onSelectionChanged: (s) => setState(() => _wordLimit = s.first),
+            FilterTile(
+              icon: Icons.format_list_numbered,
+              label: 'Số từ mỗi session',
+              value: _wordLimit?.toString() ?? 'Tất cả',
+              onTap: _pickWordLimit,
             ),
 
             const Spacer(),

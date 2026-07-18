@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/widgets/filter_tile.dart';
+import '../../../../core/widgets/selection_sheets.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
+import '../../domain/entities/topic.dart';
 import '../../domain/entities/vocab_record.dart';
 import '../providers/topics_provider.dart';
 import '../providers/vocab_bank_provider.dart';
@@ -62,14 +65,19 @@ class _VocabDetailScreenState extends ConsumerState<VocabDetailScreen> {
     super.dispose();
   }
 
-  void _toggleTopic(String id) {
-    setState(() {
-      if (_editTopicIds.contains(id)) {
-        _editTopicIds.remove(id);
-      } else if (_editTopicIds.length < 2) {
-        _editTopicIds.add(id);
-      }
-    });
+  Future<void> _pickTopics(List<Topic> topics) async {
+    final result = await showMultiSelectSheet<String>(
+      context: context,
+      title: 'Topics',
+      options: topics
+          .map((t) => SelectOption(value: t.id, label: t.name, emoji: t.emoji))
+          .toList(),
+      initialSelected: _editTopicIds.toSet(),
+      maxSelected: 2,
+    );
+    if (result != null) {
+      setState(() => _editTopicIds = result.toList());
+    }
   }
 
   Future<void> _saveEdit() async {
@@ -293,37 +301,25 @@ class _VocabDetailScreenState extends ConsumerState<VocabDetailScreen> {
             const SizedBox(height: 16),
 
             // Topics
-            Row(
-              children: [
-                _SectionLabel('Topics'),
-                if (_editing) ...[
-                  const SizedBox(width: 8),
-                  Text(
-                    '(max 2, ${_editTopicIds.length} selected)',
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: theme.colorScheme.outline),
-                  ),
-                ],
-              ],
-            ),
+            _SectionLabel('Topics'),
             const SizedBox(height: 6),
             if (_editing)
               ref.watch(topicsNotifierProvider).when(
-                    data: (topics) => Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: topics.map((t) {
-                        final selected = _editTopicIds.contains(t.id);
-                        final disabled =
-                            !selected && _editTopicIds.length >= 2;
-                        return FilterChip(
-                          label: Text('${t.emoji} ${t.name}'),
-                          selected: selected,
-                          onSelected:
-                              disabled ? null : (_) => _toggleTopic(t.id),
-                        );
-                      }).toList(),
-                    ),
+                    data: (topics) {
+                      final selectedTopics = topics
+                          .where((t) => _editTopicIds.contains(t.id))
+                          .toList();
+                      return FilterTile(
+                        icon: Icons.sell_outlined,
+                        label: 'Topics (tối đa 2)',
+                        value: selectedTopics.isEmpty
+                            ? 'Chưa chọn'
+                            : selectedTopics
+                                .map((t) => '${t.emoji} ${t.name}')
+                                .join(', '),
+                        onTap: () => _pickTopics(topics),
+                      );
+                    },
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
                     error: (e, _) => Text(e.toString()),

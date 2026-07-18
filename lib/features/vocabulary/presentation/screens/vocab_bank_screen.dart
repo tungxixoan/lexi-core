@@ -2,6 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/widgets/selection_sheets.dart';
+import '../../../dictionary/domain/entities/language.dart';
+import '../../../dictionary/presentation/providers/user_settings_provider.dart';
+import '../../domain/entities/topic.dart';
 import '../../domain/entities/vocab_record.dart';
 import '../providers/topics_provider.dart';
 import '../providers/vocab_bank_provider.dart';
@@ -14,7 +18,7 @@ class VocabBankScreen extends ConsumerStatefulWidget {
 }
 
 class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
-  String? _selectedTopicId;
+  final Set<String> _selectedTopicIds = {};
   String _searchQuery = '';
   final _searchCtrl = TextEditingController();
 
@@ -24,10 +28,30 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
     super.dispose();
   }
 
-  List<VocabRecord> _filter(List<VocabRecord> records) {
-    var result = records;
-    if (_selectedTopicId != null) {
-      result = result.where((r) => r.topicIds.contains(_selectedTopicId)).toList();
+  Future<void> _openTopicPicker(List<Topic> topics) async {
+    final result = await showMultiSelectSheet<String>(
+      context: context,
+      title: 'Chủ đề',
+      options: topics
+          .map((t) => SelectOption(value: t.id, label: t.name, emoji: t.emoji))
+          .toList(),
+      initialSelected: _selectedTopicIds,
+    );
+    if (result != null) {
+      setState(() {
+        _selectedTopicIds
+          ..clear()
+          ..addAll(result);
+      });
+    }
+  }
+
+  List<VocabRecord> _filter(List<VocabRecord> records, Language targetLanguage) {
+    var result = records.where((r) => r.targetLanguage == targetLanguage).toList();
+    if (_selectedTopicIds.isNotEmpty) {
+      result = result
+          .where((r) => r.topicIds.any(_selectedTopicIds.contains))
+          .toList();
     }
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
@@ -42,12 +66,16 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final vocabAsync = ref.watch(vocabBankNotifierProvider);
     final topicsAsync = ref.watch(topicsNotifierProvider);
+    final targetLanguage = ref.watch(
+      userSettingsNotifierProvider.select((s) => s.targetLanguage),
+    );
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Vocab Bank'),
+        title: Text('Vocab Bank · ${targetLanguage.label}'),
         centerTitle: false,
         actions: [
           IconButton(
@@ -79,36 +107,39 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
               onChanged: (v) => setState(() => _searchQuery = v),
             ),
           ),
-          const SizedBox(height: 4),
-          // Topic filter chips
+          const SizedBox(height: 8),
+          // Topic filter — opens a bottom sheet with multi-select checkboxes
           topicsAsync.when(
-            data: (topics) => SizedBox(
-              height: 48,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: const Text('All'),
-                      selected: _selectedTopicId == null,
-                      onSelected: (_) => setState(() => _selectedTopicId = null),
+            data: (topics) => Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+              child: Material(
+                color: theme.colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => _openTopicPicker(topics),
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        Icon(Icons.sell_outlined,
+                            size: 20, color: theme.colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _selectedTopicIds.isEmpty
+                                ? 'Chủ đề: Tất cả'
+                                : 'Chủ đề: ${_selectedTopicIds.length} đã chọn',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ),
+                        Icon(Icons.keyboard_arrow_down,
+                            color: theme.colorScheme.onSurfaceVariant),
+                      ],
                     ),
                   ),
-                  ...topics.map(
-                    (t) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text('${t.emoji} ${t.name}'),
-                        selected: _selectedTopicId == t.id,
-                        onSelected: (_) => setState(() =>
-                            _selectedTopicId =
-                                _selectedTopicId == t.id ? null : t.id),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
             loading: () => const SizedBox(height: 48),
@@ -119,7 +150,7 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
           Expanded(
             child: vocabAsync.when(
               data: (records) {
-                final filtered = _filter(records);
+                final filtered = _filter(records, targetLanguage);
                 if (filtered.isEmpty && records.isEmpty) {
                   return const Center(
                     child: Padding(

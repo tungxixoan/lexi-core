@@ -3,6 +3,8 @@
 **Date:** 2026-07-01
 **Status:** Approved for implementation
 
+> **⚠️ Updated 2026-07-18:** Practice's filter UI (topic/level/word-count → `FilterTile` + bottom sheets), the flashcard's flip-card redesign (tap-to-flip, "Chưa hiểu"/"Đã hiểu"), a cross-word `AnimatedSwitcher` transition, and a root-cause fix for stale exercise `State` leaking between words (missing `key`, affected all 4 exercise types) were added on top of this design. See [2026-07-18 UI/UX Polish Update](2026-07-18-ui-ux-polish-update-design.md) §3.2 before changing `practice_home_screen.dart`, `practice_session_screen.dart`, or the exercise widgets.
+
 ---
 
 ## Goal

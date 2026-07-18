@@ -314,7 +314,7 @@ class _TypingArea extends StatelessWidget {
   final FocusNode focusNode;
   final ValueChanged<String> onTyped;
 
-  List<TextSpan> _buildSpans(BuildContext context) {
+  List<TextSpan> _buildSpans(BuildContext context, TextStyle baseStyle) {
     final theme = Theme.of(context);
     final spans = <TextSpan>[];
     for (int i = 0; i < target.length; i++) {
@@ -322,7 +322,7 @@ class _TypingArea extends StatelessWidget {
         final correct = typedText[i] == target[i];
         spans.add(TextSpan(
           text: typedText[i],
-          style: TextStyle(
+          style: baseStyle.copyWith(
             color: correct
                 ? Colors.green
                 : theme.colorScheme.error,
@@ -334,7 +334,7 @@ class _TypingArea extends StatelessWidget {
       } else {
         spans.add(TextSpan(
           text: target[i],
-          style: TextStyle(color: theme.colorScheme.outline),
+          style: baseStyle.copyWith(color: theme.colorScheme.outline),
         ));
       }
     }
@@ -344,6 +344,12 @@ class _TypingArea extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // The colored text (RichText) and the invisible input caret (TextField)
+    // are stacked on top of each other, so they MUST share the exact same
+    // font metrics — otherwise every typed character drifts a little further
+    // out of alignment with the visible text underneath it.
+    final baseStyle = theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16);
+    final strutStyle = StrutStyle.fromTextStyle(baseStyle);
     return Container(
       constraints: const BoxConstraints(minHeight: 80),
       decoration: BoxDecoration(
@@ -355,7 +361,11 @@ class _TypingArea extends StatelessWidget {
         children: [
           IgnorePointer(
             child: RichText(
-              text: TextSpan(children: _buildSpans(context)),
+              strutStyle: strutStyle,
+              text: TextSpan(
+                style: baseStyle,
+                children: _buildSpans(context, baseStyle),
+              ),
             ),
           ),
           TextField(
@@ -363,7 +373,8 @@ class _TypingArea extends StatelessWidget {
             focusNode: focusNode,
             maxLines: null,
             autofocus: true,
-            style: const TextStyle(color: Colors.transparent),
+            style: baseStyle.copyWith(color: Colors.transparent),
+            strutStyle: strutStyle,
             cursorColor: theme.colorScheme.primary,
             decoration: const InputDecoration.collapsed(hintText: ''),
             onChanged: onTyped,

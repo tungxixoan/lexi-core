@@ -8,6 +8,8 @@
 
 **Depends on:** Plans 1–5 (full mobile app complete, Firebase configured)
 
+> **⚠️ Updated 2026-07-18:** Web testing surfaced a cursor/caret misalignment bug in the typing exercise (font-metric mismatch between the overlay `TextField` and `RichText`, fixed) and the reading screen gained per-session language/topic/level/word-count controls (previously hardcoded to global Settings + a fixed 10 words). See [2026-07-18 UI/UX Polish Update](2026-07-18-ui-ux-polish-update-design.md) §3.3 before touching `reading_home_screen.dart` or `reading_session_screen.dart`.
+
 ---
 
 ## 1. Goal

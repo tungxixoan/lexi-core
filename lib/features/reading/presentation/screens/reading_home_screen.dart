@@ -1,65 +1,203 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/di/app_providers.dart';
+import '../../../../core/widgets/filter_tile.dart';
+import '../../../../core/widgets/selection_sheets.dart';
+import '../../../../features/dictionary/domain/entities/language.dart';
 import '../../../../features/dictionary/presentation/providers/user_settings_provider.dart';
 import '../../../../features/vocabulary/domain/entities/cefr_level.dart';
+import '../../../../features/vocabulary/domain/entities/topic.dart';
 import '../../../../features/vocabulary/domain/entities/vocab_record.dart';
-import '../../../../features/vocabulary/presentation/providers/vocab_bank_provider.dart';
+import '../../../../features/vocabulary/presentation/providers/topics_provider.dart';
 import '../providers/reading_practice_provider.dart';
 
-class ReadingHomeScreen extends ConsumerWidget {
+class ReadingHomeScreen extends ConsumerStatefulWidget {
   const ReadingHomeScreen({super.key});
 
+  @override
+  ConsumerState<ReadingHomeScreen> createState() => _ReadingHomeScreenState();
+}
+
+class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
   static const _minVocabWords = 5;
+  static const _wordCounts = <int?>[5, 10, 20, null];
+  static const _wordCountLabels = ['5', '10', '20', 'Tất cả'];
+
+  late Language _language;
+  final Set<String> _topicIds = {};
+  CEFRLevel? _level;
+  int? _wordCount = 10;
+
+  List<VocabRecord>? _matchingWords; // null while loading
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    final settings = ref.read(userSettingsNotifierProvider);
+    _language = settings.targetLanguage;
+    _level = settings.targetCefrLevel;
+    _reload();
+  }
+
+  Future<void> _reload() async {
+    setState(() => _matchingWords = null);
+    // Language and level are filtered server-side — topic can be
+    // multi-selected, so it's applied locally below.
+    final words = await ref.read(getVocabListUseCaseProvider).execute(
+          language: _language,
+          maxCefrLevel: _level,
+        );
+    var filtered = words;
+    if (_topicIds.isNotEmpty) {
+      filtered =
+          filtered.where((r) => r.topicIds.any(_topicIds.contains)).toList();
+    }
+    if (mounted) setState(() => _matchingWords = filtered);
+  }
+
+  Future<void> _pickLanguage() async {
+    final result = await showSingleSelectSheet<Language>(
+      context: context,
+      title: 'Ngôn ngữ',
+      options: Language.values
+          .map((l) => SelectOption(value: l, label: l.label))
+          .toList(),
+      selected: _language,
+    );
+    if (result != null) {
+      setState(() => _language = result.value);
+      _reload();
+    }
+  }
+
+  Future<void> _pickTopics(List<Topic> topics) async {
+    final result = await showMultiSelectSheet<String>(
+      context: context,
+      title: 'Chủ đề',
+      options: topics
+          .map((t) => SelectOption(value: t.id, label: t.name, emoji: t.emoji))
+          .toList(),
+      initialSelected: _topicIds,
+    );
+    if (result != null) {
+      setState(() {
+        _topicIds
+          ..clear()
+          ..addAll(result);
+      });
+      _reload();
+    }
+  }
+
+  Future<void> _pickLevel() async {
+    final result = await showSingleSelectSheet<CEFRLevel?>(
+      context: context,
+      title: 'Cấp độ',
+      options: [
+        ...CEFRLevel.values.map((l) => SelectOption(value: l, label: l.label)),
+        const SelectOption<CEFRLevel?>(value: null, label: 'Tất cả'),
+      ],
+      selected: _level,
+    );
+    if (result != null) {
+      setState(() => _level = result.value);
+      _reload();
+    }
+  }
+
+  Future<void> _pickWordCount() async {
+    final result = await showSingleSelectSheet<int?>(
+      context: context,
+      title: 'Số từ dùng để tạo bài',
+      options: List.generate(
+        _wordCounts.length,
+        (i) => SelectOption(value: _wordCounts[i], label: _wordCountLabels[i]),
+      ),
+      selected: _wordCount,
+    );
+    if (result != null) {
+      setState(() => _wordCount = result.value);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final settings = ref.watch(userSettingsNotifierProvider);
-    final vocabItems = ref.watch(vocabBankProvider);
+    final topicsAsync = ref.watch(topicsNotifierProvider);
     final sessionAsync = ref.watch(readingPracticeNotifierProvider);
     final theme = Theme.of(context);
+    final words = _matchingWords;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Luyện đọc & gõ'),
         automaticallyImplyLeading: false,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'AI tạo một đoạn văn song ngữ từ Vocab Bank của bạn. '
-              'Đọc đoạn văn bằng ngôn ngữ mục tiêu, sau đó gõ lại từng câu.',
-              style: theme.textTheme.bodyLarge,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                'AI tạo một đoạn văn song ngữ từ Vocab Bank của bạn. '
+                'Đọc đoạn văn bằng ngôn ngữ mục tiêu, sau đó gõ lại từng câu.',
+                style: theme.textTheme.bodyLarge,
+              ),
             ),
             const SizedBox(height: 16),
-            _InfoRow(label: 'Ngôn ngữ', value: settings.targetLanguage.label),
-            _InfoRow(
+
+            FilterTile(
+              icon: Icons.language_outlined,
+              label: 'Ngôn ngữ',
+              value: _language.label,
+              onTap: _pickLanguage,
+            ),
+            topicsAsync.when(
+              data: (topics) => FilterTile(
+                icon: Icons.sell_outlined,
+                label: 'Chủ đề',
+                value: _topicIds.isEmpty
+                    ? 'Tất cả'
+                    : '${_topicIds.length} đã chọn',
+                onTap: () => _pickTopics(topics),
+              ),
+              loading: () => const LinearProgressIndicator(),
+              error: (e, _) => Text(e.toString()),
+            ),
+            FilterTile(
+              icon: Icons.school_outlined,
               label: 'Cấp độ',
-              value: settings.targetCefrLevel?.label ?? 'Tất cả',
+              value: _level?.label ?? 'Tất cả',
+              onTap: _pickLevel,
             ),
-            _InfoRow(
-              label: 'Ngữ cảnh',
-              value: settings.activeContext.label,
+            FilterTile(
+              icon: Icons.format_list_numbered,
+              label: 'Số từ dùng để tạo bài',
+              value: _wordCount?.toString() ?? 'Tất cả',
+              onTap: _pickWordCount,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
+
             if (!settings.aiEnabled)
               _ErrorCard(
                 message:
                     'Tính năng này yêu cầu AI. Bật AI trong Cài đặt để dùng.',
               )
-            else if (vocabItems.length < _minVocabWords)
+            else if (words == null)
+              const Center(child: CircularProgressIndicator())
+            else if (words.length < _minVocabWords)
               _ErrorCard(
                 message:
-                    'Hãy lưu ít nhất 5 từ vào Vocab Bank để dùng tính năng này. '
-                    'Hiện có ${vocabItems.length} từ.',
+                    'Hãy lưu ít nhất 5 từ khớp với bộ lọc trên vào Vocab Bank. '
+                    'Hiện có ${words.length} từ.',
               )
             else
               sessionAsync.when(
                 data: (_) => FilledButton.icon(
-                  onPressed: () => _generate(context, ref),
+                  onPressed: () => _generate(context, ref, words),
                   icon: const Icon(Icons.auto_awesome),
                   label: const Text('Tạo bài luyện'),
                 ),
@@ -80,7 +218,7 @@ class ReadingHomeScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     OutlinedButton(
-                      onPressed: () => _generate(context, ref),
+                      onPressed: () => _generate(context, ref, words),
                       child: const Text('Thử lại'),
                     ),
                   ],
@@ -92,9 +230,12 @@ class ReadingHomeScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _generate(BuildContext context, WidgetRef ref) async {
+  Future<void> _generate(
+    BuildContext context,
+    WidgetRef ref,
+    List<VocabRecord> vocabItems,
+  ) async {
     final settings = ref.read(userSettingsNotifierProvider);
-    final vocabItems = ref.read(vocabBankProvider);
 
     final sorted = [...vocabItems]..sort((a, b) {
         final aDue = a.nextReviewAt == null ||
@@ -105,13 +246,15 @@ class ReadingHomeScreen extends ConsumerWidget {
         if (!aDue && bDue) return 1;
         return b.createdAt.compareTo(a.createdAt);
       });
-    final words = sorted.take(10).toList().cast<VocabRecord>();
+    final words = (_wordCount == null ? sorted : sorted.take(_wordCount!))
+        .toList()
+        .cast<VocabRecord>();
 
     await ref.read(readingPracticeNotifierProvider.notifier).generate(
           words: words,
-          level: settings.targetCefrLevel ?? CEFRLevel.b1,
+          level: _level ?? settings.targetCefrLevel ?? CEFRLevel.b1,
           context: settings.activeContext,
-          targetLanguage: settings.targetLanguage,
+          targetLanguage: _language,
         );
 
     if (context.mounted) {
@@ -120,30 +263,6 @@ class ReadingHomeScreen extends ConsumerWidget {
         context.go('/reading/session');
       }
     }
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Text('$label: ', style: theme.textTheme.bodyMedium),
-          Text(
-            value,
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: theme.colorScheme.primary),
-          ),
-        ],
-      ),
-    );
   }
 }
 

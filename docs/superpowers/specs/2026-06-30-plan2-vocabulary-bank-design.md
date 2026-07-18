@@ -5,6 +5,8 @@
 **Covers:** Plan 2 (Vocabulary Bank + Topic System).
 **Depends on:** [Plan 1 spec](2026-06-29-lexicore-design.md) for architecture and folder structure.
 
+> **⚠️ Updated 2026-07-18:** The topic-filter UI on Vocab Bank (multi-select, mouse-wheel scroll fix, collapse into a bottom sheet), target-language filtering on Vocab Bank, and the topic-tagging UI in the save/edit-word flows were all reworked. See [2026-07-18 UI/UX Polish Update](2026-07-18-ui-ux-polish-update-design.md) §3.1 and §3.6 — do not read only this spec's topic-filtering sections and assume they're current.
+
 ---
 
 ## 1. Goal

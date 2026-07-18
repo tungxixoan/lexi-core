@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/widgets/filter_tile.dart';
+import '../../../../core/widgets/selection_sheets.dart';
 import '../../../../features/vocabulary/domain/entities/cefr_level.dart';
 import '../../../../features/vocabulary/domain/entities/topic.dart';
 import '../../../../features/vocabulary/domain/entities/vocab_record.dart';
@@ -46,14 +48,19 @@ class _SaveVocabSheetState extends ConsumerState<SaveVocabSheet> {
     super.dispose();
   }
 
-  void _toggleTopic(String id) {
-    setState(() {
-      if (_selectedTopicIds.contains(id)) {
-        _selectedTopicIds.remove(id);
-      } else if (_selectedTopicIds.length < 2) {
-        _selectedTopicIds.add(id);
-      }
-    });
+  Future<void> _pickTopics(List<Topic> topics) async {
+    final result = await showMultiSelectSheet<String>(
+      context: context,
+      title: 'Topics',
+      options: topics
+          .map((t) => SelectOption(value: t.id, label: t.name, emoji: t.emoji))
+          .toList(),
+      initialSelected: _selectedTopicIds.toSet(),
+      maxSelected: 2,
+    );
+    if (result != null) {
+      setState(() => _selectedTopicIds = result.toList());
+    }
   }
 
   void _preSelectTopics(List<Topic> topics) {
@@ -179,17 +186,7 @@ class _SaveVocabSheetState extends ConsumerState<SaveVocabSheet> {
                 ),
                 const SizedBox(height: 16),
                 // Topics
-                Row(
-                  children: [
-                    Text('Topics', style: theme.textTheme.labelLarge),
-                    const SizedBox(width: 8),
-                    Text(
-                      '(max 2, ${_selectedTopicIds.length} selected)',
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: theme.colorScheme.outline),
-                    ),
-                  ],
-                ),
+                Text('Topics', style: theme.textTheme.labelLarge),
                 const SizedBox(height: 8),
                 topicsAsync.when(
                   data: (topics) {
@@ -198,20 +195,18 @@ class _SaveVocabSheetState extends ConsumerState<SaveVocabSheet> {
                         setState(() => _preSelectTopics(topics));
                       });
                     }
-                    return Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: topics.map((topic) {
-                        final selected = _selectedTopicIds.contains(topic.id);
-                        final disabled =
-                            !selected && _selectedTopicIds.length >= 2;
-                        return FilterChip(
-                          label: Text('${topic.emoji} ${topic.name}'),
-                          selected: selected,
-                          onSelected:
-                              disabled ? null : (_) => _toggleTopic(topic.id),
-                        );
-                      }).toList(),
+                    final selectedTopics = topics
+                        .where((t) => _selectedTopicIds.contains(t.id))
+                        .toList();
+                    return FilterTile(
+                      icon: Icons.sell_outlined,
+                      label: 'Topics (tối đa 2)',
+                      value: selectedTopics.isEmpty
+                          ? 'Chưa chọn'
+                          : selectedTopics
+                              .map((t) => '${t.emoji} ${t.name}')
+                              .join(', '),
+                      onTap: () => _pickTopics(topics),
                     );
                   },
                   loading: () =>

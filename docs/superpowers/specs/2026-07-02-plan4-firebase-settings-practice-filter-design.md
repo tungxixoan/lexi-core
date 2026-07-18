@@ -7,6 +7,8 @@
 
 **Architecture:** Three independent slices — (1) Settings persistence via `shared_preferences`, (2) Firebase Auth + Firestore sync as an opt-in infrastructure layer that wraps existing Hive storage, (3) CEFR filter threaded through `GetVocabListUseCase` → `PracticeHomeScreen`. Each slice is independently testable and deployable.
 
+> **⚠️ Updated 2026-07-18:** Settings' "Ngôn ngữ mục tiêu" control (native `DropdownButton` → bottom-sheet picker) and Practice's CEFR/word-count filter controls were reworked. See [2026-07-18 UI/UX Polish Update](2026-07-18-ui-ux-polish-update-design.md) §3.2 and §3.4 before touching those controls.
+
 ---
 
 ## Global Constraints

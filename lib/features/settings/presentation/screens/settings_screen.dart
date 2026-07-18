@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/sync_service.dart';
+import '../../../../core/widgets/selection_sheets.dart';
 import '../../../../features/dictionary/domain/entities/ai_provider.dart';
 import '../../../../features/dictionary/domain/entities/language.dart';
 import '../../../../features/dictionary/domain/entities/user_settings_state.dart';
@@ -118,19 +119,13 @@ class SettingsScreen extends ConsumerWidget {
           _SectionHeader('Học tập'),
           ListTile(
             title: const Text('Ngôn ngữ mục tiêu'),
-            trailing: DropdownButton<Language>(
-              value: settings.targetLanguage,
-              underline: const SizedBox(),
-              items: Language.values
-                  .map((l) => DropdownMenuItem(
-                        value: l,
-                        child: Text(l.label),
-                      ))
-                  .toList(),
-              onChanged: (l) {
-                if (l != null) notifier.setTargetLanguage(l);
-              },
+            subtitle: Text(
+              settings.targetLanguage.label,
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: theme.colorScheme.primary),
             ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _pickLanguage(context, ref, settings.targetLanguage),
           ),
           ListTile(
             title: const Text('Cấp độ mục tiêu'),
@@ -190,6 +185,21 @@ class SettingsScreen extends ConsumerWidget {
             .setApiKeyForActiveProvider(key),
       ),
     );
+  }
+
+  Future<void> _pickLanguage(
+      BuildContext context, WidgetRef ref, Language current) async {
+    final result = await showSingleSelectSheet<Language>(
+      context: context,
+      title: 'Ngôn ngữ mục tiêu',
+      options: Language.values
+          .map((l) => SelectOption(value: l, label: l.label))
+          .toList(),
+      selected: current,
+    );
+    if (result != null) {
+      ref.read(userSettingsNotifierProvider.notifier).setTargetLanguage(result.value);
+    }
   }
 
   void _showCefrPicker(

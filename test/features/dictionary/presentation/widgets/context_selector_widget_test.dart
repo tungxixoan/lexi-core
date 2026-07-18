@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/dictionary/presentation/widgets/context_selector_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,54 +15,48 @@ void main() {
     prefs = await SharedPreferences.getInstance();
   });
 
-  testWidgets('renders a chip for every AppContext', (tester) async {
-    await tester.pumpWidget(
-      ProviderScope(
+  Widget buildWidget() => ProviderScope(
         overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
         child: const MaterialApp(
           home: Scaffold(body: ContextSelectorWidget()),
         ),
-      ),
-    );
+      );
 
-    // Verify that FilterChip widgets are rendered
-    // ListView renders only visible items, so we check that at least one chip is visible
-    expect(find.byType(FilterChip), findsWidgets);
+  testWidgets('shows the current context as a tappable tile', (tester) async {
+    await tester.pumpWidget(buildWidget());
 
-    // Scroll to the end to ensure all chips are rendered
-    await tester.drag(
-      find.byType(ListView),
-      const Offset(-300, 0),
-    );
-    await tester.pumpAndSettle();
-
-    // After scrolling, verify we can find multiple chips
-    expect(find.byType(FilterChip), findsWidgets);
+    expect(find.text('Ngữ cảnh'), findsOneWidget);
+    expect(find.textContaining(AppContext.general.label), findsOneWidget);
   });
 
-  testWidgets('tapping a chip marks it selected', (tester) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-        child: const MaterialApp(
-          home: Scaffold(body: ContextSelectorWidget()),
-        ),
-      ),
+  testWidgets('tapping the tile opens a bottom sheet listing contexts',
+      (tester) async {
+    await tester.pumpWidget(buildWidget());
+
+    await tester.tap(find.text('Ngữ cảnh'));
+    await tester.pumpAndSettle();
+
+    // The sheet's list is lazily built, so only assert on entries near the
+    // top plus one reached by scrolling — not every AppContext value.
+    expect(find.textContaining(AppContext.general.label), findsWidgets);
+    expect(find.textContaining(AppContext.business.label), findsWidgets);
+    await tester.dragUntilVisible(
+      find.textContaining(AppContext.socialCasual.label),
+      find.byType(ListView),
+      const Offset(0, -50),
     );
+    expect(find.textContaining(AppContext.socialCasual.label), findsWidgets);
+  });
 
-    // Get the Business context chip (it's the 2nd in the list since Business is at index 1)
-    final businessChipFinder = find.byType(FilterChip).at(1);
+  testWidgets('picking a context updates the displayed value', (tester) async {
+    await tester.pumpWidget(buildWidget());
 
-    // Get the initial state
-    var chip = tester.widget<FilterChip>(businessChipFinder);
-    expect(chip.selected, isFalse); // Initially not selected
+    await tester.tap(find.text('Ngữ cảnh'));
+    await tester.pumpAndSettle();
 
-    // Tap it
-    await tester.tap(businessChipFinder);
-    await tester.pump();
+    await tester.tap(find.textContaining(AppContext.business.label).last);
+    await tester.pumpAndSettle();
 
-    // Verify it's now selected
-    chip = tester.widget<FilterChip>(businessChipFinder);
-    expect(chip.selected, isTrue);
+    expect(find.textContaining(AppContext.business.label), findsOneWidget);
   });
 }

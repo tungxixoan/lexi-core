@@ -4,6 +4,8 @@
 **Status:** Approved
 **Covers:** Plan 1 (Foundation + Dictionary Lookup). See sibling specs for Plans 2–5.
 
+> **⚠️ Updated 2026-07-18:** The context-selector UI (the `AppContext` chip row under the search bar) described below was reworked into a `FilterTile` + bottom-sheet picker. See [2026-07-18 UI/UX Polish Update](2026-07-18-ui-ux-polish-update-design.md) §3.5 before touching `context_selector_widget.dart`.
+
 ---
 
 ## 1. Problem Statement
