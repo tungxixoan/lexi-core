@@ -237,16 +237,15 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
   ) async {
     final settings = ref.read(userSettingsNotifierProvider);
 
-    final sorted = [...vocabItems]..sort((a, b) {
-        final aDue = a.nextReviewAt == null ||
-            a.nextReviewAt!.isBefore(DateTime.now());
-        final bDue = b.nextReviewAt == null ||
-            b.nextReviewAt!.isBefore(DateTime.now());
-        if (aDue && !bDue) return -1;
-        if (!aDue && bDue) return 1;
-        return b.createdAt.compareTo(a.createdAt);
-      });
-    final words = (_wordCount == null ? sorted : sorted.take(_wordCount!))
+    final now = DateTime.now();
+    bool isDue(VocabRecord r) =>
+        r.nextReviewAt == null || r.nextReviewAt!.isBefore(now);
+    final dueWords = vocabItems.where(isDue).toList()..shuffle();
+    final notDueWords = vocabItems.where((r) => !isDue(r)).toList()..shuffle();
+    final prioritized = [...dueWords, ...notDueWords];
+    final words = (_wordCount == null
+            ? prioritized
+            : prioritized.take(_wordCount!))
         .toList()
         .cast<VocabRecord>();
 
