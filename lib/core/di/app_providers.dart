@@ -34,7 +34,7 @@ import '../../features/reading/domain/use_cases/generate_reading_passage_use_cas
 
 part 'app_providers.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 http.Client httpClient(HttpClientRef ref) {
   final client = http.Client();
   ref.onDispose(client.close);

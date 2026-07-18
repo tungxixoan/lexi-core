@@ -6,11 +6,11 @@ part of 'app_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$httpClientHash() => r'a50cfbbd72ec0eb6a0e782e25f03cc9ece1eef9f';
+String _$httpClientHash() => r'ed4c948b2fa39b9289a939034474b5f5551ff3b4';
 
 /// See also [httpClient].
 @ProviderFor(httpClient)
-final httpClientProvider = AutoDisposeProvider<http.Client>.internal(
+final httpClientProvider = Provider<http.Client>.internal(
   httpClient,
   name: r'httpClientProvider',
   debugGetCreateSourceHash:
@@ -21,7 +21,7 @@ final httpClientProvider = AutoDisposeProvider<http.Client>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef HttpClientRef = AutoDisposeProviderRef<http.Client>;
+typedef HttpClientRef = ProviderRef<http.Client>;
 String _$flutterTtsHash() => r'c34a069582a0236a5fc4e642f11e74ab9c51e4bb';
 
 /// See also [flutterTts].
