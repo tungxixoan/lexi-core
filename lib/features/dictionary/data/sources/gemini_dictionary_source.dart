@@ -49,6 +49,8 @@ class GeminiDictionarySource {
       meaning: json['meaning'] as String,
       examples: (json['examples'] as List).cast<String>(),
       suggestedTopics: (json['suggestedTopics'] as List).cast<String>(),
+      definition: json['definition'] as String? ?? '',
+      synonyms: (json['synonyms'] as List?)?.cast<String>() ?? const [],
     );
   }
 
@@ -75,8 +77,13 @@ class GeminiDictionarySource {
       'Look up "$query" and respond with JSON only (no markdown, no code fences): '
       '{"headword":"exact word or phrase","ipa":"IPA transcription",'
       '"meaning":"Vietnamese definition",'
+      '"definition":"English definition",'
+      '"synonyms":["2-4 English synonyms for this sense, or empty array if none fit"],'
       '"examples":["example 1 in ${targetLanguage.label}","example 2"],'
       '"suggestedTopics":["one topic from: Daily Life, Travel, Food & Drink, Business, Technology, Health, Education, Entertainment, Nature, Emotion, Academic, Idioms, Phrasal Verbs, Slang, Social/Casual, Sports, Art & Culture, Science, Law & Politics, Other"]} '
+      'If the word has multiple common parts of speech (e.g. "record" as both noun and verb), '
+      'cover each sense in both "meaning" and "definition" using this format: "(n) ...; (v) ...", '
+      'and give an IPA per sense too, e.g. "N: /ˈrekɔːrd/; V: /rɪˈkɔːrd/". '
       'Shape examples for context: ${context.label}.';
 
   String _sentencePrompt(String sentence) =>

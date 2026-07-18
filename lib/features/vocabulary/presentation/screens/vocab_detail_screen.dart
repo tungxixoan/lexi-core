@@ -237,6 +237,31 @@ class _VocabDetailScreenState extends ConsumerState<VocabDetailScreen> {
                 : Text(r.meaning, style: theme.textTheme.bodyLarge),
             const SizedBox(height: 16),
 
+            // Definition (English) — read-only, optional
+            if (!_editing && r.definition.isNotEmpty) ...[
+              _SectionLabel('Definition'),
+              const SizedBox(height: 6),
+              Text(r.definition, style: theme.textTheme.bodyMedium),
+              const SizedBox(height: 16),
+            ],
+
+            // Synonyms — read-only, optional
+            if (!_editing && r.synonyms.isNotEmpty) ...[
+              _SectionLabel('Synonyms'),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: r.synonyms
+                    .map((s) => Chip(
+                          label: Text(s),
+                          visualDensity: VisualDensity.compact,
+                        ))
+                    .toList(),
+              ),
+              const SizedBox(height: 16),
+            ],
+
             // Examples
             _SectionLabel('Examples'),
             const SizedBox(height: 6),

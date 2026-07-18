@@ -96,6 +96,8 @@ class _SaveVocabSheetState extends ConsumerState<SaveVocabSheet> {
       activeContext: settings.activeContext,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
+      definition: widget.result.definition,
+      synonyms: widget.result.synonyms,
     );
     try {
       await ref.read(vocabBankNotifierProvider.notifier).save(record);
@@ -153,6 +155,30 @@ class _SaveVocabSheetState extends ConsumerState<SaveVocabSheet> {
                   decoration: const InputDecoration(border: OutlineInputBorder()),
                 ),
                 const SizedBox(height: 16),
+                // Definition (English) — read-only
+                if (widget.result.definition.isNotEmpty) ...[
+                  Text('Definition', style: theme.textTheme.labelLarge),
+                  const SizedBox(height: 4),
+                  Text(widget.result.definition,
+                      style: theme.textTheme.bodyMedium),
+                  const SizedBox(height: 16),
+                ],
+                // Synonyms — read-only
+                if (widget.result.synonyms.isNotEmpty) ...[
+                  Text('Synonyms', style: theme.textTheme.labelLarge),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: widget.result.synonyms
+                        .map((s) => Chip(
+                              label: Text(s),
+                              visualDensity: VisualDensity.compact,
+                            ))
+                        .toList(),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 // Examples
                 Text('Examples', style: theme.textTheme.labelLarge),
                 const SizedBox(height: 4),

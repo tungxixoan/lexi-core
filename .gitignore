@@ -53,3 +53,10 @@ devtools_options.yaml
 
 # Firebase CLI local deploy cache
 .firebase/
+
+# Firebase Admin SDK service account keys (never commit)
+*firebase-adminsdk*.json
+docs/lexi-core-firebase-adminsdk-fbsvc-a2d70465e6.json
+scripts/import-vocab/*.json
+!scripts/import-vocab/package.json
+**/node_modules/

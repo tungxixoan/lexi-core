@@ -22,6 +22,8 @@ final class VocabRecord {
     this.sm2Repetitions = 0,
     this.sm2EaseFactor = 2.5,
     this.sm2Interval = 1,
+    this.definition = '',
+    this.synonyms = const [],
   });
 
   final String id;
@@ -31,6 +33,8 @@ final class VocabRecord {
   final String meaning;
   final List<String> examples;
   final String personalNotes;
+  final String definition; // English definition (optional)
+  final List<String> synonyms;
   final List<String> topicIds; // max 2
   final Language targetLanguage;
   final CEFRLevel cefrLevel;
@@ -53,6 +57,8 @@ final class VocabRecord {
     int? sm2Repetitions,
     double? sm2EaseFactor,
     int? sm2Interval,
+    String? definition,
+    List<String>? synonyms,
   }) =>
       VocabRecord(
         id: id,
@@ -72,6 +78,8 @@ final class VocabRecord {
         sm2Repetitions: sm2Repetitions ?? this.sm2Repetitions,
         sm2EaseFactor: sm2EaseFactor ?? this.sm2EaseFactor,
         sm2Interval: sm2Interval ?? this.sm2Interval,
+        definition: definition ?? this.definition,
+        synonyms: synonyms ?? this.synonyms,
       );
 
   Map<String, dynamic> toJson() => {
@@ -92,6 +100,8 @@ final class VocabRecord {
         'sm2Repetitions': sm2Repetitions,
         'sm2EaseFactor': sm2EaseFactor,
         'sm2Interval': sm2Interval,
+        'definition': definition,
+        'synonyms': synonyms,
       };
 
   factory VocabRecord.fromJson(Map<String, dynamic> json) => VocabRecord(
@@ -114,5 +124,9 @@ final class VocabRecord {
         sm2Repetitions: json['sm2Repetitions'] as int? ?? 0,
         sm2EaseFactor: (json['sm2EaseFactor'] as num?)?.toDouble() ?? 2.5,
         sm2Interval: json['sm2Interval'] as int? ?? 1,
+        definition: json['definition'] as String? ?? '',
+        synonyms: json['synonyms'] != null
+            ? List<String>.from(json['synonyms'] as List)
+            : const [],
       );
 }

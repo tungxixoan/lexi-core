@@ -32,8 +32,10 @@ class FreeDictionarySource {
         (data['meanings'] as List?)?.whereType<Map<String, dynamic>>() ?? [];
     String meaning = '';
     final examples = <String>[];
+    final synonyms = <String>[];
 
     for (final m in meanings) {
+      synonyms.addAll((m['synonyms'] as List?)?.cast<String>() ?? const []);
       final defs = (m['definitions'] as List?)
               ?.whereType<Map<String, dynamic>>()
               .toList() ??
@@ -42,6 +44,7 @@ class FreeDictionarySource {
         if (meaning.isEmpty) meaning = (d['definition'] as String?) ?? '';
         final ex = d['example'] as String?;
         if (ex != null) examples.add(ex);
+        synonyms.addAll((d['synonyms'] as List?)?.cast<String>() ?? const []);
       }
     }
 
@@ -50,6 +53,8 @@ class FreeDictionarySource {
       inputType: InputDetector.detect(word),
       ipa: ipa,
       meaning: meaning,
+      definition: meaning,
+      synonyms: synonyms.toSet().take(4).toList(),
       examples: examples.take(3).toList(),
       suggestedTopics: const [],
     );

@@ -13,6 +13,8 @@ final class WordPhraseResult extends LookupResult {
     required this.meaning,
     required this.examples,
     required this.suggestedTopics,
+    this.definition = '',
+    this.synonyms = const [],
   });
 
   final String headword;
@@ -21,6 +23,8 @@ final class WordPhraseResult extends LookupResult {
   final String meaning;
   final List<String> examples;
   final List<String> suggestedTopics;
+  final String definition; // English definition (optional)
+  final List<String> synonyms;
 }
 
 final class SentenceResult extends LookupResult {

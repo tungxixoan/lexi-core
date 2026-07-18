@@ -53,6 +53,31 @@ class WordResultWidget extends ConsumerWidget {
               ),
             const SizedBox(height: 8),
             Text(result.meaning, style: theme.textTheme.bodyLarge),
+            if (result.definition.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                result.definition,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+            if (result.synonyms.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: result.synonyms
+                    .map((s) => Chip(
+                          label: Text(s, style: theme.textTheme.bodySmall),
+                          visualDensity: VisualDensity.compact,
+                          backgroundColor:
+                              theme.colorScheme.secondaryContainer,
+                        ))
+                    .toList(),
+              ),
+            ],
             if (result.examples.isNotEmpty) ...[
               const Divider(height: 24),
               ...result.examples.map(

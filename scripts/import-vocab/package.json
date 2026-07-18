@@ -1,0 +1,11 @@
+{
+  "name": "import-vocab",
+  "private": true,
+  "version": "1.0.0",
+  "description": "One-off bulk import of Master_List vocab into Firestore (delete this folder after use)",
+  "main": "import.js",
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "uuid": "^9.0.1"
+  }
+}
