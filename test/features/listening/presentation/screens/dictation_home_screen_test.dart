@@ -8,6 +8,7 @@ import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
+import 'package:lexi_core/features/listening/presentation/providers/dictation_practice_provider.dart';
 import 'package:lexi_core/features/listening/presentation/screens/dictation_home_screen.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/topic.dart';
@@ -15,7 +16,7 @@ import 'package:lexi_core/features/vocabulary/domain/entities/vocab_record.dart'
 import 'package:lexi_core/features/vocabulary/domain/repositories/vocab_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-VocabRecord _record(int i) {
+VocabRecord _record(int i, {DateTime? nextReviewAt}) {
   final now = DateTime(2026, 1, i + 1);
   return VocabRecord(
     id: 'word-$i',
@@ -31,6 +32,7 @@ VocabRecord _record(int i) {
     activeContext: AppContext.general,
     createdAt: now,
     updatedAt: now,
+    nextReviewAt: nextReviewAt,
   );
 }
 
@@ -85,9 +87,33 @@ class _FakeSettingsNotifier extends UserSettingsNotifier {
   UserSettingsState build() => _state;
 }
 
+/// Fake notifier that records the `words` argument passed to [generate]
+/// instead of invoking the real (AI-backed) use case.
+class _FakeDictationNotifier extends DictationPracticeNotifier {
+  List<VocabRecord>? capturedWords;
+  int callCount = 0;
+
+  @override
+  AsyncValue<DictationSessionState?> build() => const AsyncData(null);
+
+  @override
+  Future<void> generate({
+    required List<VocabRecord> words,
+    required AppContext context,
+    required Language targetLanguage,
+    required CEFRLevel level,
+  }) async {
+    callCount++;
+    capturedWords = words;
+    // Leave state as AsyncData(null): the screen only navigates away when
+    // the resulting session is non-null, so tests can stay on this screen.
+  }
+}
+
 Widget _buildHome({
   required UserSettingsState settings,
   required List<VocabRecord> vocabItems,
+  _FakeDictationNotifier? dictationNotifier,
 }) {
   SharedPreferences.setMockInitialValues({});
   final router = GoRouter(
@@ -96,12 +122,18 @@ Widget _buildHome({
         path: '/',
         builder: (ctx, state) => const DictationHomeScreen(),
       ),
+      GoRoute(
+        path: '/listening/dictation/session',
+        builder: (ctx, state) => const Scaffold(body: Text('Session screen')),
+      ),
     ],
   );
   return ProviderScope(
     overrides: [
       userSettingsNotifierProvider.overrideWith(() => _FakeSettingsNotifier(settings)),
       vocabRepositoryProvider.overrideWithValue(_FakeVocabRepository(vocabItems)),
+      if (dictationNotifier != null)
+        dictationPracticeNotifierProvider.overrideWith(() => dictationNotifier),
     ],
     child: MaterialApp.router(routerConfig: router),
   );
@@ -148,5 +180,56 @@ void main() {
     expect(find.text('Ngôn ngữ'), findsOneWidget);
     expect(find.text('Chủ đề'), findsOneWidget);
     expect(find.text('Cấp độ'), findsOneWidget);
+  });
+
+  testWidgets('generate() is called with exactly 2 words when more than 2 are eligible', (tester) async {
+    final fakeNotifier = _FakeDictationNotifier();
+    await tester.pumpWidget(_buildHome(
+      settings: UserSettingsState.defaults.copyWith(aiEnabled: true),
+      vocabItems: List.generate(5, _record),
+      dictationNotifier: fakeNotifier,
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Tạo bài luyện'));
+    await tester.pumpAndSettle();
+
+    expect(fakeNotifier.callCount, 1);
+    expect(fakeNotifier.capturedWords, isNotNull);
+    expect(fakeNotifier.capturedWords!.length, 2);
+  });
+
+  testWidgets('generate() prioritizes due words over not-due words', (tester) async {
+    final now = DateTime.now();
+    final dueWords = [
+      _record(0, nextReviewAt: null),
+      _record(1, nextReviewAt: now.subtract(const Duration(days: 1))),
+    ];
+    final notDueWords = [
+      _record(2, nextReviewAt: now.add(const Duration(days: 30))),
+      _record(3, nextReviewAt: now.add(const Duration(days: 30))),
+      _record(4, nextReviewAt: now.add(const Duration(days: 30))),
+    ];
+    final dueIds = dueWords.map((r) => r.id).toSet();
+
+    final fakeNotifier = _FakeDictationNotifier();
+    await tester.pumpWidget(_buildHome(
+      settings: UserSettingsState.defaults.copyWith(aiEnabled: true),
+      vocabItems: [...dueWords, ...notDueWords],
+      dictationNotifier: fakeNotifier,
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Tạo bài luyện'));
+    await tester.pumpAndSettle();
+
+    expect(fakeNotifier.capturedWords, isNotNull);
+    expect(fakeNotifier.capturedWords!.length, 2);
+    expect(
+      fakeNotifier.capturedWords!.every((r) => dueIds.contains(r.id)),
+      isTrue,
+      reason: 'expected both selected words to come from the due set: '
+          '${fakeNotifier.capturedWords!.map((r) => r.id)}',
+    );
   });
 }
