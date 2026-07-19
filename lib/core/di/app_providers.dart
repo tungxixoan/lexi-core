@@ -31,6 +31,9 @@ import '../../features/practice/domain/use_cases/get_learning_stats_use_case.dar
 // --- Reading DI (Plan 7) ---
 import '../../features/reading/data/sources/reading_passage_source.dart';
 import '../../features/reading/domain/use_cases/generate_reading_passage_use_case.dart';
+// --- Listening DI (Plan 9) ---
+import '../../features/listening/data/sources/dictation_source.dart';
+import '../../features/listening/domain/use_cases/generate_dictation_item_use_case.dart';
 
 part 'app_providers.g.dart';
 
@@ -140,3 +143,14 @@ ReadingPassageSource readingPassageSource(ReadingPassageSourceRef ref) {
 GenerateReadingPassageUseCase generateReadingPassageUseCase(
         GenerateReadingPassageUseCaseRef ref) =>
     GenerateReadingPassageUseCase(ref.watch(readingPassageSourceProvider));
+
+@riverpod
+DictationSource dictationSource(DictationSourceRef ref) {
+  final settings = ref.watch(userSettingsNotifierProvider);
+  return DictationSource(settings);
+}
+
+@riverpod
+GenerateDictationItemUseCase generateDictationItemUseCase(
+        GenerateDictationItemUseCaseRef ref) =>
+    GenerateDictationItemUseCase(ref.watch(dictationSourceProvider));

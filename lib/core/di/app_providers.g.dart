@@ -423,5 +423,42 @@ final generateReadingPassageUseCaseProvider =
 // ignore: unused_element
 typedef GenerateReadingPassageUseCaseRef
     = AutoDisposeProviderRef<GenerateReadingPassageUseCase>;
+String _$dictationSourceHash() => r'c19ca976651004ecc93eaf02375f5ddd9aac3a0d';
+
+/// See also [dictationSource].
+@ProviderFor(dictationSource)
+final dictationSourceProvider = AutoDisposeProvider<DictationSource>.internal(
+  dictationSource,
+  name: r'dictationSourceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$dictationSourceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef DictationSourceRef = AutoDisposeProviderRef<DictationSource>;
+String _$generateDictationItemUseCaseHash() =>
+    r'030d2b6b46b4d8c3c209fbc3a1ee0ddb3e294e1b';
+
+/// See also [generateDictationItemUseCase].
+@ProviderFor(generateDictationItemUseCase)
+final generateDictationItemUseCaseProvider =
+    AutoDisposeProvider<GenerateDictationItemUseCase>.internal(
+  generateDictationItemUseCase,
+  name: r'generateDictationItemUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$generateDictationItemUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GenerateDictationItemUseCaseRef
+    = AutoDisposeProviderRef<GenerateDictationItemUseCase>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

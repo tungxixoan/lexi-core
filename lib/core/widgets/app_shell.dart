@@ -47,7 +47,7 @@ class _AppShellState extends ConsumerState<AppShell>
     }
   }
 
-  List<_Dest> _destinations(bool showReading) => [
+  List<_Dest> _destinations(bool showReading, bool showListening) => [
         const _Dest(
           path: '/',
           icon: Icons.search_outlined,
@@ -66,6 +66,13 @@ class _AppShellState extends ConsumerState<AppShell>
             icon: Icons.menu_book_outlined,
             selectedIcon: Icons.menu_book,
             label: 'Đọc',
+          ),
+        if (showListening)
+          const _Dest(
+            path: '/listening',
+            icon: Icons.headphones_outlined,
+            selectedIcon: Icons.headphones,
+            label: 'Luyện nghe',
           ),
         const _Dest(
           path: '/practice',
@@ -99,6 +106,9 @@ class _AppShellState extends ConsumerState<AppShell>
     final showReadingOnMobile = ref.watch(
       userSettingsNotifierProvider.select((s) => s.showReadingPracticeOnMobile),
     );
+    final showListeningOnMobile = ref.watch(
+      userSettingsNotifierProvider.select((s) => s.showListeningPracticeOnMobile),
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -106,7 +116,8 @@ class _AppShellState extends ConsumerState<AppShell>
         // a phone browser and a narrow Chrome DevTools window are both
         // kIsWeb == true, so that flag can't distinguish them from desktop.
         final showReading = constraints.maxWidth >= 600 || showReadingOnMobile;
-        final dests = _destinations(showReading);
+        final showListening = constraints.maxWidth >= 600 || showListeningOnMobile;
+        final dests = _destinations(showReading, showListening);
         final selectedIndex = _selectedIndex(context, dests);
 
         if (constraints.maxWidth >= 600) {

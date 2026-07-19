@@ -6,9 +6,13 @@ import 'package:lexi_core/core/widgets/app_shell.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 
-Future<Widget> _buildShell({bool showReadingPracticeOnMobile = false}) async {
+Future<Widget> _buildShell({
+  bool showReadingPracticeOnMobile = false,
+  bool showListeningPracticeOnMobile = false,
+}) async {
   SharedPreferences.setMockInitialValues({
     if (showReadingPracticeOnMobile) 'show_reading_mobile': true,
+    if (showListeningPracticeOnMobile) 'show_listening_mobile': true,
   });
   final prefs = await SharedPreferences.getInstance();
   final router = GoRouter(
@@ -90,5 +94,40 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Đọc'), findsOneWidget);
+  });
+
+  testWidgets('hides Listening tab on narrow screen when toggle is off',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(await _buildShell());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Luyện nghe'), findsNothing);
+  });
+
+  testWidgets('shows Listening tab on narrow screen when toggle is on',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      await _buildShell(showListeningPracticeOnMobile: true),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Luyện nghe'), findsOneWidget);
+  });
+
+  testWidgets('shows Listening tab on wide screen regardless of toggle',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(await _buildShell());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Luyện nghe'), findsOneWidget);
   });
 }

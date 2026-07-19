@@ -13,6 +13,11 @@ import '../../features/reading/presentation/screens/reading_home_screen.dart';
 import '../../features/reading/presentation/screens/reading_session_screen.dart';
 import '../../features/reading/presentation/screens/reading_result_screen.dart';
 import '../../features/reading/presentation/providers/reading_practice_provider.dart';
+import '../../features/listening/presentation/screens/listening_home_screen.dart';
+import '../../features/listening/presentation/screens/dictation_home_screen.dart';
+import '../../features/listening/presentation/screens/dictation_session_screen.dart';
+import '../../features/listening/presentation/screens/dictation_result_screen.dart';
+import '../../features/listening/presentation/providers/dictation_practice_provider.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -74,6 +79,36 @@ final appRouter = GoRouter(
                   builder: (context, state) => ReadingResultScreen(
                     result: state.extra as ReadingSessionResult,
                   ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        GoRoute(
+          path: '/listening',
+          builder: (context, state) => const ListeningHomeScreen(),
+          routes: [
+            GoRoute(
+              path: 'dictation',
+              builder: (context, state) => const DictationHomeScreen(),
+              routes: [
+                GoRoute(
+                  path: 'session',
+                  builder: (context, state) => const DictationSessionScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'result',
+                      redirect: (context, state) {
+                        if (state.extra is! DictationSessionResult) {
+                          return '/listening/dictation';
+                        }
+                        return null;
+                      },
+                      builder: (context, state) => DictationResultScreen(
+                        result: state.extra as DictationSessionResult,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
