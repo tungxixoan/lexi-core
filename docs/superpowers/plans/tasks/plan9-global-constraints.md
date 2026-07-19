@@ -1,0 +1,21 @@
+# Plan 9 — Global Constraints
+
+- Flutter SDK >=3.22.0, Dart >=3.4.0
+- Target platforms: Android, iOS, Web (all already enabled — no platform-enablement work needed)
+- Riverpod 2.x with `@riverpod` annotation — no StateNotifier, no ChangeNotifier
+- Navigation: GoRouter only — no `Navigator.push`
+- All domain entities: immutable, `const` constructors, no public setters; mutation via `copyWith`
+- AI calls go through `AiClientFactory.buildClient(settings)` / `GenerativeModelClient` (from `lib/core/services/ai_client_factory.dart`) — never construct a `GenerativeModel` directly. This supports whichever provider (Gemini/Groq/OpenRouter) the user has active, not just Gemini.
+- Minimum eligible Vocab Bank words to start a Nghe chép (dictation) session: **2** — show error if fewer (lower than Reading's 5, because only ~2 words are embedded per single sentence, not 5–10 across a whole passage)
+- Feature must check `settings.aiEnabled` — show error if AI is off
+- "Luyện nghe" tab visibility: `constraints.maxWidth >= 600 || settings.showListeningPracticeOnMobile` — same width-based rule as the (corrected) Reading tab, **not** `kIsWeb`. See `docs/superpowers/specs/2026-07-19-mobile-tab-visibility-kisweb-fix-design.md` for why `kIsWeb` is wrong here.
+- Dictation **does** update SM-2 (`nextReviewAt`, `sm2Interval`, etc.) for every vocab word used in the sentence — unlike Reading, which explicitly does not. See scoring formula below.
+- `DictationSessionState`, `DictationSessionResult`, `DictationPracticeNotifier` are defined in `dictation_practice_provider.dart` (presentation layer) — they are not domain entities. `DictationItem` (in `domain/entities/`) is the only domain entity this plan adds.
+- Typing/scoring comparison is character-exact: `typed[i] == target[i]` (position-by-position, same simple algorithm as Reading's `SentenceResult` — not a Levenshtein/edit-distance diff)
+- Scoring formula (defined as getters on `DictationSessionResult`):
+  - `charAccuracy` = correct chars / total target chars (1.0 if target is empty)
+  - `finalScore` = `(charAccuracy - 0.05 * replayCount).clamp(0.0, 1.0)`
+  - `sm2Quality` (int 0–5): `finalScore >= 0.95` → 5, `>= 0.80` → 4, `>= 0.60` → 3, `>= 0.40` → 2, else → 0
+- No autoplay: the dictation session never calls `TtsService.speak()` on screen entry — only in response to the user tapping the play/replay button. The first tap does not count as a "replay" (`replayCount` stays 0); every tap after that increments it.
+- Sentence length: one sentence targeting ~2 vocabulary words (enforced in the AI prompt, not validated post-generation)
+- `geminiApiKey`/provider credentials are **NEVER** stored in Firestore — `SharedPreferences` only (unchanged existing constraint, not modified by this plan)

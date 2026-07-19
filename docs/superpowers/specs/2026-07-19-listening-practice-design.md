@@ -1,8 +1,8 @@
-# LexiCore Plan 8 — "Luyện nghe" (Listening Practice) Design Spec
+# LexiCore Plan 9 & 10 — "Luyện nghe" (Listening Practice) Design Spec
 
 **Date:** 2026-07-19
 **Status:** Approved
-**Covers:** Plan 8 — two listening sub-features, web + mobile.
+**Covers:** Two sequential plans — Plan 9 (Nghe chép/dictation) and Plan 10 (Nghe hiểu/TOEIC comprehension) — two listening sub-features, web + mobile.
 
 **Depends on:** Plan 6 (Flutter Web + adaptive nav), Plan 7 (Reading — shares its UI patterns).
 
