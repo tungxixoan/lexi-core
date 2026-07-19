@@ -77,6 +77,51 @@ class _CapturingVocabRepository implements VocabRepository {
   Future<void> deleteTopic(String id) async {}
 }
 
+class _ThrowingVocabRepository implements VocabRepository {
+  final List<VocabRecord> updated = [];
+
+  @override
+  Future<List<VocabRecord>> getAll({
+    String? topicId,
+    InputType? inputType,
+    Language? language,
+    CEFRLevel? maxCefrLevel,
+    bool dueOnly = false,
+  }) async =>
+      throw Exception('storage error fetching vocab bank');
+
+  @override
+  Future<List<Topic>> getTopics() async => const [];
+
+  @override
+  Future<void> save(VocabRecord record) async {}
+
+  @override
+  Future<VocabRecord?> getById(String id) async => null;
+
+  @override
+  Future<void> update(VocabRecord record) async {
+    updated.add(record);
+  }
+
+  @override
+  Future<void> delete(String id) async {}
+
+  @override
+  Future<bool> existsByHeadword(String headword, Language language) async =>
+      false;
+
+  @override
+  Future<VocabRecord?> getByHeadword(String headword, Language language) async =>
+      null;
+
+  @override
+  Future<void> addTopic(Topic topic) async {}
+
+  @override
+  Future<void> deleteTopic(String id) async {}
+}
+
 final _testItem = DictationItem(
   id: 'item-1',
   target: 'Hello world.',
@@ -97,7 +142,7 @@ final _perfectResult = DictationSessionResult(
 
 Widget _buildResult(
   DictationSessionResult result,
-  _CapturingVocabRepository repo,
+  VocabRepository repo,
 ) {
   final router = GoRouter(
     routes: [
@@ -155,5 +200,17 @@ void main() {
       expect(r.sm2Repetitions, 1);
       expect(r.nextReviewAt, isNotNull);
     }
+  });
+
+  testWidgets(
+      'does not crash and performs zero updates when the vocab bank fetch throws',
+      (tester) async {
+    final repo = _ThrowingVocabRepository();
+    await tester.pumpWidget(_buildResult(_perfectResult, repo));
+    await tester.pumpAndSettle();
+
+    // Screen still renders normally despite the fetch failure.
+    expect(find.text('Câu khác'), findsOneWidget);
+    expect(repo.updated, isEmpty);
   });
 }

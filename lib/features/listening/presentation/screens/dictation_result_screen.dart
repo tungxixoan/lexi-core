@@ -22,23 +22,32 @@ class _DictationResultScreenState extends ConsumerState<DictationResultScreen> {
   }
 
   Future<void> _updateSm2() async {
-    final computeUseCase = ref.read(computeSm2UseCaseProvider);
-    final updateUseCase = ref.read(updateVocabUseCaseProvider);
-    // vocabBankProvider reads synchronously off the underlying async
-    // notifier and returns [] while it's still loading, which races the
-    // fetch below. Await the notifier's future so the vocab list is
-    // guaranteed to be populated before we look up records to update.
-    final vocabRecords = await ref.read(vocabBankNotifierProvider.future);
-    final quality = widget.result.sm2Quality;
+    // Best-effort: SM-2 updates should never crash or block the result
+    // screen. This wraps the whole method (including the vocab-bank fetch)
+    // so a storage/permission error fetching the vocab list degrades the
+    // same way a single record's update failure does, instead of
+    // propagating uncaught from the fire-and-forget post-frame callback.
+    try {
+      final computeUseCase = ref.read(computeSm2UseCaseProvider);
+      final updateUseCase = ref.read(updateVocabUseCaseProvider);
+      // vocabBankProvider reads synchronously off the underlying async
+      // notifier and returns [] while it's still loading, which races the
+      // fetch below. Await the notifier's future so the vocab list is
+      // guaranteed to be populated before we look up records to update.
+      final vocabRecords = await ref.read(vocabBankNotifierProvider.future);
+      final quality = widget.result.sm2Quality;
 
-    for (final id in widget.result.item.vocabIds) {
-      try {
-        final record = vocabRecords.firstWhere((r) => r.id == id);
-        final updated = computeUseCase.compute(record, quality);
-        await updateUseCase.execute(updated);
-      } catch (_) {
-        // best-effort: don't crash the result screen on an SM-2 update failure
+      for (final id in widget.result.item.vocabIds) {
+        try {
+          final record = vocabRecords.firstWhere((r) => r.id == id);
+          final updated = computeUseCase.compute(record, quality);
+          await updateUseCase.execute(updated);
+        } catch (_) {
+          // best-effort: don't let one bad record block the others
+        }
       }
+    } catch (_) {
+      // best-effort: don't crash the result screen on an SM-2 update failure
     }
   }
 
