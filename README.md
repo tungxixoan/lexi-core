@@ -43,6 +43,17 @@
 - Màn hình kết quả: độ chính xác tổng, WPM, danh sách từ đã thực hành
 - Có thể ẩn/hiện trên mobile (mặc định ẩn, bật trong Cài đặt)
 
+### Luyện nghe (Listening Practice)
+Tab "Luyện nghe" — hub với 2 tính năng con, dùng chung `TtsService` (flutter_tts) có sẵn, không cần package audio mới:
+
+- **Nghe chép (dictation)** — AI tạo một câu vừa-dài dùng ~2 từ từ Vocab Bank; nghe (không tự phát, phải bấm) rồi gõ lại chính xác
+  - Nghe lại không giới hạn số lần, nhưng mỗi lần nghe lại trừ 5% điểm
+  - Chấm điểm cập nhật **SM-2** cho các từ vựng xuất hiện trong câu — khác với Luyện đọc & gõ (không ảnh hưởng SM-2)
+  - Màn hình kết quả: điểm số, số lần nghe lại, thời gian, phần gõ được tô màu đối chiếu với câu đúng
+  - Lọc theo Ngôn ngữ / Chủ đề (Topic tag) / Cấp độ, tối thiểu 2 từ khớp bộ lọc
+  - Có thể ẩn/hiện trên mobile (mặc định ẩn, bật trong Cài đặt), hiển thị dựa theo bề rộng màn hình (không dùng `kIsWeb`)
+- **Nghe hiểu (TOEIC-style comprehension)** — *sắp ra mắt* — nghe hội thoại 2 người hoặc bài nói 1 người, trả lời trắc nghiệm kiểu TOEIC Part 3–4 (ý chính/chi tiết/ý ngụ ý), không ảnh hưởng SM-2
+
 ### Tiến độ học tập (Progress Dashboard)
 - Tổng số từ đã học
 - Chuỗi ngày học (streak)
@@ -159,6 +170,16 @@ lib/
 │   │       ├── providers/   # ReadingPracticeNotifier
 │   │       └── screens/     # ReadingHome, ReadingSession, ReadingResult
 │   │
+│   ├── listening/
+│   │   ├── data/sources/
+│   │   │   └── dictation_source.dart           # AI sentence gen (dùng AiClientFactory)
+│   │   ├── domain/
+│   │   │   ├── entities/    # DictationItem
+│   │   │   └── use_cases/   # GenerateDictationItem
+│   │   └── presentation/
+│   │       ├── providers/   # DictationPracticeNotifier
+│   │       └── screens/     # ListeningHome (hub), DictationHome, DictationSession, DictationResult
+│   │
 │   └── settings/
 │       └── presentation/
 │           ├── providers/   # AuthNotifier, SyncNotifier
@@ -179,7 +200,8 @@ UserSettingsNotifier (SharedPreferences)
                  └─ GenerativeModelClient interface
                       ├─ GeminiDictionarySource
                       ├─ ExerciseGeneratorSource
-                      └─ ReadingPassageSource
+                      ├─ ReadingPassageSource
+                      └─ DictationSource
 ```
 
 ### Luồng đồng bộ
@@ -324,7 +346,7 @@ flutter test test/features/dictionary/presentation/providers/user_settings_notif
 flutter test --reporter expanded
 ```
 
-Hiện tại: **133 tests** — domain entities, use cases, sources, providers, UI widgets, services.
+Hiện tại: **182 tests** — domain entities, use cases, sources, providers, UI widgets, services.
 
 ### Phân tích code
 
@@ -421,7 +443,8 @@ users/
 
 - [ ] Hỗ trợ thêm ngôn ngữ (French, Spanish, German)
 - [ ] Export/Import từ vựng (CSV, Anki)
-- [ ] Luyện tập nghe (listening comprehension)
+- [x] Nghe chép (listening dictation)
+- [ ] Nghe hiểu (TOEIC-style listening comprehension)
 - [ ] Widget màn hình chính hiển thị từ ngẫu nhiên
 - [ ] Tìm kiếm full-text trong ngân hàng từ
 - [ ] Thống kê học tập nâng cao (heatmap, phân tích lỗi)
