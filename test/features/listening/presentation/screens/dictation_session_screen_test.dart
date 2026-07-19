@@ -56,7 +56,10 @@ class _FakeDictationNotifier extends DictationPracticeNotifier {
   AsyncValue<DictationSessionState?> build() => AsyncData(_initial);
 }
 
-Widget _buildSession(DictationSessionState initial) {
+Widget _buildSession(
+  DictationSessionState initial, {
+  void Function(Object? extra)? onResult,
+}) {
   final router = GoRouter(
     routes: [
       GoRoute(
@@ -65,7 +68,10 @@ Widget _buildSession(DictationSessionState initial) {
       ),
       GoRoute(
         path: '/listening/dictation/session/result',
-        builder: (ctx, state) => const Scaffold(body: Text('Result screen')),
+        builder: (ctx, state) {
+          onResult?.call(state.extra);
+          return const Scaffold(body: Text('Result screen'));
+        },
       ),
     ],
   );
@@ -120,5 +126,57 @@ void main() {
     await tester.tap(find.text('Phát'));
     await tester.pumpAndSettle();
     expect(find.text('Nghe lại (0)'), findsOneWidget);
+  });
+
+  testWidgets('tapping play a second time increments to Nghe lại (1)',
+      (tester) async {
+    await tester.pumpWidget(_buildSession(_session()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Phát'));
+    await tester.pumpAndSettle();
+    expect(find.text('Nghe lại (0)'), findsOneWidget);
+
+    await tester.tap(find.text('Nghe lại (0)'));
+    await tester.pumpAndSettle();
+    expect(find.text('Nghe lại (1)'), findsOneWidget);
+  });
+
+  testWidgets(
+      'submitting after playing, replaying, and typing navigates to the '
+      'result route with a correct DictationSessionResult', (tester) async {
+    Object? capturedExtra;
+    await tester.pumpWidget(
+      _buildSession(
+        _session(),
+        onResult: (extra) => capturedExtra = extra,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Play once, then replay once more, so replayCount should end up at 1.
+    await tester.tap(find.text('Phát'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Nghe lại (0)'));
+    await tester.pumpAndSettle();
+    expect(find.text('Nghe lại (1)'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'Hello world.');
+    await tester.pumpAndSettle();
+
+    final submitButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Nộp bài'),
+    );
+    expect(submitButton.onPressed, isNotNull);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Nộp bài'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Result screen'), findsOneWidget);
+    expect(capturedExtra, isA<DictationSessionResult>());
+    final result = capturedExtra! as DictationSessionResult;
+    expect(result.item, _testItem);
+    expect(result.typed, 'Hello world.');
+    expect(result.replayCount, 1);
   });
 }
