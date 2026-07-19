@@ -1,9 +1,21 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:lexi_core/core/di/app_providers.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
+import 'package:lexi_core/features/vocabulary/domain/entities/vocab_record.dart';
 import 'package:lexi_core/features/listening/domain/entities/dictation_item.dart';
+import 'package:lexi_core/features/listening/domain/use_cases/generate_dictation_item_use_case.dart';
 import 'package:lexi_core/features/listening/presentation/providers/dictation_practice_provider.dart';
+import 'package:lexi_core/services/tts_service.dart';
+
+class MockGenerateDictationItemUseCase extends Mock
+    implements GenerateDictationItemUseCase {}
+
+class MockTtsService extends Mock implements TtsService {}
 
 DictationItem _item(String target) => DictationItem(
       id: 'item-1',
@@ -87,6 +99,155 @@ void main() {
         duration: const Duration(seconds: 1),
       );
       expect(result.charAccuracy, 1.0);
+    });
+  });
+
+  group('DictationPracticeNotifier lifecycle', () {
+    late MockGenerateDictationItemUseCase mockUseCase;
+    late MockTtsService mockTts;
+    late DictationItem fixedItem;
+    late List<VocabRecord> words;
+
+    setUp(() {
+      mockUseCase = MockGenerateDictationItemUseCase();
+      mockTts = MockTtsService();
+      fixedItem = _item('Hello world.');
+      words = [
+        VocabRecord(
+          id: 'id1',
+          headword: 'hello',
+          inputType: InputType.word,
+          ipa: '',
+          meaning: '',
+          examples: const [],
+          personalNotes: '',
+          topicIds: const [],
+          targetLanguage: Language.english,
+          cefrLevel: CEFRLevel.b1,
+          activeContext: AppContext.general,
+          createdAt: DateTime(2026),
+          updatedAt: DateTime(2026),
+        ),
+      ];
+
+      when(
+        () => mockUseCase.execute(
+          words: words,
+          level: CEFRLevel.b1,
+          context: AppContext.general,
+          targetLanguage: Language.english,
+        ),
+      ).thenAnswer((_) async => fixedItem);
+
+      when(() => mockTts.speak(fixedItem.target, fixedItem.targetLanguage))
+          .thenAnswer((_) async {});
+    });
+
+    ProviderContainer makeContainer() => ProviderContainer(
+          overrides: [
+            generateDictationItemUseCaseProvider
+                .overrideWithValue(mockUseCase),
+            ttsServiceProvider.overrideWithValue(mockTts),
+          ],
+        );
+
+    Future<void> generateSession(DictationPracticeNotifier notifier) =>
+        notifier.generate(
+          words: words,
+          level: CEFRLevel.b1,
+          context: AppContext.general,
+          targetLanguage: Language.english,
+        );
+
+    test('generate() populates a fresh session state', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(dictationPracticeNotifierProvider.notifier);
+
+      await generateSession(notifier);
+
+      final state = c.read(dictationPracticeNotifierProvider).value;
+      expect(state, isNotNull);
+      expect(state!.item, same(fixedItem));
+      expect(state.typedText, '');
+      expect(state.replayCount, 0);
+      expect(state.hasPlayedOnce, false);
+      expect(state.isComplete, false);
+    });
+
+    test(
+        'first play() sets hasPlayedOnce without incrementing replayCount, '
+        'and speaks the item once', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(dictationPracticeNotifierProvider.notifier);
+      await generateSession(notifier);
+
+      await notifier.play();
+
+      final state = c.read(dictationPracticeNotifierProvider).value!;
+      expect(state.hasPlayedOnce, true);
+      expect(state.replayCount, 0);
+      verify(() => mockTts.speak(fixedItem.target, fixedItem.targetLanguage))
+          .called(1);
+    });
+
+    test(
+        'second play() increments replayCount and keeps hasPlayedOnce true, '
+        'and speaks the item again', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(dictationPracticeNotifierProvider.notifier);
+      await generateSession(notifier);
+
+      await notifier.play();
+      await notifier.play();
+
+      final state = c.read(dictationPracticeNotifierProvider).value!;
+      expect(state.hasPlayedOnce, true);
+      expect(state.replayCount, 1);
+      verify(() => mockTts.speak(fixedItem.target, fixedItem.targetLanguage))
+          .called(2);
+    });
+
+    test('updateTypedText() updates typedText without completing', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(dictationPracticeNotifierProvider.notifier);
+      await generateSession(notifier);
+
+      notifier.updateTypedText('Hello wor');
+
+      final state = c.read(dictationPracticeNotifierProvider).value!;
+      expect(state.typedText, 'Hello wor');
+      expect(state.isComplete, false);
+    });
+
+    test('submit() marks the session complete', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(dictationPracticeNotifierProvider.notifier);
+      await generateSession(notifier);
+
+      notifier.submit();
+
+      final state = c.read(dictationPracticeNotifierProvider).value!;
+      expect(state.isComplete, true);
+    });
+
+    test('reset() returns state to AsyncData(null)', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(dictationPracticeNotifierProvider.notifier);
+      await generateSession(notifier);
+      notifier.submit();
+
+      notifier.reset();
+
+      expect(
+        c.read(dictationPracticeNotifierProvider),
+        const AsyncValue<DictationSessionState?>.data(null),
+      );
     });
   });
 }
