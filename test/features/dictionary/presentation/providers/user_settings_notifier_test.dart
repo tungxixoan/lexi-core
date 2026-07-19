@@ -245,5 +245,41 @@ void main() {
         );
       });
     });
+
+    group('showListeningPracticeOnMobile', () {
+      test('defaults to false', () async {
+        final container = await makeContainer();
+        addTearDown(container.dispose);
+        expect(
+          container.read(userSettingsNotifierProvider).showListeningPracticeOnMobile,
+          false,
+        );
+      });
+
+      test('setShowListeningPracticeOnMobile persists to prefs and updates state', () async {
+        final container = await makeContainer();
+        addTearDown(container.dispose);
+        final prefs = container.read(sharedPreferencesProvider);
+        container
+            .read(userSettingsNotifierProvider.notifier)
+            .setShowListeningPracticeOnMobile(true);
+        expect(
+          container.read(userSettingsNotifierProvider).showListeningPracticeOnMobile,
+          true,
+        );
+        expect(prefs.getBool('show_listening_mobile'), true);
+      });
+
+      test('build() loads persisted showListeningPracticeOnMobile from prefs', () async {
+        final container = await makeContainer(
+          initialValues: {'show_listening_mobile': true},
+        );
+        addTearDown(container.dispose);
+        expect(
+          container.read(userSettingsNotifierProvider).showListeningPracticeOnMobile,
+          true,
+        );
+      });
+    });
   });
 }

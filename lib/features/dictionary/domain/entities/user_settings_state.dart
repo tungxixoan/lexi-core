@@ -17,6 +17,7 @@ final class UserSettingsState {
     this.reminderHour = 20,
     this.reminderMinute = 0,
     this.showReadingPracticeOnMobile = false,
+    this.showListeningPracticeOnMobile = false,
   });
 
   final Language targetLanguage;
@@ -29,6 +30,7 @@ final class UserSettingsState {
   final int reminderHour;
   final int reminderMinute;
   final bool showReadingPracticeOnMobile;
+  final bool showListeningPracticeOnMobile;
 
   // The active provider's config. Falls back to an empty default if not yet configured.
   ProviderConfig get activeConfig =>
@@ -47,6 +49,7 @@ final class UserSettingsState {
     int? reminderHour,
     int? reminderMinute,
     bool? showReadingPracticeOnMobile,
+    bool? showListeningPracticeOnMobile,
   }) =>
       UserSettingsState(
         targetLanguage: targetLanguage ?? this.targetLanguage,
@@ -62,6 +65,8 @@ final class UserSettingsState {
         reminderMinute: reminderMinute ?? this.reminderMinute,
         showReadingPracticeOnMobile:
             showReadingPracticeOnMobile ?? this.showReadingPracticeOnMobile,
+        showListeningPracticeOnMobile:
+            showListeningPracticeOnMobile ?? this.showListeningPracticeOnMobile,
       );
 
   static const defaults = UserSettingsState(
@@ -77,5 +82,6 @@ final class UserSettingsState {
     reminderHour: 20,
     reminderMinute: 0,
     showReadingPracticeOnMobile: false,
+    showListeningPracticeOnMobile: false,
   );
 }

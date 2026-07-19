@@ -66,6 +66,8 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
       reminderMinute: prefs.getInt('reminder_minute') ?? 0,
       showReadingPracticeOnMobile:
           prefs.getBool('show_reading_mobile') ?? false,
+      showListeningPracticeOnMobile:
+          prefs.getBool('show_listening_mobile') ?? false,
     );
   }
 
@@ -148,5 +150,10 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
   void setShowReadingPracticeOnMobile(bool show) {
     _prefs.setBool('show_reading_mobile', show);
     state = state.copyWith(showReadingPracticeOnMobile: show);
+  }
+
+  void setShowListeningPracticeOnMobile(bool show) {
+    _prefs.setBool('show_listening_mobile', show);
+    state = state.copyWith(showListeningPracticeOnMobile: show);
   }
 }
