@@ -63,6 +63,52 @@ void main() {
         }
       }
     });
+
+    test('adjacency is not avoided for short (3-5 word) sentences: at least '
+        'one seed out of many produces an adjacent pair for a 4-word '
+        'sentence', () {
+      var sawAdjacentPair = false;
+      for (var seed = 0; seed < 50; seed++) {
+        final blanks = useCase.execute(
+          _sentence(4),
+          DictationDifficulty.easy,
+          random: Random(seed),
+        );
+        expect(blanks.length, 2, reason: 'seed=$seed');
+        final indices = blanks.map((b) => b.startWordIndex).toList()..sort();
+        if (indices[1] - indices[0] == 1) {
+          sawAdjacentPair = true;
+          break;
+        }
+      }
+      expect(sawAdjacentPair, isTrue,
+          reason:
+              'expected at least one seed to produce an adjacent pair for a '
+              '4-word sentence, since non-adjacency should only be enforced '
+              'when wordCount >= 6');
+    });
+
+    test('does not crash for a 0-word sentence and returns a single blank '
+        'at index 0', () {
+      final blanks = useCase.execute(
+        _sentence(0),
+        DictationDifficulty.easy,
+        random: Random(1),
+      );
+      expect(blanks.length, 1);
+      expect(blanks.single.startWordIndex, 0);
+    });
+
+    test('does not crash for a 1-word sentence and returns a single blank '
+        'at index 0', () {
+      final blanks = useCase.execute(
+        _sentence(1),
+        DictationDifficulty.easy,
+        random: Random(1),
+      );
+      expect(blanks.length, 1);
+      expect(blanks.single.startWordIndex, 0);
+    });
   });
 
   group('medium difficulty', () {
@@ -89,6 +135,20 @@ void main() {
         expect(span.startWordIndex, greaterThanOrEqualTo(1), reason: 'seed=$seed');
         expect(span.startWordIndex + span.wordCount, lessThanOrEqualTo(11),
             reason: 'seed=$seed');
+      }
+    });
+
+    test('falls back to a single blank covering the whole sentence for '
+        'wordCount 1, 2, and 3 (the wordCount <= 3 early-return path)', () {
+      for (final wordCount in [1, 2, 3]) {
+        final blanks = useCase.execute(
+          _sentence(wordCount),
+          DictationDifficulty.medium,
+          random: Random(1),
+        );
+        expect(blanks.length, 1, reason: 'wordCount=$wordCount');
+        expect(blanks.single.wordCount, wordCount, reason: 'wordCount=$wordCount');
+        expect(blanks.single.startWordIndex, 0, reason: 'wordCount=$wordCount');
       }
     });
 

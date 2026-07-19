@@ -31,17 +31,21 @@ class SelectDictationBlanksUseCase {
     if (wordCount <= 1) {
       return [const BlankSpan(startWordIndex: 0, wordCount: 1)];
     }
-    final minIndex = wordCount >= 6 ? 1 : 0;
-    final maxIndex = wordCount >= 6 ? wordCount - 2 : wordCount - 1;
+    final enforceNonAdjacent = wordCount >= 6;
+    final minIndex = enforceNonAdjacent ? 1 : 0;
+    final maxIndex = enforceNonAdjacent ? wordCount - 2 : wordCount - 1;
     final range = maxIndex - minIndex + 1;
 
     int first = minIndex + rand.nextInt(range);
     int second = minIndex + rand.nextInt(range);
 
     var attempts = 0;
-    // Prefer non-adjacent indices when the range allows it; always avoid
-    // picking the exact same index twice.
-    while ((second == first || (range >= 3 && (second - first).abs() < 2)) &&
+    // Non-adjacency is only required when wordCount >= 6 (see global
+    // constraints doc); for shorter sentences any 2 distinct indices are
+    // acceptable and adjacency is not avoided. Always avoid picking the
+    // exact same index twice.
+    while ((second == first ||
+            (enforceNonAdjacent && (second - first).abs() < 2)) &&
         attempts < 30) {
       second = minIndex + rand.nextInt(range);
       attempts++;
