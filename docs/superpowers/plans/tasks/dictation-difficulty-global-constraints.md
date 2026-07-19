@@ -1,0 +1,22 @@
+# Nghe chép Difficulty Levels — Global Constraints
+
+- Flutter SDK >=3.22.0, Dart >=3.4.0
+- Riverpod 2.x with `@riverpod` annotation — no StateNotifier, no ChangeNotifier
+- Navigation: GoRouter only — no `Navigator.push`
+- All domain entities: immutable, `const` constructors, no public setters; mutation via `copyWith`
+- **Zero behavior change for Khó (hard) mode.** Every new field added to `DictationSessionState`/`DictationSessionResult` and every new parameter added to `DictationPracticeNotifier.generate()` must be **optional with a default that reproduces today's shipped behavior** (`DictationDifficulty.hard`, `blanks: const []`, `blankAnswers: const []`). No existing call site, test, or screen may need to change just because these fields exist — only tasks that actively add Dễ/Trung bình support touch call sites, and only to pass the new (still-optional) values.
+- No AI prompt or `DictationItem`/`DictationSource` change of any kind — blank selection is a pure client-side function computed from the already-generated `DictationItem.target` string.
+- Blank selection (see `SelectDictationBlanksUseCase`):
+  - **Dễ:** 2 distinct, non-adjacent (`|i − j| ≥ 2`) word indices from `[1, wordCount − 2]` when `wordCount ≥ 6`; from `[0, wordCount − 1]` (any 2 distinct indices, adjacency not enforced) when `wordCount < 6`. Each blank is exactly 1 word.
+  - **Trung bình:** one contiguous span of `clamp(round(wordCount × 0.35), 2, wordCount − 2)` words, starting at a random index that leaves at least 1 word of visible context on each side when the sentence is long enough to allow it.
+  - **Khó:** no blanks (empty list) — entire sentence hidden, unchanged.
+  - Blanks are computed **once** when a session starts (inside `generate()`), not re-randomized on replay or rebuild.
+- Blank grading: whole-word exact match, case-insensitive, trimmed. Trung bình's multi-word blank: split the typed phrase on whitespace and compare word-by-word against the target words in that span — every word must match.
+- Scoring formula is shared across all 3 levels — only the accuracy input differs:
+  - Khó: `charAccuracy` (existing position-by-position character match)
+  - Dễ/Trung bình: `blockAccuracy` = correct blanks / total blanks
+  - Both feed the same `finalScore = accuracy − 0.05 × replayCount` and the same SM-2 quality thresholds (≥0.95→5, ≥0.80→4, ≥0.60→3, ≥0.40→2, else→0)
+- SM-2 is still applied to every `VocabRecord` in `item.vocabIds` regardless of difficulty or which words happen to be blanked — unchanged from today.
+- No live per-character/per-word feedback while typing, for any level — blanks show plain (uncolored) text while editable; coloring only appears on the result screen after submission.
+- "Nộp bài" enablement: Khó — unchanged (`hasPlayedOnce && typedText.trim().isNotEmpty`). Dễ/Trung bình — `hasPlayedOnce && allBlanksFilled` (every blank has non-empty trimmed text).
+- Default difficulty = Khó, both as the `DictationHomeScreen` picker's initial selection and as every new parameter/field's default value.
