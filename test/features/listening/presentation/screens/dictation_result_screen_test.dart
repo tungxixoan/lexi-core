@@ -13,6 +13,8 @@ import 'package:lexi_core/features/vocabulary/domain/repositories/vocab_reposito
 import 'package:lexi_core/features/listening/domain/entities/dictation_item.dart';
 import 'package:lexi_core/features/listening/presentation/providers/dictation_practice_provider.dart';
 import 'package:lexi_core/features/listening/presentation/screens/dictation_result_screen.dart';
+import 'package:lexi_core/features/listening/domain/entities/blank_span.dart';
+import 'package:lexi_core/features/listening/domain/entities/dictation_difficulty.dart';
 
 VocabRecord _record(String id) => VocabRecord(
       id: id,
@@ -212,5 +214,52 @@ void main() {
     // Screen still renders normally despite the fetch failure.
     expect(find.text('Câu khác'), findsOneWidget);
     expect(repo.updated, isEmpty);
+  });
+
+  group('cloze mode (Dễ/Trung bình)', () {
+    // _testItem.target == 'Hello world.' — blank both words, one each.
+    const clozeBlanks = [
+      BlankSpan(startWordIndex: 0, wordCount: 1),
+      BlankSpan(startWordIndex: 1, wordCount: 1),
+    ];
+
+    final clozeResult = DictationSessionResult(
+      item: _testItem,
+      typed: '',
+      replayCount: 0,
+      duration: const Duration(seconds: 3),
+      difficulty: DictationDifficulty.easy,
+      blanks: clozeBlanks,
+      blankAnswers: const ['Hello', 'wrong'],
+    );
+
+    testWidgets(
+        'shows the correct blank answer and reveals the right word for the wrong one',
+        (tester) async {
+      final repo = _CapturingVocabRepository([_record('id1'), _record('id2')]);
+      await tester.pumpWidget(_buildResult(clozeResult, repo));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Hello'), findsWidgets);
+      expect(find.textContaining('wrong'), findsOneWidget);
+      expect(find.textContaining('đúng: world.'), findsOneWidget);
+    });
+
+    testWidgets('shows the score based on blockAccuracy (1 of 2 blanks correct = 50%)',
+        (tester) async {
+      final repo = _CapturingVocabRepository([_record('id1'), _record('id2')]);
+      await tester.pumpWidget(_buildResult(clozeResult, repo));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('50'), findsWidgets);
+    });
+
+    testWidgets('still shows the full correct sentence and Vietnamese translation',
+        (tester) async {
+      final repo = _CapturingVocabRepository([_record('id1'), _record('id2')]);
+      await tester.pumpWidget(_buildResult(clozeResult, repo));
+      await tester.pumpAndSettle();
+      expect(find.text('Hello world.'), findsOneWidget); // "Câu đúng" section
+      expect(find.text('Xin chào thế giới.'), findsOneWidget);
+    });
   });
 }

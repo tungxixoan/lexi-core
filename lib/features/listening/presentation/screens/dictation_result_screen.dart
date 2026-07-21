@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../../vocabulary/presentation/providers/vocab_bank_provider.dart';
+import '../../domain/entities/dictation_difficulty.dart';
 import '../providers/dictation_practice_provider.dart';
 
 class DictationResultScreen extends ConsumerStatefulWidget {
@@ -76,11 +77,14 @@ class _DictationResultScreenState extends ConsumerState<DictationResultScreen> {
             const SizedBox(height: 24),
             Text('Bạn đã gõ', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
-            _DiffText(
-              typed: result.typed,
-              target: result.item.target,
-              style: theme.textTheme.bodyLarge,
-            ),
+            if (result.difficulty == DictationDifficulty.hard)
+              _DiffText(
+                typed: result.typed,
+                target: result.item.target,
+                style: theme.textTheme.bodyLarge,
+              )
+            else
+              _ClozeResult(result: result),
             const SizedBox(height: 16),
             Text('Câu đúng', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
@@ -145,6 +149,57 @@ class _DiffText extends StatelessWidget {
       ));
     }
     return RichText(text: TextSpan(children: spans, style: style));
+  }
+}
+
+class _ClozeResult extends StatelessWidget {
+  const _ClozeResult({required this.result});
+  final DictationSessionResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final baseStyle = theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16);
+    final words = result.item.target
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .toList();
+
+    final spans = <InlineSpan>[];
+    var wordIndex = 0;
+    for (var blankIdx = 0; blankIdx < result.blanks.length; blankIdx++) {
+      final blank = result.blanks[blankIdx];
+      if (blank.startWordIndex > wordIndex) {
+        final visible = words.sublist(wordIndex, blank.startWordIndex).join(' ');
+        spans.add(TextSpan(text: '$visible ', style: baseStyle));
+      }
+      final isCorrect = result.isBlankCorrect(blankIdx);
+      final answer = result.blankAnswers[blankIdx];
+      spans.add(TextSpan(
+        text: answer.isEmpty ? '___' : answer,
+        style: baseStyle.copyWith(
+          color: isCorrect ? Colors.green : theme.colorScheme.error,
+          fontWeight: FontWeight.bold,
+          decoration: TextDecoration.underline,
+        ),
+      ));
+      if (!isCorrect) {
+        spans.add(TextSpan(
+          text: ' (đúng: ${result.targetTextFor(blank)})',
+          style: baseStyle.copyWith(
+            color: theme.colorScheme.error,
+            fontStyle: FontStyle.italic,
+          ),
+        ));
+      }
+      spans.add(TextSpan(text: ' ', style: baseStyle));
+      wordIndex = blank.startWordIndex + blank.wordCount;
+    }
+    if (wordIndex < words.length) {
+      spans.add(TextSpan(text: words.sublist(wordIndex).join(' '), style: baseStyle));
+    }
+
+    return Text.rich(TextSpan(children: spans));
   }
 }
 
