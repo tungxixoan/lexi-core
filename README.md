@@ -47,9 +47,13 @@
 Tab "Luyện nghe" — hub với 2 tính năng con, dùng chung `TtsService` (flutter_tts) có sẵn, không cần package audio mới:
 
 - **Nghe chép (dictation)** — AI tạo một câu vừa-dài dùng ~2 từ từ Vocab Bank; nghe (không tự phát, phải bấm) rồi gõ lại chính xác
-  - Nghe lại không giới hạn số lần, nhưng mỗi lần nghe lại trừ 5% điểm
-  - Chấm điểm cập nhật **SM-2** cho các từ vựng xuất hiện trong câu — khác với Luyện đọc & gõ (không ảnh hưởng SM-2)
-  - Màn hình kết quả: điểm số, số lần nghe lại, thời gian, phần gõ được tô màu đối chiếu với câu đúng
+  - **3 mức độ** (chọn mỗi phiên luyện tập, mặc định Khó):
+    - **Dễ** — điền 2 ô trống 1-từ rời rạc, phần còn lại của câu hiện sẵn (dạng điền khuyết)
+    - **Trung bình** — điền 1 cụm từ liên tục (~35% số từ của câu), phần còn lại hiện sẵn
+    - **Khó** — chép lại toàn bộ câu từ trí nhớ, không hiện gì (mù hoàn toàn)
+  - Nghe lại không giới hạn số lần, nhưng mỗi lần nghe lại trừ 5% điểm — áp dụng cho cả 3 mức độ
+  - Chấm điểm cập nhật **SM-2** cho các từ vựng xuất hiện trong câu — khác với Luyện đọc & gõ (không ảnh hưởng SM-2). Dễ/Trung bình chấm theo số ô điền đúng (không phân biệt hoa/thường); Khó chấm theo từng ký tự — cùng công thức trừ điểm và cùng ngưỡng quy đổi SM-2
+  - Màn hình kết quả: điểm số, số lần nghe lại, thời gian; Khó hiện phần gõ tô màu đối chiếu ký tự, Dễ/Trung bình hiện lại đúng đoạn điền khuyết với từng ô tô xanh (đúng)/đỏ kèm đáp án đúng (sai)
   - Lọc theo Ngôn ngữ / Chủ đề (Topic tag) / Cấp độ, tối thiểu 2 từ khớp bộ lọc
   - Có thể ẩn/hiện trên mobile (mặc định ẩn, bật trong Cài đặt), hiển thị dựa theo bề rộng màn hình (không dùng `kIsWeb`)
 - **Nghe hiểu (TOEIC-style comprehension)** — *sắp ra mắt* — nghe hội thoại 2 người hoặc bài nói 1 người, trả lời trắc nghiệm kiểu TOEIC Part 3–4 (ý chính/chi tiết/ý ngụ ý), không ảnh hưởng SM-2
@@ -346,7 +350,7 @@ flutter test test/features/dictionary/presentation/providers/user_settings_notif
 flutter test --reporter expanded
 ```
 
-Hiện tại: **182 tests** — domain entities, use cases, sources, providers, UI widgets, services.
+Hiện tại: **216 tests** — domain entities, use cases, sources, providers, UI widgets, services.
 
 ### Phân tích code
 
