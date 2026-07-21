@@ -455,6 +455,26 @@ void main() {
       expect(state.isComplete, false);
     });
 
+    test('updateBlankAnswer() with an out-of-range blankIndex is a no-op', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(dictationPracticeNotifierProvider.notifier);
+      await notifier.generate(
+        words: words,
+        level: CEFRLevel.b1,
+        context: AppContext.general,
+        targetLanguage: Language.english,
+        difficulty: DictationDifficulty.easy,
+      );
+
+      expect(() => notifier.updateBlankAnswer(-1, 'quick'), returnsNormally);
+      expect(() => notifier.updateBlankAnswer(2, 'quick'), returnsNormally);
+
+      final state = c.read(dictationPracticeNotifierProvider).value!;
+      expect(state.blankAnswers, ['', '']);
+      expect(state.isComplete, false);
+    });
+
     test('allBlanksFilled is true only once every blank has non-empty text', () async {
       final c = makeContainer();
       addTearDown(c.dispose);

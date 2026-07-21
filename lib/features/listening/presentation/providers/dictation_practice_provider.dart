@@ -188,6 +188,7 @@ class DictationPracticeNotifier extends _$DictationPracticeNotifier {
   void updateBlankAnswer(int blankIndex, String text) {
     final current = state.valueOrNull;
     if (current == null || current.isComplete) return;
+    if (blankIndex < 0 || blankIndex >= current.blankAnswers.length) return;
     final updated = List<String>.from(current.blankAnswers);
     updated[blankIndex] = text;
     state = AsyncData(current.copyWith(blankAnswers: updated));
