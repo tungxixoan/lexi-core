@@ -10,6 +10,7 @@ import '../../../vocabulary/domain/entities/cefr_level.dart';
 import '../../../vocabulary/domain/entities/topic.dart';
 import '../../../vocabulary/domain/entities/vocab_record.dart';
 import '../../../vocabulary/presentation/providers/topics_provider.dart';
+import '../../domain/entities/dictation_difficulty.dart';
 import '../providers/dictation_practice_provider.dart';
 
 class DictationHomeScreen extends ConsumerStatefulWidget {
@@ -26,6 +27,7 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
   late Language _language;
   final Set<String> _topicIds = {};
   CEFRLevel? _level;
+  DictationDifficulty _difficulty = DictationDifficulty.hard;
 
   List<VocabRecord>? _matchingWords; // null while loading
 
@@ -102,6 +104,20 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
     }
   }
 
+  Future<void> _pickDifficulty() async {
+    final result = await showSingleSelectSheet<DictationDifficulty>(
+      context: context,
+      title: 'Mức độ',
+      options: DictationDifficulty.values
+          .map((d) => SelectOption(value: d, label: d.label))
+          .toList(),
+      selected: _difficulty,
+    );
+    if (result != null) {
+      setState(() => _difficulty = result.value);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(userSettingsNotifierProvider);
@@ -153,6 +169,12 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
               label: 'Cấp độ',
               value: _level?.label ?? 'Tất cả',
               onTap: _pickLevel,
+            ),
+            FilterTile(
+              icon: Icons.tune,
+              label: 'Mức độ',
+              value: _difficulty.label,
+              onTap: _pickDifficulty,
             ),
             const SizedBox(height: 16),
 
@@ -225,6 +247,7 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
           level: _level ?? settings.targetCefrLevel ?? CEFRLevel.b1,
           context: settings.activeContext,
           targetLanguage: _language,
+          difficulty: _difficulty,
         );
 
     if (context.mounted) {

@@ -92,6 +92,7 @@ class _FakeSettingsNotifier extends UserSettingsNotifier {
 /// instead of invoking the real (AI-backed) use case.
 class _FakeDictationNotifier extends DictationPracticeNotifier {
   List<VocabRecord>? capturedWords;
+  DictationDifficulty? capturedDifficulty;
   int callCount = 0;
 
   @override
@@ -107,6 +108,7 @@ class _FakeDictationNotifier extends DictationPracticeNotifier {
   }) async {
     callCount++;
     capturedWords = words;
+    capturedDifficulty = difficulty;
     // Leave state as AsyncData(null): the screen only navigates away when
     // the resulting session is non-null, so tests can stay on this screen.
   }
@@ -233,5 +235,31 @@ void main() {
       reason: 'expected both selected words to come from the due set: '
           '${fakeNotifier.capturedWords!.map((r) => r.id)}',
     );
+  });
+
+  testWidgets('shows the Mức độ picker', (tester) async {
+    await tester.pumpWidget(_buildHome(
+      settings: UserSettingsState.defaults.copyWith(aiEnabled: true),
+      vocabItems: List.generate(2, _record),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Mức độ'), findsOneWidget);
+  });
+
+  testWidgets('defaults to Khó and passes it to generate()', (tester) async {
+    final fakeNotifier = _FakeDictationNotifier();
+    await tester.pumpWidget(_buildHome(
+      settings: UserSettingsState.defaults.copyWith(aiEnabled: true),
+      vocabItems: List.generate(2, _record),
+      dictationNotifier: fakeNotifier,
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Khó'), findsOneWidget);
+
+    await tester.tap(find.text('Tạo bài luyện'));
+    await tester.pumpAndSettle();
+
+    expect(fakeNotifier.capturedDifficulty, DictationDifficulty.hard);
   });
 }
