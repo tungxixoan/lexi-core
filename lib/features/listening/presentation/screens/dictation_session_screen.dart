@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../domain/entities/blank_span.dart';
 import '../providers/dictation_practice_provider.dart';
 
 class DictationSessionScreen extends ConsumerStatefulWidget {
@@ -13,6 +14,7 @@ class DictationSessionScreen extends ConsumerStatefulWidget {
 
 class _DictationSessionScreenState extends ConsumerState<DictationSessionScreen> {
   late final TextEditingController _ctrl;
+  List<TextEditingController>? _blankCtrls;
 
   @override
   void initState() {
@@ -23,7 +25,20 @@ class _DictationSessionScreenState extends ConsumerState<DictationSessionScreen>
   @override
   void dispose() {
     _ctrl.dispose();
+    _blankCtrls?.forEach((c) => c.dispose());
     super.dispose();
+  }
+
+  /// Lazily creates one controller per blank, once per screen lifetime —
+  /// blanks never change after generation, so these stay stable across
+  /// rebuilds (unlike constructing a fresh controller in build(), which
+  /// would reset the user's cursor/focus on every keystroke).
+  List<TextEditingController> _blankControllersFor(DictationSessionState session) {
+    _blankCtrls ??= List.generate(
+      session.blanks.length,
+      (i) => TextEditingController(text: session.blankAnswers[i]),
+    );
+    return _blankCtrls!;
   }
 
   @override
@@ -40,6 +55,9 @@ class _DictationSessionScreenState extends ConsumerState<DictationSessionScreen>
             typed: session.typedText,
             replayCount: session.replayCount,
             duration: DateTime.now().difference(session.startedAt),
+            difficulty: session.difficulty,
+            blanks: session.blanks,
+            blankAnswers: session.blankAnswers,
           );
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
@@ -65,7 +83,11 @@ class _DictationSessionScreenState extends ConsumerState<DictationSessionScreen>
         if (session.isComplete) {
           return const Scaffold(body: SizedBox.shrink());
         }
-        return _SessionScaffold(session: session, ctrl: _ctrl);
+        return _SessionScaffold(
+          session: session,
+          ctrl: _ctrl,
+          blankCtrls: session.isClozeMode ? _blankControllersFor(session) : const [],
+        );
       },
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
@@ -75,14 +97,23 @@ class _DictationSessionScreenState extends ConsumerState<DictationSessionScreen>
 }
 
 class _SessionScaffold extends ConsumerWidget {
-  const _SessionScaffold({required this.session, required this.ctrl});
+  const _SessionScaffold({
+    required this.session,
+    required this.ctrl,
+    required this.blankCtrls,
+  });
+
   final DictationSessionState session;
   final TextEditingController ctrl;
+  final List<TextEditingController> blankCtrls;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(dictationPracticeNotifierProvider.notifier);
-    final canSubmit = session.hasPlayedOnce && session.typedText.trim().isNotEmpty;
+    final canSubmit = session.hasPlayedOnce &&
+        (session.isClozeMode
+            ? session.allBlanksFilled
+            : session.typedText.trim().isNotEmpty);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Nghe chép'), automaticallyImplyLeading: false),
@@ -104,15 +135,23 @@ class _SessionScaffold extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 32),
-            TextField(
-              controller: ctrl,
-              maxLines: null,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'Gõ lại những gì bạn nghe được...',
+            if (session.isClozeMode)
+              _ClozeInput(
+                target: session.item.target,
+                blanks: session.blanks,
+                controllers: blankCtrls,
+                onBlankChanged: notifier.updateBlankAnswer,
+              )
+            else
+              TextField(
+                controller: ctrl,
+                maxLines: null,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: 'Gõ lại những gì bạn nghe được...',
+                ),
+                onChanged: notifier.updateTypedText,
               ),
-              onChanged: notifier.updateTypedText,
-            ),
             const Spacer(),
             FilledButton(
               onPressed: canSubmit ? notifier.submit : null,
@@ -121,6 +160,66 @@ class _SessionScaffold extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Renders [target] with each [blanks] entry replaced by an inline editable
+/// text field, and everything else as plain visible text — a cloze
+/// (fill-in-the-blank) layout for Dễ/Trung bình.
+class _ClozeInput extends StatelessWidget {
+  const _ClozeInput({
+    required this.target,
+    required this.blanks,
+    required this.controllers,
+    required this.onBlankChanged,
+  });
+
+  final String target;
+  final List<BlankSpan> blanks;
+  final List<TextEditingController> controllers;
+  final void Function(int blankIndex, String text) onBlankChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final words = target.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    final theme = Theme.of(context);
+    final baseStyle = theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16);
+
+    final children = <Widget>[];
+    var wordIndex = 0;
+    for (var blankIdx = 0; blankIdx < blanks.length; blankIdx++) {
+      final blank = blanks[blankIdx];
+      if (blank.startWordIndex > wordIndex) {
+        final visible = words.sublist(wordIndex, blank.startWordIndex).join(' ');
+        children.add(Text('$visible ', style: baseStyle));
+      }
+      children.add(
+        IntrinsicWidth(
+          child: TextField(
+            key: ValueKey('blank-$blankIdx'),
+            controller: controllers[blankIdx],
+            style: baseStyle,
+            textAlign: TextAlign.center,
+            decoration: const InputDecoration(
+              isDense: true,
+              border: UnderlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(horizontal: 4),
+            ),
+            onChanged: (text) => onBlankChanged(blankIdx, text),
+          ),
+        ),
+      );
+      children.add(const Text(' '));
+      wordIndex = blank.startWordIndex + blank.wordCount;
+    }
+    if (wordIndex < words.length) {
+      children.add(Text(words.sublist(wordIndex).join(' '), style: baseStyle));
+    }
+
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: children,
     );
   }
 }

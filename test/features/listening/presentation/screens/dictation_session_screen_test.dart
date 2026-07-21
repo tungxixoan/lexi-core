@@ -6,6 +6,8 @@ import 'package:lexi_core/core/di/app_providers.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
+import 'package:lexi_core/features/listening/domain/entities/blank_span.dart';
+import 'package:lexi_core/features/listening/domain/entities/dictation_difficulty.dart';
 import 'package:lexi_core/features/listening/domain/entities/dictation_item.dart';
 import 'package:lexi_core/features/listening/presentation/providers/dictation_practice_provider.dart';
 import 'package:lexi_core/features/listening/presentation/screens/dictation_session_screen.dart';
@@ -39,6 +41,9 @@ DictationSessionState _session({
   int replayCount = 0,
   bool hasPlayedOnce = false,
   bool isComplete = false,
+  DictationDifficulty difficulty = DictationDifficulty.hard,
+  List<BlankSpan> blanks = const [],
+  List<String> blankAnswers = const [],
 }) =>
     DictationSessionState(
       item: _testItem,
@@ -47,6 +52,9 @@ DictationSessionState _session({
       hasPlayedOnce: hasPlayedOnce,
       startedAt: DateTime(2026),
       isComplete: isComplete,
+      difficulty: difficulty,
+      blanks: blanks,
+      blankAnswers: blankAnswers,
     );
 
 class _FakeDictationNotifier extends DictationPracticeNotifier {
@@ -178,5 +186,74 @@ void main() {
     expect(result.item, _testItem);
     expect(result.typed, 'Hello world.');
     expect(result.replayCount, 1);
+  });
+
+  group('cloze mode (Dễ/Trung bình)', () {
+    // _testItem.target == 'Hello world.' — 2 words: blank both, one each.
+    const clozeBlanks = [
+      BlankSpan(startWordIndex: 0, wordCount: 1),
+      BlankSpan(startWordIndex: 1, wordCount: 1),
+    ];
+
+    testWidgets('shows one input per blank instead of the hard-mode single TextField',
+        (tester) async {
+      await tester.pumpWidget(_buildSession(_session(
+        difficulty: DictationDifficulty.easy,
+        blanks: clozeBlanks,
+        blankAnswers: const ['', ''],
+        hasPlayedOnce: true,
+      )));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('blank-0')), findsOneWidget);
+      expect(find.byKey(const ValueKey('blank-1')), findsOneWidget);
+    });
+
+    testWidgets('Nộp bài is disabled until every blank is filled', (tester) async {
+      await tester.pumpWidget(_buildSession(_session(
+        difficulty: DictationDifficulty.easy,
+        blanks: clozeBlanks,
+        blankAnswers: const ['Hello', ''],
+        hasPlayedOnce: true,
+      )));
+      await tester.pumpAndSettle();
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Nộp bài'),
+      );
+      expect(button.onPressed, isNull);
+    });
+
+    testWidgets(
+        'Nộp bài is enabled once every blank is filled and submits with the typed answers',
+        (tester) async {
+      Object? capturedExtra;
+      await tester.pumpWidget(_buildSession(
+        _session(
+          difficulty: DictationDifficulty.easy,
+          blanks: clozeBlanks,
+          blankAnswers: const ['', ''],
+          hasPlayedOnce: true,
+        ),
+        onResult: (extra) => capturedExtra = extra,
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byKey(const ValueKey('blank-0')), 'Hello');
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const ValueKey('blank-1')), 'world.');
+      await tester.pumpAndSettle();
+
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Nộp bài'),
+      );
+      expect(button.onPressed, isNotNull);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Nộp bài'));
+      await tester.pumpAndSettle();
+
+      expect(capturedExtra, isA<DictationSessionResult>());
+      final result = capturedExtra! as DictationSessionResult;
+      expect(result.blankAnswers, ['Hello', 'world.']);
+      expect(result.difficulty, DictationDifficulty.easy);
+    });
   });
 }
