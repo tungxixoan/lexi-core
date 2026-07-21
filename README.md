@@ -56,7 +56,12 @@ Tab "Luyện nghe" — hub với 2 tính năng con, dùng chung `TtsService` (fl
   - Màn hình kết quả: điểm số, số lần nghe lại, thời gian; Khó hiện phần gõ tô màu đối chiếu ký tự, Dễ/Trung bình hiện lại đúng đoạn điền khuyết với từng ô tô xanh (đúng)/đỏ kèm đáp án đúng (sai)
   - Lọc theo Ngôn ngữ / Chủ đề (Topic tag) / Cấp độ, tối thiểu 2 từ khớp bộ lọc
   - Có thể ẩn/hiện trên mobile (mặc định ẩn, bật trong Cài đặt), hiển thị dựa theo bề rộng màn hình (không dùng `kIsWeb`)
-- **Nghe hiểu (TOEIC-style comprehension)** — *sắp ra mắt* — nghe hội thoại 2 người hoặc bài nói 1 người, trả lời trắc nghiệm kiểu TOEIC Part 3–4 (ý chính/chi tiết/ý ngụ ý), không ảnh hưởng SM-2
+- **Nghe hiểu (TOEIC-style comprehension)** — AI tạo ngẫu nhiên một hội thoại 2 người (nhãn "A"/"B", đổi cao độ giọng để phân biệt) hoặc một bài nói 1 người, cộng đúng 3 câu hỏi trắc nghiệm 4 đáp án (ý chính/chi tiết/ý ngụ ý — không điền từ), bằng ngôn ngữ mục tiêu giống TOEIC thật
+  - Điều khiển nghe theo từng lượt: ⏮ lượt trước / ▶️⏸ phát-dừng / ⏭ lượt sau / 🔁 phát lại từ đầu — không có thanh tua liên tục
+  - Nghe lại/tua thoải mái, **không trừ điểm** (khác Nghe chép) — mục tiêu là luyện hiểu, không phải áp lực thi 1 lần
+  - Trả lời cả 3 câu rồi mới nộp bài; kết quả hiện điểm X/3, phân tích từng câu, và toàn bộ bản ghi hội thoại/bài nói
+  - Lọc theo Ngôn ngữ / Chủ đề (**AppContext** — Business/Travel/...) / Cấp độ — không cần Vocab Bank, không có ngưỡng số từ tối thiểu
+  - **Không ảnh hưởng SM-2** — không có từ vựng cụ thể nào để gắn điểm vào
 
 ### Tiến độ học tập (Progress Dashboard)
 - Tổng số từ đã học
@@ -176,13 +181,15 @@ lib/
 │   │
 │   ├── listening/
 │   │   ├── data/sources/
-│   │   │   └── dictation_source.dart           # AI sentence gen (dùng AiClientFactory)
+│   │   │   ├── dictation_source.dart           # AI sentence gen (dùng AiClientFactory)
+│   │   │   └── listening_passage_source.dart   # AI conversation/talk gen (dùng AiClientFactory)
 │   │   ├── domain/
-│   │   │   ├── entities/    # DictationItem
-│   │   │   └── use_cases/   # GenerateDictationItem
+│   │   │   ├── entities/    # DictationItem, ListeningPassage, ListeningTurn, ListeningQuestion
+│   │   │   └── use_cases/   # GenerateDictationItem, GenerateListeningPassage
 │   │   └── presentation/
-│   │       ├── providers/   # DictationPracticeNotifier
-│   │       └── screens/     # ListeningHome (hub), DictationHome, DictationSession, DictationResult
+│   │       ├── providers/   # DictationPracticeNotifier, ListeningComprehensionNotifier
+│   │       └── screens/     # ListeningHome (hub), DictationHome/Session/Result,
+│   │                        # ComprehensionHome/Session/Result
 │   │
 │   └── settings/
 │       └── presentation/
@@ -205,7 +212,8 @@ UserSettingsNotifier (SharedPreferences)
                       ├─ GeminiDictionarySource
                       ├─ ExerciseGeneratorSource
                       ├─ ReadingPassageSource
-                      └─ DictationSource
+                      ├─ DictationSource
+                      └─ ListeningPassageSource
 ```
 
 ### Luồng đồng bộ
@@ -350,7 +358,7 @@ flutter test test/features/dictionary/presentation/providers/user_settings_notif
 flutter test --reporter expanded
 ```
 
-Hiện tại: **216 tests** — domain entities, use cases, sources, providers, UI widgets, services.
+Hiện tại: **256 tests** — domain entities, use cases, sources, providers, UI widgets, services.
 
 ### Phân tích code
 
@@ -448,7 +456,7 @@ users/
 - [ ] Hỗ trợ thêm ngôn ngữ (French, Spanish, German)
 - [ ] Export/Import từ vựng (CSV, Anki)
 - [x] Nghe chép (listening dictation)
-- [ ] Nghe hiểu (TOEIC-style listening comprehension)
+- [x] Nghe hiểu (TOEIC-style listening comprehension)
 - [ ] Widget màn hình chính hiển thị từ ngẫu nhiên
 - [ ] Tìm kiếm full-text trong ngân hàng từ
 - [ ] Thống kê học tập nâng cao (heatmap, phân tích lỗi)
