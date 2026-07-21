@@ -223,3 +223,93 @@
 
 - Task 2: `defaults` map non-empty while fresh `build()` yields empty `providerConfigs` — harmless (activeConfig falls back via ProviderConfig.empty)
 - Task 2: `AiProvider.values.byName()` unguarded — consistent with existing codebase risk tolerance
+
+---
+
+# LexiCore Plan 9 — "Luyện nghe" Tab + Nghe chép (Dictation)
+
+**BASE commit (Plan 9 start):** 6a4ce274cadf7cc64a31b712bf50e2e69940fa84
+**Plan file:** docs/superpowers/plans/2026-07-19-plan9-listening-dictation.md
+**Task files:** docs/superpowers/plans/tasks/plan9-task-{01..08}.md
+
+**Pre-flight note:** diff/scoring algorithm is position-by-position character compare (not edit-distance) per plan — human explicitly approved allowing a switch to edit-distance if a reviewer proposes it (not plan-mandated-immune).
+
+## Status
+
+- Task 01: ✅ complete (commit d95b5ff, 20/20 tests, review clean)
+- Task 02: ✅ complete (commit e406f42, 2/2 tests, review clean)
+- Task 03: ✅ complete (commit cc96598, 5/5 tests, review clean)
+- Task 04: ✅ complete (commits b22210c+38caf21, 164/164 tests, review clean after fix)
+  Fixed: added DictationPracticeNotifier lifecycle tests (play() no-autoplay semantics, generate/updateTypedText/submit/reset)
+- Task 05: ✅ complete (commits b5bb5dd+1ddec2e, 170/170 tests, review clean after fix)
+  Fixed: added due-priority 2-word selection tests
+  Aside: ae96b51 regenerated a stale codegen hash unrelated to this task
+- Task 06: ✅ complete (commits ee622d4+f3b5790, 177/177 tests, review clean after fix)
+  Fixed: added replay-count-increment test + submit-to-result-navigation test
+- Task 07: ✅ complete (commits 4053948+d492c36, 182/182 tests, review clean after fix)
+  Note: implementer found+fixed a real race in the brief (vocabBankProvider returns [] while loading; switched to awaiting vocabBankNotifierProvider.future)
+  Fixed: wrapped the awaited fetch in the same best-effort try/catch as per-record updates
+- Task 08: ✅ complete (commit c115ab7, 182/182 tests, review clean)
+
+## Final Whole-Branch Review
+
+**Commits reviewed:** 6a4ce27..c115ab7 (13 commits)
+**Status:** ✅ Ready to merge (Yes)
+
+**Strengths:** faithful mirror of Reading feature; SM-2 asymmetry (Dictation updates it, Reading never does) confirmed real and non-leaking; no-autoplay holds end-to-end; kIsWeb->width fix applied consistently to both tabs, no stale kIsWeb visibility logic left; Task 07 race fix well-guarded; tests verify real behavior (actual SM-2 state, not just verify() calls).
+
+**Important (flagged for human decision, not a merge blocker):**
+- Positional character-diff scoring cascades badly for blind dictation specifically (unlike Reading, where the target is visible while typing) — one dropped/inserted early character collapses the rest of the score, feeding a bad SM-2 quality on words the user may actually know. Spec-sanctioned known limitation (§3.4), reviewer explicitly invited to flag it, human previously said this is not immune to being changed if a reviewer proposes edit-distance.
+
+**Minor (not blocking):**
+- GradeDictationUseCase from spec's file map folded into DictationSessionResult getters + DictationResultScreen inline instead of a standalone use case — intentional, matches Plan 3/5 SessionResultScreen convention.
+- Hardcoded Colors.green in diff view (not theme-adaptive) — copied from reading_session_screen.dart, systemic not new.
+- AI JSON parsing doesn't strip ```json fences — same as ReadingPassageSource, systemic not new.
+- TTS not stopped on navigation away from session screen (minor UX only).
+- No test asserts TTS speakCount==0 on session entry (no-autoplay is structurally solid but unguarded by a regression test).
+
+**Remaining decision for the human:** whether to fix the positional-diff scoring now (edit-distance) or accept it as-is for this plan.
+
+**Human decision:** keep positional-diff scoring as-is for this plan (known limitation, spec-documented); improve to edit-distance in a future task/plan if revisited.
+
+---
+
+# LexiCore — Nghe chép Difficulty Levels (Dễ/Trung bình/Khó)
+
+**BASE commit:** 8f32606
+**Plan file:** docs/superpowers/plans/2026-07-20-dictation-difficulty-levels.md
+**Task files:** docs/superpowers/plans/tasks/dictation-difficulty-task-{01..06}.md
+
+**Pre-flight note:** scanned for conflicts against global constraints — none found. All new fields/params are additive with defaults reproducing today's Khó-only behavior; no plan-mandated design tension flagged this round.
+
+## Status
+
+- Task 01: ✅ complete (commits 225e6d4+12a54f0, 195/195 tests, review clean after fix)
+  Fixed: Dễ adjacency-avoidance was gated on `range` instead of `wordCount>=6`, causing short sentences to wrongly avoid adjacent blanks; added regression test + boundary-case tests
+- Task 02: ✅ complete (commits b3e7c3a+0d2461b, 206/206 tests, review clean after fix)
+  Fixed: bounds-checked updateBlankAnswer against out-of-range blankIndex
+  Zero-behavior-change-for-Khó guarantee independently verified byte-for-byte by reviewer
+- Task 03: ✅ complete (commit 95a99a6, 208/208 tests, review clean)
+- Task 04: ✅ complete (commits cf6ff43+f7ef0b1, 213/213 tests, review clean after fix)
+  Fixed: added visible-text interleaving test (9-word fixture) + multi-word (Trung bình) blank test
+- Task 05: ✅ complete (commit ca07108, 216/216 tests, review clean)
+  Note: implementer deviated RichText->Text.rich for testability (reviewer verified sound + consistent with existing _DiffText behavior)
+- Task 06: ✅ complete (commit 133d985, 216/216 tests, review clean)
+
+## Final Whole-Branch Review
+
+**Commits reviewed:** 8f32606..133d985 (9 commits)
+**Status:** ✅ Ready to merge (Yes)
+
+**Strengths:** Khó path verified identical to pre-branch production at every hop (traced end-to-end); cross-task type consistency clean; all 4 earlier task-level fixes hold up; tests verify real behavior (seed sweeps, actual interleaving/multi-word rendering); 216/216 passing, analyzer clean.
+
+**Important (not a merge blocker, human decision):**
+- Punctuation attached to a blanked word (e.g. "fox," "world.") isn't stripped by `_normalize()`, so a user who types the word correctly without matching punctuation is marked wrong. Only affects Dễ/Trung bình block-accuracy scoring; Khó's char-scoring is untouched.
+
+**Minor (not fixed, logged for awareness):**
+- Empty cloze blank TextField has a tiny initial tap target (IntrinsicWidth collapses near-zero before typing).
+- _ClozeInput (session) and _ClozeResult (result) duplicate the same "walk words against blanks" interleaving algorithm (~15 lines each) — accepted as fine for 2 call sites.
+- Pre-sorted-blanks invariant assumed by both cloze widgets, undocumented/unenforced.
+- Redundant double-space between a blank and following visible text (cosmetic).
+
+**Post-review fix applied:** 5185e0b strips leading/trailing punctuation (Unicode-aware, \p{L}/\p{N}) when grading Dễ/Trung bình blanks — fixes the Important finding above. Reviewed clean (219/219 tests). Branch is now final.
