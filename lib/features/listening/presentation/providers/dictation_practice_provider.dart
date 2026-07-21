@@ -53,8 +53,16 @@ final class DictationSessionResult {
       .take(blank.wordCount)
       .join(' ');
 
-  String _normalize(String s) =>
-      s.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+  static final RegExp _edgePunctuation =
+      RegExp(r'^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$', unicode: true);
+
+  String _normalize(String s) => s
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .split(' ')
+      .map((word) => word.replaceAll(_edgePunctuation, ''))
+      .join(' ');
 
   bool isBlankCorrect(int index) =>
       _normalize(blankAnswers[index]) == _normalize(targetTextFor(blanks[index]));

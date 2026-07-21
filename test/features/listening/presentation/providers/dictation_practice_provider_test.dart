@@ -199,6 +199,71 @@ void main() {
       );
       expect(halfCorrect.sm2Quality, 2); // blockAccuracy 0.5 >= 0.40
     });
+
+    test('isBlankCorrect strips trailing punctuation attached to the target word', () {
+      // "fox," has a comma glued on by whitespace-only tokenization; typing
+      // "fox" without the comma should still be graded correct.
+      final result = DictationSessionResult(
+        item: _item('The quick brown fox, jumps'),
+        typed: '',
+        replayCount: 0,
+        duration: const Duration(seconds: 1),
+        difficulty: DictationDifficulty.easy,
+        blanks: const [BlankSpan(startWordIndex: 3, wordCount: 1)], // "fox,"
+        blankAnswers: const ['fox'],
+      );
+      expect(result.isBlankCorrect(0), isTrue);
+    });
+
+    test('isBlankCorrect strips leading/trailing quotes and sentence-ending periods', () {
+      final quoted = DictationSessionResult(
+        item: _item('She said "hello" loudly'),
+        typed: '',
+        replayCount: 0,
+        duration: const Duration(seconds: 1),
+        difficulty: DictationDifficulty.easy,
+        blanks: const [BlankSpan(startWordIndex: 2, wordCount: 1)], // '"hello"'
+        blankAnswers: const ['hello'],
+      );
+      expect(quoted.isBlankCorrect(0), isTrue);
+
+      final sentenceEnd = DictationSessionResult(
+        item: _item('Hello world.'),
+        typed: '',
+        replayCount: 0,
+        duration: const Duration(seconds: 1),
+        difficulty: DictationDifficulty.easy,
+        blanks: const [BlankSpan(startWordIndex: 1, wordCount: 1)], // "world."
+        blankAnswers: const ['World'],
+      );
+      expect(sentenceEnd.isBlankCorrect(0), isTrue);
+    });
+
+    test('isBlankCorrect does NOT strip internal punctuation (apostrophes/hyphens)', () {
+      // Target word itself is "don't" — an answer missing the apostrophe
+      // must still be marked incorrect, proving we only strip edges.
+      final result = DictationSessionResult(
+        item: _item("I don't know"),
+        typed: '',
+        replayCount: 0,
+        duration: const Duration(seconds: 1),
+        difficulty: DictationDifficulty.easy,
+        blanks: const [BlankSpan(startWordIndex: 1, wordCount: 1)], // "don't"
+        blankAnswers: const ['dont'],
+      );
+      expect(result.isBlankCorrect(0), isFalse);
+
+      final exactMatch = DictationSessionResult(
+        item: _item("I don't know"),
+        typed: '',
+        replayCount: 0,
+        duration: const Duration(seconds: 1),
+        difficulty: DictationDifficulty.easy,
+        blanks: const [BlankSpan(startWordIndex: 1, wordCount: 1)], // "don't"
+        blankAnswers: const ["don't"],
+      );
+      expect(exactMatch.isBlankCorrect(0), isTrue);
+    });
   });
 
   group('DictationPracticeNotifier lifecycle', () {
