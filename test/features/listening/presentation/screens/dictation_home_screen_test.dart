@@ -8,6 +8,7 @@ import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
+import 'package:lexi_core/features/listening/domain/entities/dictation_difficulty.dart';
 import 'package:lexi_core/features/listening/presentation/providers/dictation_practice_provider.dart';
 import 'package:lexi_core/features/listening/presentation/screens/dictation_home_screen.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
@@ -102,6 +103,7 @@ class _FakeDictationNotifier extends DictationPracticeNotifier {
     required AppContext context,
     required Language targetLanguage,
     required CEFRLevel level,
+    DictationDifficulty difficulty = DictationDifficulty.hard,
   }) async {
     callCount++;
     capturedWords = words;

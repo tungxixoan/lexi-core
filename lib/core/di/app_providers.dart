@@ -34,6 +34,7 @@ import '../../features/reading/domain/use_cases/generate_reading_passage_use_cas
 // --- Listening DI (Plan 9) ---
 import '../../features/listening/data/sources/dictation_source.dart';
 import '../../features/listening/domain/use_cases/generate_dictation_item_use_case.dart';
+import '../../features/listening/domain/use_cases/select_dictation_blanks_use_case.dart';
 
 part 'app_providers.g.dart';
 
@@ -154,3 +155,8 @@ DictationSource dictationSource(DictationSourceRef ref) {
 GenerateDictationItemUseCase generateDictationItemUseCase(
         GenerateDictationItemUseCaseRef ref) =>
     GenerateDictationItemUseCase(ref.watch(dictationSourceProvider));
+
+@riverpod
+SelectDictationBlanksUseCase selectDictationBlanksUseCase(
+        SelectDictationBlanksUseCaseRef ref) =>
+    const SelectDictationBlanksUseCase();

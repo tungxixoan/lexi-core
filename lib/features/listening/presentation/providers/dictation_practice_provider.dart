@@ -4,6 +4,8 @@ import '../../../dictionary/domain/entities/app_context.dart';
 import '../../../dictionary/domain/entities/language.dart';
 import '../../../vocabulary/domain/entities/cefr_level.dart';
 import '../../../vocabulary/domain/entities/vocab_record.dart';
+import '../../domain/entities/blank_span.dart';
+import '../../domain/entities/dictation_difficulty.dart';
 import '../../domain/entities/dictation_item.dart';
 
 part 'dictation_practice_provider.g.dart';
@@ -14,12 +16,18 @@ final class DictationSessionResult {
     required this.typed,
     required this.replayCount,
     required this.duration,
+    this.difficulty = DictationDifficulty.hard,
+    this.blanks = const [],
+    this.blankAnswers = const [],
   });
 
   final DictationItem item;
   final String typed;
   final int replayCount;
   final Duration duration;
+  final DictationDifficulty difficulty;
+  final List<BlankSpan> blanks;
+  final List<String> blankAnswers;
 
   int get totalChars => item.target.length;
 
@@ -36,8 +44,32 @@ final class DictationSessionResult {
 
   double get charAccuracy => totalChars == 0 ? 1.0 : correctChars / totalChars;
 
-  double get finalScore =>
-      (charAccuracy - 0.05 * replayCount).clamp(0.0, 1.0);
+  List<String> get _targetWords =>
+      item.target.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+
+  /// The correct text for [blank] — one or more words joined by a single space.
+  String targetTextFor(BlankSpan blank) => _targetWords
+      .skip(blank.startWordIndex)
+      .take(blank.wordCount)
+      .join(' ');
+
+  String _normalize(String s) =>
+      s.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+
+  bool isBlankCorrect(int index) =>
+      _normalize(blankAnswers[index]) == _normalize(targetTextFor(blanks[index]));
+
+  double get blockAccuracy {
+    if (blanks.isEmpty) return 1.0;
+    final correctCount =
+        List.generate(blanks.length, (i) => i).where(isBlankCorrect).length;
+    return correctCount / blanks.length;
+  }
+
+  double get _rawAccuracy =>
+      difficulty == DictationDifficulty.hard ? charAccuracy : blockAccuracy;
+
+  double get finalScore => (_rawAccuracy - 0.05 * replayCount).clamp(0.0, 1.0);
 
   int get sm2Quality {
     final score = finalScore;
@@ -57,6 +89,9 @@ final class DictationSessionState {
     required this.hasPlayedOnce,
     required this.startedAt,
     required this.isComplete,
+    this.difficulty = DictationDifficulty.hard,
+    this.blanks = const [],
+    this.blankAnswers = const [],
   });
 
   final DictationItem item;
@@ -65,12 +100,21 @@ final class DictationSessionState {
   final bool hasPlayedOnce;
   final DateTime startedAt;
   final bool isComplete;
+  final DictationDifficulty difficulty;
+  final List<BlankSpan> blanks;
+  final List<String> blankAnswers;
+
+  bool get isClozeMode => difficulty != DictationDifficulty.hard;
+
+  bool get allBlanksFilled =>
+      blankAnswers.isNotEmpty && blankAnswers.every((a) => a.trim().isNotEmpty);
 
   DictationSessionState copyWith({
     String? typedText,
     int? replayCount,
     bool? hasPlayedOnce,
     bool? isComplete,
+    List<String>? blankAnswers,
   }) =>
       DictationSessionState(
         item: item,
@@ -79,6 +123,9 @@ final class DictationSessionState {
         hasPlayedOnce: hasPlayedOnce ?? this.hasPlayedOnce,
         startedAt: startedAt,
         isComplete: isComplete ?? this.isComplete,
+        difficulty: difficulty,
+        blanks: blanks,
+        blankAnswers: blankAnswers ?? this.blankAnswers,
       );
 }
 
@@ -92,6 +139,7 @@ class DictationPracticeNotifier extends _$DictationPracticeNotifier {
     required CEFRLevel level,
     required AppContext context,
     required Language targetLanguage,
+    DictationDifficulty difficulty = DictationDifficulty.hard,
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
@@ -101,6 +149,9 @@ class DictationPracticeNotifier extends _$DictationPracticeNotifier {
             context: context,
             targetLanguage: targetLanguage,
           );
+      final blanks = ref
+          .read(selectDictationBlanksUseCaseProvider)
+          .execute(item.target, difficulty);
       return DictationSessionState(
         item: item,
         typedText: '',
@@ -108,6 +159,9 @@ class DictationPracticeNotifier extends _$DictationPracticeNotifier {
         hasPlayedOnce: false,
         startedAt: DateTime.now(),
         isComplete: false,
+        difficulty: difficulty,
+        blanks: blanks,
+        blankAnswers: List.filled(blanks.length, ''),
       );
     });
   }
@@ -129,6 +183,14 @@ class DictationPracticeNotifier extends _$DictationPracticeNotifier {
     final current = state.valueOrNull;
     if (current == null || current.isComplete) return;
     state = AsyncData(current.copyWith(typedText: text));
+  }
+
+  void updateBlankAnswer(int blankIndex, String text) {
+    final current = state.valueOrNull;
+    if (current == null || current.isComplete) return;
+    final updated = List<String>.from(current.blankAnswers);
+    updated[blankIndex] = text;
+    state = AsyncData(current.copyWith(blankAnswers: updated));
   }
 
   void submit() {
