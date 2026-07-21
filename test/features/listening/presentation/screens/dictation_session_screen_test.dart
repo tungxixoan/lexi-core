@@ -37,6 +37,7 @@ final _testItem = DictationItem(
 );
 
 DictationSessionState _session({
+  DictationItem? item,
   String typedText = '',
   int replayCount = 0,
   bool hasPlayedOnce = false,
@@ -46,7 +47,7 @@ DictationSessionState _session({
   List<String> blankAnswers = const [],
 }) =>
     DictationSessionState(
-      item: _testItem,
+      item: item ?? _testItem,
       typedText: typedText,
       replayCount: replayCount,
       hasPlayedOnce: hasPlayedOnce,
@@ -254,6 +255,95 @@ void main() {
       final result = capturedExtra! as DictationSessionResult;
       expect(result.blankAnswers, ['Hello', 'world.']);
       expect(result.difficulty, DictationDifficulty.easy);
+    });
+
+    // clozeBlanks above blanks both words of the 2-word _testItem, so it
+    // never exercises the visible-text-between-blanks branch of
+    // _ClozeInput, nor a multi-word (wordCount > 1) blank. Use a longer
+    // sentence for those two cases.
+    // Word indices: 0 The, 1 quick, 2 brown, 3 fox, 4 jumps, 5 over,
+    // 6 the, 7 lazy, 8 dog.
+    final longItem = DictationItem(
+      id: 'item-2',
+      target: 'The quick brown fox jumps over the lazy dog',
+      vietnamese: 'Con cáo nâu nhanh nhẹn nhảy qua con chó lười biếng',
+      vocabIds: const [],
+      level: CEFRLevel.b1,
+      context: AppContext.general,
+      targetLanguage: Language.english,
+      generatedAt: DateTime(2026),
+    );
+
+    testWidgets(
+        'renders visible text before, between, and after non-adjacent blanks',
+        (tester) async {
+      const blanks = [
+        BlankSpan(startWordIndex: 1, wordCount: 1), // "quick"
+        BlankSpan(startWordIndex: 6, wordCount: 1), // "the"
+      ];
+      await tester.pumpWidget(_buildSession(_session(
+        item: longItem,
+        difficulty: DictationDifficulty.easy,
+        blanks: blanks,
+        blankAnswers: const ['', ''],
+        hasPlayedOnce: true,
+      )));
+      await tester.pumpAndSettle();
+
+      // Visible segments before the first blank, between the two blanks,
+      // and after the second blank must actually render as plain text.
+      expect(find.text('The '), findsOneWidget);
+      expect(find.text('brown fox jumps over '), findsOneWidget);
+      expect(find.text('lazy dog'), findsOneWidget);
+
+      // Both blanks are still rendered as inputs.
+      expect(find.byKey(const ValueKey('blank-0')), findsOneWidget);
+      expect(find.byKey(const ValueKey('blank-1')), findsOneWidget);
+    });
+
+    testWidgets(
+        'a multi-word (Trung bình) blank renders as a single TextField and '
+        'submits the typed phrase as one blankAnswers entry', (tester) async {
+      const blanks = [
+        BlankSpan(startWordIndex: 2, wordCount: 3), // "brown fox jumps"
+      ];
+      Object? capturedExtra;
+      await tester.pumpWidget(_buildSession(
+        _session(
+          item: longItem,
+          difficulty: DictationDifficulty.medium,
+          blanks: blanks,
+          blankAnswers: const [''],
+          hasPlayedOnce: true,
+        ),
+        onResult: (extra) => capturedExtra = extra,
+      ));
+      await tester.pumpAndSettle();
+
+      // Visible context on both sides of the single 3-word blank.
+      expect(find.text('The quick '), findsOneWidget);
+      expect(find.text('over the lazy dog'), findsOneWidget);
+
+      // One TextField stands in for all 3 words — not one per word.
+      expect(find.byKey(const ValueKey('blank-0')), findsOneWidget);
+      expect(find.byKey(const ValueKey('blank-1')), findsNothing);
+
+      await tester.enterText(
+          find.byKey(const ValueKey('blank-0')), 'brown fox jumps');
+      await tester.pumpAndSettle();
+
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Nộp bài'),
+      );
+      expect(button.onPressed, isNotNull);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Nộp bài'));
+      await tester.pumpAndSettle();
+
+      expect(capturedExtra, isA<DictationSessionResult>());
+      final result = capturedExtra! as DictationSessionResult;
+      expect(result.blankAnswers, ['brown fox jumps']);
+      expect(result.difficulty, DictationDifficulty.medium);
     });
   });
 }
