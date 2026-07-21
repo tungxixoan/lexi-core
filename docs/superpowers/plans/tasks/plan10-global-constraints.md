@@ -1,0 +1,25 @@
+# Plan 10 — Global Constraints
+
+- Flutter SDK >=3.22.0, Dart >=3.4.0
+- Target platforms: Android, iOS, Web (all already enabled)
+- Riverpod 2.x with `@riverpod` annotation — no StateNotifier, no ChangeNotifier
+- Navigation: GoRouter only — no `Navigator.push`
+- All domain entities: immutable, `const` constructors, no public setters; mutation via `copyWith`
+- AI calls go through `AiClientFactory.buildClient(settings)` / `GenerativeModelClient` (from `lib/core/services/ai_client_factory.dart`) — never construct a `GenerativeModel` directly.
+- **No Vocab Bank dependency, no minimum-word gate** — unlike Dictation, comprehension content is a generic AI-generated scenario. The only gate is `settings.aiEnabled`.
+- **No SM-2 impact whatsoever** — comprehension sessions never call `ComputeSm2UseCase` or `updateVocabUseCaseProvider`. There is no specific vocab word to attribute a conversation-level score to.
+- "Chủ đề" on the comprehension home screen means **AppContext** (the 8-value enum: General/Business/Technology/Travel/Food & Drink/Health/Academic/Social-Casual), **not** Topic tag — this is the opposite of Dictation's "Chủ đề" (which means Topic tag). Each feature's "Chủ đề" maps to whatever it actually filters/shapes.
+- Passage kind is chosen **randomly by the AI prompt** (conversation vs. talk), not by the user — the prompt asks for one of the two per generation.
+- Conversation speakers are constrained to exactly the labels `"A"` and `"B"` in the AI prompt (never other names) — this keeps the pitch-per-speaker logic a simple string comparison, not a lookup keyed by whatever the AI decides to call people.
+- A "talk" (single speaker) is still split into 2–4 turns (all with `speaker: null`) rather than returned as one long block, so the same per-turn navigation controls (⏮/⏭) work uniformly regardless of kind.
+- Exactly 3 questions per passage, each with exactly 4 options — enforced in the AI prompt, not validated post-generation (same convention as Reading's 4–6 sentences and Dictation's one-sentence target).
+- Questions and answer options are generated in the **target language** (matching real TOEIC format), not Vietnamese — this is a deliberate authenticity choice, distinct from Dictation/Reading which always show a Vietnamese translation.
+- No autoplay, ever: `ListeningComprehensionNotifier` never calls `TtsService.speak()` from `generate()`, `previousTurn()`, `nextTurn()`, or `replayFromStart()` — only `playCurrentTurn()`, triggered by an explicit user tap, plays audio. Moving to a different turn (⏮/⏭) or restarting (🔁) does **not** auto-play the newly-selected turn.
+- Playback is play/stop, not true pause/resume — `flutter_tts`'s pause support is inconsistent across platforms, and a continuous scrub bar is explicitly out of scope (spec §2, §4.3). The ▶/⏸ button toggles between "not currently speaking → start" and "currently speaking → stop", using `TtsService.stop()` for the latter, not a resume-from-position API.
+- Speaker pitch: `speaker == 'A'` → pitch `1.0`; `speaker == 'B'` → pitch `1.3`; `speaker == null` (a talk) → pitch `1.0`. Set via `TtsService.speak(text, language, pitch: ...)` before each turn plays.
+- Unlimited replay/seek, **no scoring penalty** for comprehension (opposite of Dictation's −5%/replay) — the goal is comprehension training, not one-shot exam discipline.
+- "Nộp bài" (submit) only enables once all 3 questions have a selected answer (`selectedAnswers.every((a) => a != null)`).
+- "Luyện nghe" tab / hub visibility: unchanged from Plan 9 — this plan only enables the already-present, previously-disabled "Nghe hiểu" card on `ListeningHomeScreen`; it does not touch `AppShell` or the Settings toggle.
+- `ListeningSessionState`, `ComprehensionSessionResult`, `ListeningComprehensionNotifier` are defined in `listening_comprehension_provider.dart` (presentation layer) — not domain entities. `ListeningPassage`, `ListeningTurn`, `ListeningQuestion`, `ListeningKind` (in `domain/entities/`) are the domain entities this plan adds.
+- `TtsService.speak()` gains an optional `pitch` parameter (default `1.0`, fully backward-compatible with every existing caller in `word_result_widget.dart`, `sentence_result_widget.dart`, and `DictationPracticeNotifier.play()` from Plan 9 — none of them need to change).
+- `geminiApiKey`/provider credentials are **NEVER** stored in Firestore — unchanged existing constraint, not touched by this plan.
