@@ -7,7 +7,7 @@ part of 'dictation_practice_provider.dart';
 // **************************************************************************
 
 String _$dictationPracticeNotifierHash() =>
-    r'79f03c03e5a83d1767738188d3663598f4719adc';
+    r'40cc44059622db61e9680dc7c9059d8afbecc50e';
 
 /// See also [DictationPracticeNotifier].
 @ProviderFor(DictationPracticeNotifier)
