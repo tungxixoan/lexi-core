@@ -18,6 +18,10 @@ import '../../features/listening/presentation/screens/dictation_home_screen.dart
 import '../../features/listening/presentation/screens/dictation_session_screen.dart';
 import '../../features/listening/presentation/screens/dictation_result_screen.dart';
 import '../../features/listening/presentation/providers/dictation_practice_provider.dart';
+import '../../features/listening/presentation/screens/comprehension_home_screen.dart';
+import '../../features/listening/presentation/screens/comprehension_session_screen.dart';
+import '../../features/listening/presentation/screens/comprehension_result_screen.dart';
+import '../../features/listening/presentation/providers/listening_comprehension_provider.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -106,6 +110,30 @@ final appRouter = GoRouter(
                       },
                       builder: (context, state) => DictationResultScreen(
                         result: state.extra as DictationSessionResult,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            GoRoute(
+              path: 'comprehension',
+              builder: (context, state) => const ComprehensionHomeScreen(),
+              routes: [
+                GoRoute(
+                  path: 'session',
+                  builder: (context, state) => const ComprehensionSessionScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'result',
+                      redirect: (context, state) {
+                        if (state.extra is! ComprehensionSessionResult) {
+                          return '/listening/comprehension';
+                        }
+                        return null;
+                      },
+                      builder: (context, state) => ComprehensionResultScreen(
+                        result: state.extra as ComprehensionSessionResult,
                       ),
                     ),
                   ],

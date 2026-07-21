@@ -480,5 +480,45 @@ final selectDictationBlanksUseCaseProvider =
 // ignore: unused_element
 typedef SelectDictationBlanksUseCaseRef
     = AutoDisposeProviderRef<SelectDictationBlanksUseCase>;
+String _$listeningPassageSourceHash() =>
+    r'f599a4218748ed5f01a563e47ce5275edcbbb100';
+
+/// See also [listeningPassageSource].
+@ProviderFor(listeningPassageSource)
+final listeningPassageSourceProvider =
+    AutoDisposeProvider<ListeningPassageSource>.internal(
+  listeningPassageSource,
+  name: r'listeningPassageSourceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$listeningPassageSourceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ListeningPassageSourceRef
+    = AutoDisposeProviderRef<ListeningPassageSource>;
+String _$generateListeningPassageUseCaseHash() =>
+    r'3398182c4a0d8773468536c8f5d78a968cdae140';
+
+/// See also [generateListeningPassageUseCase].
+@ProviderFor(generateListeningPassageUseCase)
+final generateListeningPassageUseCaseProvider =
+    AutoDisposeProvider<GenerateListeningPassageUseCase>.internal(
+  generateListeningPassageUseCase,
+  name: r'generateListeningPassageUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$generateListeningPassageUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GenerateListeningPassageUseCaseRef
+    = AutoDisposeProviderRef<GenerateListeningPassageUseCase>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

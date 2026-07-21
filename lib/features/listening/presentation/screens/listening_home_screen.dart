@@ -6,7 +6,6 @@ class ListeningHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Luyện nghe'),
@@ -29,16 +28,13 @@ class ListeningHomeScreen extends StatelessWidget {
           const SizedBox(height: 12),
           Card(
             child: ListTile(
-              enabled: false,
-              leading: Icon(
-                Icons.quiz_outlined,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.38),
-              ),
+              leading: const Icon(Icons.quiz_outlined),
               title: const Text('Nghe hiểu'),
               subtitle: const Text(
                 'Nghe hội thoại/bài nói và trả lời câu hỏi trắc nghiệm kiểu TOEIC.',
               ),
-              trailing: Chip(label: const Text('Sắp ra mắt')),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.go('/listening/comprehension'),
             ),
           ),
         ],

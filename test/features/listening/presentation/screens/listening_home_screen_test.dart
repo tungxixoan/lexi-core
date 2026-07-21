@@ -14,6 +14,10 @@ Widget _buildHub() {
         path: '/listening/dictation',
         builder: (ctx, state) => const Scaffold(body: Text('Dictation home')),
       ),
+      GoRoute(
+        path: '/listening/comprehension',
+        builder: (ctx, state) => const Scaffold(body: Text('Comprehension home')),
+      ),
     ],
   );
   return MaterialApp.router(routerConfig: router);
@@ -25,7 +29,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Nghe chép'), findsOneWidget);
     expect(find.text('Nghe hiểu'), findsOneWidget);
-    expect(find.text('Sắp ra mắt'), findsOneWidget);
   });
 
   testWidgets('tapping Nghe chép navigates to dictation home', (tester) async {
@@ -34,5 +37,13 @@ void main() {
     await tester.tap(find.text('Nghe chép'));
     await tester.pumpAndSettle();
     expect(find.text('Dictation home'), findsOneWidget);
+  });
+
+  testWidgets('tapping Nghe hiểu navigates to comprehension home', (tester) async {
+    await tester.pumpWidget(_buildHub());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Nghe hiểu'));
+    await tester.pumpAndSettle();
+    expect(find.text('Comprehension home'), findsOneWidget);
   });
 }
