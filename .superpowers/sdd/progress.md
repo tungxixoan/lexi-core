@@ -313,3 +313,44 @@
 - Redundant double-space between a blank and following visible text (cosmetic).
 
 **Post-review fix applied:** 5185e0b strips leading/trailing punctuation (Unicode-aware, \p{L}/\p{N}) when grading Dễ/Trung bình blanks — fixes the Important finding above. Reviewed clean (219/219 tests). Branch is now final.
+
+---
+
+# LexiCore Plan 10 — "Nghe hiểu" (TOEIC-style Listening Comprehension)
+
+**BASE commit:** 90c17fa
+**Plan file:** docs/superpowers/plans/2026-07-19-plan10-listening-comprehension.md
+**Task files:** docs/superpowers/plans/tasks/plan10-task-{01..08}.md
+
+**Pre-flight note:** scanned for conflicts against global constraints — none found. Per-turn seek (not a continuous scrub bar) is a deliberate, already-documented spec trade-off (avoids a new audio pipeline); not flagged for pre-emptive escalation since it's an ergonomics choice, not a correctness/fairness concern like Plan 9's char-diff algorithm was. Verified shared files this plan touches (tts_service.dart, app_providers.dart, listening_home_screen.dart) were untouched by the intervening dictation-difficulty work, so the plan's "before" anchors still hold.
+
+## Status
+
+- Task 01: ✅ complete (commit 10be8f4, 6/6 tests, review clean)
+- Task 02: ✅ complete (commit 0c7ccca, 229/229 tests, review clean)
+  Note: fixed an unrelated fake TtsService override in dictation_session_screen_test.dart (created by the intervening dictation-difficulty work, not anticipated by this plan) to include the new pitch param
+- Task 03: ✅ complete (commit 4efdd6b, 83/83 listening tests, review clean)
+- Task 04: ✅ complete (commit 8a18b83, 243/243 tests, review clean)
+  Note: implementer found brief's async previousTurn/nextTurn/replayFromStart code conflicted with its own synchronous tests; changed these 3 methods Future<void>->void (fire-and-forget stop()). Verified forward-compatible with Tasks 05-07 (only ever wired as onPressed tear-offs) and race-free (playToken guard already neutralizes timing).
+- Task 05: ✅ complete (commit e64742f, 246/246 tests, review clean)
+- Task 06: ✅ complete (commit ca3714a, 252/252 tests, review clean)
+  Note: implementer found+fixed 3 real bugs in the brief itself (Q1? text match, IconButton finder type, ListView virtualization hiding 3rd question card under test viewport) - all independently verified by reviewer
+- Task 07: ✅ complete (commit 3e49e06, 256/256 tests, review clean)
+  Note: same ListView-virtualization defect class as Task 06 (transcript section never built under test viewport), fixed identically, independently re-verified
+- Task 08: ✅ complete (commit 8b07309, 256/256 tests, review clean)
+
+## Final Whole-Branch Review
+
+**Commits reviewed:** 90c17fa..8b07309 (9 commits)
+**Status:** ✅ Ready to merge (With fixes — fix applied below)
+
+**Strengths:** both "opposite of Dictation" guarantees (no replay penalty, zero SM-2 impact) independently traced end-to-end and confirmed real; cross-task type/signature consistency clean (void-not-Future nav methods wired consistently); Task 02's fake-TtsService fix holds; pitch logic (A=1.0/B=1.3) matches spec exactly; Task 06/07 ListView->Column fixes are the right call, no shared-helper needed (different widgets); tests exercise real behavior, not mocks.
+
+**Important (fixed before merge):**
+- Null/empty AI response fell back to a passage with empty `turns`/`questions` that `generate()` did not reject, so `AsyncValue.guard` never caught anything — `ComprehensionSessionScreen` then indexed `passage.turns[0]` on an empty list, a hard `RangeError` crash bypassing the home screen's built "Lỗi tạo bài / Thử lại" retry UI. Unlike the sibling `dictation_source.dart`, which degrades an empty response to an empty string (no crash), an empty passage has no safe equivalent here.
+
+**Post-review fix applied:** 46c19af (`listening_passage_source.dart` throws `FormatException` when parsed `turns`/`questions` are empty, caught by the existing `AsyncValue.guard`) — re-reviewed clean, 257/257 tests, ready to merge as-is.
+
+**Minor (not fixed, logged for awareness):**
+- README test count should be verified against the final 257 at merge time.
+- `RadioListTile` groupValue/onChanged API is deprecated on recent Flutter in favor of `RadioGroup` — not a bug, future-proofing note only.
