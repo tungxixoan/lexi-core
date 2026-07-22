@@ -106,4 +106,22 @@ void main() {
     expect(passage.turns.every((t) => t.speaker == null), isTrue);
     expect(passage.questions.length, 3);
   });
+
+  test('throws when the AI response falls back to empty turns/questions',
+      () async {
+    final source = ListeningPassageSource.withModel(
+      FakeGenerativeModelClient(
+        '{"kind":"talk","turns":[],"questions":[]}',
+      ),
+    );
+
+    expect(
+      () => source.generate(
+        level: CEFRLevel.b1,
+        context: AppContext.general,
+        targetLanguage: Language.english,
+      ),
+      throwsA(isA<FormatException>()),
+    );
+  });
 }

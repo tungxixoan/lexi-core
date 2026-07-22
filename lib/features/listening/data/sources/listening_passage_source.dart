@@ -33,7 +33,13 @@ class ListeningPassageSource {
     final response = await _client.generateContent([Content.text(prompt)]);
     final text = response.text ?? '{"kind":"talk","turns":[],"questions":[]}';
     final json = jsonDecode(text) as Map<String, dynamic>;
-    return _parse(json, level, context, targetLanguage);
+    final passage = _parse(json, level, context, targetLanguage);
+    if (passage.turns.isEmpty || passage.questions.isEmpty) {
+      throw const FormatException(
+        'AI response produced an empty listening passage (no turns or no questions).',
+      );
+    }
+    return passage;
   }
 
   String _buildPrompt({
