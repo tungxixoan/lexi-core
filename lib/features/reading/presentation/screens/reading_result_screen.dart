@@ -17,6 +17,7 @@ class ReadingResultScreen extends ConsumerWidget {
     final accuracyPct = (result.overallAccuracy * 100).toStringAsFixed(1);
     final wpm = result.wpm.toStringAsFixed(0);
     final elapsed = _formatDuration(result.totalDuration);
+    final scorePct = (result.finalScore * 100).toStringAsFixed(1);
 
     final usedRecords = result.passage.vocabIds
         .map((id) => vocabRecords.where((r) => r.id == id).firstOrNull)
@@ -40,6 +41,7 @@ class ReadingResultScreen extends ConsumerWidget {
                 _StatCard(label: 'Độ chính xác', value: '$accuracyPct%'),
                 _StatCard(label: 'Tốc độ', value: '$wpm WPM'),
                 _StatCard(label: 'Thời gian', value: elapsed),
+                _StatCard(label: 'Điểm', value: '$scorePct%'),
               ],
             ),
             const SizedBox(height: 24),

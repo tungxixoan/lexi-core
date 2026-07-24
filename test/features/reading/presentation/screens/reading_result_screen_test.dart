@@ -38,6 +38,56 @@ final _testResult = ReadingSessionResult(
   totalDuration: const Duration(seconds: 5),
 );
 
+final _testResultWithBackspaces = ReadingSessionResult(
+  passage: ReadingPassage(
+    id: 'p2',
+    sentences: const [
+      BilingualSentence(
+        target: 'Hello world.',
+        vietnamese: 'Xin chào thế giới.',
+        vocabIds: [],
+      ),
+    ],
+    vocabIds: const [],
+    level: CEFRLevel.b1,
+    context: AppContext.general,
+    targetLanguage: Language.english,
+    generatedAt: DateTime(2026),
+  ),
+  sentenceResults: const [
+    SentenceResult(
+      target: 'Hello world.',
+      typed: 'Hello world.',
+      correctChars: 12,
+      totalChars: 12,
+      durationMs: 5000,
+      backspaceCount: 10,
+    ),
+  ],
+  totalDuration: const Duration(seconds: 5),
+);
+
+Widget _buildResultWithBackspaces() {
+  final router = GoRouter(
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (ctx, state) => ReadingResultScreen(result: _testResultWithBackspaces),
+      ),
+      GoRoute(
+        path: '/reading',
+        builder: (ctx, state) => const Scaffold(body: Text('Home')),
+      ),
+    ],
+  );
+  return ProviderScope(
+    overrides: [
+      vocabBankProvider.overrideWith((_) => const []),
+    ],
+    child: MaterialApp.router(routerConfig: router),
+  );
+}
+
 Widget _buildResult() {
   final router = GoRouter(
     routes: [
@@ -72,5 +122,18 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Sinh bài mới'), findsOneWidget);
     expect(find.text('Về trang chính'), findsOneWidget);
+  });
+
+  testWidgets('shows a score stat card labeled Điểm', (tester) async {
+    await tester.pumpWidget(_buildResult());
+    await tester.pumpAndSettle();
+    expect(find.text('Điểm'), findsOneWidget);
+  });
+
+  testWidgets('score reflects the backspace penalty subtracted from accuracy', (tester) async {
+    await tester.pumpWidget(_buildResultWithBackspaces());
+    await tester.pumpAndSettle();
+    // accuracy 100% - 10 backspaces * 1% = 90.0%
+    expect(find.text('90.0%'), findsOneWidget);
   });
 }
