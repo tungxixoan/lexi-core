@@ -205,7 +205,8 @@ void main() {
       await generateSession(notifier);
 
       notifier.updateTypedText('Hix');
-      notifier.updateTypedText('Hi.'); // backspace then retype to match target exactly
+      notifier.updateTypedText('Hi'); // backspace: 'Hix' (3) -> 'Hi' (2)
+      notifier.updateTypedText('Hi.'); // retype the period to match the target
 
       var state = c.read(readingPracticeNotifierProvider).value!;
       expect(state.completedSentences.length, 1);
@@ -219,7 +220,7 @@ void main() {
 
       state = c.read(readingPracticeNotifierProvider).value!;
       expect(state.completedSentences.length, 2);
-      expect(state.completedSentences.last.backspaceCount, 2);
+      expect(state.completedSentences.last.backspaceCount, 1);
       expect(state.isComplete, true);
     });
   });
