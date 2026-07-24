@@ -57,6 +57,7 @@ class _DictationResultScreenState extends ConsumerState<DictationResultScreen> {
     final theme = Theme.of(context);
     final result = widget.result;
     final scorePct = (result.finalScore * 100).toStringAsFixed(0);
+    final seekPenaltyPct = (result.seekPenaltyTotal * 100).toStringAsFixed(0);
     final elapsed = _formatDuration(result.duration);
 
     return Scaffold(
@@ -71,6 +72,10 @@ class _DictationResultScreenState extends ConsumerState<DictationResultScreen> {
               children: [
                 _StatCard(label: 'Điểm', value: '$scorePct%'),
                 _StatCard(label: 'Nghe lại', value: '${result.replayCount}'),
+                _StatCard(
+                  label: 'Số lần tua',
+                  value: '${result.seekCount} (−$seekPenaltyPct%)',
+                ),
                 _StatCard(label: 'Thời gian', value: elapsed),
               ],
             ),

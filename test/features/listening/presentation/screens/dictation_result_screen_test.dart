@@ -216,6 +216,22 @@ void main() {
     expect(repo.updated, isEmpty);
   });
 
+  testWidgets('shows the Số lần tua stat with count and penalty percentage', (tester) async {
+    final repo = _CapturingVocabRepository([_record('id1'), _record('id2')]);
+    final result = DictationSessionResult(
+      item: _testItem,
+      typed: 'Hello world.',
+      replayCount: 0,
+      duration: const Duration(seconds: 5),
+      seekCount: 2,
+      seekPenaltyTotal: 0.03,
+    );
+    await tester.pumpWidget(_buildResult(result, repo));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Số lần tua'), findsOneWidget);
+    expect(find.textContaining('2 (−3%)'), findsOneWidget);
+  });
+
   group('cloze mode (Dễ/Trung bình)', () {
     // _testItem.target == 'Hello world.' — blank both words, one each.
     const clozeBlanks = [
