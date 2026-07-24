@@ -19,6 +19,8 @@ final class DictationSessionResult {
     this.difficulty = DictationDifficulty.hard,
     this.blanks = const [],
     this.blankAnswers = const [],
+    this.seekCount = 0,
+    this.seekPenaltyTotal = 0.0,
   });
 
   final DictationItem item;
@@ -28,6 +30,8 @@ final class DictationSessionResult {
   final DictationDifficulty difficulty;
   final List<BlankSpan> blanks;
   final List<String> blankAnswers;
+  final int seekCount;
+  final double seekPenaltyTotal;
 
   int get totalChars => item.target.length;
 
@@ -77,7 +81,8 @@ final class DictationSessionResult {
   double get _rawAccuracy =>
       difficulty == DictationDifficulty.hard ? charAccuracy : blockAccuracy;
 
-  double get finalScore => (_rawAccuracy - 0.05 * replayCount).clamp(0.0, 1.0);
+  double get finalScore =>
+      (_rawAccuracy - 0.05 * replayCount - seekPenaltyTotal).clamp(0.0, 1.0);
 
   int get sm2Quality {
     final score = finalScore;
@@ -87,6 +92,19 @@ final class DictationSessionResult {
     if (score >= 0.40) return 2;
     return 0;
   }
+}
+
+/// Fraction (0.01–0.05) deducted for a single seek to [wordIndex] out of
+/// [totalWords] words in the sentence. TTS always speaks from the seek
+/// point to the end of the sentence, so seeking near the start re-hears
+/// almost the whole sentence (expensive) while seeking near the end
+/// re-hears almost nothing (cheap) — this scales the penalty accordingly.
+double seekPenaltyFraction({required int wordIndex, required int totalWords}) {
+  if (totalWords <= 0) return 0.0;
+  final wordsReheard = totalWords - wordIndex;
+  final reheardRatio = wordsReheard / totalWords;
+  if (reheardRatio <= 0.2) return 0.01;
+  return (0.01 + 0.04 * (reheardRatio - 0.2) / 0.8).clamp(0.01, 0.05);
 }
 
 final class DictationSessionState {
@@ -100,6 +118,8 @@ final class DictationSessionState {
     this.difficulty = DictationDifficulty.hard,
     this.blanks = const [],
     this.blankAnswers = const [],
+    this.seekCount = 0,
+    this.seekPenaltyTotal = 0.0,
   });
 
   final DictationItem item;
@@ -111,6 +131,8 @@ final class DictationSessionState {
   final DictationDifficulty difficulty;
   final List<BlankSpan> blanks;
   final List<String> blankAnswers;
+  final int seekCount;
+  final double seekPenaltyTotal;
 
   bool get isClozeMode => difficulty != DictationDifficulty.hard;
 
@@ -123,6 +145,8 @@ final class DictationSessionState {
     bool? hasPlayedOnce,
     bool? isComplete,
     List<String>? blankAnswers,
+    int? seekCount,
+    double? seekPenaltyTotal,
   }) =>
       DictationSessionState(
         item: item,
@@ -134,6 +158,8 @@ final class DictationSessionState {
         difficulty: difficulty,
         blanks: blanks,
         blankAnswers: blankAnswers ?? this.blankAnswers,
+        seekCount: seekCount ?? this.seekCount,
+        seekPenaltyTotal: seekPenaltyTotal ?? this.seekPenaltyTotal,
       );
 }
 
@@ -185,6 +211,31 @@ class DictationPracticeNotifier extends _$DictationPracticeNotifier {
     await ref
         .read(ttsServiceProvider)
         .speak(current.item.target, current.item.targetLanguage);
+  }
+
+  Future<void> seekTo(int wordIndex) async {
+    final current = state.valueOrNull;
+    if (current == null || current.isComplete) return;
+    final words = current.item.target
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .toList();
+    if (wordIndex < 0 || wordIndex >= words.length) return;
+
+    final updated = current.hasPlayedOnce
+        ? current.copyWith(
+            seekCount: current.seekCount + 1,
+            seekPenaltyTotal: current.seekPenaltyTotal +
+                seekPenaltyFraction(wordIndex: wordIndex, totalWords: words.length),
+          )
+        : current.copyWith(hasPlayedOnce: true, seekCount: current.seekCount + 1);
+    state = AsyncData(updated);
+
+    await ref.read(ttsServiceProvider).stop();
+    await ref.read(ttsServiceProvider).speak(
+          words.skip(wordIndex).join(' '),
+          current.item.targetLanguage,
+        );
   }
 
   void updateTypedText(String text) {

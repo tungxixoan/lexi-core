@@ -31,6 +31,22 @@ DictationItem _item(String target) => DictationItem(
     );
 
 void main() {
+  group('seekPenaltyFraction', () {
+    test('returns the 1% floor when reheardRatio is at or below 20%', () {
+      expect(seekPenaltyFraction(wordIndex: 8, totalWords: 10), closeTo(0.01, 0.0001)); // ratio 0.2 exactly
+      expect(seekPenaltyFraction(wordIndex: 9, totalWords: 10), closeTo(0.01, 0.0001)); // ratio 0.1
+    });
+
+    test('scales linearly from 1% to 5% as reheardRatio grows from 20% to 100%', () {
+      expect(seekPenaltyFraction(wordIndex: 5, totalWords: 10), closeTo(0.025, 0.0001)); // ratio 0.5
+      expect(seekPenaltyFraction(wordIndex: 0, totalWords: 10), closeTo(0.05, 0.0001)); // ratio 1.0
+    });
+
+    test('returns 0 when totalWords is 0 (guards against division by zero)', () {
+      expect(seekPenaltyFraction(wordIndex: 0, totalWords: 0), 0.0);
+    });
+  });
+
   group('DictationSessionResult scoring', () {
     test('charAccuracy is 1.0 for an exact match', () {
       final result = DictationSessionResult(
@@ -66,6 +82,17 @@ void main() {
       );
       expect(result.charAccuracy, 1.0);
       expect(result.finalScore, closeTo(0.90, 0.0001)); // 1.0 - 2*0.05
+    });
+
+    test('finalScore also subtracts seekPenaltyTotal on top of the replay penalty', () {
+      final result = DictationSessionResult(
+        item: _item('Hello world.'),
+        typed: 'Hello world.',
+        replayCount: 1,
+        duration: const Duration(seconds: 5),
+        seekPenaltyTotal: 0.03,
+      );
+      expect(result.finalScore, closeTo(0.92, 0.0001)); // 1.0 - 0.05 - 0.03
     });
 
     test('finalScore never goes below 0', () {
@@ -559,6 +586,113 @@ void main() {
 
       notifier.updateBlankAnswer(1, 'fox');
       expect(c.read(dictationPracticeNotifierProvider).value!.allBlanksFilled, isTrue);
+    });
+  });
+
+  group('DictationPracticeNotifier seekTo', () {
+    late MockGenerateDictationItemUseCase mockUseCase;
+    late MockTtsService mockTts;
+    late DictationItem fixedItem;
+    late List<VocabRecord> words;
+
+    setUpAll(() {
+      registerFallbackValue(Language.english);
+    });
+
+    setUp(() {
+      mockUseCase = MockGenerateDictationItemUseCase();
+      mockTts = MockTtsService();
+      fixedItem = _item('Hello world.');
+      words = [
+        VocabRecord(
+          id: 'id1',
+          headword: 'hello',
+          inputType: InputType.word,
+          ipa: '',
+          meaning: '',
+          examples: const [],
+          personalNotes: '',
+          topicIds: const [],
+          targetLanguage: Language.english,
+          cefrLevel: CEFRLevel.b1,
+          activeContext: AppContext.general,
+          createdAt: DateTime(2026),
+          updatedAt: DateTime(2026),
+        ),
+      ];
+
+      when(
+        () => mockUseCase.execute(
+          words: words,
+          level: CEFRLevel.b1,
+          context: AppContext.general,
+          targetLanguage: Language.english,
+        ),
+      ).thenAnswer((_) async => fixedItem);
+      when(() => mockTts.speak(any(), any())).thenAnswer((_) async {});
+      when(() => mockTts.stop()).thenAnswer((_) async {});
+    });
+
+    ProviderContainer makeContainer() => ProviderContainer(
+          overrides: [
+            generateDictationItemUseCaseProvider.overrideWithValue(mockUseCase),
+            ttsServiceProvider.overrideWithValue(mockTts),
+          ],
+        );
+
+    Future<void> generateSession(DictationPracticeNotifier notifier) =>
+        notifier.generate(
+          words: words,
+          level: CEFRLevel.b1,
+          context: AppContext.general,
+          targetLanguage: Language.english,
+        );
+
+    test('first seekTo() sets hasPlayedOnce and seekCount without adding a penalty', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(dictationPracticeNotifierProvider.notifier);
+      await generateSession(notifier);
+
+      await notifier.seekTo(1); // "world."
+
+      final state = c.read(dictationPracticeNotifierProvider).value!;
+      expect(state.hasPlayedOnce, true);
+      expect(state.seekCount, 1);
+      expect(state.seekPenaltyTotal, 0.0);
+      verify(() => mockTts.stop()).called(1);
+      verify(() => mockTts.speak('world.', fixedItem.targetLanguage)).called(1);
+    });
+
+    test('seekTo() after the first listen adds the correct penalty fraction', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(dictationPracticeNotifierProvider.notifier);
+      await generateSession(notifier);
+
+      await notifier.seekTo(1); // first listen via seek: free
+      await notifier.seekTo(0); // "Hello world." — wordsReheard 2/2 = 100% ratio -> max 5%
+
+      final state = c.read(dictationPracticeNotifierProvider).value!;
+      expect(state.seekCount, 2);
+      expect(state.seekPenaltyTotal, closeTo(0.05, 0.0001));
+      verify(() => mockTts.speak('Hello world.', fixedItem.targetLanguage)).called(1);
+    });
+
+    test('seekTo() with an out-of-range wordIndex is a no-op', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(dictationPracticeNotifierProvider.notifier);
+      await generateSession(notifier);
+
+      await notifier.seekTo(-1);
+      await notifier.seekTo(2); // only indices 0-1 are valid for a 2-word sentence
+
+      final state = c.read(dictationPracticeNotifierProvider).value!;
+      expect(state.hasPlayedOnce, false);
+      expect(state.seekCount, 0);
+      expect(state.seekPenaltyTotal, 0.0);
+      verifyNever(() => mockTts.speak(any(), any()));
     });
   });
 }
