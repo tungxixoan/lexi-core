@@ -52,12 +52,14 @@ Tab "Luyện nghe" — hub với 2 tính năng con, dùng chung `TtsService` (fl
     - **Trung bình** — điền 1 cụm từ liên tục (~35% số từ của câu), phần còn lại hiện sẵn
     - **Khó** — chép lại toàn bộ câu từ trí nhớ, không hiện gì (mù hoàn toàn)
   - Nghe lại không giới hạn số lần, nhưng mỗi lần nghe lại trừ 5% điểm — áp dụng cho cả 3 mức độ
+  - **Thanh trượt tua theo từ** (không có audio file để tua theo thời gian — TTS luôn đọc từ điểm tua tới hết câu): kéo thả trừ 1-5% tùy tỷ lệ câu sẽ được nghe lại (kéo về gần đầu câu bị trừ nhiều hơn kéo về gần cuối câu, chống việc dùng tua thay thế Nghe lại với giá rẻ); lần nghe đầu tiên của phiên luôn miễn phí dù qua nút Phát hay slider
   - Chấm điểm cập nhật **SM-2** cho các từ vựng xuất hiện trong câu — khác với Luyện đọc & gõ (không ảnh hưởng SM-2). Dễ/Trung bình chấm theo số ô điền đúng (không phân biệt hoa/thường); Khó chấm theo từng ký tự — cùng công thức trừ điểm và cùng ngưỡng quy đổi SM-2
-  - Màn hình kết quả: điểm số, số lần nghe lại, thời gian; Khó hiện phần gõ tô màu đối chiếu ký tự, Dễ/Trung bình hiện lại đúng đoạn điền khuyết với từng ô tô xanh (đúng)/đỏ kèm đáp án đúng (sai)
+  - Màn hình kết quả: điểm số, số lần nghe lại, **số lần tua** (kèm % bị trừ), thời gian; Khó hiện phần gõ tô màu đối chiếu ký tự, Dễ/Trung bình hiện lại đúng đoạn điền khuyết với từng ô tô xanh (đúng)/đỏ kèm đáp án đúng (sai)
   - Lọc theo Ngôn ngữ / Chủ đề (Topic tag) / Cấp độ, tối thiểu 2 từ khớp bộ lọc
   - Có thể ẩn/hiện trên mobile (mặc định ẩn, bật trong Cài đặt), hiển thị dựa theo bề rộng màn hình (không dùng `kIsWeb`)
 - **Nghe hiểu (TOEIC-style comprehension)** — AI tạo ngẫu nhiên một hội thoại 2 người (nhãn "A"/"B", đổi cao độ giọng để phân biệt) hoặc một bài nói 1 người, cộng đúng 3 câu hỏi trắc nghiệm 4 đáp án (ý chính/chi tiết/ý ngụ ý — không điền từ), bằng ngôn ngữ mục tiêu giống TOEIC thật
-  - Điều khiển nghe theo từng lượt: ⏮ lượt trước / ▶️⏸ phát-dừng / ⏭ lượt sau / 🔁 phát lại từ đầu — không có thanh tua liên tục
+  - Điều khiển nghe theo từng lượt: ⏮ lượt trước / ▶️⏸ phát-dừng / ⏭ lượt sau / 🔁 phát lại từ đầu
+  - **Thanh trượt tua theo từ, xuyên suốt toàn bộ bài** (nhiều lượt thoại nối lại) — kéo qua ranh giới lượt tự chuyển lượt + đổi cao độ giọng tương ứng; bổ sung cho các nút điều khiển trên, không thay thế
   - Nghe lại/tua thoải mái, **không trừ điểm** (khác Nghe chép) — mục tiêu là luyện hiểu, không phải áp lực thi 1 lần
   - Trả lời cả 3 câu rồi mới nộp bài; kết quả hiện điểm X/3, phân tích từng câu, và toàn bộ bản ghi hội thoại/bài nói
   - Lọc theo Ngôn ngữ / Chủ đề (**AppContext** — Business/Travel/...) / Cấp độ — không cần Vocab Bank, không có ngưỡng số từ tối thiểu
@@ -358,7 +360,7 @@ flutter test test/features/dictionary/presentation/providers/user_settings_notif
 flutter test --reporter expanded
 ```
 
-Hiện tại: **256 tests** — domain entities, use cases, sources, providers, UI widgets, services.
+Hiện tại: **277 tests** — domain entities, use cases, sources, providers, UI widgets, services.
 
 ### Phân tích code
 
