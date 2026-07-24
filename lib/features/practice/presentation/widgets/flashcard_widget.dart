@@ -21,7 +21,6 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
   );
   late final Animation<double> _flipAnim =
       CurvedAnimation(parent: _flipCtrl, curve: Curves.easeInOut);
-  bool _revealed = false;
 
   @override
   void dispose() {
@@ -29,10 +28,13 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
     super.dispose();
   }
 
-  void _flip() {
-    if (_revealed) return;
-    setState(() => _revealed = true);
-    _flipCtrl.forward();
+  void _toggleFlip() {
+    if (_flipCtrl.isAnimating) return;
+    if (_flipCtrl.value == 0) {
+      _flipCtrl.forward();
+    } else {
+      _flipCtrl.reverse();
+    }
   }
 
   void _submit(bool understood) {
@@ -56,7 +58,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
 
         final face = _CardFace(
           child: showingBack
-              ? _BackContent(record: record, onSubmit: _submit)
+              ? _BackContent(record: record, onSubmit: _submit, onTapToFlip: _toggleFlip)
               : _FrontContent(record: record),
         );
 
@@ -68,12 +70,14 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
           child: face,
         );
 
-        // Only the front face is tappable — once flipped, the back's own
-        // buttons handle progression so they don't compete with an ancestor
-        // tap recognizer.
+        // Front: whole card is tappable to flip. Back: only _BackContent's
+        // own gesture detector (around the meaning/example area, excluding
+        // the two grading buttons) triggers a flip back — an ancestor
+        // GestureDetector here would compete with the buttons' tap
+        // recognizers in the gesture arena.
         return showingBack
             ? transformed
-            : GestureDetector(onTap: _flip, child: transformed);
+            : GestureDetector(onTap: _toggleFlip, child: transformed);
       },
     );
   }
@@ -127,9 +131,14 @@ class _FrontContent extends StatelessWidget {
 }
 
 class _BackContent extends StatelessWidget {
-  const _BackContent({required this.record, required this.onSubmit});
+  const _BackContent({
+    required this.record,
+    required this.onSubmit,
+    required this.onTapToFlip,
+  });
   final VocabRecord record;
   final void Function(bool understood) onSubmit;
+  final VoidCallback onTapToFlip;
 
   @override
   Widget build(BuildContext context) {
@@ -137,14 +146,27 @@ class _BackContent extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(record.meaning, style: theme.textTheme.bodyLarge, textAlign: TextAlign.center),
-        if (record.examples.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          Text('"${record.examples.first}"',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                  fontStyle: FontStyle.italic, color: theme.colorScheme.outline),
-              textAlign: TextAlign.center),
-        ],
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTapToFlip,
+          child: Column(
+            children: [
+              Text(record.meaning, style: theme.textTheme.bodyLarge, textAlign: TextAlign.center),
+              if (record.examples.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text('"${record.examples.first}"',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                        fontStyle: FontStyle.italic, color: theme.colorScheme.outline),
+                    textAlign: TextAlign.center),
+              ],
+              const SizedBox(height: 12),
+              Icon(Icons.flip_camera_android_outlined, color: theme.colorScheme.outline, size: 18),
+              const SizedBox(height: 4),
+              Text('Chạm để xem lại từ vựng',
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+            ],
+          ),
+        ),
         const SizedBox(height: 24),
         Row(
           children: [
