@@ -354,3 +354,37 @@
 **Minor (not fixed, logged for awareness):**
 - README test count should be verified against the final 257 at merge time.
 - `RadioListTile` groupValue/onChanged API is deprecated on recent Flutter in favor of `RadioGroup` — not a bug, future-proofing note only.
+
+---
+
+# LexiCore — Audio Seek Slider (Nghe chép & Nghe hiểu)
+
+**BASE commit:** 80b9bed
+**Plan file:** docs/superpowers/plans/2026-07-22-listening-audio-seek.md
+
+## Status
+
+- Task 1: ✅ complete (commit 8397c66, 264/264 tests, review clean)
+- Task 2: ✅ complete (commit fb3d4ef, 268/268 tests, review clean)
+  Minor: word-splitting duplicated between _SessionScaffold and _ClozeInput (cosmetic, pre-existing pattern)
+- Task 3: ✅ complete (commits c0c2c7c+21ab782, 270/270 tests, review clean after fix)
+  Fixed: added zero-seek-count render test (_perfectResult -> '0 (−0%)')
+- Task 4: ✅ complete (commit 627eaf8, 274/274 tests, review clean)
+  Minor: dead-code fallback branch in _resolveGlobalWordIndex unreachable via seekToWord; missing tests for isSubmitted guard and last-valid-index case
+- Task 5: ✅ complete (commit 90bccfe, 277/277 tests, review clean)
+  Minor: pre-existing RadioListTile deprecation warnings (not introduced by this task); preview-label word-split duplicates Task 4's private _splitWords (unavoidable, private to provider file)
+- Task 6: ✅ complete (commit faa6b7e, 277/277 tests, review clean)
+
+## Final Whole-Branch Review
+
+**Commits reviewed:** 80b9bed..faa6b7e (7 commits)
+**Status:** ✅ Ready to merge (Yes)
+
+**Strengths:** seekPenaltyFraction formula matches spec exactly incl. div-by-zero guard and boundary at ratio=0.2; finalScore's 3 terms (rawAccuracy, replayCount*5%, seekPenaltyTotal) are cleanly additive/independent; free-first-listen correctly built on the single shared hasPlayedOnce gate across both Play and seek entry points; Comprehension's zero-scoring guarantee verified by direct grep (no penalty/score/sm2/replay trace anywhere in seekToWord/_resolveGlobalWordIndex/totalWordsOf/its _SeekSlider); global-word-index math traced off-by-one-clean at turn boundaries; both sliders confirmed rendering above their play controls; unit consistency (fraction*100->percent) correct on result screen; 277-test total reconciles exactly (257 baseline + 20 new); tests exercise real Slider callbacks + real ProviderContainers, not mocks.
+
+**Minor (not blocking):**
+- Comprehension screen's `_previewLabel` duplicates the provider's private turn-resolution logic (byte-identical today, latent-divergence risk if one changes without the other — no shared helper possible across the private/public file boundary).
+- First-ever seek increments seekCount to 1 while showing "−0%" penalty — intentional/spec-conformant (free first listen), just a UX nuance worth being aware of.
+- Confirmed harmless: _resolveGlobalWordIndex's dead fallback branch (Task 4 finding) still unreachable branch-wide.
+
+**Ready to merge — no fixes required.**
