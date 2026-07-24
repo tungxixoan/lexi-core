@@ -83,6 +83,7 @@ class _SessionScaffold extends ConsumerWidget {
                       style: theme.textTheme.titleMedium,
                     ),
                     const SizedBox(height: 12),
+                    _SeekSlider(passage: session.passage, onSeek: notifier.seekToWord),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -186,5 +187,63 @@ class _QuestionCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _SeekSlider extends StatefulWidget {
+  const _SeekSlider({required this.passage, required this.onSeek});
+  final ListeningPassage passage;
+  final ValueChanged<int> onSeek;
+
+  @override
+  State<_SeekSlider> createState() => _SeekSliderState();
+}
+
+class _SeekSliderState extends State<_SeekSlider> {
+  int? _restWordIndex;
+  bool _isDragging = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = totalWordsOf(widget.passage);
+    if (total <= 1) return const SizedBox.shrink();
+    final value = (_restWordIndex ?? 0).toDouble();
+    return Column(
+      children: [
+        if (_isDragging && _restWordIndex != null) Text(_previewLabel(_restWordIndex!)),
+        Slider(
+          value: value,
+          min: 0,
+          max: (total - 1).toDouble(),
+          divisions: total - 1,
+          onChanged: (v) => setState(() {
+            _isDragging = true;
+            _restWordIndex = v.round();
+          }),
+          onChangeEnd: (v) {
+            setState(() {
+              _isDragging = false;
+              _restWordIndex = v.round();
+            });
+            widget.onSeek(v.round());
+          },
+        ),
+      ],
+    );
+  }
+
+  String _previewLabel(int globalWordIndex) {
+    var remaining = globalWordIndex;
+    for (var t = 0; t < widget.passage.turns.length; t++) {
+      final wordCount = widget.passage.turns[t].text
+          .split(RegExp(r'\s+'))
+          .where((w) => w.isNotEmpty)
+          .length;
+      if (remaining < wordCount) {
+        return 'Lượt ${t + 1}/${widget.passage.turns.length} · Từ ${remaining + 1}/$wordCount';
+      }
+      remaining -= wordCount;
+    }
+    return '';
   }
 }

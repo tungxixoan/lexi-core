@@ -153,4 +153,38 @@ void main() {
     );
     expect(nextButton.onPressed, isNull);
   });
+
+  group('seek slider', () {
+    testWidgets('shows a seek slider spanning the whole passage', (tester) async {
+      await tester.pumpWidget(_buildSession(_session()));
+      await tester.pumpAndSettle();
+      expect(find.byType(Slider), findsOneWidget);
+    });
+
+    testWidgets('dragging shows a turn+word preview label', (tester) async {
+      await tester.pumpWidget(_buildSession(_session()));
+      await tester.pumpAndSettle();
+
+      final slider = tester.widget<Slider>(find.byType(Slider));
+      // _testPassage turn 0 "Can I help you?" = 4 words; global word 1 = word
+      // index 1 of turn 0 ("I").
+      slider.onChanged?.call(1.0);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Lượt 1/3 · Từ 2/4'), findsOneWidget);
+    });
+
+    testWidgets('releasing the slider past the first turn switches to the resolved turn',
+        (tester) async {
+      await tester.pumpWidget(_buildSession(_session()));
+      await tester.pumpAndSettle();
+
+      final slider = tester.widget<Slider>(find.byType(Slider));
+      // turn 0 has 4 words (indices 0-3), so global word 5 is turn 1 word 1.
+      slider.onChangeEnd?.call(5.0);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Lượt 2/3'), findsOneWidget);
+    });
+  });
 }
