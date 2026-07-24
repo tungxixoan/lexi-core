@@ -232,6 +232,14 @@ void main() {
     expect(find.textContaining('2 (−3%)'), findsOneWidget);
   });
 
+  testWidgets('shows the Số lần tua stat as 0 (−0%) when no seeks happened', (tester) async {
+    final repo = _CapturingVocabRepository([_record('id1'), _record('id2')]);
+    await tester.pumpWidget(_buildResult(_perfectResult, repo));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Số lần tua'), findsOneWidget);
+    expect(find.textContaining('0 (−0%)'), findsOneWidget);
+  });
+
   group('cloze mode (Dễ/Trung bình)', () {
     // _testItem.target == 'Hello world.' — blank both words, one each.
     const clozeBlanks = [
