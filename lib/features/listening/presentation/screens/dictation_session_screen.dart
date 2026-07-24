@@ -58,6 +58,8 @@ class _DictationSessionScreenState extends ConsumerState<DictationSessionScreen>
             difficulty: session.difficulty,
             blanks: session.blanks,
             blankAnswers: session.blankAnswers,
+            seekCount: session.seekCount,
+            seekPenaltyTotal: session.seekPenaltyTotal,
           );
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
@@ -115,6 +117,11 @@ class _SessionScaffold extends ConsumerWidget {
             ? session.allBlanksFilled
             : session.typedText.trim().isNotEmpty);
 
+    final wordCount = session.item.target
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .length;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Nghe chép'), automaticallyImplyLeading: false),
       body: Padding(
@@ -123,6 +130,7 @@ class _SessionScaffold extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Spacer(),
+            _SeekSlider(totalWords: wordCount, onSeek: notifier.seekTo),
             Center(
               child: FilledButton.icon(
                 onPressed: notifier.play,
@@ -220,6 +228,49 @@ class _ClozeInput extends StatelessWidget {
     return Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
       children: children,
+    );
+  }
+}
+
+class _SeekSlider extends StatefulWidget {
+  const _SeekSlider({required this.totalWords, required this.onSeek});
+  final int totalWords;
+  final ValueChanged<int> onSeek;
+
+  @override
+  State<_SeekSlider> createState() => _SeekSliderState();
+}
+
+class _SeekSliderState extends State<_SeekSlider> {
+  int? _restWordIndex;
+  bool _isDragging = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.totalWords <= 1) return const SizedBox.shrink();
+    final value = (_restWordIndex ?? 0).toDouble();
+    return Column(
+      children: [
+        if (_isDragging && _restWordIndex != null)
+          Text('Từ ${_restWordIndex! + 1}/${widget.totalWords}'),
+        Slider(
+          value: value,
+          min: 0,
+          max: (widget.totalWords - 1).toDouble(),
+          divisions: widget.totalWords - 1,
+          onChanged: (v) => setState(() {
+            _isDragging = true;
+            _restWordIndex = v.round();
+          }),
+          onChangeEnd: (v) {
+            setState(() {
+              _isDragging = false;
+              _restWordIndex = v.round();
+            });
+            widget.onSeek(v.round());
+          },
+        ),
+      ],
     );
   }
 }

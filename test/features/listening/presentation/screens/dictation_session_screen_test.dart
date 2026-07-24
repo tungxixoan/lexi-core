@@ -346,4 +346,63 @@ void main() {
       expect(result.difficulty, DictationDifficulty.medium);
     });
   });
+
+  group('seek slider', () {
+    testWidgets('shows a seek slider once the item has more than 1 word', (tester) async {
+      await tester.pumpWidget(_buildSession(_session()));
+      await tester.pumpAndSettle();
+      expect(find.byType(Slider), findsOneWidget);
+    });
+
+    testWidgets('shows a word-position label while dragging, before releasing', (tester) async {
+      await tester.pumpWidget(_buildSession(_session()));
+      await tester.pumpAndSettle();
+
+      final slider = tester.widget<Slider>(find.byType(Slider));
+      slider.onChanged?.call(1.0); // word index 1 of 2: "world."
+      await tester.pumpAndSettle();
+
+      expect(find.text('Từ 2/2'), findsOneWidget);
+    });
+
+    testWidgets(
+        'releasing the slider on the first-ever interaction sets hasPlayedOnce for free',
+        (tester) async {
+      await tester.pumpWidget(_buildSession(_session()));
+      await tester.pumpAndSettle();
+
+      final slider = tester.widget<Slider>(find.byType(Slider));
+      slider.onChangeEnd?.call(1.0); // word index 1: "world."
+      await tester.pumpAndSettle();
+
+      expect(find.text('Nghe lại (0)'), findsOneWidget);
+    });
+
+    testWidgets('submitting after seeking includes seekCount and seekPenaltyTotal in the result',
+        (tester) async {
+      Object? capturedExtra;
+      await tester.pumpWidget(
+        _buildSession(_session(), onResult: (extra) => capturedExtra = extra),
+      );
+      await tester.pumpAndSettle();
+
+      final slider1 = tester.widget<Slider>(find.byType(Slider));
+      slider1.onChangeEnd?.call(1.0); // first-ever listen via seek: free
+      await tester.pumpAndSettle();
+
+      final slider2 = tester.widget<Slider>(find.byType(Slider));
+      slider2.onChangeEnd?.call(0.0); // back to word 0: full reheard -> 5%
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'Hello world.');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Nộp bài'));
+      await tester.pumpAndSettle();
+
+      final result = capturedExtra! as DictationSessionResult;
+      expect(result.seekCount, 2);
+      expect(result.seekPenaltyTotal, closeTo(0.05, 0.0001));
+    });
+  });
 }
