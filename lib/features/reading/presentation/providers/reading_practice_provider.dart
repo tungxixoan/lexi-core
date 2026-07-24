@@ -15,6 +15,7 @@ final class SentenceResult {
     required this.correctChars,
     required this.totalChars,
     required this.durationMs,
+    this.backspaceCount = 0,
   });
 
   final String target;
@@ -22,6 +23,7 @@ final class SentenceResult {
   final int correctChars;
   final int totalChars;
   final int durationMs;
+  final int backspaceCount;
 
   double get accuracy => totalChars == 0 ? 1.0 : correctChars / totalChars;
 }
@@ -52,6 +54,12 @@ final class ReadingSessionResult {
     if (minutes == 0) return 0;
     return (totalTyped / 5.0) / minutes;
   }
+
+  int get totalBackspaceCount =>
+      sentenceResults.fold(0, (s, r) => s + r.backspaceCount);
+
+  double get finalScore =>
+      (overallAccuracy - 0.01 * totalBackspaceCount).clamp(0.0, 1.0);
 }
 
 final class ReadingSessionState {
@@ -63,6 +71,7 @@ final class ReadingSessionState {
     required this.sessionStartedAt,
     required this.sentenceStartedAt,
     required this.isComplete,
+    this.currentBackspaceCount = 0,
   });
 
   final ReadingPassage passage;
@@ -72,6 +81,7 @@ final class ReadingSessionState {
   final DateTime sessionStartedAt;
   final DateTime sentenceStartedAt;
   final bool isComplete;
+  final int currentBackspaceCount;
 
   BilingualSentence get currentSentence =>
       passage.sentences[currentSentenceIndex];
@@ -82,6 +92,7 @@ final class ReadingSessionState {
     List<SentenceResult>? completedSentences,
     DateTime? sentenceStartedAt,
     bool? isComplete,
+    int? currentBackspaceCount,
   }) =>
       ReadingSessionState(
         passage: passage,
@@ -91,6 +102,7 @@ final class ReadingSessionState {
         sessionStartedAt: sessionStartedAt,
         sentenceStartedAt: sentenceStartedAt ?? this.sentenceStartedAt,
         isComplete: isComplete ?? this.isComplete,
+        currentBackspaceCount: currentBackspaceCount ?? this.currentBackspaceCount,
       );
 }
 
@@ -131,10 +143,16 @@ class ReadingPracticeNotifier extends _$ReadingPracticeNotifier {
   void updateTypedText(String text) {
     final current = state.valueOrNull;
     if (current == null || current.isComplete) return;
+    final backspaceCount = text.length < current.typedText.length
+        ? current.currentBackspaceCount + 1
+        : current.currentBackspaceCount;
     if (text == current.currentSentence.target) {
-      _advance(current, text);
+      _advance(current.copyWith(currentBackspaceCount: backspaceCount), text);
     } else {
-      state = AsyncData(current.copyWith(typedText: text));
+      state = AsyncData(current.copyWith(
+        typedText: text,
+        currentBackspaceCount: backspaceCount,
+      ));
     }
   }
 
@@ -152,6 +170,7 @@ class ReadingPracticeNotifier extends _$ReadingPracticeNotifier {
       durationMs: DateTime.now()
           .difference(current.sentenceStartedAt)
           .inMilliseconds,
+      backspaceCount: current.currentBackspaceCount,
     );
     final nextIndex = current.currentSentenceIndex + 1;
     final isComplete = nextIndex >= current.passage.sentences.length;
@@ -162,6 +181,7 @@ class ReadingPracticeNotifier extends _$ReadingPracticeNotifier {
       completedSentences: [...current.completedSentences, result],
       sentenceStartedAt: now,
       isComplete: isComplete,
+      currentBackspaceCount: 0,
     ));
   }
 
