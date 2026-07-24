@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
@@ -89,6 +91,39 @@ void main() {
     verify(() => mockTts.speak('Hello, can I help you?', Language.english, pitch: 1.0)).called(1);
     final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.isSpeaking, false); // reset after the awaited speak() completes
+  });
+
+  test('playCurrentTurn() auto-continues through every turn until the last one', () async {
+    await generateFixed();
+    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+
+    await notifier.playCurrentTurn();
+
+    verify(() => mockTts.speak('Hello, can I help you?', Language.english, pitch: 1.0)).called(1);
+    verify(() => mockTts.speak('Yes, I need a room for tonight.', Language.english, pitch: 1.3))
+        .called(1);
+    verify(() => mockTts.speak('Sure, for how many guests?', Language.english, pitch: 1.0))
+        .called(1);
+    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    expect(state.currentTurnIndex, 2); // last turn
+    expect(state.isSpeaking, false);
+  });
+
+  test('interrupting playback via stopPlayback() cancels the auto-continue chain', () async {
+    await generateFixed();
+    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+    final completer = Completer<void>();
+    when(() => mockTts.speak(any(), any(), pitch: any(named: 'pitch')))
+        .thenAnswer((_) => completer.future);
+
+    final playFuture = notifier.playCurrentTurn();
+    await notifier.stopPlayback(); // supersedes the in-flight turn 0 playback
+    completer.complete(); // let the original (now-superseded) speak() resolve
+    await playFuture;
+
+    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    expect(state.currentTurnIndex, 0); // stopPlayback() doesn't change turns
+    verify(() => mockTts.speak(any(), any(), pitch: any(named: 'pitch'))).called(1); // no auto-continue
   });
 
   test('nextTurn() advances currentTurnIndex and stops any playing audio', () async {

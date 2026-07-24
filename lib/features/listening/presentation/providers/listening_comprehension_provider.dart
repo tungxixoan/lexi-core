@@ -134,6 +134,13 @@ class ListeningComprehensionNotifier extends _$ListeningComprehensionNotifier {
         );
     final latest = state.valueOrNull;
     if (latest == null || latest.playToken != token) return; // superseded meanwhile
+    if (latest.currentTurnIndex < latest.passage.turns.length - 1) {
+      // Turn finished naturally (not interrupted) and it's not the last one
+      // — keep going without a gap, staying "isSpeaking" the whole time.
+      state = AsyncData(latest.copyWith(currentTurnIndex: latest.currentTurnIndex + 1));
+      await playCurrentTurn();
+      return;
+    }
     state = AsyncData(latest.copyWith(isSpeaking: false));
   }
 
