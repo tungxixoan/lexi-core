@@ -34,6 +34,7 @@ class LexiCoreApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       routerConfig: appRouter,
+      builder: (context, child) => SelectionArea(child: child!),
     );
   }
 }
