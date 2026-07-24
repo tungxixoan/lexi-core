@@ -164,4 +164,49 @@ void main() {
     container.read(listeningComprehensionNotifierProvider.notifier).reset();
     expect(container.read(listeningComprehensionNotifierProvider).valueOrNull, isNull);
   });
+
+  test('totalWordsOf sums word counts across all turns', () async {
+    await generateFixed();
+    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    // Turn 0 "Hello, can I help you?" = 5 words; turn 1 "Yes, I need a room for
+    // tonight." = 7 words; turn 2 "Sure, for how many guests?" = 5 words.
+    expect(totalWordsOf(state.passage), 17);
+  });
+
+  test('seekToWord within the first turn speaks from that word to the end of the turn', () async {
+    await generateFixed();
+    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+
+    await notifier.seekToWord(2); // turn 0, word index 2: "I"
+
+    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    expect(state.currentTurnIndex, 0);
+    verify(() => mockTts.speak('I help you?', Language.english, pitch: 1.0)).called(1);
+  });
+
+  test(
+      "seekToWord crossing into a later turn switches currentTurnIndex and uses that turn's pitch",
+      () async {
+    await generateFixed();
+    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+
+    await notifier.seekToWord(5); // turn 0 has 5 words (indices 0-4), so this is turn 1 word 0
+
+    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    expect(state.currentTurnIndex, 1);
+    verify(() => mockTts.speak('Yes, I need a room for tonight.', Language.english, pitch: 1.3))
+        .called(1);
+  });
+
+  test('seekToWord with an out-of-range index is a no-op', () async {
+    await generateFixed();
+    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+
+    await notifier.seekToWord(-1);
+    await notifier.seekToWord(17); // total is 17, valid indices are 0-16
+
+    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    expect(state.currentTurnIndex, 0);
+    verifyNever(() => mockTts.speak(any(), any(), pitch: any(named: 'pitch')));
+  });
 }

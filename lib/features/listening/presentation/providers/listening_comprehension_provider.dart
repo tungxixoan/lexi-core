@@ -62,6 +62,37 @@ final class ListeningSessionState {
       );
 }
 
+List<String> _splitWords(String text) =>
+    text.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+
+/// Total word count across every turn of [passage], in order — the range
+/// the Nghe hiểu seek slider spans (word positions are counted across all
+/// turns, not per turn).
+int totalWordsOf(ListeningPassage passage) =>
+    passage.turns.fold(0, (sum, t) => sum + _splitWords(t.text).length);
+
+/// Maps a 0-based [globalWordIndex] (counting words across all turns of
+/// [passage] in order) to the turn it falls in and its word index within
+/// that turn's own text.
+({int turnIndex, int wordIndex}) _resolveGlobalWordIndex(
+  ListeningPassage passage,
+  int globalWordIndex,
+) {
+  var remaining = globalWordIndex;
+  for (var t = 0; t < passage.turns.length; t++) {
+    final wordCount = _splitWords(passage.turns[t].text).length;
+    if (remaining < wordCount) {
+      return (turnIndex: t, wordIndex: remaining);
+    }
+    remaining -= wordCount;
+  }
+  final lastTurn = passage.turns.length - 1;
+  return (
+    turnIndex: lastTurn,
+    wordIndex: _splitWords(passage.turns[lastTurn].text).length - 1,
+  );
+}
+
 @riverpod
 class ListeningComprehensionNotifier extends _$ListeningComprehensionNotifier {
   @override
@@ -98,6 +129,32 @@ class ListeningComprehensionNotifier extends _$ListeningComprehensionNotifier {
     final turn = current.currentTurn;
     await ref.read(ttsServiceProvider).speak(
           turn.text,
+          current.passage.targetLanguage,
+          pitch: _pitchFor(turn.speaker),
+        );
+    final latest = state.valueOrNull;
+    if (latest == null || latest.playToken != token) return; // superseded meanwhile
+    state = AsyncData(latest.copyWith(isSpeaking: false));
+  }
+
+  Future<void> seekToWord(int globalWordIndex) async {
+    final current = state.valueOrNull;
+    if (current == null || current.isSubmitted) return;
+    final total = totalWordsOf(current.passage);
+    if (globalWordIndex < 0 || globalWordIndex >= total) return;
+
+    final resolved = _resolveGlobalWordIndex(current.passage, globalWordIndex);
+    final turn = current.passage.turns[resolved.turnIndex];
+    final words = _splitWords(turn.text);
+    final token = current.playToken + 1;
+    state = AsyncData(current.copyWith(
+      currentTurnIndex: resolved.turnIndex,
+      isSpeaking: true,
+      playToken: token,
+    ));
+    await ref.read(ttsServiceProvider).stop();
+    await ref.read(ttsServiceProvider).speak(
+          words.skip(resolved.wordIndex).join(' '),
           current.passage.targetLanguage,
           pitch: _pitchFor(turn.speaker),
         );
