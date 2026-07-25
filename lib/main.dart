@@ -34,7 +34,14 @@ class LexiCoreApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       routerConfig: appRouter,
-      builder: (context, child) => SelectionArea(child: child!),
+      // SelectionArea needs an Overlay ancestor, but the router's own
+      // Overlay (inside its Navigator) sits *below* this builder's child,
+      // not above it — so we supply an explicit one here.
+      builder: (context, child) => Overlay(
+        initialEntries: [
+          OverlayEntry(builder: (context) => SelectionArea(child: child!)),
+        ],
+      ),
     );
   }
 }
