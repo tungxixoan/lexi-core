@@ -520,5 +520,25 @@ final generateListeningPassageUseCaseProvider =
 // ignore: unused_element
 typedef GenerateListeningPassageUseCaseRef
     = AutoDisposeProviderRef<GenerateListeningPassageUseCase>;
+String _$findKnownHeadwordsUseCaseHash() =>
+    r'8b099e59f4f7419a169603714d02c3d8f59fdd9b';
+
+/// See also [findKnownHeadwordsUseCase].
+@ProviderFor(findKnownHeadwordsUseCase)
+final findKnownHeadwordsUseCaseProvider =
+    AutoDisposeProvider<FindKnownHeadwordsUseCase>.internal(
+  findKnownHeadwordsUseCase,
+  name: r'findKnownHeadwordsUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$findKnownHeadwordsUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef FindKnownHeadwordsUseCaseRef
+    = AutoDisposeProviderRef<FindKnownHeadwordsUseCase>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
