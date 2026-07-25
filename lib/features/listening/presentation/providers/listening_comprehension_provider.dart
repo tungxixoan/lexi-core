@@ -33,6 +33,7 @@ final class ListeningSessionState {
     required this.playToken,
     required this.selectedAnswers,
     required this.isSubmitted,
+    this.speedMultiplier = 1.0,
   });
 
   final ListeningPassage passage;
@@ -41,6 +42,7 @@ final class ListeningSessionState {
   final int playToken;
   final List<int?> selectedAnswers;
   final bool isSubmitted;
+  final double speedMultiplier;
 
   ListeningTurn get currentTurn => passage.turns[currentTurnIndex];
   bool get canSubmit => selectedAnswers.every((a) => a != null);
@@ -51,6 +53,7 @@ final class ListeningSessionState {
     int? playToken,
     List<int?>? selectedAnswers,
     bool? isSubmitted,
+    double? speedMultiplier,
   }) =>
       ListeningSessionState(
         passage: passage,
@@ -59,8 +62,11 @@ final class ListeningSessionState {
         playToken: playToken ?? this.playToken,
         selectedAnswers: selectedAnswers ?? this.selectedAnswers,
         isSubmitted: isSubmitted ?? this.isSubmitted,
+        speedMultiplier: speedMultiplier ?? this.speedMultiplier,
       );
 }
+
+double _rateFor(double speedMultiplier) => (0.5 * speedMultiplier).clamp(0.0, 1.0);
 
 List<String> _splitWords(String text) =>
     text.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
@@ -131,6 +137,7 @@ class ListeningComprehensionNotifier extends _$ListeningComprehensionNotifier {
           turn.text,
           current.passage.targetLanguage,
           pitch: _pitchFor(turn.speaker),
+          rate: _rateFor(current.speedMultiplier),
         );
     final latest = state.valueOrNull;
     if (latest == null || latest.playToken != token) return; // superseded meanwhile
@@ -164,10 +171,23 @@ class ListeningComprehensionNotifier extends _$ListeningComprehensionNotifier {
           words.skip(resolved.wordIndex).join(' '),
           current.passage.targetLanguage,
           pitch: _pitchFor(turn.speaker),
+          rate: _rateFor(current.speedMultiplier),
         );
     final latest = state.valueOrNull;
     if (latest == null || latest.playToken != token) return; // superseded meanwhile
     state = AsyncData(latest.copyWith(isSpeaking: false));
+  }
+
+  Future<void> setSpeed(double multiplier) async {
+    final current = state.valueOrNull;
+    if (current == null || current.isSubmitted) return;
+    if (!current.isSpeaking) {
+      state = AsyncData(current.copyWith(speedMultiplier: multiplier));
+      return;
+    }
+    await ref.read(ttsServiceProvider).stop();
+    state = AsyncData(current.copyWith(speedMultiplier: multiplier));
+    await playCurrentTurn();
   }
 
   Future<void> stopPlayback() async {
