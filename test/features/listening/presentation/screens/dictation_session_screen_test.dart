@@ -405,4 +405,27 @@ void main() {
       expect(result.seekPenaltyTotal, closeTo(0.05, 0.0001));
     });
   });
+
+  group('speed selector', () {
+    testWidgets('defaults to the 1x segment selected', (tester) async {
+      await tester.pumpWidget(_buildSession(_session()));
+      await tester.pumpAndSettle();
+      final segmented =
+          tester.widget<SegmentedButton<double>>(find.byType(SegmentedButton<double>));
+      expect(segmented.selected, {1.0});
+    });
+
+    testWidgets('tapping 0.75x calls setSpeed(0.75) and updates the selected segment',
+        (tester) async {
+      await tester.pumpWidget(_buildSession(_session()));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('0.75x'));
+      await tester.pumpAndSettle();
+
+      final segmented =
+          tester.widget<SegmentedButton<double>>(find.byType(SegmentedButton<double>));
+      expect(segmented.selected, {0.75});
+    });
+  });
 }

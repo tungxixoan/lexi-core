@@ -110,6 +110,11 @@ class _SessionScaffold extends ConsumerWidget {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 12),
+                    _SpeedSelector(
+                      speed: session.speedMultiplier,
+                      onChanged: notifier.setSpeed,
+                    ),
                   ],
                 ),
               ),
@@ -245,5 +250,24 @@ class _SeekSliderState extends State<_SeekSlider> {
       remaining -= wordCount;
     }
     return '';
+  }
+}
+
+class _SpeedSelector extends StatelessWidget {
+  const _SpeedSelector({required this.speed, required this.onChanged});
+  final double speed;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<double>(
+      segments: const [
+        ButtonSegment(value: 0.75, label: Text('0.75x')),
+        ButtonSegment(value: 1.0, label: Text('1x')),
+        ButtonSegment(value: 1.25, label: Text('1.25x')),
+      ],
+      selected: {speed},
+      onSelectionChanged: (selected) => onChanged(selected.first),
+    );
   }
 }
