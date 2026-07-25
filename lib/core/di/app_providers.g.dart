@@ -540,5 +540,42 @@ final findKnownHeadwordsUseCaseProvider =
 // ignore: unused_element
 typedef FindKnownHeadwordsUseCaseRef
     = AutoDisposeProviderRef<FindKnownHeadwordsUseCase>;
+String _$wordRadarSourceHash() => r'5ade99f38dc62804da2036019ed9a19574828733';
+
+/// See also [wordRadarSource].
+@ProviderFor(wordRadarSource)
+final wordRadarSourceProvider = AutoDisposeProvider<WordRadarSource>.internal(
+  wordRadarSource,
+  name: r'wordRadarSourceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$wordRadarSourceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef WordRadarSourceRef = AutoDisposeProviderRef<WordRadarSource>;
+String _$generateWordSuggestionsUseCaseHash() =>
+    r'170af548189a051a3dcc9a458f8d24e935925f54';
+
+/// See also [generateWordSuggestionsUseCase].
+@ProviderFor(generateWordSuggestionsUseCase)
+final generateWordSuggestionsUseCaseProvider =
+    AutoDisposeProvider<GenerateWordSuggestionsUseCase>.internal(
+  generateWordSuggestionsUseCase,
+  name: r'generateWordSuggestionsUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$generateWordSuggestionsUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GenerateWordSuggestionsUseCaseRef
+    = AutoDisposeProviderRef<GenerateWordSuggestionsUseCase>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

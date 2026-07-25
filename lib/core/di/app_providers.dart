@@ -38,7 +38,9 @@ import '../../features/listening/domain/use_cases/select_dictation_blanks_use_ca
 import '../../features/listening/data/sources/listening_passage_source.dart';
 import '../../features/listening/domain/use_cases/generate_listening_passage_use_case.dart';
 // --- Word Radar DI ---
+import '../../features/word_radar/data/sources/word_radar_source.dart';
 import '../../features/word_radar/domain/use_cases/find_known_headwords_use_case.dart';
+import '../../features/word_radar/domain/use_cases/generate_word_suggestions_use_case.dart';
 
 part 'app_providers.g.dart';
 
@@ -180,3 +182,14 @@ GenerateListeningPassageUseCase generateListeningPassageUseCase(
 FindKnownHeadwordsUseCase findKnownHeadwordsUseCase(
         FindKnownHeadwordsUseCaseRef ref) =>
     FindKnownHeadwordsUseCase(ref.watch(vocabRepositoryProvider));
+
+@riverpod
+WordRadarSource wordRadarSource(WordRadarSourceRef ref) {
+  final settings = ref.watch(userSettingsNotifierProvider);
+  return WordRadarSource(settings);
+}
+
+@riverpod
+GenerateWordSuggestionsUseCase generateWordSuggestionsUseCase(
+        GenerateWordSuggestionsUseCaseRef ref) =>
+    GenerateWordSuggestionsUseCase(ref.watch(wordRadarSourceProvider));

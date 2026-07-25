@@ -1,0 +1,82 @@
+import 'dart:convert';
+import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
+import '../../../../core/services/ai_client_factory.dart';
+import '../../../dictionary/domain/entities/input_type.dart';
+import '../../../dictionary/domain/entities/language.dart';
+import '../../../dictionary/domain/entities/lookup_result.dart';
+import '../../../dictionary/domain/entities/user_settings_state.dart';
+import '../../../vocabulary/domain/entities/cefr_level.dart';
+
+// Re-export so test imports (from this file) continue to resolve.
+export '../../../../core/services/ai_client_factory.dart' show GenerativeModelClient;
+
+class WordRadarSource {
+  WordRadarSource(UserSettingsState settings)
+      : _client = AiClientFactory.buildClient(settings);
+
+  WordRadarSource.withModel(GenerativeModelClient client) : _client = client;
+
+  final GenerativeModelClient _client;
+
+  Future<List<WordPhraseResult>> scan({
+    required String text,
+    required Language targetLanguage,
+    required CEFRLevel? targetCefrLevel,
+    required List<String> knownHeadwords,
+  }) async {
+    final prompt = _buildPrompt(
+      text: text,
+      targetLanguage: targetLanguage,
+      targetCefrLevel: targetCefrLevel,
+      knownHeadwords: knownHeadwords,
+    );
+    final response = await _client.generateContent([Content.text(prompt)]);
+    final responseText = response.text ?? '{"suggestions":[]}';
+    final json = jsonDecode(responseText) as Map<String, dynamic>;
+    return (json['suggestions'] as List? ?? [])
+        .map((item) => _parseSuggestion(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  String _buildPrompt({
+    required String text,
+    required Language targetLanguage,
+    required CEFRLevel? targetCefrLevel,
+    required List<String> knownHeadwords,
+  }) {
+    final levelClause =
+        targetCefrLevel != null ? 'at ${targetCefrLevel.label} level' : 'at any level';
+    final exclusionClause = knownHeadwords.isEmpty
+        ? 'There are no already-known words to exclude.'
+        : 'Do NOT suggest any of these already-known words: ${knownHeadwords.join(", ")}.';
+    return 'You are a language learning assistant helping a Vietnamese speaker learn '
+        '${targetLanguage.label}. Given this text: "$text", suggest up to 10 words or '
+        'short phrases from the text that are worth learning $levelClause, for a '
+        'Vietnamese speaker. $exclusionClause '
+        'Respond with JSON only (no markdown, no code fences): '
+        '{"suggestions":[{"headword":"exact word or phrase from the text",'
+        '"ipa":"IPA transcription","meaning":"Vietnamese definition",'
+        '"definition":"English definition",'
+        '"synonyms":["2-4 English synonyms, or empty array if none fit"],'
+        '"examples":["one example sentence, ideally reusing context from the source text"],'
+        '"suggestedTopics":["one topic from: Daily Life, Travel, Food & Drink, Business, '
+        'Technology, Health, Education, Entertainment, Nature, Emotion, Academic, Idioms, '
+        'Phrasal Verbs, Slang, Social/Casual, Sports, Art & Culture, Science, Law & Politics, Other"],'
+        '"cefrLevel":"a1, a2, b1, b2, c1, or c2"}]}. '
+        'If nothing in the text is worth learning, respond with {"suggestions":[]}.';
+  }
+
+  WordPhraseResult _parseSuggestion(Map<String, dynamic> json) => WordPhraseResult(
+        headword: json['headword'] as String,
+        inputType: InputType.word,
+        ipa: json['ipa'] as String? ?? '',
+        meaning: json['meaning'] as String? ?? '',
+        examples: (json['examples'] as List?)?.cast<String>() ?? const [],
+        suggestedTopics: (json['suggestedTopics'] as List?)?.cast<String>() ?? const [],
+        definition: json['definition'] as String? ?? '',
+        synonyms: (json['synonyms'] as List?)?.cast<String>() ?? const [],
+        cefrLevel: json['cefrLevel'] != null
+            ? CEFRLevel.values.byName((json['cefrLevel'] as String).toLowerCase())
+            : null,
+      );
+}
