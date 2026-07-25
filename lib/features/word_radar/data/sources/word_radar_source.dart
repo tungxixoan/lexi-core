@@ -34,7 +34,9 @@ class WordRadarSource {
     final responseText = response.text ?? '{"suggestions":[]}';
     final json = jsonDecode(responseText) as Map<String, dynamic>;
     return (json['suggestions'] as List? ?? [])
-        .map((item) => _parseSuggestion(item as Map<String, dynamic>))
+        .whereType<Map<String, dynamic>>()
+        .where((item) => item['headword'] is String && (item['headword'] as String).isNotEmpty)
+        .map((item) => _parseSuggestion(item))
         .toList();
   }
 

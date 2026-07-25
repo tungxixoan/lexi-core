@@ -85,4 +85,36 @@ void main() {
     expect(part.text, contains('cat'));
     expect(part.text, contains('mat'));
   });
+
+  test('skips a malformed suggestion but keeps the valid ones in the same response', () async {
+    final json = jsonEncode({
+      'suggestions': [
+        {
+          'headword': 'ubiquitous',
+          'ipa': '/juːˈbɪkwɪtəs/',
+          'meaning': 'có mặt khắp nơi',
+          'examples': <String>[],
+          'suggestedTopics': <String>[],
+        },
+        {
+          // missing 'headword' entirely — must not crash the whole batch
+          'ipa': '/x/',
+          'meaning': 'malformed item',
+          'examples': <String>[],
+          'suggestedTopics': <String>[],
+        },
+      ],
+    });
+    final source = WordRadarSource.withModel(FakeGenerativeModelClient(json));
+
+    final result = await source.scan(
+      text: 'Smartphones are everywhere now.',
+      targetLanguage: Language.english,
+      targetCefrLevel: null,
+      knownHeadwords: const [],
+    );
+
+    expect(result, hasLength(1));
+    expect(result[0].headword, 'ubiquitous');
+  });
 }
