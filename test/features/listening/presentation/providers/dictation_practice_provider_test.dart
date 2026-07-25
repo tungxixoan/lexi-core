@@ -335,6 +335,7 @@ void main() {
       when(() => mockTts.speak(fixedItem.target, fixedItem.targetLanguage,
               rate: any(named: 'rate')))
           .thenAnswer((_) async {});
+      when(() => mockTts.stop()).thenAnswer((_) async {});
     });
 
     ProviderContainer makeContainer() => ProviderContainer(
@@ -485,6 +486,7 @@ void main() {
       when(() => mockTts.speak(fixedItem.target, fixedItem.targetLanguage,
               rate: any(named: 'rate')))
           .thenAnswer((_) async {});
+      when(() => mockTts.stop()).thenAnswer((_) async {});
     });
 
     ProviderContainer makeContainer() => ProviderContainer(
@@ -738,6 +740,7 @@ void main() {
           targetLanguage: Language.english,
         ),
       ).thenAnswer((_) async => fixedItem);
+      when(() => mockTts.stop()).thenAnswer((_) async {});
     });
 
     ProviderContainer makeContainer() => ProviderContainer(
@@ -820,6 +823,64 @@ void main() {
       verify(() => mockTts.speak(fixedItem.target, fixedItem.targetLanguage,
               rate: 0.625))
           .called(1);
+    });
+  });
+
+  group('DictationPracticeNotifier disposal', () {
+    late MockGenerateDictationItemUseCase mockUseCase;
+    late MockTtsService mockTts;
+    late DictationItem fixedItem;
+    late List<VocabRecord> words;
+
+    setUp(() {
+      mockUseCase = MockGenerateDictationItemUseCase();
+      mockTts = MockTtsService();
+      fixedItem = _item('Hello world.');
+      words = [
+        VocabRecord(
+          id: 'id1',
+          headword: 'hello',
+          inputType: InputType.word,
+          ipa: '',
+          meaning: '',
+          examples: const [],
+          personalNotes: '',
+          topicIds: const [],
+          targetLanguage: Language.english,
+          cefrLevel: CEFRLevel.b1,
+          activeContext: AppContext.general,
+          createdAt: DateTime(2026),
+          updatedAt: DateTime(2026),
+        ),
+      ];
+      when(
+        () => mockUseCase.execute(
+          words: words,
+          level: CEFRLevel.b1,
+          context: AppContext.general,
+          targetLanguage: Language.english,
+        ),
+      ).thenAnswer((_) async => fixedItem);
+      when(() => mockTts.stop()).thenAnswer((_) async {});
+    });
+
+    test('disposing the provider (e.g. navigating away mid-playback) stops TTS', () async {
+      final container = ProviderContainer(
+        overrides: [
+          generateDictationItemUseCaseProvider.overrideWithValue(mockUseCase),
+          ttsServiceProvider.overrideWithValue(mockTts),
+        ],
+      );
+      await container.read(dictationPracticeNotifierProvider.notifier).generate(
+            words: words,
+            level: CEFRLevel.b1,
+            context: AppContext.general,
+            targetLanguage: Language.english,
+          );
+
+      container.dispose();
+
+      verify(() => mockTts.stop()).called(1);
     });
   });
 }

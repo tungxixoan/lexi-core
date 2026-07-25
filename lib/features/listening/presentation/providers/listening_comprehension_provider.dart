@@ -102,7 +102,11 @@ int totalWordsOf(ListeningPassage passage) =>
 @riverpod
 class ListeningComprehensionNotifier extends _$ListeningComprehensionNotifier {
   @override
-  AsyncValue<ListeningSessionState?> build() => const AsyncData(null);
+  AsyncValue<ListeningSessionState?> build() {
+    final ttsService = ref.read(ttsServiceProvider);
+    ref.onDispose(ttsService.stop);
+    return const AsyncData(null);
+  }
 
   Future<void> generate({
     required CEFRLevel level,

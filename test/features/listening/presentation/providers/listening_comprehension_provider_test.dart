@@ -295,4 +295,20 @@ void main() {
     verify(() => mockTts.speak('Hello, can I help you?', Language.english, pitch: 1.0, rate: 0.625))
         .called(1);
   });
+
+  test('disposing the provider (e.g. navigating away mid-playback) stops TTS', () async {
+    final localContainer = ProviderContainer(
+      overrides: [
+        generateListeningPassageUseCaseProvider.overrideWithValue(mockUseCase),
+        ttsServiceProvider.overrideWithValue(mockTts),
+      ],
+    );
+    await localContainer
+        .read(listeningComprehensionNotifierProvider.notifier)
+        .generate(level: CEFRLevel.b1, context: AppContext.general, targetLanguage: Language.english);
+
+    localContainer.dispose();
+
+    verify(() => mockTts.stop()).called(1);
+  });
 }

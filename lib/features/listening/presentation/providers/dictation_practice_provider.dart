@@ -176,7 +176,11 @@ double _rateFor(double speedMultiplier) => (0.5 * speedMultiplier).clamp(0.0, 1.
 @riverpod
 class DictationPracticeNotifier extends _$DictationPracticeNotifier {
   @override
-  AsyncValue<DictationSessionState?> build() => const AsyncData(null);
+  AsyncValue<DictationSessionState?> build() {
+    final ttsService = ref.read(ttsServiceProvider);
+    ref.onDispose(ttsService.stop);
+    return const AsyncData(null);
+  }
 
   Future<void> generate({
     required List<VocabRecord> words,
