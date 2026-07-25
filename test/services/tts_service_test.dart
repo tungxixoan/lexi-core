@@ -15,6 +15,7 @@ void main() {
     when(() => mockTts.awaitSpeakCompletion(any())).thenAnswer((_) async => 1);
     when(() => mockTts.setLanguage(any())).thenAnswer((_) async => 1);
     when(() => mockTts.setPitch(any())).thenAnswer((_) async => 1);
+    when(() => mockTts.setSpeechRate(any())).thenAnswer((_) async => 1);
     when(() => mockTts.speak(any())).thenAnswer((_) async => 1);
     when(() => mockTts.stop()).thenAnswer((_) async => 1);
     service = FlutterTtsService(mockTts);
@@ -35,6 +36,16 @@ void main() {
     await service.speak('Hi there.', Language.english, pitch: 1.3);
     verify(() => mockTts.setPitch(1.3)).called(1);
     verify(() => mockTts.speak('Hi there.')).called(1);
+  });
+
+  test('speak() does not call setSpeechRate when rate is omitted', () async {
+    await service.speak('Hello world.', Language.english);
+    verifyNever(() => mockTts.setSpeechRate(any()));
+  });
+
+  test('speak() forwards a custom rate via setSpeechRate', () async {
+    await service.speak('Hi there.', Language.english, rate: 0.375);
+    verify(() => mockTts.setSpeechRate(0.375)).called(1);
   });
 
   test('stop() delegates to FlutterTts.stop()', () async {

@@ -17,7 +17,7 @@ class _FakeTtsService implements TtsService {
   int speakCount = 0;
 
   @override
-  Future<void> speak(String text, Language language, {double pitch = 1.0}) async {
+  Future<void> speak(String text, Language language, {double pitch = 1.0, double? rate}) async {
     speakCount++;
   }
 
