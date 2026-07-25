@@ -92,7 +92,7 @@ class _SaveVocabSheetState extends ConsumerState<SaveVocabSheet> {
       personalNotes: _notesCtrl.text.trim(),
       topicIds: _selectedTopicIds,
       targetLanguage: settings.targetLanguage,
-      cefrLevel: CEFRLevel.b1,
+      cefrLevel: widget.result.cefrLevel ?? CEFRLevel.b1,
       activeContext: settings.activeContext,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),

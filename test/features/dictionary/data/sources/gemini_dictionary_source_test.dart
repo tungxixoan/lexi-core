@@ -6,6 +6,7 @@ import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart';
+import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
 
 /// Fake [GenerativeModelClient] that returns a canned response.
 class FakeGenerativeModelClient implements GenerativeModelClient {
@@ -31,6 +32,7 @@ void main() {
       'She sent a follow-up email after the meeting.',
     ],
     'suggestedTopics': ['Business'],
+    'cefrLevel': 'b1',
   });
 
   test('parses word/phrase result from Gemini JSON', () async {
@@ -51,6 +53,30 @@ void main() {
     expect(r.ipa, '/ˈfɒl.oʊ ʌp/');
     expect(r.inputType, InputType.phrase);
     expect(r.suggestedTopics, ['Business']);
+    expect(r.cefrLevel, CEFRLevel.b1);
+  });
+
+  test('defaults cefrLevel to null when the AI response omits it', () async {
+    final noLevelJson = jsonEncode({
+      'headword': 'cat',
+      'ipa': '/kæt/',
+      'meaning': 'con mèo',
+      'examples': <String>[],
+      'suggestedTopics': <String>[],
+    });
+    final source = GeminiDictionarySource.withModel(
+      FakeGenerativeModelClient(noLevelJson),
+    );
+
+    final result = await source.lookup(
+      query: 'cat',
+      inputType: InputType.word,
+      targetLanguage: Language.english,
+      context: AppContext.general,
+    );
+
+    final r = result as WordPhraseResult;
+    expect(r.cefrLevel, isNull);
   });
 
   final sentenceJson = jsonEncode({

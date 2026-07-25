@@ -1,4 +1,5 @@
 // lib/features/dictionary/domain/entities/lookup_result.dart
+import '../../../vocabulary/domain/entities/cefr_level.dart';
 import 'input_type.dart';
 
 sealed class LookupResult {
@@ -15,6 +16,7 @@ final class WordPhraseResult extends LookupResult {
     required this.suggestedTopics,
     this.definition = '',
     this.synonyms = const [],
+    this.cefrLevel,
   });
 
   final String headword;
@@ -25,6 +27,8 @@ final class WordPhraseResult extends LookupResult {
   final List<String> suggestedTopics;
   final String definition; // English definition (optional)
   final List<String> synonyms;
+  final CEFRLevel? cefrLevel; // AI-sourced level, when available
+
 }
 
 final class SentenceResult extends LookupResult {

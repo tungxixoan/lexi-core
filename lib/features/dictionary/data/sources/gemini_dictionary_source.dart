@@ -7,6 +7,7 @@ import '../../domain/entities/input_type.dart';
 import '../../domain/entities/language.dart';
 import '../../domain/entities/lookup_result.dart';
 import '../../domain/entities/user_settings_state.dart';
+import '../../../vocabulary/domain/entities/cefr_level.dart';
 
 // Re-export so existing test imports (from this file) continue to resolve.
 export '../../../../core/services/ai_client_factory.dart' show GenerativeModelClient;
@@ -51,6 +52,9 @@ class GeminiDictionarySource {
       suggestedTopics: (json['suggestedTopics'] as List).cast<String>(),
       definition: json['definition'] as String? ?? '',
       synonyms: (json['synonyms'] as List?)?.cast<String>() ?? const [],
+      cefrLevel: json['cefrLevel'] != null
+          ? CEFRLevel.values.byName((json['cefrLevel'] as String).toLowerCase())
+          : null,
     );
   }
 
@@ -80,7 +84,8 @@ class GeminiDictionarySource {
       '"definition":"English definition",'
       '"synonyms":["2-4 English synonyms for this sense, or empty array if none fit"],'
       '"examples":["example 1 in ${targetLanguage.label}","example 2"],'
-      '"suggestedTopics":["one topic from: Daily Life, Travel, Food & Drink, Business, Technology, Health, Education, Entertainment, Nature, Emotion, Academic, Idioms, Phrasal Verbs, Slang, Social/Casual, Sports, Art & Culture, Science, Law & Politics, Other"]} '
+      '"suggestedTopics":["one topic from: Daily Life, Travel, Food & Drink, Business, Technology, Health, Education, Entertainment, Nature, Emotion, Academic, Idioms, Phrasal Verbs, Slang, Social/Casual, Sports, Art & Culture, Science, Law & Politics, Other"],'
+      '"cefrLevel":"a1, a2, b1, b2, c1, or c2 — the CEFR difficulty level of this word or phrase"} '
       'If the word has multiple common parts of speech (e.g. "record" as both noun and verb), '
       'cover each sense in both "meaning" and "definition" using this format: "(n) ...; (v) ...", '
       'and give an IPA per sense too, e.g. "N: /ˈrekɔːrd/; V: /rɪˈkɔːrd/". '
