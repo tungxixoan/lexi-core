@@ -388,3 +388,67 @@
 - Confirmed harmless: _resolveGlobalWordIndex's dead fallback branch (Task 4 finding) still unreachable branch-wide.
 
 **Ready to merge — no fixes required.**
+
+---
+
+# LexiCore — TTS Playback-Speed Control (Nghe chép & Nghe hiểu)
+
+**BASE commit:** 3b0b5b0
+**Plan file:** docs/superpowers/plans/2026-07-25-tts-speed-control.md
+
+**Pre-flight note:** scanned for conflicts against global constraints — none found. Tasks 2/3 each carry a mechanical-but-large step (updating every existing `mockTts.speak(...)` when/verify call to account for the new `rate:` argument) — flagged to self during plan-writing, not a conflict, just a large Step 1 in each of those two tasks.
+
+## Status
+
+- Task 1: ✅ complete (commit ca20c5f, 299/299 full-repo tests, review clean)
+- Task 2: ✅ complete (commit 1b82ad0, 36/36 target tests + 133/133 listening suite, review clean)
+  Minor: setSpeed()'s "speaking" branch re-asserts isSpeaking:true (already true) — harmless no-op, per brief verbatim
+- Task 3: ✅ complete (commit 76af30d, 19/19 target tests, 305/305 full-repo tests, review clean)
+- Task 4: ✅ complete (commit 344890c, 29/29 target tests, 309/309 full-repo tests, review clean)
+  Minor: _SpeedSelector duplicated byte-for-byte across both screen files — deliberate, matches existing _SeekSlider precedent, not an oversight
+
+## Final Whole-Branch Review
+
+**Commits reviewed:** 3b0b5b0..344890c (4 commits)
+**Status:** ✅ Ready to merge (Yes)
+
+**Strengths:** all 4 tasks faithful to spec/plan, no scope creep; `_rateFor` byte-identical in both providers (deliberate duplication per plan); scoring divergence isolated exactly where spec requires (Dictation's mid-play speed change increments replayCount, reusing existing finalScore formula with no new penalty term; Comprehension never touches ComprehensionSessionResult/SM-2) with no leakage either direction; session-scoped reset holds (speedMultiplier defaults to 1.0 on every generate()); backward compat confirmed (3 unrelated speak() callers unaffected by nullable rate); concurrency-sensitive "while speaking" tests genuinely interleave via Completer (not vacuous); 309/309 full suite independently re-confirmed.
+
+**Minor (not blocking):**
+- Dictation has no playToken-style supersede guard (unlike Comprehension), so a rapid mid-play setSpeed() race could theoretically stamp isSpeaking:false while replay audio is still playing — confirmed to fail in the safe direction (under-counts replays, not a free-listen exploit) and currently invisible since isSpeaking is never read by the Dictation UI. Worth revisiting only if isSpeaking ever drives Dictation UI (e.g. a stop button).
+
+**Ready to merge — no fixes required.**
+
+---
+
+# LexiCore — Flashcard Flip-Back, Reading Backspace Penalty, Listening Auto-Continue
+
+**BASE commit:** 3058054
+**Plan file:** docs/superpowers/plans/2026-07-24-flashcard-flip-reading-backspace-listening-autoplay.md
+
+**Pre-flight note:** scanned for conflicts against global constraints — none found. Three independent tasks (flashcard widget, reading provider+screen split into two tasks, listening provider), no shared files between them.
+
+## Status
+
+- Task 1: ✅ complete (commit 404f39a, 8/8 tests, review clean)
+  Minor: back-face Column/Container(minHeight only) sits inside SingleChildScrollView (unbounded height) — same pre-existing pattern as the front face, not a regression from this task; resolved as non-blocking.
+- Task 2: ✅ complete (commits df17db4+289e31b, 25/25 reading tests, review clean after fix)
+  Fixed: implementer found the brief's own test scenario ('Hix'->'Hi.' single-call jump) didn't actually simulate a backspace keystroke; added missing intermediate step and corrected 2 expected counts (independently re-verified arithmetic by hand)
+- Task 3: ✅ complete (commit 7c23e9d, review clean)
+- Task 4: ✅ complete (commit 9d3f101, 297/297 full-repo tests, review clean)
+  Minor: submit() firing mid-auto-continue-chain (non-last-turn) could leave isSpeaking stuck true — confirmed zero observable effect since comprehension_session_screen unmounts to SizedBox.shrink() on isSubmitted regardless
+  Minor: auto-continue test doesn't use verifyInOrder for turn sequencing (per brief's own prescribed test body)
+
+## Final Whole-Branch Review
+
+**Commits reviewed:** 3058054..9d3f101 (5 commits)
+**Status:** ✅ Ready to merge (Yes)
+
+**Strengths:** three genuinely independent slices (practice/reading/listening, no shared state or naming collisions); reading's `finalScore` formula confirmed matching dictation's additive-penalty/clamp(0,1) pattern exactly, per spec intent; backward compatibility clean (all new fields default to 0, old test fixtures compile/pass unchanged); listening auto-continue correctly reuses the existing `playToken` supersede mechanism with no new flag; both prior per-task concerns (Task 2's fixed test scenario, Task 1's scroll-view layout pattern) independently re-verified as genuinely resolved/non-regressions; full suite re-run clean (297/297), `flutter analyze` clean on all 4 changed files.
+
+**Minor (not blocking):**
+- 4th "Điểm" stat card on reading result screen could overflow horizontally on very narrow (~320dp) devices (`_StatCard` has no `Expanded`/`Flexible` wrapping in the `Row`) — low likelihood, optional fix.
+- Task 4's `isSpeaking` stuck-true edge case (submit() mid-chain) confirmed unobservable/harmless at whole-branch level too — optional defense-in-depth (`if (latest.isSubmitted) return;`) not required.
+- Reading backspace count increments even on a delete-to-match final keystroke (e.g. 'Hii'→'Hi' completing the sentence) — consistent with spec's "count every length-decrease event," not a defect, just a note.
+
+**Ready to merge — no fixes required.**
