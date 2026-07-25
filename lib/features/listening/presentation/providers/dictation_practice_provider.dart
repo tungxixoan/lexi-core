@@ -120,6 +120,8 @@ final class DictationSessionState {
     this.blankAnswers = const [],
     this.seekCount = 0,
     this.seekPenaltyTotal = 0.0,
+    this.speedMultiplier = 1.0,
+    this.isSpeaking = false,
   });
 
   final DictationItem item;
@@ -133,6 +135,8 @@ final class DictationSessionState {
   final List<String> blankAnswers;
   final int seekCount;
   final double seekPenaltyTotal;
+  final double speedMultiplier;
+  final bool isSpeaking;
 
   bool get isClozeMode => difficulty != DictationDifficulty.hard;
 
@@ -147,6 +151,8 @@ final class DictationSessionState {
     List<String>? blankAnswers,
     int? seekCount,
     double? seekPenaltyTotal,
+    double? speedMultiplier,
+    bool? isSpeaking,
   }) =>
       DictationSessionState(
         item: item,
@@ -160,8 +166,12 @@ final class DictationSessionState {
         blankAnswers: blankAnswers ?? this.blankAnswers,
         seekCount: seekCount ?? this.seekCount,
         seekPenaltyTotal: seekPenaltyTotal ?? this.seekPenaltyTotal,
+        speedMultiplier: speedMultiplier ?? this.speedMultiplier,
+        isSpeaking: isSpeaking ?? this.isSpeaking,
       );
 }
+
+double _rateFor(double speedMultiplier) => (0.5 * speedMultiplier).clamp(0.0, 1.0);
 
 @riverpod
 class DictationPracticeNotifier extends _$DictationPracticeNotifier {
@@ -203,14 +213,18 @@ class DictationPracticeNotifier extends _$DictationPracticeNotifier {
   Future<void> play() async {
     final current = state.valueOrNull;
     if (current == null) return;
-    state = AsyncData(
-      current.hasPlayedOnce
-          ? current.copyWith(replayCount: current.replayCount + 1)
-          : current.copyWith(hasPlayedOnce: true),
-    );
-    await ref
-        .read(ttsServiceProvider)
-        .speak(current.item.target, current.item.targetLanguage);
+    final updated = current.hasPlayedOnce
+        ? current.copyWith(replayCount: current.replayCount + 1, isSpeaking: true)
+        : current.copyWith(hasPlayedOnce: true, isSpeaking: true);
+    state = AsyncData(updated);
+    await ref.read(ttsServiceProvider).speak(
+          current.item.target,
+          current.item.targetLanguage,
+          rate: _rateFor(updated.speedMultiplier),
+        );
+    final latest = state.valueOrNull;
+    if (latest == null) return;
+    state = AsyncData(latest.copyWith(isSpeaking: false));
   }
 
   Future<void> seekTo(int wordIndex) async {
@@ -227,15 +241,44 @@ class DictationPracticeNotifier extends _$DictationPracticeNotifier {
             seekCount: current.seekCount + 1,
             seekPenaltyTotal: current.seekPenaltyTotal +
                 seekPenaltyFraction(wordIndex: wordIndex, totalWords: words.length),
+            isSpeaking: true,
           )
-        : current.copyWith(hasPlayedOnce: true, seekCount: current.seekCount + 1);
+        : current.copyWith(
+            hasPlayedOnce: true, seekCount: current.seekCount + 1, isSpeaking: true);
     state = AsyncData(updated);
 
     await ref.read(ttsServiceProvider).stop();
     await ref.read(ttsServiceProvider).speak(
           words.skip(wordIndex).join(' '),
           current.item.targetLanguage,
+          rate: _rateFor(updated.speedMultiplier),
         );
+    final latest = state.valueOrNull;
+    if (latest == null) return;
+    state = AsyncData(latest.copyWith(isSpeaking: false));
+  }
+
+  Future<void> setSpeed(double multiplier) async {
+    final current = state.valueOrNull;
+    if (current == null || current.isComplete) return;
+    if (!current.isSpeaking) {
+      state = AsyncData(current.copyWith(speedMultiplier: multiplier));
+      return;
+    }
+    await ref.read(ttsServiceProvider).stop();
+    state = AsyncData(current.copyWith(
+      speedMultiplier: multiplier,
+      replayCount: current.replayCount + 1,
+      isSpeaking: true,
+    ));
+    await ref.read(ttsServiceProvider).speak(
+          current.item.target,
+          current.item.targetLanguage,
+          rate: _rateFor(multiplier),
+        );
+    final latest = state.valueOrNull;
+    if (latest == null) return;
+    state = AsyncData(latest.copyWith(isSpeaking: false));
   }
 
   void updateTypedText(String text) {
