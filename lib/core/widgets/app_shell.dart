@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/practice/presentation/providers/notification_notifier.dart';
-import '../../features/dictionary/presentation/providers/user_settings_provider.dart';
 
 class _Dest {
   const _Dest({
@@ -47,46 +46,32 @@ class _AppShellState extends ConsumerState<AppShell>
     }
   }
 
-  List<_Dest> _destinations(bool showReading, bool showListening) => [
-        const _Dest(
-          path: '/',
-          icon: Icons.search_outlined,
-          selectedIcon: Icons.search,
-          label: 'Dictionary',
-        ),
-        const _Dest(
-          path: '/vocab',
-          icon: Icons.library_books_outlined,
-          selectedIcon: Icons.library_books,
-          label: 'Vocab Bank',
-        ),
-        if (showReading)
-          const _Dest(
-            path: '/reading',
-            icon: Icons.menu_book_outlined,
-            selectedIcon: Icons.menu_book,
-            label: 'Đọc',
-          ),
-        if (showListening)
-          const _Dest(
-            path: '/listening',
-            icon: Icons.headphones_outlined,
-            selectedIcon: Icons.headphones,
-            label: 'Luyện nghe',
-          ),
-        const _Dest(
-          path: '/practice',
-          icon: Icons.school_outlined,
-          selectedIcon: Icons.school,
-          label: 'Luyện tập',
-        ),
-        const _Dest(
-          path: '/settings',
-          icon: Icons.settings_outlined,
-          selectedIcon: Icons.settings,
-          label: 'Cài đặt',
-        ),
-      ];
+  static const _destinations = [
+    _Dest(
+      path: '/',
+      icon: Icons.search_outlined,
+      selectedIcon: Icons.search,
+      label: 'Dictionary',
+    ),
+    _Dest(
+      path: '/vocab',
+      icon: Icons.library_books_outlined,
+      selectedIcon: Icons.library_books,
+      label: 'Vocab Bank',
+    ),
+    _Dest(
+      path: '/practice',
+      icon: Icons.school_outlined,
+      selectedIcon: Icons.school,
+      label: 'Luyện tập',
+    ),
+    _Dest(
+      path: '/settings',
+      icon: Icons.settings_outlined,
+      selectedIcon: Icons.settings,
+      label: 'Cài đặt',
+    ),
+  ];
 
   int _selectedIndex(BuildContext context, List<_Dest> dests) {
     final location = GoRouterState.of(context).matchedLocation;
@@ -103,21 +88,9 @@ class _AppShellState extends ConsumerState<AppShell>
 
   @override
   Widget build(BuildContext context) {
-    final showReadingOnMobile = ref.watch(
-      userSettingsNotifierProvider.select((s) => s.showReadingPracticeOnMobile),
-    );
-    final showListeningOnMobile = ref.watch(
-      userSettingsNotifierProvider.select((s) => s.showListeningPracticeOnMobile),
-    );
-
     return LayoutBuilder(
       builder: (context, constraints) {
-        // "Mobile" means a phone-sized viewport, not the web/native platform —
-        // a phone browser and a narrow Chrome DevTools window are both
-        // kIsWeb == true, so that flag can't distinguish them from desktop.
-        final showReading = constraints.maxWidth >= 600 || showReadingOnMobile;
-        final showListening = constraints.maxWidth >= 600 || showListeningOnMobile;
-        final dests = _destinations(showReading, showListening);
+        final dests = _destinations;
         final selectedIndex = _selectedIndex(context, dests);
 
         if (constraints.maxWidth >= 600) {

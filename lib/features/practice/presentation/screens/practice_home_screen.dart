@@ -133,14 +133,8 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Luyện tập'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.bar_chart_outlined),
-            tooltip: 'Tiến độ học',
-            onPressed: () => context.push('/practice/progress'),
-          ),
-        ],
+        title: const Text('Từ vựng cách khoảng'),
+        leading: BackButton(onPressed: () => context.go('/practice')),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

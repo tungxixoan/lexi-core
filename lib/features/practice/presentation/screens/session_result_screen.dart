@@ -102,7 +102,7 @@ class _SessionResultScreenState extends ConsumerState<SessionResultScreen> {
             ),
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: () => context.go('/practice'),
+              onPressed: () => context.go('/practice/vocab'),
               child: const Text('Luyện tập lại'),
             ),
           ],

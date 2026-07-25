@@ -132,7 +132,7 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Luyện đọc & gõ'),
-        automaticallyImplyLeading: false,
+        leading: BackButton(onPressed: () => context.go('/practice')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

@@ -9,7 +9,7 @@ class ListeningHomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Luyện nghe'),
-        automaticallyImplyLeading: false,
+        leading: BackButton(onPressed: () => context.go('/practice')),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

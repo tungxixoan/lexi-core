@@ -41,10 +41,10 @@
 - Luyện gõ từng câu — tính WPM (từ/phút) và độ chính xác
 - Tô màu từ vựng đã học xuất hiện trong đoạn văn
 - Màn hình kết quả: độ chính xác tổng, WPM, danh sách từ đã thực hành
-- Có thể ẩn/hiện trên mobile (mặc định ẩn, bật trong Cài đặt)
+- Truy cập qua tab "Luyện tập" → card "Đọc & gõ"
 
 ### Luyện nghe (Listening Practice)
-Tab "Luyện nghe" — hub với 2 tính năng con, dùng chung `TtsService` (flutter_tts) có sẵn, không cần package audio mới:
+Hub với 2 tính năng con (truy cập qua tab "Luyện tập" → card "Luyện nghe"), dùng chung `TtsService` (flutter_tts) có sẵn, không cần package audio mới:
 
 - **Nghe chép (dictation)** — AI tạo một câu vừa-dài dùng ~2 từ từ Vocab Bank; nghe (không tự phát, phải bấm) rồi gõ lại chính xác
   - **3 mức độ** (chọn mỗi phiên luyện tập, mặc định Khó):
@@ -56,7 +56,6 @@ Tab "Luyện nghe" — hub với 2 tính năng con, dùng chung `TtsService` (fl
   - Chấm điểm cập nhật **SM-2** cho các từ vựng xuất hiện trong câu — khác với Luyện đọc & gõ (không ảnh hưởng SM-2). Dễ/Trung bình chấm theo số ô điền đúng (không phân biệt hoa/thường); Khó chấm theo từng ký tự — cùng công thức trừ điểm và cùng ngưỡng quy đổi SM-2
   - Màn hình kết quả: điểm số, số lần nghe lại, **số lần tua** (kèm % bị trừ), thời gian; Khó hiện phần gõ tô màu đối chiếu ký tự, Dễ/Trung bình hiện lại đúng đoạn điền khuyết với từng ô tô xanh (đúng)/đỏ kèm đáp án đúng (sai)
   - Lọc theo Ngôn ngữ / Chủ đề (Topic tag) / Cấp độ, tối thiểu 2 từ khớp bộ lọc
-  - Có thể ẩn/hiện trên mobile (mặc định ẩn, bật trong Cài đặt), hiển thị dựa theo bề rộng màn hình (không dùng `kIsWeb`)
 - **Nghe hiểu (TOEIC-style comprehension)** — AI tạo ngẫu nhiên một hội thoại 2 người (nhãn "A"/"B", đổi cao độ giọng để phân biệt) hoặc một bài nói 1 người, cộng đúng 3 câu hỏi trắc nghiệm 4 đáp án (ý chính/chi tiết/ý ngụ ý — không điền từ), bằng ngôn ngữ mục tiêu giống TOEIC thật
   - Điều khiển nghe theo từng lượt: ⏮ lượt trước / ▶️⏸ phát-dừng / ⏭ lượt sau / 🔁 phát lại từ đầu
   - **Thanh trượt tua theo từ, xuyên suốt toàn bộ bài** (nhiều lượt thoại nối lại) — kéo qua ranh giới lượt tự chuyển lượt + đổi cao độ giọng tương ứng; bổ sung cho các nút điều khiển trên, không thay thế
@@ -169,7 +168,7 @@ lib/
 │   │   │   └── use_cases/   # GenerateExercise, ComputeSM2, GetLearningStats
 │   │   └── presentation/
 │   │       ├── providers/   # PracticeSessionProvider, NotificationNotifier
-│   │       └── screens/     # PracticeHome, PracticeSession, SessionResult, Progress
+│   │       └── screens/     # PracticeHub (tab), PracticeHome (SM-2), PracticeSession, SessionResult, Progress
 │   │
 │   ├── reading/
 │   │   ├── data/sources/
@@ -360,7 +359,7 @@ flutter test test/features/dictionary/presentation/providers/user_settings_notif
 flutter test --reporter expanded
 ```
 
-Hiện tại: **277 tests** — domain entities, use cases, sources, providers, UI widgets, services.
+Hiện tại: **300 tests** — domain entities, use cases, sources, providers, UI widgets, services.
 
 ### Phân tích code
 
@@ -455,10 +454,24 @@ users/
 
 ## Roadmap
 
-- [ ] Hỗ trợ thêm ngôn ngữ (French, Spanish, German)
-- [ ] Export/Import từ vựng (CSV, Anki)
 - [x] Nghe chép (listening dictation)
 - [x] Nghe hiểu (TOEIC-style listening comprehension)
+
+**Ưu tiên tiếp theo:**
+
+- [ ] **Word Radar** — dán văn bản bất kỳ, tự động highlight từ đã học (Vocab Bank) và gợi ý từ mới đáng học chưa có trong bank
+- [ ] **Serial Story** — AI viết truyện nhiều kỳ dùng từ vựng sắp đến hạn ôn, ra chương mới mỗi ngày
+
+**Ý tưởng khác đã brainstorm (chưa xếp lịch):**
+
+- [ ] AI Roleplay Conversation — luyện hội thoại tình huống với AI đóng vai đối phương, chấm điểm cuối buổi
+- [ ] Shadowing Practice — nói đè lên TTS, AI so sánh nhịp điệu/độ trễ
+- [ ] Error Pattern Coach — AI phân tích lịch sử làm bài để tự sinh bài tập nhắm đúng lỗi hay lặp lại
+
+**Việc nhỏ hơn:**
+
+- [ ] Hỗ trợ thêm ngôn ngữ (French, Spanish, German)
+- [ ] Export/Import từ vựng (CSV, Anki)
 - [ ] Widget màn hình chính hiển thị từ ngẫu nhiên
 - [ ] Tìm kiếm full-text trong ngân hàng từ
 - [ ] Thống kê học tập nâng cao (heatmap, phân tích lỗi)

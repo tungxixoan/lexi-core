@@ -137,27 +137,6 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => _showCefrPicker(
                 context, ref, settings.targetCefrLevel),
           ),
-          // "Mobile" means a phone-sized viewport, not the web/native platform —
-          // see the AppShell width check this toggle controls.
-          if (MediaQuery.sizeOf(context).width < 600)
-            SwitchListTile(
-              title: const Text('Hiện tab Luyện đọc & gõ trên điện thoại'),
-              subtitle:
-                  const Text('Mặc định ẩn trên mobile — bật nếu bạn muốn dùng'),
-              value: settings.showReadingPracticeOnMobile,
-              onChanged: (v) =>
-                  notifier.setShowReadingPracticeOnMobile(v),
-            ),
-          if (MediaQuery.sizeOf(context).width < 600)
-            SwitchListTile(
-              title: const Text('Hiện tab Luyện nghe trên điện thoại'),
-              subtitle:
-                  const Text('Mặc định ẩn trên mobile — bật nếu bạn muốn dùng'),
-              value: settings.showListeningPracticeOnMobile,
-              onChanged: (v) =>
-                  notifier.setShowListeningPracticeOnMobile(v),
-            ),
-
           // ── Thông báo ─────────────────────────────────────────
           _SectionHeader('Thông báo'),
           SwitchListTile(

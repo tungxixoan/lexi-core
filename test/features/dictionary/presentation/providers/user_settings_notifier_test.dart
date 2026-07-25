@@ -6,7 +6,6 @@ import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/provider_config.dart';
-import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -208,77 +207,6 @@ void main() {
         final prefs = container.read(sharedPreferencesProvider);
         expect(prefs.getInt('reminder_hour'), 8);
         expect(container.read(userSettingsNotifierProvider).reminderHour, 8);
-      });
-    });
-
-    group('showReadingPracticeOnMobile', () {
-      test('defaults to false', () async {
-        final container = await makeContainer();
-        addTearDown(container.dispose);
-        expect(
-          container.read(userSettingsNotifierProvider).showReadingPracticeOnMobile,
-          false,
-        );
-      });
-
-      test('setShowReadingPracticeOnMobile persists to prefs and updates state', () async {
-        final container = await makeContainer();
-        addTearDown(container.dispose);
-        final prefs = container.read(sharedPreferencesProvider);
-        container
-            .read(userSettingsNotifierProvider.notifier)
-            .setShowReadingPracticeOnMobile(true);
-        expect(
-          container.read(userSettingsNotifierProvider).showReadingPracticeOnMobile,
-          true,
-        );
-        expect(prefs.getBool('show_reading_mobile'), true);
-      });
-
-      test('build() loads persisted showReadingPracticeOnMobile from prefs', () async {
-        final container =
-            await makeContainer(initialValues: {'show_reading_mobile': true});
-        addTearDown(container.dispose);
-        expect(
-          container.read(userSettingsNotifierProvider).showReadingPracticeOnMobile,
-          true,
-        );
-      });
-    });
-
-    group('showListeningPracticeOnMobile', () {
-      test('defaults to false', () async {
-        final container = await makeContainer();
-        addTearDown(container.dispose);
-        expect(
-          container.read(userSettingsNotifierProvider).showListeningPracticeOnMobile,
-          false,
-        );
-      });
-
-      test('setShowListeningPracticeOnMobile persists to prefs and updates state', () async {
-        final container = await makeContainer();
-        addTearDown(container.dispose);
-        final prefs = container.read(sharedPreferencesProvider);
-        container
-            .read(userSettingsNotifierProvider.notifier)
-            .setShowListeningPracticeOnMobile(true);
-        expect(
-          container.read(userSettingsNotifierProvider).showListeningPracticeOnMobile,
-          true,
-        );
-        expect(prefs.getBool('show_listening_mobile'), true);
-      });
-
-      test('build() loads persisted showListeningPracticeOnMobile from prefs', () async {
-        final container = await makeContainer(
-          initialValues: {'show_listening_mobile': true},
-        );
-        addTearDown(container.dispose);
-        expect(
-          container.read(userSettingsNotifierProvider).showListeningPracticeOnMobile,
-          true,
-        );
       });
     });
   });

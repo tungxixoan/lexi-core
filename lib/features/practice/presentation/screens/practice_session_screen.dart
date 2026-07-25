@@ -67,7 +67,7 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
             automaticallyImplyLeading: false,
             actions: [
               TextButton(
-                onPressed: () => context.go('/practice'),
+                onPressed: () => context.go('/practice/vocab'),
                 child: const Text('Thoát'),
               ),
             ],

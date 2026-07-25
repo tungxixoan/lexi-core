@@ -3,6 +3,7 @@ import '../widgets/app_shell.dart';
 import '../../features/dictionary/presentation/screens/lookup_screen.dart';
 import '../../features/vocabulary/presentation/screens/vocab_bank_screen.dart';
 import '../../features/vocabulary/presentation/screens/vocab_detail_screen.dart';
+import '../../features/practice/presentation/screens/practice_hub_screen.dart';
 import '../../features/practice/presentation/screens/practice_home_screen.dart';
 import '../../features/practice/presentation/screens/practice_session_screen.dart';
 import '../../features/practice/presentation/screens/progress_screen.dart';
@@ -44,8 +45,12 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: '/practice',
-          builder: (context, state) => const PracticeHomeScreen(),
+          builder: (context, state) => const PracticeHubScreen(),
           routes: [
+            GoRoute(
+              path: 'vocab',
+              builder: (context, state) => const PracticeHomeScreen(),
+            ),
             GoRoute(
               path: 'progress',
               builder: (context, state) => const ProgressScreen(),
