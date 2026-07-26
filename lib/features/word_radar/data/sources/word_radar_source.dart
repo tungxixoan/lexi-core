@@ -77,13 +77,21 @@ class WordRadarSource {
       inputType: detectedType == InputType.word ? InputType.word : InputType.phrase,
       ipa: json['ipa'] as String? ?? '',
       meaning: json['meaning'] as String? ?? '',
-      examples: (json['examples'] as List?)?.whereType<String>().toList() ?? const [],
-      suggestedTopics:
-          (json['suggestedTopics'] as List?)?.whereType<String>().toList() ?? const [],
+      examples: _stringList(json['examples']),
+      suggestedTopics: _stringList(json['suggestedTopics']),
       definition: json['definition'] as String? ?? '',
-      synonyms: (json['synonyms'] as List?)?.whereType<String>().toList() ?? const [],
+      synonyms: _stringList(json['synonyms']),
       cefrLevel: CEFRLevel.values.asNameMap()[
           (json['cefrLevel'] as String?)?.trim().toLowerCase()],
     );
+  }
+
+  /// The AI is asked for a JSON array but sometimes returns a bare string
+  /// instead (e.g. `"suggestedTopics": "Business"`) — treat that as a
+  /// single-item list rather than crashing the whole suggestion.
+  List<String> _stringList(dynamic value) {
+    if (value is List) return value.whereType<String>().toList();
+    if (value is String && value.isNotEmpty) return [value];
+    return const [];
   }
 }

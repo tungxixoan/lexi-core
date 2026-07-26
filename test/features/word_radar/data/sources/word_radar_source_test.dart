@@ -170,4 +170,32 @@ void main() {
     expect(result[0].headword, 'ubiquitous');
     expect(result[0].cefrLevel, isNull);
   });
+
+  test('treats a bare string as a single-item list when the AI returns one instead of a JSON array', () async {
+    final json = jsonEncode({
+      'suggestions': [
+        {
+          'headword': 'ubiquitous',
+          'ipa': '/juːˈbɪkwɪtəs/',
+          'meaning': 'có mặt khắp nơi',
+          'examples': 'Smartphones are ubiquitous nowadays.',
+          'suggestedTopics': 'Business',
+          'synonyms': 'omnipresent',
+        },
+      ],
+    });
+    final source = WordRadarSource.withModel(FakeGenerativeModelClient(json));
+
+    final result = await source.scan(
+      text: 'Smartphones are everywhere now.',
+      targetLanguage: Language.english,
+      targetCefrLevel: null,
+      knownHeadwords: const [],
+    );
+
+    expect(result, hasLength(1));
+    expect(result[0].examples, ['Smartphones are ubiquitous nowadays.']);
+    expect(result[0].suggestedTopics, ['Business']);
+    expect(result[0].synonyms, ['omnipresent']);
+  });
 }
