@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
@@ -11,6 +12,7 @@ import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/topic.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/vocab_record.dart';
 import 'package:lexi_core/features/vocabulary/domain/repositories/vocab_repository.dart';
+import 'package:lexi_core/features/word_radar/data/sources/word_radar_source.dart';
 import 'package:lexi_core/features/word_radar/presentation/providers/word_radar_provider.dart';
 
 class _FakeSettingsNotifier extends UserSettingsNotifier {
@@ -42,6 +44,7 @@ VocabRecord _record(String headword) {
 class _FakeVocabRepository implements VocabRepository {
   _FakeVocabRepository(this.records);
   final List<VocabRecord> records;
+  int getAllCallCount = 0;
 
   @override
   Future<List<VocabRecord>> getAll({
@@ -50,8 +53,10 @@ class _FakeVocabRepository implements VocabRepository {
     Language? language,
     CEFRLevel? maxCefrLevel,
     bool dueOnly = false,
-  }) async =>
-      records;
+  }) async {
+    getAllCallCount++;
+    return records;
+  }
 
   @override
   Future<VocabRecord?> getById(String id) async => null;
@@ -81,9 +86,18 @@ class _FakeVocabRepository implements VocabRepository {
   Future<void> deleteTopic(String id) async {}
 }
 
+class _ThrowingGenerativeModelClient implements GenerativeModelClient {
+  @override
+  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) async {
+    throw Exception('network error');
+  }
+}
+
 Future<ProviderContainer> _makeContainer({
   required bool aiEnabled,
   required List<VocabRecord> vocabItems,
+  _FakeVocabRepository? vocabRepository,
+  WordRadarSource? wordRadarSource,
 }) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
@@ -95,7 +109,11 @@ Future<ProviderContainer> _makeContainer({
           UserSettingsState.defaults.copyWith(aiEnabled: aiEnabled),
         ),
       ),
-      vocabRepositoryProvider.overrideWithValue(_FakeVocabRepository(vocabItems)),
+      vocabRepositoryProvider.overrideWithValue(
+        vocabRepository ?? _FakeVocabRepository(vocabItems),
+      ),
+      if (wordRadarSource != null)
+        wordRadarSourceProvider.overrideWithValue(wordRadarSource),
     ],
   );
   return container;
@@ -145,5 +163,97 @@ void main() {
     final state = container.read(wordRadarNotifierProvider);
     expect(state.knownHeadwords, isNull);
     expect(state.suggestions, isNull);
+  });
+
+  test('AI path populates both knownHeadwords and suggestions', () async {
+    final container = await _makeContainer(
+      aiEnabled: true,
+      vocabItems: [_record('serendipity')],
+      wordRadarSource: WordRadarSource.withModel(_ThrowingGenerativeModelClient()),
+    );
+    addTearDown(container.dispose);
+
+    await container
+        .read(wordRadarNotifierProvider.notifier)
+        .scan('It was pure serendipity.');
+
+    final state = container.read(wordRadarNotifierProvider);
+    expect(state.knownHeadwords, ['serendipity']);
+    expect(state.suggestions, isNotNull);
+    expect(state.suggestions!.hasError, isTrue);
+  });
+
+  test('wraps a thrown AI exception into AsyncError instead of throwing', () async {
+    final container = await _makeContainer(
+      aiEnabled: true,
+      vocabItems: [_record('serendipity')],
+      wordRadarSource: WordRadarSource.withModel(_ThrowingGenerativeModelClient()),
+    );
+    addTearDown(container.dispose);
+
+    await container
+        .read(wordRadarNotifierProvider.notifier)
+        .scan('It was pure serendipity.');
+
+    final state = container.read(wordRadarNotifierProvider);
+    expect(state.knownHeadwords, ['serendipity']);
+    expect(state.suggestions!.hasError, isTrue);
+  });
+
+  test('retrySuggestions is a no-op before any scan has run', () async {
+    final container = await _makeContainer(
+      aiEnabled: true,
+      vocabItems: const [],
+      wordRadarSource: WordRadarSource.withModel(_ThrowingGenerativeModelClient()),
+    );
+    addTearDown(container.dispose);
+
+    await container.read(wordRadarNotifierProvider.notifier).retrySuggestions('text');
+
+    final state = container.read(wordRadarNotifierProvider);
+    expect(state.knownHeadwords, isNull);
+    expect(state.suggestions, isNull);
+  });
+
+  test('retrySuggestions is a no-op when AI is disabled', () async {
+    final container = await _makeContainer(
+      aiEnabled: false,
+      vocabItems: [_record('serendipity')],
+    );
+    addTearDown(container.dispose);
+
+    await container
+        .read(wordRadarNotifierProvider.notifier)
+        .scan('It was pure serendipity.');
+    await container
+        .read(wordRadarNotifierProvider.notifier)
+        .retrySuggestions('It was pure serendipity.');
+
+    final state = container.read(wordRadarNotifierProvider);
+    expect(state.suggestions, isNull);
+  });
+
+  test('retrySuggestions re-fetches suggestions without re-running the local pass', () async {
+    final repo = _FakeVocabRepository([_record('serendipity')]);
+    final container = await _makeContainer(
+      aiEnabled: true,
+      vocabItems: const [],
+      vocabRepository: repo,
+      wordRadarSource: WordRadarSource.withModel(_ThrowingGenerativeModelClient()),
+    );
+    addTearDown(container.dispose);
+
+    await container
+        .read(wordRadarNotifierProvider.notifier)
+        .scan('It was pure serendipity.');
+    expect(repo.getAllCallCount, 1);
+    expect(container.read(wordRadarNotifierProvider).suggestions!.hasError, isTrue);
+
+    await container
+        .read(wordRadarNotifierProvider.notifier)
+        .retrySuggestions('It was pure serendipity.');
+
+    expect(repo.getAllCallCount, 1); // local pass not re-run
+    expect(container.read(wordRadarNotifierProvider).suggestions!.hasError, isTrue);
   });
 }
