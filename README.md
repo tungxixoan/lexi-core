@@ -64,7 +64,19 @@ Hub với 2 tính năng con (truy cập qua tab "Luyện tập" → card "Luyệ
   - Lọc theo Ngôn ngữ / Chủ đề (**AppContext** — Business/Travel/...) / Cấp độ — không cần Vocab Bank, không có ngưỡng số từ tối thiểu
   - **Không ảnh hưởng SM-2** — không có từ vựng cụ thể nào để gắn điểm vào
 
+### Quét từ vựng (Word Radar)
+Truy cập qua tab "Luyện tập" → card "Quét từ vựng":
+
+- Dán bất kỳ văn bản nào (bài báo, tin nhắn...) vào ô nhập (tối đa 3000 ký tự), bấm "Quét"
+- **Highlight từ đã học** — quét cục bộ (không cần AI), so khớp chuỗi con không phân biệt hoa/thường với Vocab Bank; hiện ngay lập tức, hoạt động cả khi tắt AI
+- Bấm vào từ đã highlight để mở thẳng trang chi tiết từ đó trong Vocab Bank
+- **Gợi ý từ mới** (cần bật AI) — 1 lần gọi AI duy nhất, loại trừ các từ đã có trong Vocab Bank, trả về đầy đủ IPA/nghĩa/định nghĩa/từ đồng nghĩa/ví dụ/chủ đề gợi ý/cấp độ CEFR cho mỗi từ
+- Bấm "Lưu" trên gợi ý để mở sheet lưu từ y hệt luồng tra từ ở tab Dictionary (chỉnh sửa nghĩa, chọn chủ đề, ghi chú trước khi lưu)
+- **Bản dịch tiếng Việt** của toàn bộ đoạn văn (cùng 1 lần gọi AI ở trên) — cũng highlight nghĩa tiếng Việt của các từ đã học trong bản dịch (chỉ hiển thị, không bấm được)
+- Không ảnh hưởng SM-2 cho tới khi người dùng chủ động lưu một từ gợi ý
+
 ### Tiến độ học tập (Progress Dashboard)
+
 - Tổng số từ đã học
 - Chuỗi ngày học (streak)
 - Từ đến hạn ôn tập hôm nay
@@ -192,6 +204,16 @@ lib/
 │   │       └── screens/     # ListeningHome (hub), DictationHome/Session/Result,
 │   │                        # ComprehensionHome/Session/Result
 │   │
+│   ├── word_radar/
+│   │   ├── data/sources/
+│   │   │   └── word_radar_source.dart          # AI suggestions + translation (dùng AiClientFactory)
+│   │   ├── domain/
+│   │   │   ├── entities/    # WordRadarAiResult
+│   │   │   └── use_cases/   # FindKnownHeadwords (local), GenerateWordSuggestions
+│   │   └── presentation/
+│   │       ├── providers/   # WordRadarNotifier
+│   │       └── screens/     # WordRadarScreen
+│   │
 │   └── settings/
 │       └── presentation/
 │           ├── providers/   # AuthNotifier, SyncNotifier
@@ -214,7 +236,8 @@ UserSettingsNotifier (SharedPreferences)
                       ├─ ExerciseGeneratorSource
                       ├─ ReadingPassageSource
                       ├─ DictationSource
-                      └─ ListeningPassageSource
+                      ├─ ListeningPassageSource
+                      └─ WordRadarSource
 ```
 
 ### Luồng đồng bộ
@@ -359,7 +382,7 @@ flutter test test/features/dictionary/presentation/providers/user_settings_notif
 flutter test --reporter expanded
 ```
 
-Hiện tại: **300 tests** — domain entities, use cases, sources, providers, UI widgets, services.
+Hiện tại: **338 tests** — domain entities, use cases, sources, providers, UI widgets, services.
 
 ### Phân tích code
 
@@ -456,10 +479,10 @@ users/
 
 - [x] Nghe chép (listening dictation)
 - [x] Nghe hiểu (TOEIC-style listening comprehension)
+- [x] **Word Radar** — dán văn bản bất kỳ, tự động highlight từ đã học (Vocab Bank), gợi ý từ mới đáng học, và dịch nghĩa cả đoạn văn
 
 **Ưu tiên tiếp theo:**
 
-- [ ] **Word Radar** — dán văn bản bất kỳ, tự động highlight từ đã học (Vocab Bank) và gợi ý từ mới đáng học chưa có trong bank
 - [ ] **Serial Story** — AI viết truyện nhiều kỳ dùng từ vựng sắp đến hạn ôn, ra chương mới mỗi ngày
 
 **Ý tưởng khác đã brainstorm (chưa xếp lịch):**
