@@ -504,3 +504,29 @@ Fix re-reviewed clean: Ready to merge: Yes.
 - Pushing /vocab/:id from /practice/radar flips the bottom-nav highlight to "Vocab Bank" — cosmetic nav artifact, AppShell._selectedIndex matches on path prefix
 
 **Ready to merge — Word Radar feature complete (Tasks 1-6 + final review fixes).**
+
+---
+
+# LexiCore — Word Radar post-merge: bare-string parsing fix + translation feature
+
+**BASE commit:** c7f84e5 (Word Radar final-review-fix, previously "Ready to merge: Yes")
+
+## Bug found during manual testing
+Crash: `Không tải được gợi ý: TypeError: "Business": type 'String' is not a subtype of type 'List<dynamic>?'`
+AI sometimes returns a bare string (`"suggestedTopics": "Business"`) instead of a JSON array. The `as List?` cast threw immediately (not null-safe against wrong-type values), killing the whole suggestions batch.
+**Fixed:** commit 220fd33 — added `_stringList()` helper in `WordRadarSource._parseSuggestion` that accepts a bare string as a single-item list. Applied to examples/suggestedTopics/synonyms. New regression test added. 334/334 full suite.
+
+## Feature addition: Vietnamese translation + highlight in translation
+User request: add a Vietnamese translation of the scanned text, with known-word meanings highlighted in the translation too (mirroring the existing headword highlight in the original text).
+**Implemented directly (no subagent dispatch — moderate, well-understood scope, done in-session):** commit 31246e9.
+
+- `WordRadarSource.scan()` now returns a new `WordRadarAiResult { translation, suggestions }` instead of bare `List<WordPhraseResult>` — same single AI call, prompt extended to also request `"translation"`.
+- `FindKnownHeadwordsUseCase.execute()` return type changed from `List<String>` to `List<VocabRecord>` (returns full matched records, not just headword strings) — needed so both original-text (by headword) and translation (by meaning) highlighting can be driven from one local Hive query, no extra repository calls.
+- `WordRadarState` fields renamed: `knownHeadwords`→`knownRecords` (List<VocabRecord>?), `suggestions`→`aiResult` (AsyncValue<WordRadarAiResult>?).
+- `WordRadarScreen`: `_HighlightedText.onTapHighlight` made optional — translation highlights are read-only (no tap), avoiding the WidgetSpan baseline/wrap quirk noted in the final review's Minor #6 for spans that don't need a GestureDetector. `_openKnownWord` simplified to a synchronous lookup against `knownRecords` (no longer needs `vocabRepositoryProvider`/`userSettingsNotifierProvider` in the screen at all).
+- All existing tests updated for the renamed types/fields; 4 new tests added (translation defaults to empty string, translation shown + highlighted, translation section hidden when empty, FindKnownHeadwordsUseCase returns full records with meaning).
+
+**Verification:** `dart run build_runner build --delete-conflicting-outputs` clean; `flutter test` 338/338 passing, pristine; `flutter analyze` 12 pre-existing unrelated deprecation infos only, no new issues.
+**README updated:** new "Quét từ vựng (Word Radar)" feature section, Roadmap ticked, folder tree + AI data-flow diagram + test count (300→338) refreshed (commit ce3435b).
+
+**No task-reviewer subagent dispatched for this round** (done conversationally, outside the formal plan) — self-verified via full test suite + analyze per this project's standard bar.
