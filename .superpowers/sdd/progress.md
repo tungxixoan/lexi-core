@@ -452,3 +452,55 @@
 - Reading backspace count increments even on a delete-to-match final keystroke (e.g. 'Hii'→'Hi' completing the sentence) — consistent with spec's "count every length-decrease event," not a defect, just a note.
 
 **Ready to merge — no fixes required.**
+
+---
+
+# LexiCore — Word Radar
+
+**BASE commit:** 33f4cb4
+**Spec:** docs/superpowers/specs/2026-07-26-word-radar-design.md (commit dd489c1)
+**Plan file:** docs/superpowers/plans/2026-07-26-word-radar.md
+
+## Status
+
+- Task 1: complete (commit 667afc9, 5/5 target tests + 303/303 full-repo tests, review clean)
+  Minor: stray blank line before WordPhraseResult's closing brace (cosmetic, from plan template); unguarded CEFRLevel.values.byName() on malformed AI cefrLevel string (consistent with existing unguarded-cast risk tolerance in this method)
+- Task 2: complete (commit 7d6bb60, 6/6 target tests + 309/309 full-repo tests, review clean)
+- Task 3: complete (commits 1893184+f0e79d8, 4/4 word_radar_source tests + 1/1 use case test, review clean after fix)
+  Fixed: skip malformed AI suggestions (missing/empty headword) instead of discarding the whole batch on one bad item
+  Minor (for final review): cefrLevel parsing (`CEFRLevel.values.byName`) still unguarded against a non-enum AI value — same failure class as the fixed headword issue, but consistent with existing GeminiDictionarySource convention; not blocking
+- Task 4: complete (commits 8d3dfe9+9284043+7741a59, 9/9 word_radar_provider tests, review clean after 2 fix rounds)
+  Fixed round 1: added 5 tests for the AI-enabled path (deviated from exact brief — substituted a duplicate error-path test instead of the requested Completer-gated ordering test)
+  Fixed round 2: replaced the duplicate with the actual two-stage ordering test (Completer-gated fake client) + an AI-enabled success-path test; required adding container.listen() to prevent Riverpod autoDispose from wiping state during the test's Duration.zero yield (verified necessary against generated AutoDisposeNotifierProvider declaration)
+- Task 5: complete (commit 5ace6fe, 25/25 word_radar tests + 328/328 full-repo tests, review clean)
+  Fixed inline (implementer, pre-review): added await tester.pump() after enterText in 4 tests — brief's test code hit stale disabled button without it; verified against dictation_session_screen_test.dart precedent, no assertions changed
+  Minor (for final review): _openSaveSheet missing mounted guard after async showModalBottomSheet gap (unlike sibling _openKnownWord which has one) — plan-inherited, low risk
+- Task 6: complete (commit c52becc, 2/2 target tests + 330/330 full-repo tests, review clean)
+  Resolved reviewer ⚠️ (not a defect): final count 330 vs. plan's predicted 323 — reconciled by controller: review-driven fix rounds added tests beyond the plan's original static prediction (Task 3 fix +1, Task 4 fixes +6 net = +7; 323+7=330, exact match). Verified test-count arithmetic step-by-step across all 6 tasks' reported deltas.
+
+## Final Whole-Branch Review
+
+**Commits reviewed:** 33f4cb4..c52becc (Word Radar feature: Tasks 1-6, all task-level reviews clean)
+
+**Status:** Ready to merge (With fixes — fixes applied below)
+
+**Strengths:** end-to-end trace verified (WordRadarScreen -> notifier -> local+AI use cases -> suggestion card -> SaveVocabSheet -> SaveVocabUseCase); cefrLevel flows correctly cross-task from Task1's schema fix through Task3's parsing into Task1's own SaveVocabSheet consumption; DI consistent, no naming collisions; folder placement correct (word_radar/ top-level, nothing leaked into practice/); duplication-is-intentional convention for _HighlightedText held; Task4's container.listen()/Completer fixes verified legitimate against real AutoDisposeNotifierProvider semantics; 330/330 test count reconciled exactly against the plan's original 323 prediction (+7 from review-driven fix rounds in Tasks 3 and 4).
+
+**Important (fixed before merge, commit c7f84e5, 333/333 full suite):**
+- I1: InputType.word hardcoded for every AI suggestion including multi-word phrases -> now uses InputDetector.detect() (sentence collapsed to phrase, since SaveVocabUseCase rejects sentence)
+- I2: malformed cefrLevel string from AI could discard the whole suggestion batch (same failure class as an earlier fixed headword bug) -> CEFRLevel.values.byName() replaced with safe asNameMap() lookup; adjacent lazy .cast<String>() casts on examples/suggestedTopics/synonyms replaced with eager .whereType<String>()
+- I3: AI-suggested cefrLevel parsed but never shown in UI (spec required a chip) -> added Chip to suggestion ListTile
+
+Fix re-reviewed clean: Ready to merge: Yes.
+
+**Minor (not fixed, logged for awareness):**
+- cefrLevel non-string value (not just invalid enum name) would still throw inside _parseSuggestion's .map() — same failure class, narrower case, pre-existing before this branch too
+- No test locks the InputType.word branch of the new ternary (only phrase branch tested)
+- No test covers the .whereType<String>() defensive cast itself
+- _openSaveSheet missing mounted guard after async gap (unlike sibling _openKnownWord) — plan-inherited, low risk
+- Quét button has no in-flight guard against concurrent AI calls (no playToken-style sequencing, unlike ListeningComprehensionNotifier's existing pattern)
+- Highlighted text renders from live _controller.text rather than a scanned-text snapshot — editing the box after a scan can desync highlights from the text shown
+- Overlapping headwords (e.g. "cat" inside "cathedral") resolve by list order not longest-match — consistent with Reading's identical pre-existing behavior, not a regression
+- Pushing /vocab/:id from /practice/radar flips the bottom-nav highlight to "Vocab Bank" — cosmetic nav artifact, AppShell._selectedIndex matches on path prefix
+
+**Ready to merge — Word Radar feature complete (Tasks 1-6 + final review fixes).**
