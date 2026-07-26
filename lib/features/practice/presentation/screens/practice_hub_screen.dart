@@ -61,6 +61,18 @@ class PracticeHubScreen extends StatelessWidget {
               onTap: () => context.push('/practice/progress'),
             ),
           ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.radar_outlined),
+              title: const Text('Quét từ vựng'),
+              subtitle: const Text(
+                'Dán văn bản bất kỳ để tìm từ đã học và gợi ý từ mới đáng học.',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.go('/practice/radar'),
+            ),
+          ),
         ],
       ),
     );

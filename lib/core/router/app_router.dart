@@ -9,6 +9,7 @@ import '../../features/practice/presentation/screens/practice_session_screen.dar
 import '../../features/practice/presentation/screens/progress_screen.dart';
 import '../../features/practice/presentation/screens/session_result_screen.dart';
 import '../../features/practice/domain/entities/exercise_result.dart';
+import '../../features/word_radar/presentation/screens/word_radar_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/reading/presentation/screens/reading_home_screen.dart';
 import '../../features/reading/presentation/screens/reading_session_screen.dart';
@@ -68,6 +69,10 @@ final appRouter = GoRouter(
                   ),
                 ),
               ],
+            ),
+            GoRoute(
+              path: 'radar',
+              builder: (context, state) => const WordRadarScreen(),
             ),
           ],
         ),
