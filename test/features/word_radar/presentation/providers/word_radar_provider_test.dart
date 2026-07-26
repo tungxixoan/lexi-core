@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
@@ -93,6 +95,23 @@ class _ThrowingGenerativeModelClient implements GenerativeModelClient {
   }
 }
 
+/// A [GenerativeModelClient] whose response is controlled by an external
+/// [Completer], so a test can observe notifier state while the AI call is
+/// still in flight.
+class _DelayedGenerativeModelClient implements GenerativeModelClient {
+  _DelayedGenerativeModelClient(this._completer);
+  final Completer<String> _completer;
+
+  @override
+  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) async {
+    final text = await _completer.future;
+    return GenerateContentResponse(
+      [Candidate(Content.text(text), null, null, null, null)],
+      null,
+    );
+  }
+}
+
 Future<ProviderContainer> _makeContainer({
   required bool aiEnabled,
   required List<VocabRecord> vocabItems,
@@ -165,11 +184,49 @@ void main() {
     expect(state.suggestions, isNull);
   });
 
-  test('AI path populates both knownHeadwords and suggestions', () async {
+  test('knownHeadwords is observable while suggestions is still loading', () async {
+    final completer = Completer<String>();
     final container = await _makeContainer(
       aiEnabled: true,
       vocabItems: [_record('serendipity')],
-      wordRadarSource: WordRadarSource.withModel(_ThrowingGenerativeModelClient()),
+      wordRadarSource: WordRadarSource.withModel(_DelayedGenerativeModelClient(completer)),
+    );
+    addTearDown(container.dispose);
+    // wordRadarNotifierProvider is AutoDispose; without an active listener it
+    // would be torn down (resetting state) once the real Duration.zero delay
+    // below yields to the event loop. Keep it alive for the duration of the
+    // test, matching how a widget's ref.watch would keep it alive in the app.
+    container.listen(wordRadarNotifierProvider, (_, __) {});
+
+    final scanFuture = container
+        .read(wordRadarNotifierProvider.notifier)
+        .scan('It was pure serendipity.');
+
+    // Let the local (non-AI) pass finish its microtasks without resolving
+    // the still-pending AI call.
+    await Future<void>.delayed(Duration.zero);
+    final midState = container.read(wordRadarNotifierProvider);
+    expect(midState.knownHeadwords, ['serendipity']);
+    expect(midState.suggestions, isNotNull);
+    expect(midState.suggestions!.isLoading, isTrue);
+
+    completer.complete('{"suggestions":[]}');
+    await scanFuture;
+
+    final finalState = container.read(wordRadarNotifierProvider);
+    expect(finalState.suggestions!.hasValue, isTrue);
+    expect(finalState.suggestions!.value, isEmpty);
+  });
+
+  test('AI-enabled success path resolves suggestions to AsyncData', () async {
+    final json = '{"suggestions":[{"headword":"ubiquitous","ipa":"/juːˈbɪkwɪtəs/",'
+        '"meaning":"có mặt khắp nơi","definition":"present everywhere",'
+        '"synonyms":["omnipresent"],"examples":["Smartphones are ubiquitous."],'
+        '"suggestedTopics":["Technology"],"cefrLevel":"c1"}]}';
+    final container = await _makeContainer(
+      aiEnabled: true,
+      vocabItems: [_record('serendipity')],
+      wordRadarSource: WordRadarSource.withModel(_DelayedGenerativeModelClient(Completer<String>()..complete(json))),
     );
     addTearDown(container.dispose);
 
@@ -178,9 +235,9 @@ void main() {
         .scan('It was pure serendipity.');
 
     final state = container.read(wordRadarNotifierProvider);
-    expect(state.knownHeadwords, ['serendipity']);
-    expect(state.suggestions, isNotNull);
-    expect(state.suggestions!.hasError, isTrue);
+    expect(state.suggestions!.hasValue, isTrue);
+    expect(state.suggestions!.value, hasLength(1));
+    expect(state.suggestions!.value!.first.headword, 'ubiquitous');
   });
 
   test('wraps a thrown AI exception into AsyncError instead of throwing', () async {
