@@ -1,0 +1,241 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lexi_core/core/di/app_providers.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
+import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
+import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
+import 'package:lexi_core/features/vocabulary/domain/entities/topic.dart';
+import 'package:lexi_core/features/vocabulary/domain/entities/vocab_record.dart';
+import 'package:lexi_core/features/vocabulary/domain/repositories/vocab_repository.dart';
+import 'package:lexi_core/features/word_radar/data/sources/word_radar_source.dart';
+import 'package:lexi_core/features/word_radar/presentation/screens/word_radar_screen.dart';
+
+class _FakeGenerativeModelClient implements GenerativeModelClient {
+  _FakeGenerativeModelClient(this._responseText);
+  final String _responseText;
+
+  @override
+  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) async {
+    return GenerateContentResponse(
+      [Candidate(Content.text(_responseText), null, null, null, null)],
+      null,
+    );
+  }
+}
+
+class _FakeSettingsNotifier extends UserSettingsNotifier {
+  _FakeSettingsNotifier(this._state);
+  final UserSettingsState _state;
+  @override
+  UserSettingsState build() => _state;
+}
+
+VocabRecord _record(String headword) {
+  final now = DateTime(2026, 1, 1);
+  return VocabRecord(
+    id: headword,
+    headword: headword,
+    inputType: InputType.word,
+    ipa: '',
+    meaning: 'meaning of $headword',
+    examples: const [],
+    personalNotes: '',
+    topicIds: const [],
+    targetLanguage: Language.english,
+    cefrLevel: CEFRLevel.a1,
+    activeContext: AppContext.general,
+    createdAt: now,
+    updatedAt: now,
+  );
+}
+
+class _FakeVocabRepository implements VocabRepository {
+  _FakeVocabRepository(this.records);
+  final List<VocabRecord> records;
+
+  @override
+  Future<List<VocabRecord>> getAll({
+    String? topicId,
+    InputType? inputType,
+    Language? language,
+    CEFRLevel? maxCefrLevel,
+    bool dueOnly = false,
+  }) async =>
+      records;
+
+  @override
+  Future<VocabRecord?> getById(String id) async => null;
+
+  @override
+  Future<void> save(VocabRecord record) async {}
+
+  @override
+  Future<void> update(VocabRecord record) async {}
+
+  @override
+  Future<void> delete(String id) async {}
+
+  @override
+  Future<bool> existsByHeadword(String headword, Language language) async => false;
+
+  @override
+  Future<VocabRecord?> getByHeadword(String headword, Language language) async {
+    for (final r in records) {
+      if (r.headword == headword) return r;
+    }
+    return null;
+  }
+
+  @override
+  Future<List<Topic>> getTopics() async => [];
+
+  @override
+  Future<void> addTopic(Topic topic) async {}
+
+  @override
+  Future<void> deleteTopic(String id) async {}
+}
+
+Future<Widget> _buildScreen({
+  required bool aiEnabled,
+  required List<VocabRecord> vocabItems,
+  WordRadarSource? source,
+}) async {
+  SharedPreferences.setMockInitialValues({});
+  final prefs = await SharedPreferences.getInstance();
+  final router = GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(path: '/', builder: (ctx, state) => const WordRadarScreen()),
+      GoRoute(
+        path: '/practice',
+        builder: (ctx, state) => const Scaffold(body: Text('Practice hub')),
+      ),
+      GoRoute(
+        path: '/vocab/:id',
+        builder: (ctx, state) => Scaffold(
+          body: Text('Vocab detail ${state.pathParameters['id']}'),
+        ),
+      ),
+    ],
+  );
+  return ProviderScope(
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      userSettingsNotifierProvider.overrideWith(
+        () => _FakeSettingsNotifier(
+          UserSettingsState.defaults.copyWith(aiEnabled: aiEnabled),
+        ),
+      ),
+      vocabRepositoryProvider.overrideWithValue(_FakeVocabRepository(vocabItems)),
+      if (source != null) wordRadarSourceProvider.overrideWithValue(source),
+    ],
+    child: MaterialApp.router(routerConfig: router),
+  );
+}
+
+void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
+  testWidgets('shows the AI-disabled note after scanning with AI off', (tester) async {
+    await tester.pumpWidget(await _buildScreen(
+      aiEnabled: false,
+      vocabItems: [_record('serendipity')],
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'It was pure serendipity.');
+    await tester.pump();
+    await tester.tap(find.text('Quét'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Bật AI trong Cài đặt'), findsOneWidget);
+  });
+
+  testWidgets('tapping a highlighted known word navigates to its detail screen',
+      (tester) async {
+    await tester.pumpWidget(await _buildScreen(
+      aiEnabled: false,
+      vocabItems: [_record('serendipity')],
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'It was pure serendipity.');
+    await tester.pump();
+    await tester.tap(find.text('Quét'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('serendipity'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Vocab detail serendipity'), findsOneWidget);
+  });
+
+  testWidgets('shows a suggestion card with a Lưu button when AI is enabled',
+      (tester) async {
+    final source = WordRadarSource.withModel(
+      _FakeGenerativeModelClient(jsonEncode({
+        'suggestions': [
+          {
+            'headword': 'ubiquitous',
+            'ipa': '/juːˈbɪkwɪtəs/',
+            'meaning': 'có mặt khắp nơi',
+            'examples': <String>[],
+            'suggestedTopics': <String>[],
+          },
+        ],
+      })),
+    );
+    await tester.pumpWidget(await _buildScreen(
+      aiEnabled: true,
+      vocabItems: const [],
+      source: source,
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Some text here.');
+    await tester.pump();
+    await tester.tap(find.text('Quét'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ubiquitous'), findsOneWidget);
+    expect(find.text('Lưu'), findsOneWidget);
+  });
+
+  testWidgets('shows "Không có gợi ý mới" when AI returns no suggestions',
+      (tester) async {
+    final source = WordRadarSource.withModel(
+      _FakeGenerativeModelClient('{"suggestions":[]}'),
+    );
+    await tester.pumpWidget(await _buildScreen(
+      aiEnabled: true,
+      vocabItems: const [],
+      source: source,
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Some text here.');
+    await tester.pump();
+    await tester.tap(find.text('Quét'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Không có gợi ý mới.'), findsOneWidget);
+  });
+
+  testWidgets('the Quét button is disabled while the input is empty', (tester) async {
+    await tester.pumpWidget(await _buildScreen(aiEnabled: false, vocabItems: const []));
+    await tester.pumpAndSettle();
+
+    final button =
+        tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Quét'));
+    expect(button.onPressed, isNull);
+  });
+}
