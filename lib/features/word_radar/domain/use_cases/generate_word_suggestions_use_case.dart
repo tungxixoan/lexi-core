@@ -1,13 +1,13 @@
 import '../../../dictionary/domain/entities/language.dart';
-import '../../../dictionary/domain/entities/lookup_result.dart';
 import '../../../vocabulary/domain/entities/cefr_level.dart';
 import '../../data/sources/word_radar_source.dart';
+import '../entities/word_radar_ai_result.dart';
 
 class GenerateWordSuggestionsUseCase {
   const GenerateWordSuggestionsUseCase(this._source);
   final WordRadarSource _source;
 
-  Future<List<WordPhraseResult>> execute({
+  Future<WordRadarAiResult> execute({
     required String text,
     required Language targetLanguage,
     required CEFRLevel? targetCefrLevel,

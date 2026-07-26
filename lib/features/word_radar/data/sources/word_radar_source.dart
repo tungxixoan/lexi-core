@@ -7,6 +7,7 @@ import '../../../dictionary/domain/entities/language.dart';
 import '../../../dictionary/domain/entities/lookup_result.dart';
 import '../../../dictionary/domain/entities/user_settings_state.dart';
 import '../../../vocabulary/domain/entities/cefr_level.dart';
+import '../../domain/entities/word_radar_ai_result.dart';
 
 // Re-export so test imports (from this file) continue to resolve.
 export '../../../../core/services/ai_client_factory.dart' show GenerativeModelClient;
@@ -19,7 +20,7 @@ class WordRadarSource {
 
   final GenerativeModelClient _client;
 
-  Future<List<WordPhraseResult>> scan({
+  Future<WordRadarAiResult> scan({
     required String text,
     required Language targetLanguage,
     required CEFRLevel? targetCefrLevel,
@@ -32,13 +33,17 @@ class WordRadarSource {
       knownHeadwords: knownHeadwords,
     );
     final response = await _client.generateContent([Content.text(prompt)]);
-    final responseText = response.text ?? '{"suggestions":[]}';
+    final responseText = response.text ?? '{"translation":"","suggestions":[]}';
     final json = jsonDecode(responseText) as Map<String, dynamic>;
-    return (json['suggestions'] as List? ?? [])
+    final suggestions = (json['suggestions'] as List? ?? [])
         .whereType<Map<String, dynamic>>()
         .where((item) => item['headword'] is String && (item['headword'] as String).isNotEmpty)
         .map((item) => _parseSuggestion(item))
         .toList();
+    return WordRadarAiResult(
+      translation: json['translation'] as String? ?? '',
+      suggestions: suggestions,
+    );
   }
 
   String _buildPrompt({
@@ -53,11 +58,13 @@ class WordRadarSource {
         ? 'There are no already-known words to exclude.'
         : 'Do NOT suggest any of these already-known words: ${knownHeadwords.join(", ")}.';
     return 'You are a language learning assistant helping a Vietnamese speaker learn '
-        '${targetLanguage.label}. Given this text: "$text", suggest up to 10 words or '
-        'short phrases from the text that are worth learning $levelClause, for a '
-        'Vietnamese speaker. $exclusionClause '
+        '${targetLanguage.label}. Given this text: "$text", do two things. '
+        'First, translate the full text into Vietnamese. '
+        'Second, suggest up to 10 words or short phrases from the text that are worth '
+        'learning $levelClause, for a Vietnamese speaker. $exclusionClause '
         'Respond with JSON only (no markdown, no code fences): '
-        '{"suggestions":[{"headword":"exact word or phrase from the text",'
+        '{"translation":"Vietnamese translation of the full text",'
+        '"suggestions":[{"headword":"exact word or phrase from the text",'
         '"ipa":"IPA transcription","meaning":"Vietnamese definition",'
         '"definition":"English definition",'
         '"synonyms":["2-4 English synonyms, or empty array if none fit"],'
@@ -66,7 +73,8 @@ class WordRadarSource {
         'Technology, Health, Education, Entertainment, Nature, Emotion, Academic, Idioms, '
         'Phrasal Verbs, Slang, Social/Casual, Sports, Art & Culture, Science, Law & Politics, Other"],'
         '"cefrLevel":"a1, a2, b1, b2, c1, or c2"}]}. '
-        'If nothing in the text is worth learning, respond with {"suggestions":[]}.';
+        'If nothing in the text is worth learning, use an empty "suggestions" array — '
+        'still always provide the "translation".';
   }
 
   WordPhraseResult _parseSuggestion(Map<String, dynamic> json) {

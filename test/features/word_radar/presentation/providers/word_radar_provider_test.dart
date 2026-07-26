@@ -141,7 +141,7 @@ Future<ProviderContainer> _makeContainer({
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  test('populates knownHeadwords and leaves suggestions null when AI is disabled', () async {
+  test('populates knownRecords and leaves aiResult null when AI is disabled', () async {
     final container = await _makeContainer(
       aiEnabled: false,
       vocabItems: [_record('serendipity')],
@@ -153,18 +153,18 @@ void main() {
         .scan('It was pure serendipity.');
 
     final state = container.read(wordRadarNotifierProvider);
-    expect(state.knownHeadwords, ['serendipity']);
-    expect(state.suggestions, isNull);
+    expect(state.knownRecords!.map((r) => r.headword), ['serendipity']);
+    expect(state.aiResult, isNull);
   });
 
-  test('leaves knownHeadwords empty when nothing in the Vocab Bank matches', () async {
+  test('leaves knownRecords empty when nothing in the Vocab Bank matches', () async {
     final container = await _makeContainer(aiEnabled: false, vocabItems: const []);
     addTearDown(container.dispose);
 
     await container.read(wordRadarNotifierProvider.notifier).scan('Some text.');
 
     final state = container.read(wordRadarNotifierProvider);
-    expect(state.knownHeadwords, isEmpty);
+    expect(state.knownRecords, isEmpty);
   });
 
   test('reset() clears back to the initial state', () async {
@@ -180,11 +180,11 @@ void main() {
     container.read(wordRadarNotifierProvider.notifier).reset();
 
     final state = container.read(wordRadarNotifierProvider);
-    expect(state.knownHeadwords, isNull);
-    expect(state.suggestions, isNull);
+    expect(state.knownRecords, isNull);
+    expect(state.aiResult, isNull);
   });
 
-  test('knownHeadwords is observable while suggestions is still loading', () async {
+  test('knownRecords is observable while aiResult is still loading', () async {
     final completer = Completer<String>();
     final container = await _makeContainer(
       aiEnabled: true,
@@ -206,27 +206,31 @@ void main() {
     // the still-pending AI call.
     await Future<void>.delayed(Duration.zero);
     final midState = container.read(wordRadarNotifierProvider);
-    expect(midState.knownHeadwords, ['serendipity']);
-    expect(midState.suggestions, isNotNull);
-    expect(midState.suggestions!.isLoading, isTrue);
+    expect(midState.knownRecords!.map((r) => r.headword), ['serendipity']);
+    expect(midState.aiResult, isNotNull);
+    expect(midState.aiResult!.isLoading, isTrue);
 
-    completer.complete('{"suggestions":[]}');
+    completer.complete('{"translation":"","suggestions":[]}');
     await scanFuture;
 
     final finalState = container.read(wordRadarNotifierProvider);
-    expect(finalState.suggestions!.hasValue, isTrue);
-    expect(finalState.suggestions!.value, isEmpty);
+    expect(finalState.aiResult!.hasValue, isTrue);
+    expect(finalState.aiResult!.value!.suggestions, isEmpty);
   });
 
-  test('AI-enabled success path resolves suggestions to AsyncData', () async {
-    final json = '{"suggestions":[{"headword":"ubiquitous","ipa":"/juːˈbɪkwɪtəs/",'
+  test('AI-enabled success path resolves aiResult to AsyncData with translation and suggestions',
+      () async {
+    final json = '{"translation":"Điện thoại thông minh có mặt khắp nơi.",'
+        '"suggestions":[{"headword":"ubiquitous","ipa":"/juːˈbɪkwɪtəs/",'
         '"meaning":"có mặt khắp nơi","definition":"present everywhere",'
         '"synonyms":["omnipresent"],"examples":["Smartphones are ubiquitous."],'
         '"suggestedTopics":["Technology"],"cefrLevel":"c1"}]}';
     final container = await _makeContainer(
       aiEnabled: true,
       vocabItems: [_record('serendipity')],
-      wordRadarSource: WordRadarSource.withModel(_DelayedGenerativeModelClient(Completer<String>()..complete(json))),
+      wordRadarSource: WordRadarSource.withModel(
+        _DelayedGenerativeModelClient(Completer<String>()..complete(json)),
+      ),
     );
     addTearDown(container.dispose);
 
@@ -235,9 +239,10 @@ void main() {
         .scan('It was pure serendipity.');
 
     final state = container.read(wordRadarNotifierProvider);
-    expect(state.suggestions!.hasValue, isTrue);
-    expect(state.suggestions!.value, hasLength(1));
-    expect(state.suggestions!.value!.first.headword, 'ubiquitous');
+    expect(state.aiResult!.hasValue, isTrue);
+    expect(state.aiResult!.value!.translation, 'Điện thoại thông minh có mặt khắp nơi.');
+    expect(state.aiResult!.value!.suggestions, hasLength(1));
+    expect(state.aiResult!.value!.suggestions.first.headword, 'ubiquitous');
   });
 
   test('wraps a thrown AI exception into AsyncError instead of throwing', () async {
@@ -253,8 +258,8 @@ void main() {
         .scan('It was pure serendipity.');
 
     final state = container.read(wordRadarNotifierProvider);
-    expect(state.knownHeadwords, ['serendipity']);
-    expect(state.suggestions!.hasError, isTrue);
+    expect(state.knownRecords!.map((r) => r.headword), ['serendipity']);
+    expect(state.aiResult!.hasError, isTrue);
   });
 
   test('retrySuggestions is a no-op before any scan has run', () async {
@@ -268,8 +273,8 @@ void main() {
     await container.read(wordRadarNotifierProvider.notifier).retrySuggestions('text');
 
     final state = container.read(wordRadarNotifierProvider);
-    expect(state.knownHeadwords, isNull);
-    expect(state.suggestions, isNull);
+    expect(state.knownRecords, isNull);
+    expect(state.aiResult, isNull);
   });
 
   test('retrySuggestions is a no-op when AI is disabled', () async {
@@ -287,7 +292,7 @@ void main() {
         .retrySuggestions('It was pure serendipity.');
 
     final state = container.read(wordRadarNotifierProvider);
-    expect(state.suggestions, isNull);
+    expect(state.aiResult, isNull);
   });
 
   test('retrySuggestions re-fetches suggestions without re-running the local pass', () async {
@@ -304,13 +309,13 @@ void main() {
         .read(wordRadarNotifierProvider.notifier)
         .scan('It was pure serendipity.');
     expect(repo.getAllCallCount, 1);
-    expect(container.read(wordRadarNotifierProvider).suggestions!.hasError, isTrue);
+    expect(container.read(wordRadarNotifierProvider).aiResult!.hasError, isTrue);
 
     await container
         .read(wordRadarNotifierProvider.notifier)
         .retrySuggestions('It was pure serendipity.');
 
     expect(repo.getAllCallCount, 1); // local pass not re-run
-    expect(container.read(wordRadarNotifierProvider).suggestions!.hasError, isTrue);
+    expect(container.read(wordRadarNotifierProvider).aiResult!.hasError, isTrue);
   });
 }

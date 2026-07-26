@@ -38,14 +38,14 @@ class _FakeSettingsNotifier extends UserSettingsNotifier {
   UserSettingsState build() => _state;
 }
 
-VocabRecord _record(String headword) {
+VocabRecord _record(String headword, {String? meaning}) {
   final now = DateTime(2026, 1, 1);
   return VocabRecord(
     id: headword,
     headword: headword,
     inputType: InputType.word,
     ipa: '',
-    meaning: 'meaning of $headword',
+    meaning: meaning ?? 'meaning of $headword',
     examples: const [],
     personalNotes: '',
     topicIds: const [],
@@ -268,5 +268,52 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('C1'), findsOneWidget);
+  });
+
+  testWidgets('shows the AI translation with the known word\'s meaning highlighted',
+      (tester) async {
+    final source = WordRadarSource.withModel(
+      _FakeGenerativeModelClient(jsonEncode({
+        'translation': 'Con mèo ngồi trên tấm thảm.',
+        'suggestions': <Map<String, dynamic>>[],
+      })),
+    );
+    await tester.pumpWidget(await _buildScreen(
+      aiEnabled: true,
+      vocabItems: [_record('cat', meaning: 'con mèo')],
+      source: source,
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'The cat sat on the mat.');
+    await tester.pump();
+    await tester.tap(find.text('Quét'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Bản dịch'), findsOneWidget);
+    expect(find.textContaining('Con mèo ngồi trên tấm thảm.'), findsOneWidget);
+  });
+
+  testWidgets('does not show a translation section when the AI returns an empty translation',
+      (tester) async {
+    final source = WordRadarSource.withModel(
+      _FakeGenerativeModelClient(jsonEncode({
+        'translation': '',
+        'suggestions': <Map<String, dynamic>>[],
+      })),
+    );
+    await tester.pumpWidget(await _buildScreen(
+      aiEnabled: true,
+      vocabItems: const [],
+      source: source,
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Some text here.');
+    await tester.pump();
+    await tester.tap(find.text('Quét'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Bản dịch'), findsNothing);
   });
 }

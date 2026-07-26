@@ -8,14 +8,18 @@ import 'package:lexi_core/features/vocabulary/domain/entities/vocab_record.dart'
 import 'package:lexi_core/features/vocabulary/domain/repositories/vocab_repository.dart';
 import 'package:lexi_core/features/word_radar/domain/use_cases/find_known_headwords_use_case.dart';
 
-VocabRecord _record(String headword, {Language language = Language.english}) {
+VocabRecord _record(
+  String headword, {
+  Language language = Language.english,
+  String? meaning,
+}) {
   final now = DateTime(2026, 1, 1);
   return VocabRecord(
     id: headword,
     headword: headword,
     inputType: InputType.word,
     ipa: '',
-    meaning: 'meaning of $headword',
+    meaning: meaning ?? 'meaning of $headword',
     examples: const [],
     personalNotes: '',
     topicIds: const [],
@@ -72,7 +76,8 @@ class _FakeVocabRepository implements VocabRepository {
 }
 
 void main() {
-  test('finds a headword that appears as a substring in the text', () async {
+  test('finds the VocabRecord for a headword that appears as a substring in the text',
+      () async {
     final repo = _FakeVocabRepository([_record('serendipity')]);
     final useCase = FindKnownHeadwordsUseCase(repo);
 
@@ -81,7 +86,8 @@ void main() {
       language: Language.english,
     );
 
-    expect(result, ['serendipity']);
+    expect(result, hasLength(1));
+    expect(result[0].headword, 'serendipity');
   });
 
   test('matches case-insensitively', () async {
@@ -93,7 +99,8 @@ void main() {
       language: Language.english,
     );
 
-    expect(result, ['Hello']);
+    expect(result, hasLength(1));
+    expect(result[0].headword, 'Hello');
   });
 
   test('returns no duplicates when a headword appears multiple times', () async {
@@ -105,7 +112,8 @@ void main() {
       language: Language.english,
     );
 
-    expect(result, ['cat']);
+    expect(result, hasLength(1));
+    expect(result[0].headword, 'cat');
   });
 
   test('matches Chinese headwords with no spaces around them', () async {
@@ -119,7 +127,8 @@ void main() {
       language: Language.chinese,
     );
 
-    expect(result, ['你好']);
+    expect(result, hasLength(1));
+    expect(result[0].headword, '你好');
   });
 
   test('excludes headwords that do not appear in the text', () async {
@@ -144,5 +153,19 @@ void main() {
     );
 
     expect(result, isEmpty);
+  });
+
+  test('returns full records including meaning, needed for translation highlighting',
+      () async {
+    final repo = _FakeVocabRepository([_record('cat', meaning: 'con mèo')]);
+    final useCase = FindKnownHeadwordsUseCase(repo);
+
+    final result = await useCase.execute(
+      text: 'The cat is asleep.',
+      language: Language.english,
+    );
+
+    expect(result, hasLength(1));
+    expect(result[0].meaning, 'con mèo');
   });
 }

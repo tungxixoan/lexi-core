@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/di/app_providers.dart';
 import '../../../dictionary/domain/entities/lookup_result.dart';
-import '../../../dictionary/presentation/providers/user_settings_provider.dart';
 import '../../../dictionary/presentation/widgets/save_vocab_sheet.dart';
+import '../../domain/entities/word_radar_ai_result.dart';
 import '../providers/word_radar_provider.dart';
 
 const _maxInputLength = 3000;
@@ -36,17 +35,18 @@ class _WordRadarScreenState extends ConsumerState<WordRadarScreen> {
       isScrollControlled: true,
       builder: (_) => SaveVocabSheet(result: suggestion),
     );
-    if (saved == true) {
+    if (mounted && saved == true) {
       setState(() => _savedHeadwords.add(suggestion.headword));
     }
   }
 
-  Future<void> _openKnownWord(String headword) async {
-    final settings = ref.read(userSettingsNotifierProvider);
-    final repo = ref.read(vocabRepositoryProvider);
-    final record = await repo.getByHeadword(headword, settings.targetLanguage);
-    if (record != null && mounted) {
-      context.push('/vocab/${record.id}');
+  void _openKnownWord(String headword) {
+    final records = ref.read(wordRadarNotifierProvider).knownRecords ?? const [];
+    for (final record in records) {
+      if (record.headword == headword) {
+        context.push('/vocab/${record.id}');
+        return;
+      }
     }
   }
 
@@ -83,30 +83,29 @@ class _WordRadarScreenState extends ConsumerState<WordRadarScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          if (radarState.knownHeadwords != null) ...[
+          if (radarState.knownRecords != null) ...[
             Text('Văn bản', style: theme.textTheme.labelLarge),
             const SizedBox(height: 8),
             _HighlightedText(
               text: _controller.text,
-              highlights: radarState.knownHeadwords!,
+              highlights: radarState.knownRecords!.map((r) => r.headword).toList(),
               onTapHighlight: _openKnownWord,
             ),
             const SizedBox(height: 24),
-            Text('Gợi ý từ mới', style: theme.textTheme.labelLarge),
-            const SizedBox(height: 8),
-            _buildSuggestions(radarState),
+            _buildAiSection(radarState),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildSuggestions(WordRadarState radarState) {
-    final suggestions = radarState.suggestions;
-    if (suggestions == null) {
+  Widget _buildAiSection(WordRadarState radarState) {
+    final theme = Theme.of(context);
+    final aiResult = radarState.aiResult;
+    if (aiResult == null) {
       return const Text('Bật AI trong Cài đặt để nhận gợi ý từ mới.');
     }
-    return suggestions.when(
+    return aiResult.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,42 +119,70 @@ class _WordRadarScreenState extends ConsumerState<WordRadarScreen> {
           ),
         ],
       ),
-      data: (list) {
-        if (list.isEmpty) return const Text('Không có gợi ý mới.');
-        return Column(
-          children: list
-              .map(
-                (s) => Card(
-                  child: ListTile(
-                    title: Text(s.headword),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('${s.ipa}  •  ${s.meaning}'),
-                        if (s.cefrLevel != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Chip(
-                              label: Text(s.cefrLevel!.label),
-                              visualDensity: VisualDensity.compact,
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      data: (result) => _buildAiResult(result, radarState, theme),
+    );
+  }
+
+  Widget _buildAiResult(
+    WordRadarAiResult result,
+    WordRadarState radarState,
+    ThemeData theme,
+  ) {
+    final knownMeanings = (radarState.knownRecords ?? const [])
+        .map((r) => r.meaning)
+        .where((m) => m.isNotEmpty)
+        .toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (result.translation.isNotEmpty) ...[
+          Text('Bản dịch', style: theme.textTheme.labelLarge),
+          const SizedBox(height: 8),
+          _HighlightedText(
+            text: result.translation,
+            highlights: knownMeanings,
+          ),
+          const SizedBox(height: 24),
+        ],
+        Text('Gợi ý từ mới', style: theme.textTheme.labelLarge),
+        const SizedBox(height: 8),
+        if (result.suggestions.isEmpty)
+          const Text('Không có gợi ý mới.')
+        else
+          Column(
+            children: result.suggestions
+                .map(
+                  (s) => Card(
+                    child: ListTile(
+                      title: Text(s.headword),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('${s.ipa}  •  ${s.meaning}'),
+                          if (s.cefrLevel != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Chip(
+                                label: Text(s.cefrLevel!.label),
+                                visualDensity: VisualDensity.compact,
+                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
+                      trailing: _savedHeadwords.contains(s.headword)
+                          ? const Text('Đã lưu')
+                          : TextButton(
+                              onPressed: () => _openSaveSheet(s),
+                              child: const Text('Lưu'),
+                            ),
                     ),
-                    trailing: _savedHeadwords.contains(s.headword)
-                        ? const Text('Đã lưu')
-                        : TextButton(
-                            onPressed: () => _openSaveSheet(s),
-                            child: const Text('Lưu'),
-                          ),
                   ),
-                ),
-              )
-              .toList(),
-        );
-      },
+                )
+                .toList(),
+          ),
+      ],
     );
   }
 }
@@ -164,12 +191,12 @@ class _HighlightedText extends StatelessWidget {
   const _HighlightedText({
     required this.text,
     required this.highlights,
-    required this.onTapHighlight,
+    this.onTapHighlight,
   });
 
   final String text;
   final List<String> highlights;
-  final void Function(String headword) onTapHighlight;
+  final void Function(String matched)? onTapHighlight;
 
   @override
   Widget build(BuildContext context) {
@@ -203,12 +230,17 @@ class _HighlightedText extends StatelessWidget {
       final matchedText =
           remaining.substring(earliestStart, earliestStart + earliestWord.length);
       final tappedWord = earliestWord;
-      spans.add(WidgetSpan(
-        child: GestureDetector(
-          onTap: () => onTapHighlight(tappedWord),
-          child: Text(matchedText, style: highlightStyle),
-        ),
-      ));
+      final onTap = onTapHighlight;
+      spans.add(
+        onTap == null
+            ? TextSpan(text: matchedText, style: highlightStyle)
+            : WidgetSpan(
+                child: GestureDetector(
+                  onTap: () => onTap(tappedWord),
+                  child: Text(matchedText, style: highlightStyle),
+                ),
+              ),
+      );
       remaining = remaining.substring(earliestStart + earliestWord.length);
     }
     return Text.rich(TextSpan(children: spans));

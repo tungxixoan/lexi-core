@@ -1,23 +1,24 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/di/app_providers.dart';
-import '../../../dictionary/domain/entities/lookup_result.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
+import '../../../vocabulary/domain/entities/vocab_record.dart';
+import '../../domain/entities/word_radar_ai_result.dart';
 
 part 'word_radar_provider.g.dart';
 
 final class WordRadarState {
-  const WordRadarState({this.knownHeadwords, this.suggestions});
+  const WordRadarState({this.knownRecords, this.aiResult});
 
-  final List<String>? knownHeadwords; // null = not scanned yet
-  final AsyncValue<List<WordPhraseResult>>? suggestions; // null = AI not run
+  final List<VocabRecord>? knownRecords; // null = not scanned yet
+  final AsyncValue<WordRadarAiResult>? aiResult; // null = AI not run
 
   WordRadarState copyWith({
-    List<String>? knownHeadwords,
-    AsyncValue<List<WordPhraseResult>>? suggestions,
+    List<VocabRecord>? knownRecords,
+    AsyncValue<WordRadarAiResult>? aiResult,
   }) =>
       WordRadarState(
-        knownHeadwords: knownHeadwords ?? this.knownHeadwords,
-        suggestions: suggestions ?? this.suggestions,
+        knownRecords: knownRecords ?? this.knownRecords,
+        aiResult: aiResult ?? this.aiResult,
       );
 }
 
@@ -28,45 +29,47 @@ class WordRadarNotifier extends _$WordRadarNotifier {
 
   Future<void> scan(String text) async {
     final settings = ref.read(userSettingsNotifierProvider);
-    final knownHeadwords = await ref
+    final knownRecords = await ref
         .read(findKnownHeadwordsUseCaseProvider)
         .execute(text: text, language: settings.targetLanguage);
 
     if (!settings.aiEnabled) {
-      state = WordRadarState(knownHeadwords: knownHeadwords, suggestions: null);
+      state = WordRadarState(knownRecords: knownRecords, aiResult: null);
       return;
     }
 
     state = WordRadarState(
-      knownHeadwords: knownHeadwords,
-      suggestions: const AsyncLoading(),
+      knownRecords: knownRecords,
+      aiResult: const AsyncLoading(),
     );
-    final suggestions = await AsyncValue.guard(
+    final headwords = knownRecords.map((r) => r.headword).toList();
+    final aiResult = await AsyncValue.guard(
       () => ref.read(generateWordSuggestionsUseCaseProvider).execute(
             text: text,
             targetLanguage: settings.targetLanguage,
             targetCefrLevel: settings.targetCefrLevel,
-            knownHeadwords: knownHeadwords,
+            knownHeadwords: headwords,
           ),
     );
-    state = state.copyWith(suggestions: suggestions);
+    state = state.copyWith(aiResult: aiResult);
   }
 
   Future<void> retrySuggestions(String text) async {
     final current = state;
-    if (current.knownHeadwords == null) return;
+    if (current.knownRecords == null) return;
     final settings = ref.read(userSettingsNotifierProvider);
     if (!settings.aiEnabled) return;
-    state = current.copyWith(suggestions: const AsyncLoading());
-    final suggestions = await AsyncValue.guard(
+    state = current.copyWith(aiResult: const AsyncLoading());
+    final headwords = current.knownRecords!.map((r) => r.headword).toList();
+    final aiResult = await AsyncValue.guard(
       () => ref.read(generateWordSuggestionsUseCaseProvider).execute(
             text: text,
             targetLanguage: settings.targetLanguage,
             targetCefrLevel: settings.targetCefrLevel,
-            knownHeadwords: current.knownHeadwords!,
+            knownHeadwords: headwords,
           ),
     );
-    state = state.copyWith(suggestions: suggestions);
+    state = state.copyWith(aiResult: aiResult);
   }
 
   void reset() => state = const WordRadarState();
