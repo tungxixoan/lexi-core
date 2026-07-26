@@ -128,7 +128,22 @@ class _WordRadarScreenState extends ConsumerState<WordRadarScreen> {
                 (s) => Card(
                   child: ListTile(
                     title: Text(s.headword),
-                    subtitle: Text('${s.ipa}  •  ${s.meaning}'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('${s.ipa}  •  ${s.meaning}'),
+                        if (s.cefrLevel != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Chip(
+                              label: Text(s.cefrLevel!.label),
+                              visualDensity: VisualDensity.compact,
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          ),
+                      ],
+                    ),
                     trailing: _savedHeadwords.contains(s.headword)
                         ? const Text('Đã lưu')
                         : TextButton(

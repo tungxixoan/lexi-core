@@ -238,4 +238,35 @@ void main() {
         tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Quét'));
     expect(button.onPressed, isNull);
   });
+
+  testWidgets('shows a CEFR level chip on a suggestion when the AI provides one',
+      (tester) async {
+    final source = WordRadarSource.withModel(
+      _FakeGenerativeModelClient(jsonEncode({
+        'suggestions': [
+          {
+            'headword': 'ubiquitous',
+            'ipa': '/juːˈbɪkwɪtəs/',
+            'meaning': 'có mặt khắp nơi',
+            'examples': <String>[],
+            'suggestedTopics': <String>[],
+            'cefrLevel': 'c1',
+          },
+        ],
+      })),
+    );
+    await tester.pumpWidget(await _buildScreen(
+      aiEnabled: true,
+      vocabItems: const [],
+      source: source,
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Some text here.');
+    await tester.pump();
+    await tester.tap(find.text('Quét'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('C1'), findsOneWidget);
+  });
 }

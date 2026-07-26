@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
+import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
 import 'package:lexi_core/features/word_radar/data/sources/word_radar_source.dart';
@@ -116,5 +117,57 @@ void main() {
 
     expect(result, hasLength(1));
     expect(result[0].headword, 'ubiquitous');
+  });
+
+  test('classifies a multi-word suggestion as a phrase, not a word', () async {
+    final json = jsonEncode({
+      'suggestions': [
+        {
+          'headword': 'follow up',
+          'ipa': '/ˈfɒl.oʊ ʌp/',
+          'meaning': 'theo dõi',
+          'examples': <String>[],
+          'suggestedTopics': <String>[],
+        },
+      ],
+    });
+    final source = WordRadarSource.withModel(FakeGenerativeModelClient(json));
+
+    final result = await source.scan(
+      text: 'Please follow up with the client.',
+      targetLanguage: Language.english,
+      targetCefrLevel: null,
+      knownHeadwords: const [],
+    );
+
+    expect(result, hasLength(1));
+    expect(result[0].inputType, InputType.phrase);
+  });
+
+  test('defaults cefrLevel to null and keeps the suggestion when the AI returns an invalid level string', () async {
+    final json = jsonEncode({
+      'suggestions': [
+        {
+          'headword': 'ubiquitous',
+          'ipa': '/juːˈbɪkwɪtəs/',
+          'meaning': 'có mặt khắp nơi',
+          'examples': <String>[],
+          'suggestedTopics': <String>[],
+          'cefrLevel': 'intermediate',
+        },
+      ],
+    });
+    final source = WordRadarSource.withModel(FakeGenerativeModelClient(json));
+
+    final result = await source.scan(
+      text: 'Smartphones are ubiquitous now.',
+      targetLanguage: Language.english,
+      targetCefrLevel: null,
+      knownHeadwords: const [],
+    );
+
+    expect(result, hasLength(1));
+    expect(result[0].headword, 'ubiquitous');
+    expect(result[0].cefrLevel, isNull);
   });
 }

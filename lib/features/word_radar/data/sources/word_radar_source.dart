@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
 import '../../../../core/services/ai_client_factory.dart';
+import '../../../../core/utils/input_detector.dart';
 import '../../../dictionary/domain/entities/input_type.dart';
 import '../../../dictionary/domain/entities/language.dart';
 import '../../../dictionary/domain/entities/lookup_result.dart';
@@ -68,17 +69,21 @@ class WordRadarSource {
         'If nothing in the text is worth learning, respond with {"suggestions":[]}.';
   }
 
-  WordPhraseResult _parseSuggestion(Map<String, dynamic> json) => WordPhraseResult(
-        headword: json['headword'] as String,
-        inputType: InputType.word,
-        ipa: json['ipa'] as String? ?? '',
-        meaning: json['meaning'] as String? ?? '',
-        examples: (json['examples'] as List?)?.cast<String>() ?? const [],
-        suggestedTopics: (json['suggestedTopics'] as List?)?.cast<String>() ?? const [],
-        definition: json['definition'] as String? ?? '',
-        synonyms: (json['synonyms'] as List?)?.cast<String>() ?? const [],
-        cefrLevel: json['cefrLevel'] != null
-            ? CEFRLevel.values.byName((json['cefrLevel'] as String).toLowerCase())
-            : null,
-      );
+  WordPhraseResult _parseSuggestion(Map<String, dynamic> json) {
+    final headword = json['headword'] as String;
+    final detectedType = InputDetector.detect(headword);
+    return WordPhraseResult(
+      headword: headword,
+      inputType: detectedType == InputType.word ? InputType.word : InputType.phrase,
+      ipa: json['ipa'] as String? ?? '',
+      meaning: json['meaning'] as String? ?? '',
+      examples: (json['examples'] as List?)?.whereType<String>().toList() ?? const [],
+      suggestedTopics:
+          (json['suggestedTopics'] as List?)?.whereType<String>().toList() ?? const [],
+      definition: json['definition'] as String? ?? '',
+      synonyms: (json['synonyms'] as List?)?.whereType<String>().toList() ?? const [],
+      cefrLevel: CEFRLevel.values.asNameMap()[
+          (json['cefrLevel'] as String?)?.trim().toLowerCase()],
+    );
+  }
 }
