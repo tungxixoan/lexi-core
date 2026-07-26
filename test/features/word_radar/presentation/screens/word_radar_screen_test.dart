@@ -179,7 +179,40 @@ void main() {
     expect(find.text('Vocab detail serendipity'), findsOneWidget);
   });
 
-  testWidgets('shows a suggestion card with a Lưu button when AI is enabled',
+  testWidgets('tapping a suggestion card opens the save sheet', (tester) async {
+    final source = WordRadarSource.withModel(
+      _FakeGenerativeModelClient(jsonEncode({
+        'suggestions': [
+          {
+            'headword': 'ubiquitous',
+            'ipa': '/juːˈbɪkwɪtəs/',
+            'meaning': 'có mặt khắp nơi',
+            'examples': <String>[],
+            'suggestedTopics': <String>[],
+          },
+        ],
+      })),
+    );
+    await tester.pumpWidget(await _buildScreen(
+      aiEnabled: true,
+      vocabItems: const [],
+      source: source,
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Some text here.');
+    await tester.pump();
+    await tester.tap(find.text('Quét'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ubiquitous'), findsOneWidget);
+    await tester.tap(find.text('ubiquitous'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Save "ubiquitous"'), findsOneWidget);
+  });
+
+  testWidgets('tapping the dismiss icon removes a suggestion from the list',
       (tester) async {
     final source = WordRadarSource.withModel(
       _FakeGenerativeModelClient(jsonEncode({
@@ -207,7 +240,53 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('ubiquitous'), findsOneWidget);
-    expect(find.text('Lưu'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ubiquitous'), findsNothing);
+    expect(find.text('Không có gợi ý mới.'), findsOneWidget);
+  });
+
+  testWidgets('Lưu tất cả saves every unsaved suggestion and shows checkmarks',
+      (tester) async {
+    final source = WordRadarSource.withModel(
+      _FakeGenerativeModelClient(jsonEncode({
+        'suggestions': [
+          {
+            'headword': 'ubiquitous',
+            'ipa': '/juːˈbɪkwɪtəs/',
+            'meaning': 'có mặt khắp nơi',
+            'examples': <String>[],
+            'suggestedTopics': <String>[],
+          },
+          {
+            'headword': 'resilient',
+            'ipa': '/rɪˈzɪliənt/',
+            'meaning': 'kiên cường',
+            'examples': <String>[],
+            'suggestedTopics': <String>[],
+          },
+        ],
+      })),
+    );
+    await tester.pumpWidget(await _buildScreen(
+      aiEnabled: true,
+      vocabItems: const [],
+      source: source,
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Some text here.');
+    await tester.pump();
+    await tester.tap(find.text('Quét'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Lưu tất cả'), findsOneWidget);
+    await tester.tap(find.text('Lưu tất cả'));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.check_circle), findsNWidgets(2));
+    expect(find.text('Lưu tất cả'), findsNothing);
   });
 
   testWidgets('shows "Không có gợi ý mới" when AI returns no suggestions',
