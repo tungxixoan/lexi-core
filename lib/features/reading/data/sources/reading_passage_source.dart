@@ -49,12 +49,21 @@ class ReadingPassageSource {
     required Language targetLanguage,
   }) {
     final wordList = headwords.join(', ');
+    // Scale length with the word count so a 10- or 20-word selection isn't
+    // crammed into a handful of sentences — bounded so a large/"all" selection
+    // doesn't produce an unreasonably long typing session.
+    final rawSentenceCount = (headwords.length * 0.75).ceil();
+    final sentenceCount =
+        rawSentenceCount < 6 ? 6 : (rawSentenceCount > 12 ? 12 : rawSentenceCount);
     return 'You are a language learning assistant helping a Vietnamese speaker learn '
         '${targetLanguage.label}. '
-        'Write a short passage of 4 to 6 sentences in ${targetLanguage.label} at ${level.label} level. '
+        'Write a passage of about $sentenceCount sentences in ${targetLanguage.label} at ${level.label} level. '
         'Context/register: ${context.label}. '
         'Naturally use as many of these vocabulary words as possible: $wordList. '
-        'For each sentence, provide its Vietnamese translation and list which vocabulary words from the input appear in that sentence. '
+        'Also naturally include a few other ${level.label}-appropriate ${targetLanguage.label} '
+        'vocabulary words beyond this list, to add variety and context. '
+        'For each sentence, provide its Vietnamese translation and list which vocabulary words '
+        'from the input list appear in that sentence (only words from the input list, not the extra ones). '
         'Respond with JSON only (no markdown, no code fences): '
         '{"sentences": [{"target": "sentence in ${targetLanguage.label}", '
         '"vietnamese": "Vietnamese translation", '

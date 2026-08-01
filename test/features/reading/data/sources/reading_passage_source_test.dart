@@ -11,9 +11,11 @@ import 'package:lexi_core/features/reading/data/sources/reading_passage_source.d
 class FakeGenerativeModelClient implements GenerativeModelClient {
   FakeGenerativeModelClient(this._responseText);
   final String _responseText;
+  String? lastPrompt;
 
   @override
   Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) async {
+    lastPrompt = (prompt.first.parts.first as TextPart).text;
     return GenerateContentResponse(
       [Candidate(Content.text(_responseText), null, null, null, null)],
       null,
@@ -109,5 +111,48 @@ void main() {
     );
     expect(passage.sentences[0].vocabIds, isEmpty);
     expect(passage.vocabIds, isEmpty);
+  });
+
+  group('prompt scales with the number of vocabulary words', () {
+    test('asks for about 6 sentences for a 5-word selection', () async {
+      final fake = FakeGenerativeModelClient(fakeJson);
+      final source = ReadingPassageSource.withModel(fake);
+      await source.generate(
+        words: words, // 5 words
+        level: CEFRLevel.b1,
+        context: AppContext.general,
+        targetLanguage: Language.english,
+      );
+      expect(fake.lastPrompt, contains('about 6 sentences'));
+    });
+
+    test('asks for more sentences (capped at 12) for a 20-word selection', () async {
+      final manyWords = List.generate(
+        20,
+        (i) => _makeRecord('id$i', 'word$i'),
+      );
+      final fake = FakeGenerativeModelClient(fakeJson);
+      final source = ReadingPassageSource.withModel(fake);
+      await source.generate(
+        words: manyWords,
+        level: CEFRLevel.b1,
+        context: AppContext.general,
+        targetLanguage: Language.english,
+      );
+      expect(fake.lastPrompt, contains('about 12 sentences'));
+    });
+
+    test('asks the model to weave in extra level-appropriate vocabulary beyond the given list',
+        () async {
+      final fake = FakeGenerativeModelClient(fakeJson);
+      final source = ReadingPassageSource.withModel(fake);
+      await source.generate(
+        words: words,
+        level: CEFRLevel.b1,
+        context: AppContext.general,
+        targetLanguage: Language.english,
+      );
+      expect(fake.lastPrompt, contains('beyond this list'));
+    });
   });
 }

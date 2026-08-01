@@ -1,10 +1,19 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../features/vocabulary/domain/entities/vocab_record.dart';
 import '../../../../features/vocabulary/presentation/providers/vocab_bank_provider.dart';
 import '../../domain/entities/reading_passage.dart';
 import '../providers/reading_practice_provider.dart';
+
+/// The web has far more screen real estate than mobile, so text on this
+/// screen (passage, translation, typing input) is scaled up for legibility.
+TextStyle _webScaled(TextStyle style) {
+  if (!kIsWeb) return style;
+  return style.copyWith(fontSize: (style.fontSize ?? 16) * 1.5);
+}
 
 class ReadingSessionScreen extends ConsumerStatefulWidget {
   const ReadingSessionScreen({super.key});
@@ -122,6 +131,13 @@ class _SessionScaffold extends ConsumerWidget {
           'Câu ${session.currentSentenceIndex + 1} / ${session.passage.sentences.length}',
         ),
         automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.copy),
+            tooltip: 'Sao chép đoạn văn',
+            onPressed: () => _copyPassage(context, session),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -159,6 +175,13 @@ class _SessionScaffold extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _copyPassage(BuildContext context, ReadingSessionState session) {
+    Clipboard.setData(ClipboardData(text: session.passage.fullText));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Đã sao chép đoạn văn.')),
     );
   }
 }
@@ -211,7 +234,7 @@ class _PassageDisplay extends StatelessWidget {
               child: _HighlightedText(
                 text: sentence.target,
                 highlights: highlights,
-                style: theme.textTheme.bodyLarge,
+                style: _webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
               ),
             ),
           );
@@ -291,8 +314,10 @@ class _VietnameseRow extends StatelessWidget {
         ),
         child: Text(
           sentence.vietnamese,
-          style: theme.textTheme.bodyMedium
-              ?.copyWith(color: theme.colorScheme.onSurface),
+          style: _webScaled(
+            (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14))
+                .copyWith(color: theme.colorScheme.onSurface),
+          ),
         ),
       ),
     );
@@ -348,10 +373,10 @@ class _TypingArea extends StatelessWidget {
     // are stacked on top of each other, so they MUST share the exact same
     // font metrics — otherwise every typed character drifts a little further
     // out of alignment with the visible text underneath it.
-    final baseStyle = theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16);
+    final baseStyle = _webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16));
     final strutStyle = StrutStyle.fromTextStyle(baseStyle);
     return Container(
-      constraints: const BoxConstraints(minHeight: 80),
+      constraints: BoxConstraints(minHeight: kIsWeb ? 200 : 80),
       decoration: BoxDecoration(
         border: Border.all(color: theme.colorScheme.outline),
         borderRadius: BorderRadius.circular(12),

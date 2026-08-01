@@ -46,6 +46,10 @@ final class ReadingPassage {
   final Language targetLanguage;
   final DateTime generatedAt;
 
+  /// The full generated passage as plain text, e.g. for copying elsewhere
+  /// (Word Radar and the like).
+  String get fullText => sentences.map((s) => s.target).join(' ');
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'sentences': sentences.map((s) => s.toJson()).toList(),
