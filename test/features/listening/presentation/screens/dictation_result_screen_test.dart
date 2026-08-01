@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
+import 'package:lexi_core/core/services/stats_service.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
@@ -15,6 +17,8 @@ import 'package:lexi_core/features/listening/presentation/providers/dictation_pr
 import 'package:lexi_core/features/listening/presentation/screens/dictation_result_screen.dart';
 import 'package:lexi_core/features/listening/domain/entities/blank_span.dart';
 import 'package:lexi_core/features/listening/domain/entities/dictation_difficulty.dart';
+
+class MockStatsService extends Mock implements StatsService {}
 
 VocabRecord _record(String id) => VocabRecord(
       id: id,
@@ -144,8 +148,9 @@ final _perfectResult = DictationSessionResult(
 
 Widget _buildResult(
   DictationSessionResult result,
-  VocabRepository repo,
-) {
+  VocabRepository repo, {
+  List<Override> extraOverrides = const [],
+}) {
   final router = GoRouter(
     routes: [
       GoRoute(
@@ -161,6 +166,7 @@ Widget _buildResult(
   return ProviderScope(
     overrides: [
       vocabRepositoryProvider.overrideWithValue(repo),
+      ...extraOverrides,
     ],
     child: MaterialApp.router(routerConfig: router),
   );
@@ -202,6 +208,23 @@ void main() {
       expect(r.sm2Repetitions, 1);
       expect(r.nextReviewAt, isNotNull);
     }
+  });
+
+  testWidgets('records a practice session (for the streak) with the item vocab count',
+      (tester) async {
+    final repo = _CapturingVocabRepository([_record('id1'), _record('id2')]);
+    final mockStats = MockStatsService();
+    when(() => mockStats.recordPracticeSession(any())).thenAnswer((_) async {});
+
+    await tester.pumpWidget(_buildResult(
+      _perfectResult,
+      repo,
+      extraOverrides: [statsServiceProvider.overrideWithValue(mockStats)],
+    ));
+    await tester.pumpAndSettle();
+
+    // _testItem.vocabIds == ['id1', 'id2']
+    verify(() => mockStats.recordPracticeSession(2)).called(1);
   });
 
   testWidgets(

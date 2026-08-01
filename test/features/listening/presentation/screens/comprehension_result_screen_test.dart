@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:lexi_core/core/di/app_providers.dart';
+import 'package:lexi_core/core/services/stats_service.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
 import 'package:lexi_core/features/listening/domain/entities/listening_passage.dart';
 import 'package:lexi_core/features/listening/presentation/providers/listening_comprehension_provider.dart';
 import 'package:lexi_core/features/listening/presentation/screens/comprehension_result_screen.dart';
+
+class MockStatsService extends Mock implements StatsService {}
 
 final _testPassage = ListeningPassage(
   id: 'p1',
@@ -33,7 +38,7 @@ final _testResult = ComprehensionSessionResult(
   selectedAnswers: const [0, 0, 0],
 );
 
-Widget _buildResult() {
+Widget _buildResult({List<Override> extraOverrides = const []}) {
   final router = GoRouter(
     routes: [
       GoRoute(
@@ -46,7 +51,10 @@ Widget _buildResult() {
       ),
     ],
   );
-  return ProviderScope(child: MaterialApp.router(routerConfig: router));
+  return ProviderScope(
+    overrides: extraOverrides,
+    child: MaterialApp.router(routerConfig: router),
+  );
 }
 
 void main() {
@@ -78,5 +86,19 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Bài khác'), findsOneWidget);
     expect(find.text('Về trang chính'), findsOneWidget);
+  });
+
+  testWidgets('records a practice session (for the streak) with the question count',
+      (tester) async {
+    final mockStats = MockStatsService();
+    when(() => mockStats.recordPracticeSession(any())).thenAnswer((_) async {});
+
+    await tester.pumpWidget(_buildResult(
+      extraOverrides: [statsServiceProvider.overrideWithValue(mockStats)],
+    ));
+    await tester.pumpAndSettle();
+
+    // _testPassage.questions has 3 items.
+    verify(() => mockStats.recordPracticeSession(3)).called(1);
   });
 }

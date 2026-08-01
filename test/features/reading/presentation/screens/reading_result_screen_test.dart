@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:lexi_core/core/di/app_providers.dart';
+import 'package:lexi_core/core/services/stats_service.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
@@ -9,6 +12,8 @@ import 'package:lexi_core/features/reading/domain/entities/reading_passage.dart'
 import 'package:lexi_core/features/reading/presentation/providers/reading_practice_provider.dart';
 import 'package:lexi_core/features/reading/presentation/screens/reading_result_screen.dart';
 import 'package:lexi_core/features/vocabulary/presentation/providers/vocab_bank_provider.dart';
+
+class MockStatsService extends Mock implements StatsService {}
 
 final _testResult = ReadingSessionResult(
   passage: ReadingPassage(
@@ -61,7 +66,7 @@ final _testResultWithBackspaces = ReadingSessionResult(
       correctChars: 12,
       totalChars: 12,
       durationMs: 5000,
-      backspaceCount: 10,
+      deletedChars: 6,
     ),
   ],
   totalDuration: const Duration(seconds: 5),
@@ -88,12 +93,15 @@ Widget _buildResultWithBackspaces() {
   );
 }
 
-Widget _buildResult() {
+Widget _buildResult({
+  ReadingSessionResult? result,
+  List<Override> extraOverrides = const [],
+}) {
   final router = GoRouter(
     routes: [
       GoRoute(
         path: '/',
-        builder: (ctx, state) => ReadingResultScreen(result: _testResult),
+        builder: (ctx, state) => ReadingResultScreen(result: result ?? _testResult),
       ),
       GoRoute(
         path: '/reading',
@@ -105,6 +113,7 @@ Widget _buildResult() {
   return ProviderScope(
     overrides: [
       vocabBankProvider.overrideWith((_) => const []),
+      ...extraOverrides,
     ],
     child: MaterialApp.router(routerConfig: router),
   );
@@ -130,10 +139,51 @@ void main() {
     expect(find.text('Điểm'), findsOneWidget);
   });
 
-  testWidgets('score reflects the backspace penalty subtracted from accuracy', (tester) async {
+  testWidgets('score reflects the deletion penalty subtracted from accuracy', (tester) async {
     await tester.pumpWidget(_buildResultWithBackspaces());
     await tester.pumpAndSettle();
-    // accuracy 100% - 10 backspaces * 1% = 90.0%
-    expect(find.text('90.0%'), findsOneWidget);
+    // deletionRatio = 6/12 = 0.5; penalty = 0.5 * 0.5 = 0.25; 100% - 25% = 75.0%
+    expect(find.text('75.0%'), findsOneWidget);
+  });
+
+  testWidgets('records a practice session (for the streak) with the passage vocab count',
+      (tester) async {
+    final mockStats = MockStatsService();
+    when(() => mockStats.recordPracticeSession(any())).thenAnswer((_) async {});
+    final resultWithVocab = ReadingSessionResult(
+      passage: ReadingPassage(
+        id: 'p3',
+        sentences: const [
+          BilingualSentence(
+            target: 'Hello world.',
+            vietnamese: 'Xin chào thế giới.',
+            vocabIds: ['id1', 'id2'],
+          ),
+        ],
+        vocabIds: const ['id1', 'id2'],
+        level: CEFRLevel.b1,
+        context: AppContext.general,
+        targetLanguage: Language.english,
+        generatedAt: DateTime(2026),
+      ),
+      sentenceResults: const [
+        SentenceResult(
+          target: 'Hello world.',
+          typed: 'Hello world.',
+          correctChars: 12,
+          totalChars: 12,
+          durationMs: 5000,
+        ),
+      ],
+      totalDuration: const Duration(seconds: 5),
+    );
+
+    await tester.pumpWidget(_buildResult(
+      result: resultWithVocab,
+      extraOverrides: [statsServiceProvider.overrideWithValue(mockStats)],
+    ));
+    await tester.pumpAndSettle();
+
+    verify(() => mockStats.recordPracticeSession(2)).called(1);
   });
 }

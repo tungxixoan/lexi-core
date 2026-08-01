@@ -1,15 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/di/app_providers.dart';
 import '../../domain/entities/listening_passage.dart';
 import '../providers/listening_comprehension_provider.dart';
 
-class ComprehensionResultScreen extends ConsumerWidget {
+class ComprehensionResultScreen extends ConsumerStatefulWidget {
   const ComprehensionResultScreen({super.key, required this.result});
   final ComprehensionSessionResult result;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ComprehensionResultScreen> createState() =>
+      _ComprehensionResultScreenState();
+}
+
+class _ComprehensionResultScreenState extends ConsumerState<ComprehensionResultScreen> {
+  ComprehensionSessionResult get result => widget.result;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _recordPracticeSession());
+  }
+
+  Future<void> _recordPracticeSession() async {
+    try {
+      await ref
+          .read(statsServiceProvider)
+          .recordPracticeSession(result.passage.questions.length);
+    } catch (_) {
+      // best-effort: don't crash the result screen on a stats update failure
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final total = result.passage.questions.length;
 

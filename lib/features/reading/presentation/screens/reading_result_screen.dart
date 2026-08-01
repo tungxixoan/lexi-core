@@ -1,16 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/di/app_providers.dart';
 import '../../../../features/vocabulary/domain/entities/vocab_record.dart';
 import '../../../../features/vocabulary/presentation/providers/vocab_bank_provider.dart';
 import '../providers/reading_practice_provider.dart';
 
-class ReadingResultScreen extends ConsumerWidget {
+class ReadingResultScreen extends ConsumerStatefulWidget {
   const ReadingResultScreen({super.key, required this.result});
   final ReadingSessionResult result;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ReadingResultScreen> createState() => _ReadingResultScreenState();
+}
+
+class _ReadingResultScreenState extends ConsumerState<ReadingResultScreen> {
+  ReadingSessionResult get result => widget.result;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _recordPracticeSession());
+  }
+
+  Future<void> _recordPracticeSession() async {
+    try {
+      await ref
+          .read(statsServiceProvider)
+          .recordPracticeSession(result.passage.vocabIds.length);
+    } catch (_) {
+      // best-effort: don't crash the result screen on a stats update failure
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final vocabRecords = ref.watch(vocabBankProvider);
     final theme = Theme.of(context);
 
@@ -28,6 +53,13 @@ class ReadingResultScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Kết quả'),
         automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.copy),
+            tooltip: 'Sao chép đoạn văn',
+            onPressed: () => _copyPassage(context),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
@@ -85,6 +117,13 @@ class ReadingResultScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _copyPassage(BuildContext context) {
+    Clipboard.setData(ClipboardData(text: result.passage.fullText));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Đã sao chép đoạn văn.')),
     );
   }
 

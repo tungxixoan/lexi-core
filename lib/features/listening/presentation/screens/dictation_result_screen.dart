@@ -50,6 +50,14 @@ class _DictationResultScreenState extends ConsumerState<DictationResultScreen> {
     } catch (_) {
       // best-effort: don't crash the result screen on an SM-2 update failure
     }
+
+    try {
+      await ref
+          .read(statsServiceProvider)
+          .recordPracticeSession(widget.result.item.vocabIds.length);
+    } catch (_) {
+      // best-effort: don't crash the result screen on a stats update failure
+    }
   }
 
   @override
