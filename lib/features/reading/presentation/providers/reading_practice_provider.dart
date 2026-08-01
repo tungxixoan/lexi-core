@@ -15,7 +15,7 @@ final class SentenceResult {
     required this.correctChars,
     required this.totalChars,
     required this.durationMs,
-    this.backspaceCount = 0,
+    this.deletedChars = 0,
   });
 
   final String target;
@@ -23,7 +23,7 @@ final class SentenceResult {
   final int correctChars;
   final int totalChars;
   final int durationMs;
-  final int backspaceCount;
+  final int deletedChars;
 
   double get accuracy => totalChars == 0 ? 1.0 : correctChars / totalChars;
 }
@@ -39,11 +39,12 @@ final class ReadingSessionResult {
   final List<SentenceResult> sentenceResults;
   final Duration totalDuration;
 
+  int get totalChars => sentenceResults.fold(0, (s, r) => s + r.totalChars);
+
   double get overallAccuracy {
     if (sentenceResults.isEmpty) return 1.0;
     final totalCorrect =
         sentenceResults.fold(0, (s, r) => s + r.correctChars);
-    final totalChars = sentenceResults.fold(0, (s, r) => s + r.totalChars);
     return totalChars == 0 ? 1.0 : totalCorrect / totalChars;
   }
 
@@ -55,11 +56,21 @@ final class ReadingSessionResult {
     return (totalTyped / 5.0) / minutes;
   }
 
-  int get totalBackspaceCount =>
-      sentenceResults.fold(0, (s, r) => s + r.backspaceCount);
+  int get totalDeletedChars =>
+      sentenceResults.fold(0, (s, r) => s + r.deletedChars);
+
+  /// How much of the passage was deleted/retyped, relative to its length.
+  double get deletionRatio =>
+      totalChars == 0 ? 0.0 : totalDeletedChars / totalChars;
+
+  /// Deleting/retyping text equal to the whole passage length costs half the
+  /// score — light enough that normal typo corrections barely register, but
+  /// still penalizes heavy retyping.
+  static const double _deletionPenaltyWeight = 0.5;
 
   double get finalScore =>
-      (overallAccuracy - 0.01 * totalBackspaceCount).clamp(0.0, 1.0);
+      (overallAccuracy - _deletionPenaltyWeight * deletionRatio)
+          .clamp(0.0, 1.0);
 }
 
 final class ReadingSessionState {
@@ -71,7 +82,7 @@ final class ReadingSessionState {
     required this.sessionStartedAt,
     required this.sentenceStartedAt,
     required this.isComplete,
-    this.currentBackspaceCount = 0,
+    this.currentDeletedChars = 0,
   });
 
   final ReadingPassage passage;
@@ -81,7 +92,7 @@ final class ReadingSessionState {
   final DateTime sessionStartedAt;
   final DateTime sentenceStartedAt;
   final bool isComplete;
-  final int currentBackspaceCount;
+  final int currentDeletedChars;
 
   BilingualSentence get currentSentence =>
       passage.sentences[currentSentenceIndex];
@@ -92,7 +103,7 @@ final class ReadingSessionState {
     List<SentenceResult>? completedSentences,
     DateTime? sentenceStartedAt,
     bool? isComplete,
-    int? currentBackspaceCount,
+    int? currentDeletedChars,
   }) =>
       ReadingSessionState(
         passage: passage,
@@ -102,7 +113,7 @@ final class ReadingSessionState {
         sessionStartedAt: sessionStartedAt,
         sentenceStartedAt: sentenceStartedAt ?? this.sentenceStartedAt,
         isComplete: isComplete ?? this.isComplete,
-        currentBackspaceCount: currentBackspaceCount ?? this.currentBackspaceCount,
+        currentDeletedChars: currentDeletedChars ?? this.currentDeletedChars,
       );
 }
 
@@ -143,15 +154,16 @@ class ReadingPracticeNotifier extends _$ReadingPracticeNotifier {
   void updateTypedText(String text) {
     final current = state.valueOrNull;
     if (current == null || current.isComplete) return;
-    final backspaceCount = text.length < current.typedText.length
-        ? current.currentBackspaceCount + 1
-        : current.currentBackspaceCount;
+    final deletedChars = text.length < current.typedText.length
+        ? current.currentDeletedChars +
+            (current.typedText.length - text.length)
+        : current.currentDeletedChars;
     if (text == current.currentSentence.target) {
-      _advance(current.copyWith(currentBackspaceCount: backspaceCount), text);
+      _advance(current.copyWith(currentDeletedChars: deletedChars), text);
     } else {
       state = AsyncData(current.copyWith(
         typedText: text,
-        currentBackspaceCount: backspaceCount,
+        currentDeletedChars: deletedChars,
       ));
     }
   }
@@ -170,7 +182,7 @@ class ReadingPracticeNotifier extends _$ReadingPracticeNotifier {
       durationMs: DateTime.now()
           .difference(current.sentenceStartedAt)
           .inMilliseconds,
-      backspaceCount: current.currentBackspaceCount,
+      deletedChars: current.currentDeletedChars,
     );
     final nextIndex = current.currentSentenceIndex + 1;
     final isComplete = nextIndex >= current.passage.sentences.length;
@@ -181,7 +193,7 @@ class ReadingPracticeNotifier extends _$ReadingPracticeNotifier {
       completedSentences: [...current.completedSentences, result],
       sentenceStartedAt: now,
       isComplete: isComplete,
-      currentBackspaceCount: 0,
+      currentDeletedChars: 0,
     ));
   }
 
