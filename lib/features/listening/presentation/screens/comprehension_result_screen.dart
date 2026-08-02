@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../dictionary/presentation/providers/user_settings_provider.dart';
 import '../../../word_radar/domain/entities/word_radar_ai_result.dart';
 import '../../../word_radar/presentation/widgets/vocab_suggestions_section.dart';
 import '../../domain/entities/listening_passage.dart';
@@ -43,6 +44,7 @@ class _ComprehensionResultScreenState extends ConsumerState<ComprehensionResultS
   String get _transcriptText => result.passage.turns.map((t) => t.text).join(' ');
 
   Future<void> _loadSuggestions() async {
+    if (!ref.read(userSettingsNotifierProvider).aiEnabled) return;
     setState(() => _suggestions = const AsyncLoading());
     final aiResult = await AsyncValue.guard(
       () => ref.read(getVocabSuggestionsForTextUseCaseProvider).execute(

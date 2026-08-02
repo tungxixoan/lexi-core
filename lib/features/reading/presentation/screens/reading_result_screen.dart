@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../../../features/vocabulary/domain/entities/vocab_record.dart';
 import '../../../../features/vocabulary/presentation/providers/vocab_bank_provider.dart';
+import '../../../dictionary/presentation/providers/user_settings_provider.dart';
 import '../../../word_radar/domain/entities/word_radar_ai_result.dart';
 import '../../../word_radar/presentation/widgets/vocab_suggestions_section.dart';
 import '../providers/reading_practice_provider.dart';
@@ -42,6 +43,7 @@ class _ReadingResultScreenState extends ConsumerState<ReadingResultScreen> {
   }
 
   Future<void> _loadSuggestions() async {
+    if (!ref.read(userSettingsNotifierProvider).aiEnabled) return;
     setState(() => _suggestions = const AsyncLoading());
     final aiResult = await AsyncValue.guard(
       () => ref.read(getVocabSuggestionsForTextUseCaseProvider).execute(
