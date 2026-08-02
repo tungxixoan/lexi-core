@@ -552,3 +552,6 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 
 - Task 1: ✅ complete (commit dde0ed2, 9/9 tests, review clean — Approved)
   - Minor (logged, not fixed): RED-phase evidence in report was IDE errors not an actual failing test run; one line ~81 chars (no lint enforces 80-col)
+- Task 2: ✅ complete (commits 2711135, 35642c4; 40/40 word_radar tests, review clean — Approved)
+  - Note: dispatched implementer stalled (infra timeout) after completing code but before commit/report; controller independently verified diff against brief + ran full test/flutter analyze, then committed directly. No re-dispatch needed.
+  - Minor (logged, not fixed): reading_practice_provider.g.dart hash-only change bundled into this commit (stray build_runner regen, non-functional)
