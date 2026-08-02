@@ -6,14 +6,22 @@ import 'package:mocktail/mocktail.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
 import 'package:lexi_core/core/services/stats_service.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart'
+    show WordPhraseResult;
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
 import 'package:lexi_core/features/reading/domain/entities/reading_passage.dart';
 import 'package:lexi_core/features/reading/presentation/providers/reading_practice_provider.dart';
 import 'package:lexi_core/features/reading/presentation/screens/reading_result_screen.dart';
 import 'package:lexi_core/features/vocabulary/presentation/providers/vocab_bank_provider.dart';
+import 'package:lexi_core/features/word_radar/domain/entities/word_radar_ai_result.dart';
+import 'package:lexi_core/features/word_radar/domain/use_cases/get_vocab_suggestions_for_text_use_case.dart';
 
 class MockStatsService extends Mock implements StatsService {}
+
+class MockGetVocabSuggestionsForTextUseCase extends Mock
+    implements GetVocabSuggestionsForTextUseCase {}
 
 final _testResult = ReadingSessionResult(
   passage: ReadingPassage(
@@ -120,6 +128,11 @@ Widget _buildResult({
 }
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(Language.english);
+    registerFallbackValue(CEFRLevel.b1);
+  });
+
   testWidgets('shows accuracy percentage', (tester) async {
     await tester.pumpWidget(_buildResult());
     await tester.pumpAndSettle();
@@ -185,5 +198,62 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(() => mockStats.recordPracticeSession(2)).called(1);
+  });
+
+  testWidgets(
+      'loads new-word suggestions for the full passage text and shows them',
+      (tester) async {
+    final mockSuggestions = MockGetVocabSuggestionsForTextUseCase();
+    when(() => mockSuggestions.execute(
+          text: any(named: 'text'),
+          targetLanguage: any(named: 'targetLanguage'),
+          targetCefrLevel: any(named: 'targetCefrLevel'),
+        )).thenAnswer((_) async => const WordRadarAiResult(
+          translation: '',
+          suggestions: [
+            WordPhraseResult(
+              headword: 'ubiquitous',
+              inputType: InputType.word,
+              ipa: '/juːˈbɪkwɪtəs/',
+              meaning: 'có mặt khắp nơi',
+              examples: [],
+              suggestedTopics: [],
+            ),
+          ],
+        ));
+
+    await tester.pumpWidget(_buildResult(
+      extraOverrides: [
+        getVocabSuggestionsForTextUseCaseProvider.overrideWithValue(mockSuggestions),
+      ],
+    ));
+    await tester.pumpAndSettle();
+
+    verify(() => mockSuggestions.execute(
+          text: 'Hello world.',
+          targetLanguage: Language.english,
+          targetCefrLevel: CEFRLevel.b1,
+        )).called(1);
+    expect(find.text('Gợi ý từ mới'), findsOneWidget);
+    expect(find.text('ubiquitous'), findsOneWidget);
+  });
+
+  testWidgets('does not crash when loading suggestions fails', (tester) async {
+    final mockSuggestions = MockGetVocabSuggestionsForTextUseCase();
+    when(() => mockSuggestions.execute(
+          text: any(named: 'text'),
+          targetLanguage: any(named: 'targetLanguage'),
+          targetCefrLevel: any(named: 'targetCefrLevel'),
+        )).thenThrow(Exception('AI unavailable'));
+
+    await tester.pumpWidget(_buildResult(
+      extraOverrides: [
+        getVocabSuggestionsForTextUseCaseProvider.overrideWithValue(mockSuggestions),
+      ],
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sinh bài mới'), findsOneWidget); // screen still renders
+    expect(find.textContaining('Không tải được gợi ý'), findsOneWidget);
   });
 }

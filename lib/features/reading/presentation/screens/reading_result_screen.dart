@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../../../features/vocabulary/domain/entities/vocab_record.dart';
 import '../../../../features/vocabulary/presentation/providers/vocab_bank_provider.dart';
+import '../../../word_radar/domain/entities/word_radar_ai_result.dart';
+import '../../../word_radar/presentation/widgets/vocab_suggestions_section.dart';
 import '../providers/reading_practice_provider.dart';
 
 class ReadingResultScreen extends ConsumerStatefulWidget {
@@ -18,10 +20,15 @@ class ReadingResultScreen extends ConsumerStatefulWidget {
 class _ReadingResultScreenState extends ConsumerState<ReadingResultScreen> {
   ReadingSessionResult get result => widget.result;
 
+  AsyncValue<WordRadarAiResult>? _suggestions;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _recordPracticeSession());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _recordPracticeSession();
+      _loadSuggestions();
+    });
   }
 
   Future<void> _recordPracticeSession() async {
@@ -32,6 +39,18 @@ class _ReadingResultScreenState extends ConsumerState<ReadingResultScreen> {
     } catch (_) {
       // best-effort: don't crash the result screen on a stats update failure
     }
+  }
+
+  Future<void> _loadSuggestions() async {
+    setState(() => _suggestions = const AsyncLoading());
+    final aiResult = await AsyncValue.guard(
+      () => ref.read(getVocabSuggestionsForTextUseCaseProvider).execute(
+            text: result.passage.fullText,
+            targetLanguage: result.passage.targetLanguage,
+            targetCefrLevel: result.passage.level,
+          ),
+    );
+    if (mounted) setState(() => _suggestions = aiResult);
   }
 
   @override
@@ -77,33 +96,39 @@ class _ReadingResultScreenState extends ConsumerState<ReadingResultScreen> {
               ],
             ),
             const SizedBox(height: 24),
-            if (usedRecords.isNotEmpty) ...[
-              Text(
-                'Từ vựng đã luyện',
-                style: theme.textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: ListView.separated(
-                  itemCount: usedRecords.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, i) {
-                    final record = usedRecords[i];
-                    return ListTile(
-                      title: Text(record.headword),
-                      subtitle: Text(
-                        record.meaning,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (usedRecords.isNotEmpty) ...[
+                      Text('Từ vựng đã luyện', style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 8),
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: usedRecords.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (context, i) {
+                          final record = usedRecords[i];
+                          return ListTile(
+                            title: Text(record.headword),
+                            subtitle: Text(
+                              record.meaning,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            dense: true,
+                          );
+                        },
                       ),
-                      dense: true,
-                    );
-                  },
+                    ],
+                    _buildSuggestionsSection(),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-            ] else
-              const Spacer(),
+            ),
+            const SizedBox(height: 16),
             // Action buttons
             FilledButton(
               onPressed: () => _regenerate(context, ref),
@@ -116,6 +141,31 @@ class _ReadingResultScreenState extends ConsumerState<ReadingResultScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSuggestionsSection() {
+    final suggestions = _suggestions;
+    if (suggestions == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: suggestions.when(
+        loading: () => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (e, _) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Không tải được gợi ý từ mới: $e'),
+            TextButton(
+              onPressed: _loadSuggestions,
+              child: const Text('Thử lại'),
+            ),
+          ],
+        ),
+        data: (r) => VocabSuggestionsSection(suggestions: r.suggestions),
       ),
     );
   }
