@@ -12,11 +12,13 @@ class GenerateWordSuggestionsUseCase {
     required Language targetLanguage,
     required CEFRLevel? targetCefrLevel,
     required List<String> knownHeadwords,
+    bool includeTranslation = true,
   }) =>
       _source.scan(
         text: text,
         targetLanguage: targetLanguage,
         targetCefrLevel: targetCefrLevel,
         knownHeadwords: knownHeadwords,
+        includeTranslation: includeTranslation,
       );
 }

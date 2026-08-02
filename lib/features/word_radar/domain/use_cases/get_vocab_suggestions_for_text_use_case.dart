@@ -20,6 +20,7 @@ class GetVocabSuggestionsForTextUseCase {
       targetLanguage: targetLanguage,
       targetCefrLevel: targetCefrLevel,
       knownHeadwords: known.map((r) => r.headword).toList(),
+      includeTranslation: false,
     );
   }
 }

@@ -25,12 +25,14 @@ class WordRadarSource {
     required Language targetLanguage,
     required CEFRLevel? targetCefrLevel,
     required List<String> knownHeadwords,
+    bool includeTranslation = true,
   }) async {
     final prompt = _buildPrompt(
       text: text,
       targetLanguage: targetLanguage,
       targetCefrLevel: targetCefrLevel,
       knownHeadwords: knownHeadwords,
+      includeTranslation: includeTranslation,
     );
     final response = await _client.generateContent([Content.text(prompt)]);
     final responseText = response.text ?? '{"translation":"","suggestions":[]}';
@@ -51,19 +53,29 @@ class WordRadarSource {
     required Language targetLanguage,
     required CEFRLevel? targetCefrLevel,
     required List<String> knownHeadwords,
+    required bool includeTranslation,
   }) {
     final levelClause =
         targetCefrLevel != null ? 'at ${targetCefrLevel.label} level' : 'at any level';
     final exclusionClause = knownHeadwords.isEmpty
         ? 'There are no already-known words to exclude.'
         : 'Do NOT suggest any of these already-known words: ${knownHeadwords.join(", ")}.';
+    final task = includeTranslation
+        ? 'do two things. First, translate the full text into Vietnamese. Second, suggest'
+        : 'suggest';
+    final translationField = includeTranslation
+        ? '"translation":"Vietnamese translation of the full text",'
+        : '';
+    final translationReminder = includeTranslation
+        ? ' If nothing in the text is worth learning, use an empty "suggestions" array — '
+            'still always provide the "translation".'
+        : ' If nothing in the text is worth learning, use an empty "suggestions" array.';
     return 'You are a language learning assistant helping a Vietnamese speaker learn '
-        '${targetLanguage.label}. Given this text: "$text", do two things. '
-        'First, translate the full text into Vietnamese. '
-        'Second, suggest up to 10 words or short phrases from the text that are worth '
+        '${targetLanguage.label}. Given this text: "$text", $task '
+        'up to 10 words or short phrases from the text that are worth '
         'learning $levelClause, for a Vietnamese speaker. $exclusionClause '
         'Respond with JSON only (no markdown, no code fences): '
-        '{"translation":"Vietnamese translation of the full text",'
+        '{$translationField'
         '"suggestions":[{"headword":"exact word or phrase from the text",'
         '"ipa":"IPA transcription","meaning":"Vietnamese definition",'
         '"definition":"English definition",'
@@ -72,9 +84,7 @@ class WordRadarSource {
         '"suggestedTopics":["one topic from: Daily Life, Travel, Food & Drink, Business, '
         'Technology, Health, Education, Entertainment, Nature, Emotion, Academic, Idioms, '
         'Phrasal Verbs, Slang, Social/Casual, Sports, Art & Culture, Science, Law & Politics, Other"],'
-        '"cefrLevel":"a1, a2, b1, b2, c1, or c2"}]}. '
-        'If nothing in the text is worth learning, use an empty "suggestions" array — '
-        'still always provide the "translation".';
+        '"cefrLevel":"a1, a2, b1, b2, c1, or c2"}]}.$translationReminder';
   }
 
   WordPhraseResult _parseSuggestion(Map<String, dynamic> json) {

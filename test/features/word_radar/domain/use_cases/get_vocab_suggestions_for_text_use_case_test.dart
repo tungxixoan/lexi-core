@@ -61,6 +61,7 @@ void main() {
           targetLanguage: any(named: 'targetLanguage'),
           targetCefrLevel: any(named: 'targetCefrLevel'),
           knownHeadwords: any(named: 'knownHeadwords'),
+          includeTranslation: false,
         )).thenAnswer((_) async => expected);
 
     final result = await useCase.execute(
@@ -79,6 +80,7 @@ void main() {
           targetLanguage: Language.english,
           targetCefrLevel: CEFRLevel.b1,
           knownHeadwords: ['cat', 'dog'],
+          includeTranslation: false,
         )).called(1);
   });
 }

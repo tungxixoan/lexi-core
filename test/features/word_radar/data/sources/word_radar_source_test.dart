@@ -105,6 +105,23 @@ void main() {
     expect(part.text, contains('mat'));
   });
 
+  test('omits the translation instruction and field from the prompt when includeTranslation is false', () async {
+    final client = FakeGenerativeModelClient('{"suggestions":[]}');
+    final source = WordRadarSource.withModel(client);
+
+    await source.scan(
+      text: 'The cat sat on the mat.',
+      targetLanguage: Language.english,
+      targetCefrLevel: CEFRLevel.a1,
+      knownHeadwords: const [],
+      includeTranslation: false,
+    );
+
+    final part = client.lastPrompt!.first.parts.first as TextPart;
+    expect(part.text, isNot(contains('"translation"')));
+    expect(part.text, isNot(contains('translate the full text')));
+  });
+
   test('skips a malformed suggestion but keeps the valid ones in the same response', () async {
     final json = jsonEncode({
       'translation': '',
