@@ -558,3 +558,8 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 - Task 3: ✅ complete (commit 1ea7f4a, 7/7 reading_result_screen_test + 35/35 full reading suite, review clean — Approved)
   - Note: brief's import list had a naming collision (SentenceResult in both lookup_result.dart and reading_practice_provider.dart); fixed with `show WordPhraseResult` — verified genuine and necessary by reviewer
   - Minor (logged, not fixed): retry button on suggestion-load error has no debounce/disable-while-loading guard
+- Task 4: ✅ complete (commit bb2e453, 6/6 focused + 145/145 full listening suite, review clean — Approved)
+  - Note: import-collision question (from Task 3) independently re-checked — no collision here, unqualified `lookup_result.dart` import correct
+  - Minor (logged for final review): suggestion-loading boilerplate (_suggestions field/_loadSuggestions/_buildSuggestionsSection) now duplicated near-identically between ReadingResultScreen (Task 3) and ComprehensionResultScreen (Task 4) — plan-mandated, candidate for later extraction
+
+## All 4 tasks complete — proceeding to final whole-branch review.
