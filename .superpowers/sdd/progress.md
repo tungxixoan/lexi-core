@@ -555,3 +555,6 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 - Task 2: ✅ complete (commits 2711135, 35642c4; 40/40 word_radar tests, review clean — Approved)
   - Note: dispatched implementer stalled (infra timeout) after completing code but before commit/report; controller independently verified diff against brief + ran full test/flutter analyze, then committed directly. No re-dispatch needed.
   - Minor (logged, not fixed): reading_practice_provider.g.dart hash-only change bundled into this commit (stray build_runner regen, non-functional)
+- Task 3: ✅ complete (commit 1ea7f4a, 7/7 reading_result_screen_test + 35/35 full reading suite, review clean — Approved)
+  - Note: brief's import list had a naming collision (SentenceResult in both lookup_result.dart and reading_practice_provider.dart); fixed with `show WordPhraseResult` — verified genuine and necessary by reviewer
+  - Minor (logged, not fixed): retry button on suggestion-load error has no debounce/disable-while-loading guard
