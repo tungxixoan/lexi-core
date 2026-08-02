@@ -540,3 +540,15 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 **Fixed:** commit 3615081 — wrapped `SaveVocabSheet`'s returned `DraggableScrollableSheet` in its own nested `SelectionArea`, giving the modal an independent selection scope. Verified via `flutter analyze` (clean) and `flutter test` (340/340, no regressions in `save_vocab_sheet_test.dart` or elsewhere). No new automated test added for the selection-geometry behavior itself (Flutter's SelectionArea drag mechanics aren't practically assertable via widget tests without excessive complexity) — verification was manual, by the user, live in the browser.
 
 **Diagnostic dead-end (for future reference):** attempted a headless Playwright-driven reproduction against a throwaway `flutter run -d web-server` instance (port 5050, separate from the user's own running session) to test the ListTile/InkWell hypothesis before this. Both the ListTile-card test AND a plain-AppBar-title control case failed to produce a clipboard result via synthetic mouse-drag + Ctrl+C — inconclusive, most likely because Flutter web's CanvasKit renderer draws text to canvas (not real DOM text nodes Playwright's `text=` locator or synthetic pointer events reliably interact with the same way real OS input does), not because selection was actually broken everywhere. Abandoned in favor of asking the user to verify live, which correctly pinpointed the real, narrower bug above.
+
+---
+
+# LexiCore — Vocab suggestions for Reading/Comprehension results
+
+**Plan:** docs/superpowers/plans/2026-08-02-vocab-suggestions-reading-listening.md
+**BASE commit:** 13cfa17 (docs: add implementation plan for reading/listening vocab suggestions)
+
+## Status
+
+- Task 1: ✅ complete (commit dde0ed2, 9/9 tests, review clean — Approved)
+  - Minor (logged, not fixed): RED-phase evidence in report was IDE errors not an actual failing test run; one line ~81 chars (no lint enforces 80-col)
