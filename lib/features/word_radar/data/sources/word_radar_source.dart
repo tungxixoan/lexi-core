@@ -1,6 +1,6 @@
-import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
 import '../../../../core/services/ai_client_factory.dart';
+import '../../../../core/utils/ai_json_parser.dart';
 import '../../../../core/utils/input_detector.dart';
 import '../../../dictionary/domain/entities/input_type.dart';
 import '../../../dictionary/domain/entities/language.dart';
@@ -36,7 +36,7 @@ class WordRadarSource {
     );
     final response = await _client.generateContent([Content.text(prompt)]);
     final responseText = response.text ?? '{"translation":"","suggestions":[]}';
-    final json = jsonDecode(responseText) as Map<String, dynamic>;
+    final json = parseAiJsonObject(responseText);
     final suggestions = (json['suggestions'] as List? ?? [])
         .whereType<Map<String, dynamic>>()
         .where((item) => item['headword'] is String && (item['headword'] as String).isNotEmpty)
@@ -74,6 +74,8 @@ class WordRadarSource {
         '${targetLanguage.label}. Given this text: "$text", $task '
         'up to 10 words or short phrases from the text that are worth '
         'learning $levelClause, for a Vietnamese speaker. $exclusionClause '
+        'Any Vietnamese text in your response must use only Vietnamese script — '
+        'never Chinese, Japanese, or other non-Vietnamese characters. '
         'Respond with JSON only (no markdown, no code fences): '
         '{$translationField'
         '"suggestions":[{"headword":"exact word or phrase from the text",'

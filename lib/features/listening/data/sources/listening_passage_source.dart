@@ -1,7 +1,7 @@
-import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
 import 'package:uuid/uuid.dart';
 import '../../../../core/services/ai_client_factory.dart';
+import '../../../../core/utils/ai_json_parser.dart';
 import '../../../dictionary/domain/entities/app_context.dart';
 import '../../../dictionary/domain/entities/language.dart';
 import '../../../dictionary/domain/entities/user_settings_state.dart';
@@ -32,7 +32,7 @@ class ListeningPassageSource {
     );
     final response = await _client.generateContent([Content.text(prompt)]);
     final text = response.text ?? '{"kind":"talk","turns":[],"questions":[]}';
-    final json = jsonDecode(text) as Map<String, dynamic>;
+    final json = parseAiJsonObject(text);
     final passage = _parse(json, level, context, targetLanguage);
     if (passage.turns.isEmpty || passage.questions.isEmpty) {
       throw const FormatException(

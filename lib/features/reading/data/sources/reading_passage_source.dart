@@ -1,8 +1,8 @@
 // lib/features/reading/data/sources/reading_passage_source.dart
-import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
 import 'package:uuid/uuid.dart';
 import '../../../../core/services/ai_client_factory.dart';
+import '../../../../core/utils/ai_json_parser.dart';
 import '../../../../features/dictionary/domain/entities/app_context.dart';
 import '../../../../features/dictionary/domain/entities/language.dart';
 import '../../../../features/dictionary/domain/entities/user_settings_state.dart';
@@ -38,7 +38,7 @@ class ReadingPassageSource {
     );
     final response = await _client.generateContent([Content.text(prompt)]);
     final text = response.text ?? '{"sentences":[]}';
-    final json = jsonDecode(text) as Map<String, dynamic>;
+    final json = parseAiJsonObject(text);
     return _parse(json, wordMap, level, context, targetLanguage);
   }
 
@@ -58,12 +58,16 @@ class ReadingPassageSource {
     return 'You are a language learning assistant helping a Vietnamese speaker learn '
         '${targetLanguage.label}. '
         'Write a passage of about $sentenceCount sentences in ${targetLanguage.label} at ${level.label} level. '
+        'The sentences must connect into a single coherent narrative or description — '
+        'not a list of unrelated example sentences. '
         'Context/register: ${context.label}. '
         'Naturally use as many of these vocabulary words as possible: $wordList. '
         'Also naturally include a few other ${level.label}-appropriate ${targetLanguage.label} '
         'vocabulary words beyond this list, to add variety and context. '
         'For each sentence, provide its Vietnamese translation and list which vocabulary words '
         'from the input list appear in that sentence (only words from the input list, not the extra ones). '
+        'Every Vietnamese translation must use only Vietnamese script — '
+        'never Chinese, Japanese, or other non-Vietnamese characters. '
         'Respond with JSON only (no markdown, no code fences): '
         '{"sentences": [{"target": "sentence in ${targetLanguage.label}", '
         '"vietnamese": "Vietnamese translation", '

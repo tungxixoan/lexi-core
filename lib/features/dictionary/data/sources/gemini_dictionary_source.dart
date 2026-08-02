@@ -1,7 +1,7 @@
 // lib/features/dictionary/data/sources/gemini_dictionary_source.dart
-import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
 import '../../../../core/services/ai_client_factory.dart';
+import '../../../../core/utils/ai_json_parser.dart';
 import '../../domain/entities/app_context.dart';
 import '../../domain/entities/input_type.dart';
 import '../../domain/entities/language.dart';
@@ -34,7 +34,7 @@ class GeminiDictionarySource {
 
     final response = await _client.generateContent([Content.text(prompt)]);
     final text = response.text ?? '';
-    final json = jsonDecode(text) as Map<String, dynamic>;
+    final json = parseAiJsonObject(text);
 
     if (inputType == InputType.sentence) {
       return SentenceResult(
@@ -67,7 +67,7 @@ class GeminiDictionarySource {
         'Context: ${context.label}. '
         'Respond with JSON only: {"word": "the word"}';
     final response = await _client.generateContent([Content.text(prompt)]);
-    final json = jsonDecode(response.text ?? '{}') as Map<String, dynamic>;
+    final json = parseAiJsonObject(response.text ?? '{}');
     return json['word'] as String;
   }
 
@@ -89,9 +89,13 @@ class GeminiDictionarySource {
       'If the word has multiple common parts of speech (e.g. "record" as both noun and verb), '
       'cover each sense in both "meaning" and "definition" using this format: "(n) ...; (v) ...", '
       'and give an IPA per sense too, e.g. "N: /ˈrekɔːrd/; V: /rɪˈkɔːrd/". '
-      'Shape examples for context: ${context.label}.';
+      'Shape examples for context: ${context.label}. '
+      'The "meaning" field must use only Vietnamese script — '
+      'never Chinese, Japanese, or other non-Vietnamese characters.';
 
   String _sentencePrompt(String sentence) =>
       'Translate this sentence to Vietnamese: "$sentence" '
+      'Use only Vietnamese script in the translation — '
+      'never Chinese, Japanese, or other non-Vietnamese characters. '
       'Respond with JSON only: {"translation":"translated sentence"}';
 }

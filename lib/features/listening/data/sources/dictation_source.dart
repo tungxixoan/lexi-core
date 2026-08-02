@@ -1,7 +1,7 @@
-import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
 import 'package:uuid/uuid.dart';
 import '../../../../core/services/ai_client_factory.dart';
+import '../../../../core/utils/ai_json_parser.dart';
 import '../../../dictionary/domain/entities/app_context.dart';
 import '../../../dictionary/domain/entities/language.dart';
 import '../../../dictionary/domain/entities/user_settings_state.dart';
@@ -36,7 +36,7 @@ class DictationSource {
     );
     final response = await _client.generateContent([Content.text(prompt)]);
     final text = response.text ?? '{"target":"","vietnamese":"","vocabWords":[]}';
-    final json = jsonDecode(text) as Map<String, dynamic>;
+    final json = parseAiJsonObject(text);
     return _parse(json, wordMap, level, context, targetLanguage);
   }
 
@@ -55,6 +55,8 @@ class DictationSource {
         'Naturally use these vocabulary words in the sentence: $wordList. '
         'Provide the sentence\'s Vietnamese translation and list which vocabulary '
         'words from the input actually appear in it. '
+        'The Vietnamese translation must use only Vietnamese script — '
+        'never Chinese, Japanese, or other non-Vietnamese characters. '
         'Respond with JSON only (no markdown, no code fences): '
         '{"target": "the sentence in ${targetLanguage.label}", '
         '"vietnamese": "Vietnamese translation", '
