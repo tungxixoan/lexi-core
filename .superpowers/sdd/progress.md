@@ -563,3 +563,11 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
   - Minor (logged for final review): suggestion-loading boilerplate (_suggestions field/_loadSuggestions/_buildSuggestionsSection) now duplicated near-identically between ReadingResultScreen (Task 3) and ComprehensionResultScreen (Task 4) — plan-mandated, candidate for later extraction
 
 ## All 4 tasks complete — proceeding to final whole-branch review.
+
+**Final whole-branch review (commits 13cfa17..c5297fc):** Ready to merge: With fixes.
+- Important #1: WordRadarSource always generated+discarded a full-text translation on every Reading/Comprehension session (Reading already has it per-sentence). Fixed (commit 4658667): added `includeTranslation` param (default true, Word Radar unaffected), GetVocabSuggestionsForTextUseCase passes false.
+- Important #2: new suggestion-loading path had no `aiEnabled` gate, unlike Word Radar's own screen. Fixed (commit a5fca6b): early-return in both screens' `_loadSuggestions()` when settings.aiEnabled is false; section stays hidden.
+- Re-review of both fixes (commits c5297fc..a5fca6b): both Resolved, no regressions, **Ready to merge: Yes**.
+- Minor findings logged, not fixed (follow-up candidates): suggestion-loading boilerplate duplicated between Reading/Comprehension result screens (plan-mandated; extraction to a shared self-loading widget recommended, esp. since Dictation is a likely next consumer); retry button has no debounce guard; raw exception text shown on suggestion-load error (matches existing Word Radar style, not a regression); practiced-vocab list on Reading result screen lost lazy ListView building (shrinkWrap+NeverScrollableScrollPhysics, plan-mandated layout fix); fallback JSON string in word_radar_source.dart still mentions "translation" key even when includeTranslation:false (harmless, unused).
+
+## Plan complete — Ready to merge: Yes (with fixes applied and re-reviewed clean).
