@@ -6,13 +6,20 @@ import 'package:mocktail/mocktail.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
 import 'package:lexi_core/core/services/stats_service.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
 import 'package:lexi_core/features/listening/domain/entities/listening_passage.dart';
 import 'package:lexi_core/features/listening/presentation/providers/listening_comprehension_provider.dart';
 import 'package:lexi_core/features/listening/presentation/screens/comprehension_result_screen.dart';
+import 'package:lexi_core/features/word_radar/domain/entities/word_radar_ai_result.dart';
+import 'package:lexi_core/features/word_radar/domain/use_cases/get_vocab_suggestions_for_text_use_case.dart';
 
 class MockStatsService extends Mock implements StatsService {}
+
+class MockGetVocabSuggestionsForTextUseCase extends Mock
+    implements GetVocabSuggestionsForTextUseCase {}
 
 final _testPassage = ListeningPassage(
   id: 'p1',
@@ -58,6 +65,11 @@ Widget _buildResult({List<Override> extraOverrides = const []}) {
 }
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(Language.english);
+    registerFallbackValue(CEFRLevel.b1);
+  });
+
   testWidgets('shows the score as correctCount/total', (tester) async {
     await tester.pumpWidget(_buildResult());
     await tester.pumpAndSettle();
@@ -100,5 +112,44 @@ void main() {
 
     // _testPassage.questions has 3 items.
     verify(() => mockStats.recordPracticeSession(3)).called(1);
+  });
+
+  testWidgets(
+      'loads new-word suggestions for the full transcript text and shows them',
+      (tester) async {
+    final mockSuggestions = MockGetVocabSuggestionsForTextUseCase();
+    when(() => mockSuggestions.execute(
+          text: any(named: 'text'),
+          targetLanguage: any(named: 'targetLanguage'),
+          targetCefrLevel: any(named: 'targetCefrLevel'),
+        )).thenAnswer((_) async => const WordRadarAiResult(
+          translation: '',
+          suggestions: [
+            WordPhraseResult(
+              headword: 'ubiquitous',
+              inputType: InputType.word,
+              ipa: '/juːˈbɪkwɪtəs/',
+              meaning: 'có mặt khắp nơi',
+              examples: [],
+              suggestedTopics: [],
+            ),
+          ],
+        ));
+
+    await tester.pumpWidget(_buildResult(
+      extraOverrides: [
+        getVocabSuggestionsForTextUseCaseProvider.overrideWithValue(mockSuggestions),
+      ],
+    ));
+    await tester.pumpAndSettle();
+
+    // _testPassage.turns joined: "Can I help you? I am looking for a jacket."
+    verify(() => mockSuggestions.execute(
+          text: 'Can I help you? I am looking for a jacket.',
+          targetLanguage: Language.english,
+          targetCefrLevel: CEFRLevel.b1,
+        )).called(1);
+    expect(find.text('Gợi ý từ mới'), findsOneWidget);
+    expect(find.text('ubiquitous'), findsOneWidget);
   });
 }
