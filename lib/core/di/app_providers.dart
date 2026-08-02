@@ -41,6 +41,7 @@ import '../../features/listening/domain/use_cases/generate_listening_passage_use
 import '../../features/word_radar/data/sources/word_radar_source.dart';
 import '../../features/word_radar/domain/use_cases/find_known_headwords_use_case.dart';
 import '../../features/word_radar/domain/use_cases/generate_word_suggestions_use_case.dart';
+import '../../features/word_radar/domain/use_cases/get_vocab_suggestions_for_text_use_case.dart';
 
 part 'app_providers.g.dart';
 
@@ -193,3 +194,11 @@ WordRadarSource wordRadarSource(WordRadarSourceRef ref) {
 GenerateWordSuggestionsUseCase generateWordSuggestionsUseCase(
         GenerateWordSuggestionsUseCaseRef ref) =>
     GenerateWordSuggestionsUseCase(ref.watch(wordRadarSourceProvider));
+
+@riverpod
+GetVocabSuggestionsForTextUseCase getVocabSuggestionsForTextUseCase(
+        GetVocabSuggestionsForTextUseCaseRef ref) =>
+    GetVocabSuggestionsForTextUseCase(
+      ref.watch(findKnownHeadwordsUseCaseProvider),
+      ref.watch(generateWordSuggestionsUseCaseProvider),
+    );

@@ -577,5 +577,25 @@ final generateWordSuggestionsUseCaseProvider =
 // ignore: unused_element
 typedef GenerateWordSuggestionsUseCaseRef
     = AutoDisposeProviderRef<GenerateWordSuggestionsUseCase>;
+String _$getVocabSuggestionsForTextUseCaseHash() =>
+    r'f4e01eabb6ab7917d1b5a27f16b218304319e228';
+
+/// See also [getVocabSuggestionsForTextUseCase].
+@ProviderFor(getVocabSuggestionsForTextUseCase)
+final getVocabSuggestionsForTextUseCaseProvider =
+    AutoDisposeProvider<GetVocabSuggestionsForTextUseCase>.internal(
+  getVocabSuggestionsForTextUseCase,
+  name: r'getVocabSuggestionsForTextUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$getVocabSuggestionsForTextUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GetVocabSuggestionsForTextUseCaseRef
+    = AutoDisposeProviderRef<GetVocabSuggestionsForTextUseCase>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
