@@ -44,10 +44,11 @@ enum EconomyVolume {
   };
 
   /// Fed into the AI prompt to calibrate question style/difficulty.
+  /// Deliberately part-agnostic — shared across Part 5, Part 6, and (later) Part 7.
   String get promptHint => switch (this) {
     EconomyVolume.vol2 => 'easy-medium difficulty, standard trap depth, close to or slightly easier than the real exam',
     EconomyVolume.vol3 => 'medium-high difficulty, some advanced vocabulary, longer passages',
-    EconomyVolume.vol4 => 'high difficulty, equal to or harder than the real exam, longer/more complex passages, unusual grammar/vocabulary traps in Part 5',
+    EconomyVolume.vol4 => 'high difficulty, equal to or harder than the real exam, longer/more complex passages, unusual grammar/vocabulary traps',
     EconomyVolume.vol5 => 'very high difficulty, dense advanced vocabulary and the deepest grammar traps',
   };
 }
