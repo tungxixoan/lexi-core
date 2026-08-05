@@ -35,13 +35,24 @@
 - Phiên luyện tập có điểm số và tổng kết kết quả
 - Bộ lọc luyện tập theo cấp độ CEFR mục tiêu
 
-### Luyện đọc & gõ (Bilingual Reading Practice)
-- AI tạo đoạn văn 4–6 câu sử dụng từ vựng trong ngân hàng của bạn
-- Giao diện song ngữ: câu tiếng mục tiêu + dịch tiếng Việt
-- Luyện gõ từng câu — tính WPM (từ/phút) và độ chính xác
-- Tô màu từ vựng đã học xuất hiện trong đoạn văn
-- Màn hình kết quả: độ chính xác tổng, WPM, danh sách từ đã thực hành
-- Truy cập qua tab "Luyện tập" → card "Đọc & gõ"
+### Luyện đọc (Reading Practice)
+Hub với 3 tính năng con (truy cập qua tab "Luyện tập" → card "Luyện đọc"):
+
+- **Đọc & gõ (Bilingual Reading Practice)**
+  - AI tạo đoạn văn 4–6 câu sử dụng từ vựng trong ngân hàng của bạn
+  - Giao diện song ngữ: câu tiếng mục tiêu + dịch tiếng Việt
+  - Luyện gõ từng câu — tính WPM (từ/phút) và độ chính xác
+  - Tô màu từ vựng đã học xuất hiện trong đoạn văn
+  - Màn hình kết quả: độ chính xác tổng, WPM, danh sách từ đã thực hành
+- **Part 5 — Điền câu (TOEIC Incomplete Sentences)**
+  - AI tạo 15 câu điền từ/ngữ pháp trắc nghiệm 4 đáp án, độc lập với Vocab Bank
+  - Hiệu chỉnh độ khó theo **Economy TOEIC Vol 2–5** (chọn nhiều mức cùng lúc, không chọn = tất cả)
+  - Trả lời hết 15 câu rồi mới nộp bài; kết quả hiện điểm X/15, giải thích đúng/sai từng câu, gợi ý từ mới
+  - Không ảnh hưởng SM-2 — không có từ vựng cụ thể nào để gắn điểm vào
+- **Part 6 — Điền đoạn văn (TOEIC Text Completion)**
+  - AI tạo 3 đoạn văn ngắn (email/thông báo/thư...), mỗi đoạn 4 chỗ trống trắc nghiệm — luôn có ít nhất 1 chỗ trống dạng "chọn câu phù hợp nhất" mỗi đoạn
+  - Cùng cơ chế Economy TOEIC Vol 2–5, trả lời hết 12 câu rồi nộp bài, kết quả X/12 kèm giải thích từng câu và gợi ý từ mới
+  - Không ảnh hưởng SM-2
 
 ### Luyện nghe (Listening Practice)
 Hub với 2 tính năng con (truy cập qua tab "Luyện tập" → card "Luyện nghe"), dùng chung `TtsService` (flutter_tts) có sẵn, không cần package audio mới:
@@ -184,13 +195,17 @@ lib/
 │   │
 │   ├── reading/
 │   │   ├── data/sources/
-│   │   │   └── reading_passage_source.dart     # AI passage gen (dùng AiClientFactory)
+│   │   │   ├── reading_passage_source.dart     # AI passage gen (dùng AiClientFactory)
+│   │   │   ├── part5_source.dart                # AI Part 5 gen (TOEIC Incomplete Sentences)
+│   │   │   └── part6_source.dart                # AI Part 6 gen (TOEIC Text Completion)
 │   │   ├── domain/
-│   │   │   ├── entities/    # ReadingPassage, BilingualSentence
-│   │   │   └── use_cases/   # GenerateReadingPassage
+│   │   │   ├── entities/    # ReadingPassage, BilingualSentence, EconomyVolume,
+│   │   │   │               # Part5Question/Part5Set, Part6Question/Part6Passage/Part6Set
+│   │   │   └── use_cases/   # GenerateReadingPassage, GeneratePart5Set, GeneratePart6Set
 │   │   └── presentation/
-│   │       ├── providers/   # ReadingPracticeNotifier
-│   │       └── screens/     # ReadingHome, ReadingSession, ReadingResult
+│   │       ├── providers/   # ReadingPracticeNotifier, Part5PracticeNotifier, Part6PracticeNotifier
+│   │       └── screens/     # ReadingHub (hub), ReadingHome/Session/Result (bilingual),
+│   │                        # Part5Home/Session/Result, Part6Home/Session/Result
 │   │
 │   ├── listening/
 │   │   ├── data/sources/
@@ -235,6 +250,8 @@ UserSettingsNotifier (SharedPreferences)
                       ├─ GeminiDictionarySource
                       ├─ ExerciseGeneratorSource
                       ├─ ReadingPassageSource
+                      ├─ Part5Source
+                      ├─ Part6Source
                       ├─ DictationSource
                       ├─ ListeningPassageSource
                       └─ WordRadarSource

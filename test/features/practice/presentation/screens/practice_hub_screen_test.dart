@@ -37,7 +37,7 @@ void main() {
     await tester.pumpWidget(_buildHub());
     await tester.pumpAndSettle();
     expect(find.text('Từ vựng cách khoảng'), findsOneWidget);
-    expect(find.text('Đọc & gõ'), findsOneWidget);
+    expect(find.text('Luyện đọc'), findsOneWidget);
     expect(find.text('Luyện nghe'), findsOneWidget);
     expect(find.text('Tiến độ học tập'), findsOneWidget);
     expect(find.text('Quét từ vựng'), findsOneWidget);

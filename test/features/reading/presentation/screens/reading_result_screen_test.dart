@@ -100,7 +100,7 @@ Future<Widget> _buildResultWithBackspaces() async {
         builder: (ctx, state) => ReadingResultScreen(result: _testResultWithBackspaces),
       ),
       GoRoute(
-        path: '/reading',
+        path: '/reading/bilingual',
         builder: (ctx, state) => const Scaffold(body: Text('Home')),
       ),
     ],
@@ -130,7 +130,7 @@ Future<Widget> _buildResult({
         builder: (ctx, state) => ReadingResultScreen(result: result ?? _testResult),
       ),
       GoRoute(
-        path: '/reading',
+        path: '/reading/bilingual',
         builder: (ctx, state) =>
             const Scaffold(body: Text('Home')),
       ),

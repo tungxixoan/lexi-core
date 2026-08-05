@@ -181,7 +181,7 @@ class _ReadingResultScreenState extends ConsumerState<ReadingResultScreen> {
 
   void _regenerate(BuildContext context, WidgetRef ref) {
     ref.read(readingPracticeNotifierProvider.notifier).reset();
-    context.go('/reading');
+    context.go('/reading/bilingual');
   }
 
   void _goHome(BuildContext context, WidgetRef ref) {

@@ -132,7 +132,7 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Luyện đọc & gõ'),
-        leading: BackButton(onPressed: () => context.go('/practice')),
+        leading: BackButton(onPressed: () => context.go('/reading')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -259,7 +259,7 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
     if (context.mounted) {
       final session = ref.read(readingPracticeNotifierProvider).valueOrNull;
       if (session != null && !session.isComplete) {
-        context.go('/reading/session');
+        context.go('/reading/bilingual/session');
       }
     }
   }

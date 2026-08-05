@@ -29,9 +29,9 @@ class PracticeHubScreen extends StatelessWidget {
           Card(
             child: ListTile(
               leading: const Icon(Icons.menu_book_outlined),
-              title: const Text('Đọc & gõ'),
+              title: const Text('Luyện đọc'),
               subtitle: const Text(
-                'Đọc đoạn văn song ngữ dùng từ vựng của bạn và luyện gõ.',
+                'Đọc & gõ song ngữ, và luyện đề TOEIC Part 5/6.',
               ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.go('/reading'),

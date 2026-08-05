@@ -15,6 +15,15 @@ import '../../features/reading/presentation/screens/reading_home_screen.dart';
 import '../../features/reading/presentation/screens/reading_session_screen.dart';
 import '../../features/reading/presentation/screens/reading_result_screen.dart';
 import '../../features/reading/presentation/providers/reading_practice_provider.dart';
+import '../../features/reading/presentation/screens/reading_hub_screen.dart';
+import '../../features/reading/presentation/screens/part5_home_screen.dart';
+import '../../features/reading/presentation/screens/part5_session_screen.dart';
+import '../../features/reading/presentation/screens/part5_result_screen.dart';
+import '../../features/reading/presentation/providers/part5_practice_provider.dart';
+import '../../features/reading/presentation/screens/part6_home_screen.dart';
+import '../../features/reading/presentation/screens/part6_session_screen.dart';
+import '../../features/reading/presentation/screens/part6_result_screen.dart';
+import '../../features/reading/presentation/providers/part6_practice_provider.dart';
 import '../../features/listening/presentation/screens/listening_home_screen.dart';
 import '../../features/listening/presentation/screens/dictation_home_screen.dart';
 import '../../features/listening/presentation/screens/dictation_session_screen.dart';
@@ -78,21 +87,73 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: '/reading',
-          builder: (context, state) => const ReadingHomeScreen(),
+          builder: (context, state) => const ReadingHubScreen(),
           routes: [
             GoRoute(
-              path: 'session',
-              builder: (context, state) => const ReadingSessionScreen(),
+              path: 'bilingual',
+              builder: (context, state) => const ReadingHomeScreen(),
               routes: [
                 GoRoute(
-                  path: 'result',
-                  redirect: (context, state) {
-                    if (state.extra is! ReadingSessionResult) return '/reading';
-                    return null;
-                  },
-                  builder: (context, state) => ReadingResultScreen(
-                    result: state.extra as ReadingSessionResult,
-                  ),
+                  path: 'session',
+                  builder: (context, state) => const ReadingSessionScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'result',
+                      redirect: (context, state) {
+                        if (state.extra is! ReadingSessionResult) {
+                          return '/reading/bilingual';
+                        }
+                        return null;
+                      },
+                      builder: (context, state) => ReadingResultScreen(
+                        result: state.extra as ReadingSessionResult,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            GoRoute(
+              path: 'part5',
+              builder: (context, state) => const Part5HomeScreen(),
+              routes: [
+                GoRoute(
+                  path: 'session',
+                  builder: (context, state) => const Part5SessionScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'result',
+                      redirect: (context, state) {
+                        if (state.extra is! Part5SessionResult) return '/reading/part5';
+                        return null;
+                      },
+                      builder: (context, state) => Part5ResultScreen(
+                        result: state.extra as Part5SessionResult,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            GoRoute(
+              path: 'part6',
+              builder: (context, state) => const Part6HomeScreen(),
+              routes: [
+                GoRoute(
+                  path: 'session',
+                  builder: (context, state) => const Part6SessionScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'result',
+                      redirect: (context, state) {
+                        if (state.extra is! Part6SessionResult) return '/reading/part6';
+                        return null;
+                      },
+                      builder: (context, state) => Part6ResultScreen(
+                        result: state.extra as Part6SessionResult,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

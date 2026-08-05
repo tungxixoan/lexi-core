@@ -69,7 +69,7 @@ class _ReadingSessionScreenState extends ConsumerState<ReadingSessionScreen> {
           );
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
-              context.go('/reading/session/result', extra: result);
+              context.go('/reading/bilingual/session/result', extra: result);
             }
           });
         }
@@ -82,7 +82,7 @@ class _ReadingSessionScreenState extends ConsumerState<ReadingSessionScreen> {
       data: (session) {
         if (session == null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) context.go('/reading');
+            if (mounted) context.go('/reading/bilingual');
           });
           return const Scaffold(body: SizedBox.shrink());
         }

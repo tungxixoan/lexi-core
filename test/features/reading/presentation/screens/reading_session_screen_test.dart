@@ -49,7 +49,7 @@ Widget _buildSession() {
         builder: (ctx, state) => const ReadingSessionScreen(),
       ),
       GoRoute(
-        path: '/reading/session/result',
+        path: '/reading/bilingual/session/result',
         builder: (ctx, state) =>
             const Scaffold(body: Text('Result screen')),
       ),
