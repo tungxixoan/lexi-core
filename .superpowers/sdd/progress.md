@@ -585,3 +585,5 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 - Task 02: ✅ complete (commit 9a1db34, 3/3 tests, review clean — Approved)
 - Task 03: ✅ complete (commit cf64e03, 4/4 tests, review clean — Approved)
   - Minor (logged, not fixed): AiClientFactory re-export pattern propagated from ListeningPassageSource (pre-existing convention)
+- Task 04: ✅ complete (commit f0944d7, 1/1 test, review clean — Approved)
+  - Reviewer ⚠️ item resolved by controller: full-project `flutter analyze`/`flutter test` run (376/376 passing, 12 pre-existing unrelated deprecation infos) — not a gap
