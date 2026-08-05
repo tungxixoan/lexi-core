@@ -399,7 +399,7 @@ flutter test test/features/dictionary/presentation/providers/user_settings_notif
 flutter test --reporter expanded
 ```
 
-Hiện tại: **338 tests** — domain entities, use cases, sources, providers, UI widgets, services.
+Hiện tại: **432 tests** — domain entities, use cases, sources, providers, UI widgets, services.
 
 ### Phân tích code
 
