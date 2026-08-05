@@ -3,17 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/utils/web_text_scale.dart';
 import '../../../../features/vocabulary/domain/entities/vocab_record.dart';
 import '../../../../features/vocabulary/presentation/providers/vocab_bank_provider.dart';
 import '../../domain/entities/reading_passage.dart';
 import '../providers/reading_practice_provider.dart';
-
-/// The web has far more screen real estate than mobile, so text on this
-/// screen (passage, translation, typing input) is scaled up for legibility.
-TextStyle _webScaled(TextStyle style) {
-  if (!kIsWeb) return style;
-  return style.copyWith(fontSize: (style.fontSize ?? 16) * 1.5);
-}
 
 class ReadingSessionScreen extends ConsumerStatefulWidget {
   const ReadingSessionScreen({super.key});
@@ -234,7 +228,7 @@ class _PassageDisplay extends StatelessWidget {
               child: _HighlightedText(
                 text: sentence.target,
                 highlights: highlights,
-                style: _webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
+                style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
               ),
             ),
           );
@@ -314,7 +308,7 @@ class _VietnameseRow extends StatelessWidget {
         ),
         child: Text(
           sentence.vietnamese,
-          style: _webScaled(
+          style: webScaled(
             (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14))
                 .copyWith(color: theme.colorScheme.onSurface),
           ),
@@ -373,7 +367,7 @@ class _TypingArea extends StatelessWidget {
     // are stacked on top of each other, so they MUST share the exact same
     // font metrics — otherwise every typed character drifts a little further
     // out of alignment with the visible text underneath it.
-    final baseStyle = _webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16));
+    final baseStyle = webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16));
     final strutStyle = StrutStyle.fromTextStyle(baseStyle);
     return Container(
       constraints: BoxConstraints(minHeight: kIsWeb ? 200 : 80),

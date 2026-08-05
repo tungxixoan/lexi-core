@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/utils/web_text_scale.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
 import '../../../word_radar/domain/entities/word_radar_ai_result.dart';
 import '../../../word_radar/presentation/widgets/vocab_suggestions_section.dart';
@@ -163,7 +164,10 @@ class _PassageBreakdown extends StatelessWidget {
           children: [
             Text('Đoạn ${passageIndex + 1}', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
-            Text(passage.passageText, style: theme.textTheme.bodyMedium),
+            Text(
+              passage.passageText,
+              style: webScaled(theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)),
+            ),
             const SizedBox(height: 8),
             for (var q = 0; q < passage.questions.length; q++)
               _QuestionBreakdown(
@@ -220,16 +224,21 @@ class _QuestionBreakdown extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 2),
               child: Text(
                 entry.value,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: color,
-                  fontWeight: (isCorrectOption || isSelectedOption) ? FontWeight.bold : null,
+                style: webScaled(
+                  (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)).copyWith(
+                    color: color,
+                    fontWeight: (isCorrectOption || isSelectedOption) ? FontWeight.bold : null,
+                  ),
                 ),
               ),
             );
           }),
           Text(
             'Giải thích: ${question.explanation}',
-            style: theme.textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+            style: webScaled(
+              (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+                  .copyWith(fontStyle: FontStyle.italic),
+            ),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/utils/web_text_scale.dart';
 import '../../domain/entities/listening_passage.dart';
 import '../providers/listening_comprehension_provider.dart';
 
@@ -164,6 +165,7 @@ class _QuestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -174,14 +176,17 @@ class _QuestionCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 '${index + 1}. ${question.question}',
-                style: Theme.of(context).textTheme.titleSmall,
+                style: webScaled(theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14)),
               ),
             ),
             ...question.options.asMap().entries.map(
                   (entry) => RadioListTile<int>(
                     value: entry.key,
                     groupValue: selected,
-                    title: Text(entry.value),
+                    title: Text(
+                      entry.value,
+                      style: webScaled(theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)),
+                    ),
                     dense: true,
                     onChanged: (v) {
                       if (v != null) onSelected(v);

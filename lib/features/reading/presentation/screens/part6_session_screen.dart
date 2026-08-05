@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/utils/web_text_scale.dart';
 import '../../domain/entities/part6_passage.dart';
 import '../providers/part6_practice_provider.dart';
 
@@ -109,7 +110,10 @@ class _PassageCard extends StatelessWidget {
           children: [
             Text('Đoạn ${passageIndex + 1}', style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
-            Text(passage.passageText, style: theme.textTheme.bodyMedium),
+            Text(
+              passage.passageText,
+              style: webScaled(theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)),
+            ),
             const SizedBox(height: 8),
             for (var q = 0; q < passage.questions.length; q++) ...[
               if (q > 0) const Divider(height: 1),
@@ -142,18 +146,22 @@ class _QuestionGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-          child: Text('Chỗ trống ($blankNumber)', style: Theme.of(context).textTheme.labelMedium),
+          child: Text('Chỗ trống ($blankNumber)', style: theme.textTheme.labelMedium),
         ),
         ...question.options.asMap().entries.map(
               (entry) => RadioListTile<int>(
                 value: entry.key,
                 groupValue: selected,
-                title: Text(entry.value),
+                title: Text(
+                  entry.value,
+                  style: webScaled(theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)),
+                ),
                 dense: true,
                 onChanged: (v) {
                   if (v != null) onSelected(v);

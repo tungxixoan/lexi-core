@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/utils/web_text_scale.dart';
 import '../../domain/entities/blank_span.dart';
 import '../providers/dictation_practice_provider.dart';
 
@@ -161,6 +162,9 @@ class _SessionScaffold extends ConsumerWidget {
               TextField(
                 controller: ctrl,
                 maxLines: null,
+                style: webScaled(
+                  Theme.of(context).textTheme.bodyLarge ?? const TextStyle(fontSize: 16),
+                ),
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   hintText: 'Gõ lại những gì bạn nghe được...',
@@ -199,7 +203,7 @@ class _ClozeInput extends StatelessWidget {
   Widget build(BuildContext context) {
     final words = target.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
     final theme = Theme.of(context);
-    final baseStyle = theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16);
+    final baseStyle = webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16));
 
     final children = <Widget>[];
     var wordIndex = 0;

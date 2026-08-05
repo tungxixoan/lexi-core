@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/utils/web_text_scale.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
 import '../../../word_radar/domain/entities/word_radar_ai_result.dart';
 import '../../../word_radar/presentation/widgets/vocab_suggestions_section.dart';
@@ -101,7 +102,7 @@ class _ComprehensionResultScreenState extends ConsumerState<ComprehensionResultS
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Text(
                           t.speaker != null ? '${t.speaker}: ${t.text}' : t.text,
-                          style: theme.textTheme.bodyMedium,
+                          style: webScaled(theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)),
                         ),
                       ),
                     ),
@@ -194,7 +195,7 @@ class _QuestionBreakdown extends StatelessWidget {
                 Expanded(
                   child: Text(
                     '${index + 1}. ${question.question}',
-                    style: theme.textTheme.titleSmall,
+                    style: webScaled(theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14)),
                   ),
                 ),
               ],
@@ -214,10 +215,12 @@ class _QuestionBreakdown extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 2),
                 child: Text(
                   entry.value,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: color,
-                    fontWeight:
-                        (isCorrectOption || isSelectedOption) ? FontWeight.bold : null,
+                  style: webScaled(
+                    (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)).copyWith(
+                      color: color,
+                      fontWeight:
+                          (isCorrectOption || isSelectedOption) ? FontWeight.bold : null,
+                    ),
                   ),
                 ),
               );

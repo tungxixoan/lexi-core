@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/utils/web_text_scale.dart';
 import '../../domain/entities/exercise_result.dart';
 import '../providers/notification_notifier.dart';
 
@@ -94,8 +95,16 @@ class _SessionResultScreenState extends ConsumerState<SessionResultScreen> {
                       r.isCorrect ? Icons.check_circle : Icons.cancel,
                       color: r.isCorrect ? Colors.green : Colors.red,
                     ),
-                    title: Text(word.headword),
-                    subtitle: Text(word.meaning, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    title: Text(
+                      word.headword,
+                      style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
+                    ),
+                    subtitle: Text(
+                      word.meaning,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: webScaled(theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)),
+                    ),
                   );
                 },
               ),

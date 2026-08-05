@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/utils/web_text_scale.dart';
 import '../../domain/entities/word_radar_ai_result.dart';
 import '../providers/word_radar_provider.dart';
 import '../widgets/vocab_suggestions_section.dart';
@@ -77,6 +78,7 @@ class _WordRadarScreenState extends ConsumerState<WordRadarScreen> {
               text: _controller.text,
               highlights: radarState.knownRecords!.map((r) => r.headword).toList(),
               onTapHighlight: _openKnownWord,
+              style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
             ),
             const SizedBox(height: 24),
             _buildAiSection(radarState),
@@ -128,6 +130,7 @@ class _WordRadarScreenState extends ConsumerState<WordRadarScreen> {
           _HighlightedText(
             text: result.translation,
             highlights: knownMeanings,
+            style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
           ),
           const SizedBox(height: 24),
         ],
@@ -142,18 +145,20 @@ class _HighlightedText extends StatelessWidget {
     required this.text,
     required this.highlights,
     this.onTapHighlight,
+    this.style,
   });
 
   final String text;
   final List<String> highlights;
   final void Function(String matched)? onTapHighlight;
+  final TextStyle? style;
 
   @override
   Widget build(BuildContext context) {
     if (highlights.isEmpty || text.isEmpty) {
-      return Text(text);
+      return Text(text, style: style);
     }
-    const highlightStyle = TextStyle(
+    final highlightStyle = (style ?? const TextStyle()).copyWith(
       fontWeight: FontWeight.bold,
       decoration: TextDecoration.underline,
     );

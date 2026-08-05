@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/utils/web_text_scale.dart';
 import '../../../vocabulary/presentation/providers/vocab_bank_provider.dart';
 import '../../domain/entities/dictation_difficulty.dart';
 import '../providers/dictation_practice_provider.dart';
@@ -94,18 +95,24 @@ class _DictationResultScreenState extends ConsumerState<DictationResultScreen> {
               _DiffText(
                 typed: result.typed,
                 target: result.item.target,
-                style: theme.textTheme.bodyLarge,
+                style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
               )
             else
               _ClozeResult(result: result),
             const SizedBox(height: 16),
             Text('Câu đúng', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
-            Text(result.item.target, style: theme.textTheme.bodyLarge),
+            Text(
+              result.item.target,
+              style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
+            ),
             const SizedBox(height: 16),
             Text('Nghĩa', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
-            Text(result.item.vietnamese, style: theme.textTheme.bodyLarge),
+            Text(
+              result.item.vietnamese,
+              style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
+            ),
             const Spacer(),
             FilledButton(
               onPressed: () => _regenerate(context, ref),
@@ -172,7 +179,7 @@ class _ClozeResult extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final baseStyle = theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16);
+    final baseStyle = webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16));
     final words = result.item.target
         .split(RegExp(r'\s+'))
         .where((w) => w.isNotEmpty)

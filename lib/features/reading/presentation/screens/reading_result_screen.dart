@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/utils/web_text_scale.dart';
 import '../../../../features/vocabulary/domain/entities/vocab_record.dart';
 import '../../../../features/vocabulary/presentation/providers/vocab_bank_provider.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
@@ -114,11 +115,19 @@ class _ReadingResultScreenState extends ConsumerState<ReadingResultScreen> {
                         itemBuilder: (context, i) {
                           final record = usedRecords[i];
                           return ListTile(
-                            title: Text(record.headword),
+                            title: Text(
+                              record.headword,
+                              style: webScaled(
+                                theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16),
+                              ),
+                            ),
                             subtitle: Text(
                               record.meaning,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
+                              style: webScaled(
+                                theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14),
+                              ),
                             ),
                             dense: true,
                           );

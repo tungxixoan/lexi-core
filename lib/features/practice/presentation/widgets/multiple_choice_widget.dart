@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/web_text_scale.dart';
 import '../../domain/entities/exercise.dart';
 import '../../domain/entities/exercise_result.dart';
 
@@ -35,7 +36,11 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(widget.exercise.question, style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
+        Text(
+          widget.exercise.question,
+          style: webScaled(theme.textTheme.titleLarge ?? const TextStyle(fontSize: 22)),
+          textAlign: TextAlign.center,
+        ),
         const SizedBox(height: 24),
         ...widget.exercise.options.asMap().entries.map((entry) {
           final i = entry.key;
@@ -62,7 +67,10 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
                 ),
               ),
               child: ListTile(
-                title: Text(option),
+                title: Text(
+                  option,
+                  style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
+                ),
                 onTap: _selected == null ? () => _select(i) : null,
               ),
             ),

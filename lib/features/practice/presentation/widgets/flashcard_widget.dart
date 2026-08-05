@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../../../core/utils/web_text_scale.dart';
 import '../../../vocabulary/domain/entities/vocab_record.dart';
 import '../../domain/entities/exercise.dart';
 import '../../domain/entities/exercise_result.dart';
@@ -112,13 +113,18 @@ class _FrontContent extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(record.headword,
-            style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: webScaled(
+              (theme.textTheme.headlineMedium ?? const TextStyle(fontSize: 28))
+                  .copyWith(fontWeight: FontWeight.bold),
+            ),
             textAlign: TextAlign.center),
         if (record.ipa.isNotEmpty) ...[
           const SizedBox(height: 4),
           Text(record.ipa,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                  fontStyle: FontStyle.italic, color: theme.colorScheme.secondary)),
+              style: webScaled(
+                (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)).copyWith(
+                    fontStyle: FontStyle.italic, color: theme.colorScheme.secondary),
+              )),
         ],
         const SizedBox(height: 24),
         Icon(Icons.touch_app_outlined, color: theme.colorScheme.outline, size: 20),
@@ -151,12 +157,16 @@ class _BackContent extends StatelessWidget {
           onTap: onTapToFlip,
           child: Column(
             children: [
-              Text(record.meaning, style: theme.textTheme.bodyLarge, textAlign: TextAlign.center),
+              Text(record.meaning,
+                  style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
+                  textAlign: TextAlign.center),
               if (record.examples.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text('"${record.examples.first}"',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                        fontStyle: FontStyle.italic, color: theme.colorScheme.outline),
+                    style: webScaled(
+                      (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)).copyWith(
+                          fontStyle: FontStyle.italic, color: theme.colorScheme.outline),
+                    ),
                     textAlign: TextAlign.center),
               ],
               const SizedBox(height: 12),

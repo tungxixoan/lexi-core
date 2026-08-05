@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/web_text_scale.dart';
 import '../../domain/entities/exercise.dart';
 import '../../domain/entities/exercise_result.dart';
 
@@ -52,7 +53,7 @@ class _FillInBlankWidgetState extends State<FillInBlankWidget> {
         RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
-            style: theme.textTheme.titleMedium,
+            style: webScaled(theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16)),
             children: [
               TextSpan(text: parts.first),
               WidgetSpan(
@@ -89,7 +90,10 @@ class _FillInBlankWidgetState extends State<FillInBlankWidget> {
           const SizedBox(height: 8),
           Text(
             'Đáp án: ${widget.exercise.answer}',
-            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.green.shade700),
+            style: webScaled(
+              (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14))
+                  .copyWith(color: Colors.green.shade700),
+            ),
             textAlign: TextAlign.center,
           ),
         ],

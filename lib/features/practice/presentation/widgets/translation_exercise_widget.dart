@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/web_text_scale.dart';
 import '../../domain/entities/exercise.dart';
 import '../../domain/entities/exercise_result.dart';
 
@@ -46,7 +47,7 @@ class _TranslationExerciseWidgetState extends State<TranslationExerciseWidget> {
               widget.exercise.prompt
                   .replaceAll("Translate to Vietnamese: ", "")
                   .replaceAll("'", ""),
-              style: theme.textTheme.titleMedium,
+              style: webScaled(theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16)),
               textAlign: TextAlign.center,
             ),
           ),
@@ -78,7 +79,10 @@ class _TranslationExerciseWidgetState extends State<TranslationExerciseWidget> {
             ),
             child: Text(
               'Đáp án: ${widget.exercise.answer}',
-              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.green.shade800),
+              style: webScaled(
+                (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14))
+                    .copyWith(color: Colors.green.shade800),
+              ),
             ),
           ),
           const SizedBox(height: 12),
