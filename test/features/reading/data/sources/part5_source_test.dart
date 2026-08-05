@@ -103,4 +103,20 @@ void main() {
     expect(part.text, isNot(contains('Vol 3')));
     expect(part.text, isNot(contains('Vol 5')));
   });
+
+  test('prompt instructs the AI to keep explanations in Vietnamese script only', () async {
+    final client = FakeGenerativeModelClient(
+      jsonEncode({'questions': List.generate(15, _question)}),
+    );
+    final source = Part5Source.withModel(client);
+
+    await source.generate(
+      context: AppContext.general,
+      targetLanguage: Language.english,
+      volumes: const {EconomyVolume.vol3},
+    );
+
+    final part = client.lastPrompt!.first.parts.first as TextPart;
+    expect(part.text, contains('Vietnamese script'));
+  });
 }

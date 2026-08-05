@@ -15,11 +15,11 @@ final class Part6SessionResult {
 
   int get correctCount {
     int count = 0;
-    var i = 0;
-    for (final passage in set.passages) {
-      for (final question in passage.questions) {
-        if (selectedAnswers[i] == question.correctIndex) count++;
-        i++;
+    for (var p = 0; p < set.passages.length; p++) {
+      final questions = set.passages[p].questions;
+      for (var q = 0; q < questions.length; q++) {
+        final flat = Part6SessionState.flatIndex(p, q);
+        if (selectedAnswers[flat] == questions[q].correctIndex) count++;
       }
     }
     return count;

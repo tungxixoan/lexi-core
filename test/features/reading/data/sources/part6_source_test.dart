@@ -103,4 +103,76 @@ void main() {
     final part = client.lastPrompt!.first.parts.first as TextPart;
     expect(part.text.toLowerCase(), contains('select the sentence that best fits'));
   });
+
+  test('prompt instructs the AI to keep explanations in Vietnamese script only', () async {
+    final client = FakeGenerativeModelClient(
+      jsonEncode({'passages': List.generate(3, _passage)}),
+    );
+    final source = Part6Source.withModel(client);
+
+    await source.generate(
+      context: AppContext.general,
+      targetLanguage: Language.english,
+      volumes: const {EconomyVolume.vol3},
+    );
+
+    final part = client.lastPrompt!.first.parts.first as TextPart;
+    expect(part.text, contains('Vietnamese script'));
+  });
+
+  test('drops passages whose question count is not exactly 4', () async {
+    final malformedPassage = {
+      'passageText': 'Malformed (1)___ (2)___ (3)___ text.',
+      'questions': List.generate(
+        3,
+        (q) => {
+          'options': ['a', 'b', 'c', 'd'],
+          'correctIndex': q % 4,
+          'explanation': 'Malformed explanation $q',
+        },
+      ),
+    };
+    final json = jsonEncode({
+      'passages': [_passage(0), malformedPassage],
+    });
+    final source = Part6Source.withModel(FakeGenerativeModelClient(json));
+
+    final set = await source.generate(
+      context: AppContext.business,
+      targetLanguage: Language.english,
+      volumes: const {EconomyVolume.vol4},
+    );
+
+    expect(set.passages.length, 1);
+    expect(set.passages[0].questions.length, 4);
+    expect(set.passages[0].passageText, contains('Passage 0'));
+  });
+
+  test('throws when every passage is malformed', () async {
+    final malformedPassage = {
+      'passageText': 'Malformed (1)___ (2)___ (3)___ text.',
+      'questions': List.generate(
+        3,
+        (q) => {
+          'options': ['a', 'b', 'c', 'd'],
+          'correctIndex': q % 4,
+          'explanation': 'Malformed explanation $q',
+        },
+      ),
+    };
+    final source = Part6Source.withModel(
+      FakeGenerativeModelClient(jsonEncode({
+        'passages': [malformedPassage],
+      })),
+    );
+
+    expect(
+      () => source.generate(
+        context: AppContext.general,
+        targetLanguage: Language.english,
+        volumes: const {EconomyVolume.vol3},
+      ),
+      throwsA(isA<FormatException>()),
+    );
+  });
 }

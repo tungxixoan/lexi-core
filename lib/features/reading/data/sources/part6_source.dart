@@ -63,6 +63,8 @@ class Part6Source {
         'words/phrases — the other blanks use word/phrase options (word form, verb tense, '
         'preposition, conjunction, transition word). Every blank has exactly 4 options and a '
         'brief explanation (in Vietnamese) of why the correct option is right. '
+        'The explanation must use only Vietnamese script — never Chinese, Japanese, or other '
+        'non-Vietnamese characters. '
         'Respond with JSON only (no markdown, no code fences): '
         '{"passages": [{"passageText": "... (1)___ ... (2)___ ... (3)___ ... (4)___ ...", '
         '"questions": [{"options": ["...", "...", "...", "..."], "correctIndex": 0, '
@@ -89,7 +91,7 @@ class Part6Source {
         passageText: pm['passageText'] as String? ?? '',
         questions: questions,
       );
-    }).toList();
+    }).where((passage) => passage.questions.length == _blanksPerPassage).toList();
 
     return Part6Set(
       id: _uuid.v4(),

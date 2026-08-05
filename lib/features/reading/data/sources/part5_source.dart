@@ -59,6 +59,8 @@ class Part5Source {
         'conjunctions) or vocabulary-in-context, with exactly 4 answer options in '
         '${targetLanguage.label} and a brief explanation (in Vietnamese) of why the correct '
         'option is right and, briefly, why the others are wrong. '
+        'The explanation must use only Vietnamese script — never Chinese, Japanese, or other '
+        'non-Vietnamese characters. '
         'Respond with JSON only (no markdown, no code fences): '
         '{"questions": [{"sentenceWithBlank": "...", "options": ["...", "...", "...", "..."], '
         '"correctIndex": 0, "explanation": "..."}]}';
