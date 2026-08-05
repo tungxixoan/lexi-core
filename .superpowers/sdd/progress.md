@@ -592,3 +592,7 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 - Task 06: ✅ complete (commit 2ff3ca4, 3/3 tests, review clean — Approved)
 - Task 07: ✅ complete (commit 4817d64, 4/4 tests, review clean — Approved)
   - Minor (logged, not fixed): RadioListTile groupValue/onChanged deprecation infos (pre-existing codebase-wide, matches comprehension_session_screen.dart exactly)
+- Task 08: ✅ complete (commit c6f97d0, 5/5 new tests + 65/65 full reading suite, review clean — Approved)
+  - Minor (logged, not fixed): Part5 screens near-duplicate ComprehensionResultScreen structure (plan-mandated reuse pattern); routes not wired yet (deferred to Task 16 per plan)
+
+## Part 5 complete (Tasks 01-08) — proceeding to Part 6 (Tasks 09-15).
