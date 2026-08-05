@@ -600,3 +600,5 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 - Task 10: ✅ complete (commit 81b9975, 4/4 tests, review clean — Approved)
 - Task 11: ✅ complete (commit 4d9c4a9, 1/1 test, review clean — Approved)
   - Reviewer ⚠️ item resolved by controller: full-project `flutter test` run (404/404 passing)
+- Task 12: ✅ complete (commit 2d4af6f, 7/7 tests, review clean — Approved)
+  - Note: implementer subagent hit an API session-limit mid-task (after code complete, before commit/report); controller independently verified (build_runner, 7/7 tests, analyze clean) and committed directly, wrote a controller-authored report for the reviewer. No re-dispatch needed.
