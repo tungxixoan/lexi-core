@@ -596,3 +596,4 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
   - Minor (logged, not fixed): Part5 screens near-duplicate ComprehensionResultScreen structure (plan-mandated reuse pattern); routes not wired yet (deferred to Task 16 per plan)
 
 ## Part 5 complete (Tasks 01-08) — proceeding to Part 6 (Tasks 09-15).
+- Task 09: ✅ complete (commit 9094bd0, 5/5 tests, review clean — Approved)
