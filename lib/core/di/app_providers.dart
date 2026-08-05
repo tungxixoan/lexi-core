@@ -31,6 +31,8 @@ import '../../features/practice/domain/use_cases/get_learning_stats_use_case.dar
 // --- Reading DI (Plan 7) ---
 import '../../features/reading/data/sources/reading_passage_source.dart';
 import '../../features/reading/domain/use_cases/generate_reading_passage_use_case.dart';
+import '../../features/reading/data/sources/part5_source.dart';
+import '../../features/reading/domain/use_cases/generate_part5_set_use_case.dart';
 // --- Listening DI (Plan 9) ---
 import '../../features/listening/data/sources/dictation_source.dart';
 import '../../features/listening/domain/use_cases/generate_dictation_item_use_case.dart';
@@ -202,3 +204,13 @@ GetVocabSuggestionsForTextUseCase getVocabSuggestionsForTextUseCase(
       ref.watch(findKnownHeadwordsUseCaseProvider),
       ref.watch(generateWordSuggestionsUseCaseProvider),
     );
+
+@riverpod
+Part5Source part5Source(Part5SourceRef ref) {
+  final settings = ref.watch(userSettingsNotifierProvider);
+  return Part5Source(settings);
+}
+
+@riverpod
+GeneratePart5SetUseCase generatePart5SetUseCase(GeneratePart5SetUseCaseRef ref) =>
+    GeneratePart5SetUseCase(ref.watch(part5SourceProvider));

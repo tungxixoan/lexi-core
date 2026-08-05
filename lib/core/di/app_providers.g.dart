@@ -597,5 +597,41 @@ final getVocabSuggestionsForTextUseCaseProvider =
 // ignore: unused_element
 typedef GetVocabSuggestionsForTextUseCaseRef
     = AutoDisposeProviderRef<GetVocabSuggestionsForTextUseCase>;
+String _$part5SourceHash() => r'0a8bceff0ccdd17ae3cad624b7bf1b5bca5db2a6';
+
+/// See also [part5Source].
+@ProviderFor(part5Source)
+final part5SourceProvider = AutoDisposeProvider<Part5Source>.internal(
+  part5Source,
+  name: r'part5SourceProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$part5SourceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef Part5SourceRef = AutoDisposeProviderRef<Part5Source>;
+String _$generatePart5SetUseCaseHash() =>
+    r'b373ce61ada677a5e91e43b87b1ebe66a7e43980';
+
+/// See also [generatePart5SetUseCase].
+@ProviderFor(generatePart5SetUseCase)
+final generatePart5SetUseCaseProvider =
+    AutoDisposeProvider<GeneratePart5SetUseCase>.internal(
+  generatePart5SetUseCase,
+  name: r'generatePart5SetUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$generatePart5SetUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GeneratePart5SetUseCaseRef
+    = AutoDisposeProviderRef<GeneratePart5SetUseCase>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
