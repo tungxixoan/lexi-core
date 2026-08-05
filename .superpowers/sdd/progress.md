@@ -571,3 +571,14 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 - Minor findings logged, not fixed (follow-up candidates): suggestion-loading boilerplate duplicated between Reading/Comprehension result screens (plan-mandated; extraction to a shared self-loading widget recommended, esp. since Dictation is a likely next consumer); retry button has no debounce guard; raw exception text shown on suggestion-load error (matches existing Word Radar style, not a regression); practiced-vocab list on Reading result screen lost lazy ListView building (shrinkWrap+NeverScrollableScrollPhysics, plan-mandated layout fix); fallback JSON string in word_radar_source.dart still mentions "translation" key even when includeTranslation:false (harmless, unused).
 
 ## Plan complete — Ready to merge: Yes (with fixes applied and re-reviewed clean).
+
+---
+
+# LexiCore — TOEIC Reading Part 5 + Part 6
+
+**Plan:** docs/superpowers/plans/2026-08-03-toeic-reading-part5-part6.md
+**BASE commit:** 964fd8f (docs: add implementation plan for TOEIC reading Part 5 + Part 6)
+
+## Status
+
+- Task 01: ✅ complete (commit f62947a, 3/3 tests, review clean — Approved)
