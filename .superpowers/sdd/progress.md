@@ -598,3 +598,5 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 ## Part 5 complete (Tasks 01-08) — proceeding to Part 6 (Tasks 09-15).
 - Task 09: ✅ complete (commit 9094bd0, 5/5 tests, review clean — Approved)
 - Task 10: ✅ complete (commit 81b9975, 4/4 tests, review clean — Approved)
+- Task 11: ✅ complete (commit 4d9c4a9, 1/1 test, review clean — Approved)
+  - Reviewer ⚠️ item resolved by controller: full-project `flutter test` run (404/404 passing)
