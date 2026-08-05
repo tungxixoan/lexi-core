@@ -609,3 +609,7 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 - Task 15: ✅ complete (commit a173d0f, 5/5 new tests + 95/95 full reading suite, review clean — Approved)
 
 ## Part 6 complete (Tasks 09-15) — proceeding to Task 16 (hub restructure + DI + router + README, final integration task).
+- Task 16: ✅ complete (commit ec6c1d2, 428/428 full suite, web build success, review clean — Approved)
+  - Minor (logged, not fixed): README's "338 tests" line is now stale (428 actual) — pre-existing line, not in this task's specified 3 README edits
+
+## All 16 tasks complete — proceeding to final whole-branch review.
