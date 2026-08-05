@@ -583,3 +583,5 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 
 - Task 01: ✅ complete (commit f62947a, 3/3 tests, review clean — Approved)
 - Task 02: ✅ complete (commit 9a1db34, 3/3 tests, review clean — Approved)
+- Task 03: ✅ complete (commit cf64e03, 4/4 tests, review clean — Approved)
+  - Minor (logged, not fixed): AiClientFactory re-export pattern propagated from ListeningPassageSource (pre-existing convention)
