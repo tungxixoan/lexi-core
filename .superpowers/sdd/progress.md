@@ -589,3 +589,4 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
   - Reviewer ⚠️ item resolved by controller: full-project `flutter analyze`/`flutter test` run (376/376 passing, 12 pre-existing unrelated deprecation infos) — not a gap
 - Task 05: ✅ complete (commit af8f91a, 6/6 tests, review clean — Approved)
   - Minor (logged, not fixed): selectAnswer() has no bounds-check on index (mirrors pre-existing ListeningComprehensionNotifier pattern)
+- Task 06: ✅ complete (commit 2ff3ca4, 3/3 tests, review clean — Approved)
