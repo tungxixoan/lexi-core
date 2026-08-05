@@ -109,4 +109,47 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Result screen'), findsOneWidget);
   });
+
+  testWidgets(
+      'tapping the option for passage 1 / question 2 writes only that flat slot',
+      (tester) async {
+    await tester.pumpWidget(_buildSession());
+    await tester.pumpAndSettle();
+
+    // RadioListTiles are rendered passage-major, then question-major, then
+    // option-major: 4 questions x 4 options = 16 tiles per passage.
+    // Passage 1 (index 1), question 2 (index 2), option 1 ("b") sits at:
+    const passageIndex = 1;
+    const questionIndex = 2;
+    const optionIndex = 1;
+    const tileIndex = passageIndex * 16 + questionIndex * 4 + optionIndex;
+
+    final tiles = find.byType(RadioListTile<int>);
+    expect(tiles, findsNWidgets(48));
+    await tester.ensureVisible(tiles.at(tileIndex));
+    await tester.pumpAndSettle();
+    await tester.tap(tiles.at(tileIndex));
+    await tester.pumpAndSettle();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(Part6SessionScreen)),
+      listen: false,
+    );
+    final selectedAnswers =
+        container.read(part6PracticeNotifierProvider).value!.selectedAnswers;
+
+    // The tapped slot got the tapped option...
+    expect(
+      selectedAnswers[Part6SessionState.flatIndex(passageIndex, questionIndex)],
+      optionIndex,
+    );
+    // ...and an untouched slot (passage 0 / question 0) is unaffected. If the
+    // (passageIndex, questionIndex) arguments to selectAnswer were ever
+    // swapped, or flatIndex broken, this pair of assertions would fail
+    // because every slot would no longer be independently addressable.
+    expect(
+      selectedAnswers[Part6SessionState.flatIndex(0, 0)],
+      isNull,
+    );
+  });
 }
