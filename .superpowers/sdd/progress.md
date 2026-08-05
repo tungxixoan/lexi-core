@@ -613,3 +613,13 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
   - Minor (logged, not fixed): README's "338 tests" line is now stale (428 actual) — pre-existing line, not in this task's specified 3 README edits
 
 ## All 16 tasks complete — proceeding to final whole-branch review.
+
+**Final whole-branch review (commits 964fd8f..9ab5c08):** Ready to merge: With fixes.
+- Critical #1: Part6Source didn't validate that every passage has exactly 4 questions, which Part6SessionState.flatIndex silently assumes — malformed AI response could RangeError-crash the session screen or permanently disable "Nộp bài" via index collision. Fixed (commit 3d8b45f): filter passages to questions.length==4 before the empty-check in Part6Source._parse(); all-malformed response still correctly throws FormatException.
+- Important #2: Part6SessionResult.correctCount used its own index counter instead of the canonical Part6SessionState.flatIndex helper. Fixed (3d8b45f): rewrote to use flatIndex(p, q), single source of truth restored.
+- Important #3: Part5Source/Part6Source prompts missing the "Vietnamese script only" guard every other Vietnamese-output AI prompt in this app carries (added commit 3e00740 after a real CJK-leakage bug). Fixed (3d8b45f): added guard sentence to both prompts + prompt-content test assertions.
+- Also fixed: README stale test count (338 -> 432, commit 9f3c2ad).
+- Re-review of fix pass (9ab5c08..9f3c2ad): all 3 findings verified resolved by direct diff inspection, no new issues, **Ready to merge: Yes**.
+- Minor findings logged, not fixed (follow-up candidates): 4-way duplication of result-screen suggestion/stats scaffolding across Reading/Comprehension/Part5/Part6 (extract before Part 7 is planned); _ErrorCard duplicated privately in Part5HomeScreen/Part6HomeScreen (move to lib/core/widgets/); no test asserts "exactly one AI call per generation" for Part5/Part6 sources; element casts in Part5/Part6 sources use `as Map<String, dynamic>` instead of the newer `.whereType<Map<String, dynamic>>()` convention from word_radar_source.dart.
+
+## Plan complete — Ready to merge: Yes (with fixes applied and re-reviewed clean).
