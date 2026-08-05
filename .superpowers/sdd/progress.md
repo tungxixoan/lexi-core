@@ -604,3 +604,5 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
   - Note: implementer subagent hit an API session-limit mid-task (after code complete, before commit/report); controller independently verified (build_runner, 7/7 tests, analyze clean) and committed directly, wrote a controller-authored report for the reviewer. No re-dispatch needed.
 - Task 13: ✅ complete (commit 3b0450e, 3/3 tests, review clean — Approved)
   - Reviewer ⚠️ item resolved by controller: full-project `flutter test` run (414/414 passing)
+- Task 14: ✅ complete (commits 21b4824, 237cf73; 4/4 + 1 new = 5/5 tests, review clean after fix — Approved)
+  - Important finding fixed: original tests used uniform selectedAnswers values, blind to a passageIndex/questionIndex swap bug. Fix (237cf73) added a test tapping a specific RadioListTile and asserting on flatIndex(1,2) vs an untouched slot; sanity-checked by temporarily swapping the argument order in production code (test failed as expected), then reverting. Re-review confirmed the fix by hand-tracing the tile-order arithmetic.
