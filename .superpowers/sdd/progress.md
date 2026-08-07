@@ -634,3 +634,4 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 ## Status
 
 - Task 1: ✅ complete (commit 1f622bb, 1/1 test, review clean — Approved)
+- Task 2: ✅ complete (commit 65ed02d, 21/21 tests across 5 screens, review clean — Approved)
