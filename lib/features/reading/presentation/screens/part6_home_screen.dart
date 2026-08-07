@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/widgets/ai_disabled_card.dart';
 import '../../../../core/widgets/filter_tile.dart';
 import '../../../../core/widgets/selection_sheets.dart';
 import '../../../dictionary/domain/entities/app_context.dart';
@@ -112,7 +113,7 @@ class _Part6HomeScreenState extends ConsumerState<Part6HomeScreen> {
             ),
             const SizedBox(height: 16),
             if (!settings.aiEnabled)
-              _ErrorCard(
+              AiDisabledCard(
                 message: 'Tính năng này yêu cầu AI. Bật AI trong Cài đặt để dùng.',
               )
             else
@@ -161,19 +162,3 @@ class _Part6HomeScreenState extends ConsumerState<Part6HomeScreen> {
   }
 }
 
-class _ErrorCard extends StatelessWidget {
-  const _ErrorCard({required this.message});
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      color: theme.colorScheme.errorContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text(message, style: TextStyle(color: theme.colorScheme.onErrorContainer)),
-      ),
-    );
-  }
-}

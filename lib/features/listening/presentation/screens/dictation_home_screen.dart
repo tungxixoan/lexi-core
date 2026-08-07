@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/widgets/ai_disabled_card.dart';
 import '../../../../core/widgets/filter_tile.dart';
 import '../../../../core/widgets/selection_sheets.dart';
 import '../../../dictionary/domain/entities/language.dart';
@@ -179,14 +180,14 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
             const SizedBox(height: 16),
 
             if (!settings.aiEnabled)
-              _ErrorCard(
+              AiDisabledCard(
                 message:
                     'Tính năng này yêu cầu AI. Bật AI trong Cài đặt để dùng.',
               )
             else if (words == null)
               const Center(child: CircularProgressIndicator())
             else if (words.length < _minVocabWords)
-              _ErrorCard(
+              AiDisabledCard(
                 message:
                     'Hãy lưu ít nhất 2 từ khớp với bộ lọc trên vào Vocab Bank. '
                     'Hiện có ${words.length} từ.',
@@ -259,22 +260,3 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
   }
 }
 
-class _ErrorCard extends StatelessWidget {
-  const _ErrorCard({required this.message});
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      color: theme.colorScheme.errorContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text(
-          message,
-          style: TextStyle(color: theme.colorScheme.onErrorContainer),
-        ),
-      ),
-    );
-  }
-}
