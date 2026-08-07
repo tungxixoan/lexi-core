@@ -35,6 +35,8 @@ import '../../features/reading/data/sources/part5_source.dart';
 import '../../features/reading/domain/use_cases/generate_part5_set_use_case.dart';
 import '../../features/reading/data/sources/part6_source.dart';
 import '../../features/reading/domain/use_cases/generate_part6_set_use_case.dart';
+import '../../features/reading/data/sources/part7_source.dart';
+import '../../features/reading/domain/use_cases/generate_part7_set_use_case.dart';
 // --- Listening DI (Plan 9) ---
 import '../../features/listening/data/sources/dictation_source.dart';
 import '../../features/listening/domain/use_cases/generate_dictation_item_use_case.dart';
@@ -226,3 +228,13 @@ Part6Source part6Source(Part6SourceRef ref) {
 @riverpod
 GeneratePart6SetUseCase generatePart6SetUseCase(GeneratePart6SetUseCaseRef ref) =>
     GeneratePart6SetUseCase(ref.watch(part6SourceProvider));
+
+@riverpod
+Part7Source part7Source(Part7SourceRef ref) {
+  final settings = ref.watch(userSettingsNotifierProvider);
+  return Part7Source(settings);
+}
+
+@riverpod
+GeneratePart7SetUseCase generatePart7SetUseCase(GeneratePart7SetUseCaseRef ref) =>
+    GeneratePart7SetUseCase(ref.watch(part7SourceProvider));

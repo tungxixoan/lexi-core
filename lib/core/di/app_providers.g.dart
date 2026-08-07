@@ -669,5 +669,41 @@ final generatePart6SetUseCaseProvider =
 // ignore: unused_element
 typedef GeneratePart6SetUseCaseRef
     = AutoDisposeProviderRef<GeneratePart6SetUseCase>;
+String _$part7SourceHash() => r'53213810cf9de8c86e335b30242ed251bc6a6c4a';
+
+/// See also [part7Source].
+@ProviderFor(part7Source)
+final part7SourceProvider = AutoDisposeProvider<Part7Source>.internal(
+  part7Source,
+  name: r'part7SourceProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$part7SourceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef Part7SourceRef = AutoDisposeProviderRef<Part7Source>;
+String _$generatePart7SetUseCaseHash() =>
+    r'bd2357be6f2260e58f79492a400f32017ae5ba38';
+
+/// See also [generatePart7SetUseCase].
+@ProviderFor(generatePart7SetUseCase)
+final generatePart7SetUseCaseProvider =
+    AutoDisposeProvider<GeneratePart7SetUseCase>.internal(
+  generatePart7SetUseCase,
+  name: r'generatePart7SetUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$generatePart7SetUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GeneratePart7SetUseCaseRef
+    = AutoDisposeProviderRef<GeneratePart7SetUseCase>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
