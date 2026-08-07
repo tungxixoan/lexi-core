@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../../../core/utils/web_text_scale.dart';
-import '../../../dictionary/presentation/providers/user_settings_provider.dart';
-import '../../../word_radar/domain/entities/word_radar_ai_result.dart';
-import '../../../word_radar/presentation/widgets/vocab_suggestions_section.dart';
+import '../../../word_radar/presentation/widgets/result_suggestions_section.dart';
 import '../../domain/entities/listening_passage.dart';
 import '../providers/listening_comprehension_provider.dart';
 
@@ -26,7 +24,6 @@ class _ComprehensionResultScreenState extends ConsumerState<ComprehensionResultS
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _recordPracticeSession();
-      _loadSuggestions();
     });
   }
 
@@ -40,22 +37,7 @@ class _ComprehensionResultScreenState extends ConsumerState<ComprehensionResultS
     }
   }
 
-  AsyncValue<WordRadarAiResult>? _suggestions;
-
   String get _transcriptText => result.passage.turns.map((t) => t.text).join(' ');
-
-  Future<void> _loadSuggestions() async {
-    if (!ref.read(userSettingsNotifierProvider).aiEnabled) return;
-    setState(() => _suggestions = const AsyncLoading());
-    final aiResult = await AsyncValue.guard(
-      () => ref.read(getVocabSuggestionsForTextUseCaseProvider).execute(
-            text: _transcriptText,
-            targetLanguage: result.passage.targetLanguage,
-            targetCefrLevel: result.passage.level,
-          ),
-    );
-    if (mounted) setState(() => _suggestions = aiResult);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +88,11 @@ class _ComprehensionResultScreenState extends ConsumerState<ComprehensionResultS
                         ),
                       ),
                     ),
-                    _buildSuggestionsSection(),
+                    ResultSuggestionsSection(
+                      text: _transcriptText,
+                      targetLanguage: result.passage.targetLanguage,
+                      targetCefrLevel: result.passage.level,
+                    ),
                   ],
                 ),
               ),
@@ -123,31 +109,6 @@ class _ComprehensionResultScreenState extends ConsumerState<ComprehensionResultS
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildSuggestionsSection() {
-    final suggestions = _suggestions;
-    if (suggestions == null) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: suggestions.when(
-        loading: () => const Padding(
-          padding: EdgeInsets.symmetric(vertical: 16),
-          child: Center(child: CircularProgressIndicator()),
-        ),
-        error: (e, _) => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Không tải được gợi ý từ mới: $e'),
-            TextButton(
-              onPressed: _loadSuggestions,
-              child: const Text('Thử lại'),
-            ),
-          ],
-        ),
-        data: (r) => VocabSuggestionsSection(suggestions: r.suggestions),
       ),
     );
   }

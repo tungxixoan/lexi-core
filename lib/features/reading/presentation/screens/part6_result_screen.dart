@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../../../core/utils/web_text_scale.dart';
-import '../../../dictionary/presentation/providers/user_settings_provider.dart';
-import '../../../word_radar/domain/entities/word_radar_ai_result.dart';
-import '../../../word_radar/presentation/widgets/vocab_suggestions_section.dart';
+import '../../../word_radar/presentation/widgets/result_suggestions_section.dart';
 import '../../domain/entities/part6_passage.dart';
 import '../providers/part6_practice_provider.dart';
 
@@ -20,14 +18,11 @@ class Part6ResultScreen extends ConsumerStatefulWidget {
 class _Part6ResultScreenState extends ConsumerState<Part6ResultScreen> {
   Part6SessionResult get result => widget.result;
 
-  AsyncValue<WordRadarAiResult>? _suggestions;
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _recordPracticeSession();
-      _loadSuggestions();
     });
   }
 
@@ -43,19 +38,6 @@ class _Part6ResultScreenState extends ConsumerState<Part6ResultScreen> {
   }
 
   String get _passagesText => result.set.passages.map((p) => p.passageText).join(' ');
-
-  Future<void> _loadSuggestions() async {
-    if (!ref.read(userSettingsNotifierProvider).aiEnabled) return;
-    setState(() => _suggestions = const AsyncLoading());
-    final aiResult = await AsyncValue.guard(
-      () => ref.read(getVocabSuggestionsForTextUseCaseProvider).execute(
-            text: _passagesText,
-            targetLanguage: result.set.targetLanguage,
-            targetCefrLevel: null,
-          ),
-    );
-    if (mounted) setState(() => _suggestions = aiResult);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +76,11 @@ class _Part6ResultScreenState extends ConsumerState<Part6ResultScreen> {
                         selectedAnswers: result.selectedAnswers,
                       ),
                     ],
-                    _buildSuggestionsSection(),
+                    ResultSuggestionsSection(
+                      text: _passagesText,
+                      targetLanguage: result.set.targetLanguage,
+                      targetCefrLevel: null,
+                    ),
                   ],
                 ),
               ),
@@ -105,28 +91,6 @@ class _Part6ResultScreenState extends ConsumerState<Part6ResultScreen> {
             OutlinedButton(onPressed: () => _goHome(context, ref), child: const Text('Về trang chính')),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildSuggestionsSection() {
-    final suggestions = _suggestions;
-    if (suggestions == null) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: suggestions.when(
-        loading: () => const Padding(
-          padding: EdgeInsets.symmetric(vertical: 16),
-          child: Center(child: CircularProgressIndicator()),
-        ),
-        error: (e, _) => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Không tải được gợi ý từ mới: $e'),
-            TextButton(onPressed: _loadSuggestions, child: const Text('Thử lại')),
-          ],
-        ),
-        data: (r) => VocabSuggestionsSection(suggestions: r.suggestions),
       ),
     );
   }
