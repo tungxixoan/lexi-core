@@ -109,7 +109,10 @@ void main() {
       'passageGroups': [
         _singleGroup(0, 3),
         _singleGroup(1, 4),
-        _singleGroup(2, 4), // wrong: group 2 must be double-passage (2 docs, 5 questions)
+        {
+          'documents': ['Document A', 'Document B'], // correct: 2 documents
+          'questions': List.generate(4, _question), // wrong: must be 5 questions
+        },
       ],
     };
     final source = Part7Source.withModel(
