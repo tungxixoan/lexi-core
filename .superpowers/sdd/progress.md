@@ -640,3 +640,10 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 - Task 4: ✅ complete (commit 2bf9b27, 25/25 per-screen + 438/438 full suite, web build success, review clean — Approved)
 
 ## All 4 tasks complete — proceeding to final whole-branch review.
+
+**Final whole-branch review (commits 2bc3ab2..55b7d2f):** Ready to merge: Yes.
+- All 11 argument mappings (7 AiDisabledCard call sites, 4 ResultSuggestionsSection call sites) verified identical to the code they replaced. No behavior change, no scope creep into Part5/6 feature files beyond the 4 legitimate result-screen touches. 110/110 focused tests + zero edits to any pre-existing test file.
+- Minor findings logged, not fixed (recommended to bundle with Part 7 planning, when the shared widgets get their second real consumer): (1) AiDisabledCard's name doesn't fit the "not enough vocab words" call sites (2 of 7) — consider renaming to something neutral like InlineErrorCard; (2) ResultSuggestionsSection has no didUpdateWidget guard — fine today since all 4 consumers pass an immutable `text` at construction, but a future consumer swapping text in place would show stale suggestions; document the single-shot contract or add the guard; (3) ai_disabled_card_test.dart doesn't assert error-container coloring, only text+Card presence.
+- Stray directory the reviewer flagged as a session artifact was not found in the actual working tree (git status clean) — no action needed.
+
+## Plan complete — Ready to merge: Yes.
