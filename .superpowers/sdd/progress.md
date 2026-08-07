@@ -635,3 +635,5 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 
 - Task 1: ✅ complete (commit 1f622bb, 1/1 test, review clean — Approved)
 - Task 2: ✅ complete (commit 65ed02d, 21/21 tests across 5 screens, review clean — Approved)
+- Task 3: ✅ complete (commit 955eb24, 4/4 tests, review clean — Approved)
+  - Minor (logged, not fixed): uses ref.read not ref.watch for aiEnabled, inherited unchanged from original inline code (pre-existing, not a regression)
