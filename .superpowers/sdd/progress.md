@@ -623,3 +623,14 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 - Minor findings logged, not fixed (follow-up candidates): 4-way duplication of result-screen suggestion/stats scaffolding across Reading/Comprehension/Part5/Part6 (extract before Part 7 is planned); _ErrorCard duplicated privately in Part5HomeScreen/Part6HomeScreen (move to lib/core/widgets/); no test asserts "exactly one AI call per generation" for Part5/Part6 sources; element casts in Part5/Part6 sources use `as Map<String, dynamic>` instead of the newer `.whereType<Map<String, dynamic>>()` convention from word_radar_source.dart.
 
 ## Plan complete — Ready to merge: Yes (with fixes applied and re-reviewed clean).
+
+---
+
+# LexiCore — Dedupe result-screen suggestions & home-screen error card
+
+**Plan:** docs/superpowers/plans/2026-08-06-dedupe-result-error-widgets.md
+**BASE commit:** 2bc3ab2 (docs: add implementation plan for deduping result/error widgets)
+
+## Status
+
+- Task 1: ✅ complete (commit 1f622bb, 1/1 test, review clean — Approved)
