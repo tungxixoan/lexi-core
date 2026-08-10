@@ -212,7 +212,8 @@ lib/
 │   │       ├── providers/   # ReadingPracticeNotifier, Part5PracticeNotifier, Part6PracticeNotifier,
 │   │       │               # Part7PracticeNotifier
 │   │       └── screens/     # ReadingHub (hub), ReadingHome/Session/Result (bilingual),
-│   │                        # Part5Home/Session/Result, Part6Home/Session/Result
+│   │                        # Part5Home/Session/Result, Part6Home/Session/Result,
+│   │                        # Part7Home/Session/Result
 │   │
 │   ├── listening/
 │   │   ├── data/sources/
