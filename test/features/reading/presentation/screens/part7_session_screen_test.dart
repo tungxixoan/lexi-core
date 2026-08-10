@@ -81,6 +81,27 @@ Widget _buildSession({Part7SessionState? session}) {
   );
 }
 
+/// Locates the `Column` built by `_QuestionGroup` for the question whose
+/// rendered text contains [questionTextSubstring] (e.g. `'Q1-2?'`), so a
+/// specific option tile can be searched for within that scope only.
+Finder _questionColumn(String questionTextSubstring) {
+  final questionFinder = find.textContaining(questionTextSubstring);
+  return find
+      .ancestor(of: questionFinder, matching: find.byWidgetPredicate((w) => w is Column))
+      .first;
+}
+
+/// Locates the `RadioListTile<int>` within [questionScope] whose title text
+/// equals [optionText] (e.g. `'a'`..`'d'`).
+Finder _optionTile(Finder questionScope, String optionText) {
+  return find.descendant(
+    of: questionScope,
+    matching: find.byWidgetPredicate(
+      (w) => w is RadioListTile<int> && (w.title as Text?)?.data == optionText,
+    ),
+  );
+}
+
 void main() {
   testWidgets('shows all 3 groups\' documents, including both documents of the double-passage group',
       (tester) async {
@@ -116,5 +137,66 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Nộp bài'));
     await tester.pumpAndSettle();
     expect(find.text('Result screen'), findsOneWidget);
+  });
+
+  testWidgets(
+      'tapping an option threads the correct group/question index end-to-end '
+      'and Nộp bài only enables once every question across all 3 groups is answered',
+      (tester) async {
+    await tester.pumpWidget(_buildSession());
+    await tester.pumpAndSettle();
+
+    FilledButton submitButton() =>
+        tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Nộp bài'));
+    bool submitEnabled() => submitButton().onPressed != null;
+
+    expect(submitEnabled(), isFalse);
+
+    // Group 1 (the second single-passage group, 4 questions), question index 2
+    // (0-based) — a non-first group/question where a swapped or miscaptured
+    // groupIndex/questionIndex would visibly select the wrong tile.
+    final targetQuestion = _questionColumn('Q1-2?');
+    final targetOptionC = _optionTile(targetQuestion, 'c');
+    await tester.ensureVisible(targetOptionC);
+    await tester.tap(targetOptionC);
+    await tester.pumpAndSettle();
+
+    // The tapped question now shows option 'c' (index 2) as selected...
+    final tappedTile = tester.widget<RadioListTile<int>>(_optionTile(targetQuestion, 'c'));
+    expect(tappedTile.groupValue, 2);
+
+    // ...while a sibling question in the SAME group remains untouched...
+    final siblingTile =
+        tester.widget<RadioListTile<int>>(_optionTile(_questionColumn('Q1-0?'), 'a'));
+    expect(siblingTile.groupValue, isNull);
+
+    // ...and a question in the double-passage group (a different groupIndex)
+    // is also untouched.
+    final otherGroupTile =
+        tester.widget<RadioListTile<int>>(_optionTile(_questionColumn('DQ0?'), 'a'));
+    expect(otherGroupTile.groupValue, isNull);
+
+    expect(submitEnabled(), isFalse);
+
+    // Now answer every remaining question, in flat (group-major) order, and
+    // confirm the submit button flips to enabled only after the very last
+    // one — proving the dynamic total-question count (3 + 4 + 5 = 12) and
+    // per-group indexing work end-to-end, not just at the notifier level.
+    const questionsInFlatOrder = [
+      'Q0-0?', 'Q0-1?', 'Q0-2?', // group 0 (3 questions)
+      'Q1-0?', 'Q1-1?', 'Q1-2?', 'Q1-3?', // group 1 (4 questions)
+      'DQ0?', 'DQ1?', 'DQ2?', 'DQ3?', 'DQ4?', // group 2, double-passage (5 questions)
+    ];
+    const options = ['a', 'b', 'c', 'd'];
+
+    for (var i = 0; i < questionsInFlatOrder.length; i++) {
+      final scope = _questionColumn(questionsInFlatOrder[i]);
+      final tile = _optionTile(scope, options[i % options.length]);
+      await tester.ensureVisible(tile);
+      await tester.tap(tile);
+      await tester.pumpAndSettle();
+      final isLast = i == questionsInFlatOrder.length - 1;
+      expect(submitEnabled(), isLast, reason: 'after tapping "${questionsInFlatOrder[i]}"');
+    }
   });
 }
