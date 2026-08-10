@@ -24,6 +24,10 @@ import '../../features/reading/presentation/screens/part6_home_screen.dart';
 import '../../features/reading/presentation/screens/part6_session_screen.dart';
 import '../../features/reading/presentation/screens/part6_result_screen.dart';
 import '../../features/reading/presentation/providers/part6_practice_provider.dart';
+import '../../features/reading/presentation/screens/part7_home_screen.dart';
+import '../../features/reading/presentation/screens/part7_session_screen.dart';
+import '../../features/reading/presentation/screens/part7_result_screen.dart';
+import '../../features/reading/presentation/providers/part7_practice_provider.dart';
 import '../../features/listening/presentation/screens/listening_home_screen.dart';
 import '../../features/listening/presentation/screens/dictation_home_screen.dart';
 import '../../features/listening/presentation/screens/dictation_session_screen.dart';
@@ -151,6 +155,28 @@ final appRouter = GoRouter(
                       },
                       builder: (context, state) => Part6ResultScreen(
                         result: state.extra as Part6SessionResult,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            GoRoute(
+              path: 'part7',
+              builder: (context, state) => const Part7HomeScreen(),
+              routes: [
+                GoRoute(
+                  path: 'session',
+                  builder: (context, state) => const Part7SessionScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'result',
+                      redirect: (context, state) {
+                        if (state.extra is! Part7SessionResult) return '/reading/part7';
+                        return null;
+                      },
+                      builder: (context, state) => Part7ResultScreen(
+                        result: state.extra as Part7SessionResult,
                       ),
                     ),
                   ],

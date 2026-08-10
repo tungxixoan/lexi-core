@@ -36,7 +36,7 @@
 - Bộ lọc luyện tập theo cấp độ CEFR mục tiêu
 
 ### Luyện đọc (Reading Practice)
-Hub với 3 tính năng con (truy cập qua tab "Luyện tập" → card "Luyện đọc"):
+Hub với 4 tính năng con (truy cập qua tab "Luyện tập" → card "Luyện đọc"):
 
 - **Đọc & gõ (Bilingual Reading Practice)**
   - AI tạo đoạn văn 4–6 câu sử dụng từ vựng trong ngân hàng của bạn
@@ -52,6 +52,10 @@ Hub với 3 tính năng con (truy cập qua tab "Luyện tập" → card "Luyệ
 - **Part 6 — Điền đoạn văn (TOEIC Text Completion)**
   - AI tạo 3 đoạn văn ngắn (email/thông báo/thư...), mỗi đoạn 4 chỗ trống trắc nghiệm — luôn có ít nhất 1 chỗ trống dạng "chọn câu phù hợp nhất" mỗi đoạn
   - Cùng cơ chế Economy TOEIC Vol 2–5, trả lời hết 12 câu rồi nộp bài, kết quả X/12 kèm giải thích từng câu và gợi ý từ mới
+  - Không ảnh hưởng SM-2
+- **Part 7 — Đọc hiểu (TOEIC Reading Comprehension)**
+  - AI tạo 2 đoạn văn đơn (3–4 câu hỏi/đoạn) + 1 bộ đoạn văn đôi (2 văn bản liên quan, 5 câu hỏi, ít nhất 1 câu cần đối chiếu cả 2 văn bản) — tổng ~11–13 câu/phiên
+  - Cùng cơ chế Economy TOEIC Vol 2–5, trả lời hết rồi nộp bài, kết quả X/N (N tính động theo số câu thực tế) kèm giải thích từng câu và gợi ý từ mới
   - Không ảnh hưởng SM-2
 
 ### Luyện nghe (Listening Practice)
@@ -197,13 +201,16 @@ lib/
 │   │   ├── data/sources/
 │   │   │   ├── reading_passage_source.dart     # AI passage gen (dùng AiClientFactory)
 │   │   │   ├── part5_source.dart                # AI Part 5 gen (TOEIC Incomplete Sentences)
-│   │   │   └── part6_source.dart                # AI Part 6 gen (TOEIC Text Completion)
+│   │   │   ├── part6_source.dart                # AI Part 6 gen (TOEIC Text Completion)
+│   │   │   └── part7_source.dart                # AI Part 7 gen + shape validation (TOEIC Reading Comprehension)
 │   │   ├── domain/
 │   │   │   ├── entities/    # ReadingPassage, BilingualSentence, EconomyVolume,
-│   │   │   │               # Part5Question/Part5Set, Part6Question/Part6Passage/Part6Set
-│   │   │   └── use_cases/   # GenerateReadingPassage, GeneratePart5Set, GeneratePart6Set
+│   │   │   │               # Part5Question/Part5Set, Part6Question/Part6Passage/Part6Set,
+│   │   │   │               # Part7Question/Part7PassageGroup/Part7Set
+│   │   │   └── use_cases/   # GenerateReadingPassage, GeneratePart5Set, GeneratePart6Set, GeneratePart7Set
 │   │   └── presentation/
-│   │       ├── providers/   # ReadingPracticeNotifier, Part5PracticeNotifier, Part6PracticeNotifier
+│   │       ├── providers/   # ReadingPracticeNotifier, Part5PracticeNotifier, Part6PracticeNotifier,
+│   │       │               # Part7PracticeNotifier
 │   │       └── screens/     # ReadingHub (hub), ReadingHome/Session/Result (bilingual),
 │   │                        # Part5Home/Session/Result, Part6Home/Session/Result
 │   │
@@ -252,6 +259,7 @@ UserSettingsNotifier (SharedPreferences)
                       ├─ ReadingPassageSource
                       ├─ Part5Source
                       ├─ Part6Source
+                      ├─ Part7Source
                       ├─ DictationSource
                       ├─ ListeningPassageSource
                       └─ WordRadarSource
@@ -399,7 +407,7 @@ flutter test test/features/dictionary/presentation/providers/user_settings_notif
 flutter test --reporter expanded
 ```
 
-Hiện tại: **432 tests** — domain entities, use cases, sources, providers, UI widgets, services.
+Hiện tại: **474 tests** — domain entities, use cases, sources, providers, UI widgets, services.
 
 ### Phân tích code
 

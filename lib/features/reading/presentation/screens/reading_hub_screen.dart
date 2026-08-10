@@ -49,6 +49,18 @@ class ReadingHubScreen extends StatelessWidget {
               onTap: () => context.go('/reading/part6'),
             ),
           ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.dynamic_feed_outlined),
+              title: const Text('Part 7 — Đọc hiểu'),
+              subtitle: const Text(
+                '2 đoạn văn đơn + 1 bộ đoạn đôi, kèm câu hỏi trắc nghiệm kiểu TOEIC Part 7.',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.go('/reading/part7'),
+            ),
+          ),
         ],
       ),
     );

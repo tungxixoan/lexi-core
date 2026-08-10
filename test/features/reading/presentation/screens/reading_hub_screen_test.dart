@@ -20,6 +20,10 @@ Widget _buildHub() {
         builder: (ctx, state) => const Scaffold(body: Text('Part6 home')),
       ),
       GoRoute(
+        path: '/reading/part7',
+        builder: (ctx, state) => const Scaffold(body: Text('Part7 home')),
+      ),
+      GoRoute(
         path: '/practice',
         builder: (ctx, state) => const Scaffold(body: Text('Practice hub')),
       ),
@@ -29,12 +33,13 @@ Widget _buildHub() {
 }
 
 void main() {
-  testWidgets('shows all 3 cards', (tester) async {
+  testWidgets('shows all 4 cards', (tester) async {
     await tester.pumpWidget(_buildHub());
     await tester.pumpAndSettle();
     expect(find.text('Đọc & gõ'), findsOneWidget);
     expect(find.text('Part 5 — Điền câu'), findsOneWidget);
     expect(find.text('Part 6 — Điền đoạn văn'), findsOneWidget);
+    expect(find.text('Part 7 — Đọc hiểu'), findsOneWidget);
   });
 
   testWidgets('tapping Đọc & gõ navigates to the bilingual home', (tester) async {
@@ -59,5 +64,13 @@ void main() {
     await tester.tap(find.text('Part 6 — Điền đoạn văn'));
     await tester.pumpAndSettle();
     expect(find.text('Part6 home'), findsOneWidget);
+  });
+
+  testWidgets('tapping Part 7 navigates to Part7 home', (tester) async {
+    await tester.pumpWidget(_buildHub());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Part 7 — Đọc hiểu'));
+    await tester.pumpAndSettle();
+    expect(find.text('Part7 home'), findsOneWidget);
   });
 }
