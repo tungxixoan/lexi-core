@@ -647,3 +647,33 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 - Stray directory the reviewer flagged as a session artifact was not found in the actual working tree (git status clean) — no action needed.
 
 ## Plan complete — Ready to merge: Yes.
+
+---
+
+# LexiCore — TOEIC Reading Part 7
+
+**Plan:** docs/superpowers/plans/2026-08-07-toeic-reading-part7.md
+**BASE commit:** b8209ac (docs: add implementation plan for TOEIC reading Part 7)
+
+## Status
+
+- Task 01: ✅ complete (commit ea696b9, 7/7 tests, review clean — Approved)
+- Task 02: ✅ complete (commits ea696b9..7d690a4, 8/8 tests, review clean after fix — Approved)
+  - Important finding fixed: test 'double-passage wrong question count' originally built group[2] with wrong document count too, accidentally re-testing the document-count branch instead of the question-count branch (`_hasValidShape` in part7_source.dart short-circuits on document count first). Fix (7d690a4) corrected the test fixture to isolate the intended branch. Production code was correct from the start.
+- Task 03: ✅ complete (commit d8a2741, 1/1 test, review clean — Approved)
+- Task 04: ✅ complete (commit 874f00a, 7/7 tests, review clean — Approved)
+  - Verified: flatIndex genuinely dynamic (not disguised fixed-multiplier), correctCount/selectAnswer route through it exclusively — the direct fix for the Part6 Critical bug, confirmed correct by review.
+  - Minor (logged, not fixed): no bounds check distinguishing valid-but-wrong flat index (pre-existing pattern shared with Part6Source, out of scope)
+- Task 05: ✅ complete (commit 09ab37d, 3/3 tests, review clean — Approved)
+  - Minor (logged, not fixed): widget test coverage shallow (no tap/interaction assertions) — inherited verbatim from brief + Part5 precedent, not a regression
+- Task 06: ✅ complete (commits 09ab37d..0f02b10, 5/5 tests, review clean after fix — Approved)
+  - Important finding fixed: original 4 widget tests never tapped a RadioListTile, only pre-set state (real onSelected -> selectAnswer -> flatIndex wiring untested). Fix (0f02b10) added an interactive test targeting group 1 (non-zero offset), verified selection lands at correct flat index + sibling/other-group slots unaffected + submit flips disabled->enabled only after all 12 taps. Implementer mutation-tested (swapped groupIndex/questionIndex, confirmed new test fails, reverted) — verified clean by reviewer diff inspection.
+  - Minor (logged, not fixed): null-state redirect path untested (consistent with Part6 precedent); ~80% structural duplication with Part5/Part6 session screens (each domain-typed, out of scope to unify now)
+- Task 07: ✅ complete (commit 247d362, 5/5 new tests + 138/138 reading suite, review clean — Approved)
+  - Verified: N dynamic (fold), X uses Part7SessionResult.correctCount (not reimplemented), ResultSuggestionsSection fed all 4 documents across all 3 groups, recordPracticeSession dynamic — all confirmed by direct code inspection.
+  - Minor (logged, not fixed): tests don't assert correct/incorrect color/icon rendering (pre-existing pattern shared with Part6 result screen test)
+- Task 08: ✅ complete (commits cb79fa1, 4d412de fix, 474/474 full suite, web build success, review clean — Approved)
+  - Important finding fixed (4d412de): README file-tree screens/ line omitted Part7Home/Session/Result (brief's own replace-block stopped one line short) — corrected directly by controller, trivial one-line doc fix.
+  - Verified: route nesting matches Part5/6, AppShell untouched, Part7ResultScreen(result:) extra-threading through GoRouter type-checked end to end (session screen -> context.go extra: -> router redirect guard -> result screen constructor).
+
+## All 8 tasks complete — proceeding to final whole-branch review.
