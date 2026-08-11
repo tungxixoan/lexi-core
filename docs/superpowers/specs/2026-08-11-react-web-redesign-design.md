@@ -34,6 +34,8 @@ Replace the current Flutter Web build (`lexi-core.web.app`) with a purpose-built
 
 React via **Next.js**, deployed on **Vercel**. Next.js is the natural fit for "React + Vercel" — colocates API routes/Server Actions with the frontend in one deploy, gives SSR and file-based routing for free. A plain Vite+React SPA was considered and rejected: it would need a separate serverless-functions setup for the backend pieces in §3.2 rather than one coherent app.
 
+**Repo structure: monorepo, one GitHub repo.** The Next.js app lives at **`apps/web/`** — a new top-level folder, *not* `web/`. This repo already has a top-level `web/` directory that is Flutter's own web-platform scaffold (`index.html`, `manifest.json`, icons — what `flutter build web` compiles from into `build/web`, which `firebase.json`'s `hosting.public` points at). Reusing that name for the Next.js app would silently collide with it. The existing Flutter code (`lib/`, `pubspec.yaml`, `web/`, `android/`, `ios/`) stays exactly where it is at the repo root, untouched. Vercel connects to this same GitHub repo with its project **Root Directory set to `apps/web/`**; Firebase Hosting keeps deploying `build/web` as today. Both coexist in the same repo/remote until the cutover in §3.6. Add `apps/web/node_modules` and `apps/web/.next` to `.gitignore`.
+
 ### 3.2 Backend / API layer
 
 Vercel serverless functions (Node runtime) expose endpoints for: LLM prompt calls (exercise/passage generation, dictionary lookups, Word Radar suggestions), TTS, and (future) STT. Long-running generations (e.g. a full Part 7 set, which needs several AI calls) should **stream the response** (SSE) to the client rather than block-and-return, both to stay under serverless execution limits and to improve perceived latency.
