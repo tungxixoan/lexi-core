@@ -2,14 +2,14 @@
 
 **Date:** 2026-08-11
 **Status:** Approved
-**Covers:** The umbrella design for replacing Flutter Web with a new React web frontend (design system + screen inventory), plus the backend/infra decisions that frontend depends on (hosting, DB, STT/TTS, LLM proxying). This spec is intentionally broad — implementation will be decomposed into multiple plans (see §9).
+**Covers:** The umbrella design for replacing Flutter Web with a new React web frontend (design system + screen inventory), plus the backend/infra decisions that frontend depends on (hosting, DB, STT/TTS, LLM proxying). This spec is intentionally broad — implementation will be decomposed into 3 plans (see §10).
 **Depends on:** none (new initiative). Does not change the Flutter mobile app or its Firebase usage.
 
 ---
 
 ## 1. Goal
 
-Replace the current Flutter Web build (`lexi-core.web.app`) with a purpose-built React web frontend, visually redesigned for more polish/appeal (the "Bloom" design system below), while the Flutter mobile app continues unchanged. Alongside the frontend rewrite, move AI-adjacent work (LLM prompt calls, STT, TTS) from direct client calls to a server layer on Vercel, for security and quality reasons — not raw speed.
+Replace the current Flutter Web build (`lexi-core.web.app`) with a purpose-built React web frontend, visually redesigned for more polish/appeal (the "Bloom" design system below), while the Flutter mobile app continues unchanged. Alongside the frontend rewrite, move AI-adjacent work — LLM prompt calls and TTS (both exist today, client-side) — to a server layer, for security and quality reasons, not raw speed. STT does not exist yet anywhere in the app (no `speech_to_text` dependency, no feature uses it) — this spec prepares a server-side home for it ahead of a future shadowing-practice feature, it is not migrating anything that currently runs.
 
 ## 2. Scope & Non-Goals
 
@@ -38,17 +38,45 @@ React via **Next.js**, deployed on **Vercel**. Next.js is the natural fit for "R
 
 ### 3.2 Backend / API layer
 
-Vercel serverless functions (Node runtime) expose endpoints for: LLM prompt calls (exercise/passage generation, dictionary lookups, Word Radar suggestions), TTS, and (future) STT. Long-running generations (e.g. a full Part 7 set, which needs several AI calls) should **stream the response** (SSE) to the client rather than block-and-return, both to stay under serverless execution limits and to improve perceived latency.
+**Scope boundary:** the Vercel backend is limited to the three AI-proxy endpoint families below — it is **not** a general data-access proxy. Firestore reads/writes and Auth (Google Sign-In) happen **client-side**, via the Firebase JS SDK in the browser, exactly the same trust model Flutter Web already uses today. Existing Firestore security rules apply unchanged — no rule changes needed, since the web app is just another authenticated client of the same Firebase project.
+
+Vercel serverless functions (Node runtime) expose:
+
+- LLM prompt calls (exercise/passage generation, dictionary lookups, Word Radar suggestions) — thin proxy to Gemini/Groq/OpenRouter using the client-supplied BYOK key (§3.5).
+- TTS and (future) STT — thin proxy to the self-hosted model service (§3.4), not run on Vercel itself.
+
+Long-running generations (e.g. a full Part 7 set, which needs several AI calls) should **stream the response** (SSE) to the client rather than block-and-return, both to stay under serverless execution limits and to improve perceived latency.
+
+**Auth requirement:** every AI-proxy endpoint requires a valid Firebase ID token (verified server-side via Firebase Admin SDK) before doing any work — including the LLM-proxy, even though callers still need their own BYOK key to get a useful response. Without this, a stranger who finds the endpoint URL can spam it and burn *your* Vercel function-invocation quota for free, even though they can't burn your AI-provider spend (they'd need their own key for that). The repo already has prior art for Admin SDK usage (`scripts/import-vocab`'s service-account credential), so this isn't new territory — the credential just moves to a Vercel env var instead of a local JSON file.
 
 ### 3.3 Database — keep Firebase, do not adopt Supabase now
 
 Supabase (Postgres) is technically a strong fit — RLS, real full-text search (on the roadmap already), pgvector if semantic Word Radar/RAG features happen later, an official Flutter SDK. But adopting it *in this same effort* would mean rewriting Auth (Google Sign-In), Firestore sync, and security rules→RLS on **both** the new web app and the already-live Flutter mobile app simultaneously with the frontend rewrite — two large risks stacked at once, over data real users already have.
 
-**Decision: keep Firestore + Firebase Auth as the single source of truth.** The React web app talks to Firebase the same way mobile does (via the backend layer using Firebase Admin SDK, or the Firebase JS SDK directly where appropriate). Supabase remains a candidate for a future, standalone migration project if a concrete need justifies it — not bundled with this one.
+**Decision: keep Firestore + Firebase Auth as the single source of truth.** The React web app talks to Firebase client-side via the Firebase JS SDK — see §3.2's scope boundary; the Vercel backend does not proxy Firestore/Auth. Supabase remains a candidate for a future, standalone migration project if a concrete need justifies it — not bundled with this one.
 
-### 3.4 STT / TTS — move server-side
+### 3.4 STT / TTS — move server-side, self-hosted open-source models
 
-Reasoning is **quality/consistency, not speed**: the Web Speech API (browser TTS/STT) is inconsistent across browsers/OS, often lacking decent Vietnamese voices, and has no reliable STT path for a future shadowing-practice feature. Server-side models (e.g. OpenAI TTS/Whisper-class APIs, or Google Cloud TTS/STT) give one consistent experience across every browser. Flutter mobile keeps `flutter_tts` (native OS voices are fine there) — this change is web-specific.
+Reasoning is **quality/consistency, not speed**: the Web Speech API (browser TTS/STT) is inconsistent across browsers/OS, often lacking decent Vietnamese voices, and has no reliable STT path for a future shadowing-practice feature. Flutter mobile keeps `flutter_tts` (native OS voices are fine there) — this change is web-specific.
+
+**Models — self-hosted open-source, not a paid third-party API:**
+
+- **TTS:** [Piper](https://github.com/rhasspy/piper) — lightweight, CPU-friendly, has both Vietnamese and English voices, low latency for short clips (words/sentences).
+- **STT (future):** [faster-whisper](https://github.com/SYSTRAN/faster-whisper) (`base`/`small` checkpoint) — CPU-friendly, good Vietnamese support.
+- Rejected: paying per-call for OpenAI TTS/Whisper API or Google Cloud TTS/STT — no reason to pay per-call for a capability decent open-weight models already cover well at this app's scale.
+
+**Hosting — Google Cloud Run, not Vercel:** these are compute-heavy model-inference workloads (no GPU on Vercel, ~250MB function-size ceiling, execution-time limits, cold model-weight loading on every serverless invocation) — fundamentally the wrong shape for Vercel functions. Piper + faster-whisper are packaged into one Docker container (a small FastAPI service) and deployed to **Cloud Run**, called by the Vercel proxy endpoints (§3.2) over HTTP with a shared secret — the Cloud Run service is never exposed directly to the browser.
+
+- Cloud Run's free tier (2M requests/mo, ~180k vCPU-seconds, ~360k GB-seconds/mo) comfortably covers personal-project scale — genuinely free, not a "trial" that later requires payment.
+- Trade-off: **scale-to-zero** — an idle container costs nothing but adds cold-start latency (a few seconds, dominated by loading model weights into memory) to the first request after a quiet period. Acceptable here because usage is session-shaped (a practice session makes several TTS/STT calls in a row; only the first pays the cold-start cost, the container stays warm for the rest of the session).
+- If cold-start latency ever becomes a real complaint, the fallback is an Oracle Cloud "Always Free" ARM VM (4 OCPU/24GB RAM, permanently free, always-on, no scale-to-zero) — logged as a deferred alternative (§9), not adopted now since it trades less latency for more ops burden (self-managed VM vs. a managed container platform).
+
+**Cache layer for pronunciation TTS (the high-frequency path):** dictionary-lookup and vocab-example pronunciation is small, static, and repeats constantly (spaced repetition re-plays the same word's audio over weeks) — a good fit for content-addressable caching, unlike freshly-AI-generated Nghe (Listening) content which is different every session and not worth caching:
+
+- Generated audio is stored in **Firebase Storage**, keyed by `sha256(text + language + voiceId)` — a pure function of the input, so identical text always resolves to the same cache entry, and the cache is **shared across all users** (not per-user), since pronunciation isn't personal data.
+- On a TTS request for lookup/vocab-example audio, the Vercel proxy checks Firebase Storage for that key first; a hit returns the stored audio directly (no Cloud Run call at all — no cold-start exposure on this path). A miss calls the Cloud Run Piper service once, stores the result at that key, then returns it.
+- "Only regenerates when the text changes" falls out of the hash-based key for free — no explicit invalidation logic needed. A stale/unused entry (e.g. an edited example sentence) just becomes an orphaned cache object; not worth cleaning up at this scale.
+- **Nghe (Listening) audio is never cached** — dictation/comprehension text is freshly AI-generated per session and essentially unique each time, so caching it wouldn't produce meaningful hit rates. Those requests always go through Cloud Run live.
 
 ### 3.5 LLM prompt calls — move server-side, keep BYOK
 
@@ -173,7 +201,11 @@ Flutter's `FilterTile` → bottom-sheet pattern doesn't fit web. Each of the 3 f
 | Frontend framework | Next.js on Vercel, not a plain Vite SPA | Colocates frontend + API layer in one deploy; Vercel is built around it |
 | Database | Keep Firebase, defer Supabase | Avoids stacking a DB migration (Auth + Firestore→Postgres + RLS, across both mobile and web) on top of a frontend rewrite; Supabase remains a candidate for a later, isolated project |
 | STT/TTS | Move server-side | Web Speech API is inconsistent cross-browser; server models give one consistent experience. Not about speed. |
+| STT/TTS models | Self-hosted open-source (Piper, faster-whisper) on Cloud Run, not a paid third-party API | No reason to pay per-call for capability decent open-weight models already cover; Cloud Run's free tier comfortably covers personal-project scale |
+| Pronunciation TTS caching | Cache in Firebase Storage keyed by `sha256(text+lang+voice)`, shared across users; Nghe (Listening) audio never cached | High-frequency reused content (word/example pronunciation) shouldn't hit the model live every time; freshly-AI-generated Listening content has no meaningful cache hit rate |
+| AI-proxy endpoint auth | Require a valid Firebase ID token on every call, verified server-side | Prevents strangers from spamming the endpoints and burning Vercel quota, even though they can't burn AI-provider spend without their own BYOK key |
 | LLM prompt calls | Move server-side, BYOK key never stored in DB | Hides the key from third-party domains and centralizes validation/streaming; storing keys server-side would create a single high-value breach target disproportionate to this app's scale |
+| Firebase access boundary | Web app talks to Firestore/Auth client-side via the JS SDK, same as Flutter Web; Vercel backend limited to AI-proxy only | No security-rule changes needed; avoids scope creep of the backend into a general data proxy |
 | Rollout | Flutter Web stays live; React ships to staging first, production cutover only after testing | Explicit user requirement — no accidental simultaneous kill of the working site |
 | Visual direction | Bloom (Warm Modern) over Playful/Gamified or Editorial Minimalist | Best fit for an adult/professional TOEIC-prep audience that still wants encouragement, not clinical minimalism or high-energy gamification |
 | Vocab detail pattern | Side Drawer over centered modal or tabbed modal | Keeps reading/list context visible behind it — important specifically for the "tra từ giữa lúc đọc passage" use case |
@@ -185,6 +217,7 @@ Flutter's `FilterTile` → bottom-sheet pattern doesn't fit web. Each of the 3 f
 
 - **Supabase migration** — revisit only as its own isolated project, if a concrete need (full-text search, pgvector/RAG, heavy relational queries) materializes.
 - **BYOK session-token optimization** — issuing a short-lived, TTL'd token after first key submission (via Vercel KV/Upstash) instead of resending the raw key every request. Logged as a possible polish, not required.
+- **Oracle Cloud "Always Free" ARM VM** — alternative to Cloud Run for the STT/TTS model host, if scale-to-zero cold-start latency ever becomes a real complaint. Trades less latency for more self-managed-server ops burden; not adopted now.
 - **Responsive/mobile-web breakpoints** — all 12 screens are desktop-only mockups; a narrow-viewport pass is separate future work.
 - **Full SM-2 detail view** (ease factor, review history chart) — explored in the Variant C tabbed-modal mockup but not carried into the chosen Side Drawer pattern. Revisit if users want it.
 
@@ -192,9 +225,10 @@ Flutter's `FilterTile` → bottom-sheet pattern doesn't fit web. Each of the 3 f
 
 ## 10. Implementation Note (decomposition)
 
-This spec is intentionally broad and covers two logically separable workstreams that should become **separate plans** under `writing-plans`, not one:
+This spec is intentionally broad and covers three logically separable workstreams that should become **separate plans** under `writing-plans`, not one:
 
-1. **Backend/infra migration** — Next.js + Vercel scaffold, the STT/TTS/LLM-proxy API endpoints, BYOK header-passthrough wiring, staging deploy.
-2. **React frontend build-out** — the Bloom design system as real components/tokens, then the screen inventory in §6, roughly in the order: Vocab Bank + Side Drawer (the most-explored pattern) → Dashboard/Lookup/Practice hub → Đọc/Nghe hubs and their session/result screens → Cài đặt.
+1. **Backend/infra core** — Next.js + Vercel scaffold, client-side Firebase wiring (Auth + Firestore, reusing existing security rules), the LLM-proxy endpoint with BYOK header passthrough and Firebase ID-token verification, staging deploy. No TTS/STT yet.
+2. **STT/TTS service** — the Piper + faster-whisper Docker container on Cloud Run, the Vercel TTS/STT proxy endpoints (reusing Plan 1's ID-token auth pattern), and the Firebase Storage pronunciation cache. Depends on Plan 1 existing (auth pattern, Vercel project) but is otherwise a self-contained deployable unit — a genuinely separate service, not just more Vercel routes.
+3. **React frontend build-out** — the Bloom design system as real components/tokens, then the screen inventory in §6, roughly in the order: Vocab Bank + Side Drawer (the most-explored pattern) → Dashboard/Lookup/Practice hub (needs Plan 2's cached pronunciation TTS) → Đọc/Nghe hubs and their session/result screens (Nghe needs Plan 2's live TTS/STT) → Cài đặt.
 
-Plan 2 depends on Plan 1's API endpoints existing (or working stubs) before session/result screens can be wired to real data.
+Plan 3 depends on Plan 1 for any screen touching Firestore/Auth/LLM generation, and on Plan 2 specifically for any screen playing pronunciation or listening audio — in practice, most screens need both before they're more than a static mockup.

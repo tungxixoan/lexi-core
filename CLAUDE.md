@@ -18,7 +18,11 @@ Both Firebase Hosting (Flutter Web) and Vercel (Next.js) deploy from this same r
 ## Backend/data decisions (see the spec above for full reasoning)
 
 - **Database stays Firebase** (Firestore + Auth) for both apps — Supabase was evaluated and deliberately deferred, not adopted.
-- AI calls (LLM prompts, TTS, future STT) move server-side for the web app via Vercel serverless functions, but stay **BYOK**: the user's own provider API key is never stored server-side or in the DB — sent per-request via header, used in-memory, never logged.
+- **Vercel backend scope is limited to AI-proxy endpoints only** (LLM, TTS, STT). It does not proxy Firestore/Auth — the web app talks to Firebase client-side via the JS SDK, same trust model as Flutter Web, existing security rules unchanged.
+- Every AI-proxy endpoint requires a valid **Firebase ID token**, verified server-side (Admin SDK), even for the LLM-proxy — stops strangers from burning Vercel quota, not AI spend (they'd still need their own BYOK key for that).
+- **LLM calls** stay **BYOK**: the user's own provider API key is never stored server-side or in the DB — sent per-request via header, used in-memory, never logged.
+- **TTS/STT use self-hosted open-source models** (Piper for TTS, faster-whisper for STT — not a paid third-party API), packaged in a Docker container on **Google Cloud Run** (free tier, scale-to-zero), called by the Vercel proxy over a shared secret — never exposed directly to the browser. This is a separate deployable service from the Next.js app, not more Vercel routes.
+- **Pronunciation TTS (dictionary/vocab-example audio) is cached** in Firebase Storage, keyed by `sha256(text+lang+voice)`, shared across all users. Nghe (Listening) audio is never cached — it's freshly AI-generated per session.
 
 ## Workflow
 
