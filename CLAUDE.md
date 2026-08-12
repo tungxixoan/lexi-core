@@ -7,7 +7,8 @@ Personal Vietnamese-first language-learning app. Full feature list lives in `REA
 This is one GitHub repo hosting two apps:
 
 - **Flutter app** (mobile + legacy web) — repo root: `lib/`, `pubspec.yaml`, `android/`, `ios/`, `web/`. Unchanged by the React redesign; still the only client for the mobile app indefinitely.
-- **React web app** (new, replaces Flutter Web) — `apps/web/` (Next.js, deployed on **Firebase App Hosting**, configured via `apphosting.yaml` to build from `apps/web/`). Not Vercel — considered, then dropped mid-spec-review once the backend's role shrank to thin proxies that Cloud Functions does natively (see spec §3.1 for the full reasoning/trade-off).
+- **React web app** (new, replaces Flutter Web) — `apps/web/` (Next.js, deployed on **Firebase App Hosting**; exact monorepo config verified against the live `firebase` CLI at implementation time, not assumed from this doc). Not Vercel — considered, then dropped mid-spec-review once the backend's role shrank to thin proxies that Cloud Functions does natively (see spec §3.1 for the full reasoning/trade-off).
+- **Backend functions** — `functions/` (Firebase CLI convention, Node.js/TypeScript), a third sibling directory alongside `web/` and `apps/web/`. Deployed with `firebase deploy --only functions` (manual CLI push, same pattern as Flutter Web's deploy — not git-triggered auto-deploy). Test locally first with the Firebase Local Emulator Suite (`firebase emulators:start`).
 
 **Naming gotcha — do not confuse these two:**
 - `web/` (top-level, no `apps/` prefix) is Flutter's own web-platform scaffold — `index.html`, `manifest.json`, icons. `flutter build web` compiles from `lib/` + this folder into `build/web`, which `firebase.json`'s `hosting.public` points at. **Never put the Next.js app here.**
@@ -33,3 +34,4 @@ Development follows the superpowers SDD flow: spec (`docs/superpowers/specs/`) �
 
 - **Flutter Web:** `flutter build web --release` then `firebase deploy --only hosting` (from repo root).
 - **Next.js web app:** push to the connected branch; Firebase App Hosting auto-deploys `apps/web/`. Production cutover is a manual, explicit step — not automatic on merge.
+- **Cloud Functions:** test locally with `firebase emulators:start`, then `firebase deploy --only functions` — manual CLI push, not auto-deployed on git push (unless a CI workflow is added later).
