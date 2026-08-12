@@ -63,3 +63,7 @@ scripts/import-vocab/*.json
 
 # Next.js (apps/web)
 apps/web/.next/
+
+# Local env files (apps/web) — Firebase web config is not secret, but keep the
+# convention of not committing .env*.local anyway.
+apps/web/.env*.local
