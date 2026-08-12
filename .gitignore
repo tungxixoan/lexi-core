@@ -60,3 +60,6 @@ docs/lexi-core-firebase-adminsdk-fbsvc-a2d70465e6.json
 scripts/import-vocab/*.json
 !scripts/import-vocab/package.json
 **/node_modules/
+
+# Next.js (apps/web)
+apps/web/.next/
