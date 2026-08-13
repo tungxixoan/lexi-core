@@ -42,7 +42,7 @@ export function getFirebaseDb() {
 let functionsEmulatorConnected = false;
 
 export function getFirebaseFunctions() {
-  const functions = getFunctions(getFirebaseApp());
+  const functions = getFunctions(getFirebaseApp(), "asia-southeast1");
   if (
     process.env.NEXT_PUBLIC_USE_FUNCTIONS_EMULATOR === "true" &&
     !functionsEmulatorConnected

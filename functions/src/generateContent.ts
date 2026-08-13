@@ -67,4 +67,4 @@ export async function generateContentHandler(
   }
 }
 
-export const generateContent = onCall(generateContentHandler);
+export const generateContent = onCall({ region: "asia-southeast1" }, generateContentHandler);
