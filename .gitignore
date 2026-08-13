@@ -67,3 +67,10 @@ apps/web/.next/
 # Local env files (apps/web) — Firebase web config is not secret, but keep the
 # convention of not committing .env*.local anyway.
 apps/web/.env*.local
+
+# Firebase/Claude Agent Skills (auto-installed/updated by `firebase init`'s
+# "Agent Skills Setup" prompt) — tool-level reference docs, not app source;
+# churns on every firebase init/CLI update, not worth tracking.
+.agents/skills/
+.claude/skills/
+skills-lock.json
