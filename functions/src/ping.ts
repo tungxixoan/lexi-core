@@ -7,4 +7,7 @@ export function pingHandler(request: CallableRequest<unknown>) {
   return { message: `pong, ${request.auth.uid}` };
 }
 
-export const ping = onCall({ region: "asia-southeast1" }, pingHandler);
+export const ping = onCall(
+  { region: "asia-southeast1", maxInstances: 10, timeoutSeconds: 30 },
+  pingHandler
+);

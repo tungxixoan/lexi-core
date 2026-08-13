@@ -90,4 +90,7 @@ export async function generateContentHandler(
   }
 }
 
-export const generateContent = onCall({ region: "asia-southeast1" }, generateContentHandler);
+export const generateContent = onCall(
+  { region: "asia-southeast1", maxInstances: 10, timeoutSeconds: 120 },
+  generateContentHandler
+);
