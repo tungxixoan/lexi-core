@@ -86,4 +86,30 @@ describe("generateContentHandler", () => {
       )
     ).rejects.toThrow(HttpsError);
   });
+
+  it("does not leak raw upstream provider error text to the client", async () => {
+    vi.mocked(callGemini).mockRejectedValue(
+      new Error(
+        "Gemini API error: 429 rate limited — user's secret prompt was: ..."
+      )
+    );
+    let caught: unknown;
+    try {
+      await generateContentHandler(
+        makeRequest({
+          provider: "gemini",
+          apiKey: "k",
+          model: "gemini-2.5-flash",
+          prompt: "hi",
+        })
+      );
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(HttpsError);
+    const httpsError = caught as HttpsError;
+    expect(httpsError.message).toBe("AI provider call failed. Please try again.");
+    expect(httpsError.message).not.toContain("secret prompt");
+    expect(httpsError.message).not.toContain("429");
+  });
 });

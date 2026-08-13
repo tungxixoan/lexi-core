@@ -1,4 +1,5 @@
 import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/https";
+import { logger } from "firebase-functions/logger";
 import { callGemini } from "./providers/gemini";
 import { callGroq, callOpenRouter } from "./providers/openAiCompatible";
 import type { GenerateContentResult } from "./providers/types";
@@ -55,10 +56,14 @@ export async function generateContentHandler(
       }
     }
   } catch (err) {
-    throw new HttpsError(
-      "internal",
-      `AI provider call failed: ${err instanceof Error ? err.message : String(err)}`
-    );
+    if (err instanceof HttpsError) {
+      throw err;
+    }
+    logger.error(`AI provider call failed (provider: ${provider})`, {
+      provider,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    throw new HttpsError("internal", "AI provider call failed. Please try again.");
   }
 }
 
