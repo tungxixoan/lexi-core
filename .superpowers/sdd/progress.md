@@ -684,3 +684,55 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 - Minor findings logged, not fixed: duplicated totalQuestions fold (provider + result screen) — candidate for a Part7Set.totalQuestions getter; _parse casts can throw TypeError not FormatException on wrong JSON types (matches Part5/6, pre-existing); _QuestionGroup naming renders one question, reads oddly; Part7HomeScreen test coverage thinner than session/result (parity with Part5/6, not a regression).
 
 ## Plan complete — Ready to merge: Yes.
+
+# LexiCore — React Web Redesign: Backend/Infra Core (Plan 1 of 3)
+
+Plan: `docs/superpowers/plans/2026-08-11-web-backend-infra-core.md`
+
+## Status
+
+- Task 01: ✅ complete (commit 1b286c7, 1/1 test, review clean — Approved)
+  - Important finding (report-only, fixed by controller, no re-review needed): implementer's report mischaracterized the jsdom 29.1.1 downgrade as a temporary workaround to revert later. Corrected in task-1-report.md — 29.1.1 is the permanent, correct pin for this repo's Node 20 target (jsdom 30.0.1 requires Node 22+). Plan document also corrected.
+- Task 02: ✅ complete (commits 1b286c7..4afb721, 2/2 tests, review clean after 2 fix rounds — Approved)
+  - Critical finding fixed: committed test suite didn't actually pass (`instanceof HttpsError` failed — firebase-functions dual ESM/CJS module resolution gave two different HttpsError classes). Fixed via a Vitest resolveId plugin forcing single-instance resolution through require.resolve.
+  - Important finding fixed: functions/lib/*.js (compiled build output) was committed with no .gitignore — untracked, functions/.gitignore added.
+  - Additional fix (controller, not re-reviewed — mechanical, verified directly): re-review surfaced a new intermittent (2/60) cold-start flake correlated with Vite's native-configLoader warning; renamed vitest.config.ts -> vitest.config.mts per Vite's own suggested fix, verified clean across 8 runs including post-cache-clear. Plan document updated to reflect .mts + the resolveId plugin as the correct Task 2 deliverable.
+- Task 03: ✅ complete (commit 8582ae1, 3/3 tests, review clean — Approved)
+  - Verified: .env.local correctly untracked (git ls-files + git check-ignore both confirmed), .env.local.example has real non-secret config values as intended.
+  - Minor (logged, not fixed, brief limitation not implementer deviation): getFirebaseConfig validation test only exercises the apiKey branch of the 6-way missing-var check.
+- Task 04: ✅ complete (commits 8582ae1..279987f, 6/6 tests, review clean — Approved)
+  - Verified: useAuthUser returns exactly {user, loading} (Task 5 dependency), 3-layer separation (auth.ts/useAuthUser.ts/SignInButton.tsx) clean.
+  - Important finding fixed (controller, report-only, no re-review needed): implementer's report didn't document the 2nd commit (mocking useAuthUser in page.test.tsx, needed because mounting SignInButton broke Task 1's jsdom smoke test via real IndexedDB access) — addendum appended to task-4-report.md.
+  - Minor (logged, not fixed, inherited from brief not implementer deviation): SignInButton.test.tsx uses `as never` cast; empty "Đăng xuất ()" if displayName+email both null.
+- Task 05: ✅ complete (commits 279987f..b12061f, 10/10 tests, review clean after fix — Approved)
+  - Important finding fixed: VocabRecordCount useEffect didn't clear stale error/count on refetch (would show old error forever after a later successful fetch). Fixed by resetting both at top of effect, verified by re-review tracing the exact scenario.
+  - Bundled proactive fix (unrelated to Task 5, same class of issue as Task 2's functions/ fix): apps/web/vitest.config.ts had no package.json "type" field either, carrying the same latent cold-start-flake risk found in functions/ — renamed to .mts + replaced __dirname with import.meta.dirname pre-emptively. Verified pristine output across 5 cold-start-simulated runs.
+  - Minor (logged, not fixed): no regression test for the error->success state transition specifically (each of the 3 existing tests covers one state independently).
+- Task 06: ✅ complete (commits b12061f..55778aa, 14/14 tests, review clean after fix — Approved)
+  - Verified (security-focused review): auth check matches ping.ts exactly, Gemini key via x-goog-api-key header, Groq/OpenRouter key via Bearer header, key never in URL, input validation rejects malformed payloads, exhaustive provider switch with never-type guard.
+  - Important finding fixed (human decision, not left as spec-mandated): catch block was forwarding raw upstream provider error text (incl. response body) verbatim to the client. Fixed to log full detail server-side via firebase-functions/logger, return only a fixed generic message to client; HttpsError instances re-thrown unchanged (also fixes a related Minor double-wrap issue). New test asserts absence of leaked text, not just error type.
+- Task 07: ✅ complete (commit 68fba77, 13/13 tests, review clean — Approved)
+  - Verified: httpsCallable targets exact "generateContent" export name from Task 6, API key flows through callable data payload only (no manual header/URL), request/response shape matches server exactly, all 3 UI states (loading/success/error) handled without crash risk.
+  - Minor (logged, not fixed, brief-inherited not implementer deviation): dead getFunctions mock entry in generateContent.test.ts; API key stays in component state after submit (consistent with BYOK, not a spec violation).
+- Task 08 (steps 1-3 only, code portion): ✅ complete (commit 7728acd, 13/13 + 14/14 tests, review clean — Approved)
+  - Verified: emulator connect guard prevents double-connect, env flag defaulted false in both example and real .env.local (confirmed directly by controller, gitignored file not visible in diff).
+  - Steps 4-8 (interactive emulator test, production deploy, App Hosting setup, live E2E verification) deliberately NOT dispatched to a subagent — requires live infra changes + human interaction (real Google sign-in, real API key). Controller stopped here to coordinate directly with user.
+- Task 08 (steps 4-6, live infra, done with user): 
+  - Step 4 (local emulator E2E): verified working end-to-end after 2 real debugging sessions — root causes found: (a) Next.js only reads .env.local at server start, requires full restart after changing NEXT_PUBLIC_USE_FUNCTIONS_EMULATOR (not hot-reloaded); (b) user initially edited .env.local.example instead of .env.local. Real Gemini response confirmed rendering on localhost:3000 via emulator.
+  - Step 5 (deploy functions to production): done. Required Blaze plan upgrade first (Cloud Functions 2nd gen / Cloud Build mandatory, not available on free Spark plan) — not previously called out explicitly in the spec's "genuinely free" framing, worth remembering for Plan 2 (Cloud Run has the same Blaze requirement).
+  - Mid-flow architecture improvement (user-initiated): moved App Hosting backend + both Cloud Functions from default us-central1 to asia-southeast1 (Singapore) — ~200ms+ RTT from Vietnam to us-central1 vs ~30-50ms to asia-southeast1, meaningful for an interactive AI-calling app. Code changed: onCall({region: "asia-southeast1"}, handler) in both functions/src/ping.ts and generateContent.ts, client's getFunctions(app, "asia-southeast1") in apps/web/src/lib/firebase.ts. Tests re-verified (14/14 + 13/13), redeployed — old us-central1 functions cleaned up via firebase deploy's own prompt.
+  - Known follow-up (not urgent, ~2.5 months runway from 2026-08-13): Cloud Functions Node 20 runtime deprecated 2026-04-30, decommissioned 2026-10-30 — needs bumping to Node 22 before then (App Hosting backend was created on nodejs22 already; functions/ should follow for consistency).
+  - App Hosting backend created: project lexi-core, region asia-southeast1, backend id "lexicore-web", root directory apps/web, runtime nodejs22.
+  - Step 7 (production E2E verification): ✅ all 4 checks pass on the live App Hosting URL (lexicore-web--lexi-core.asia-southeast1.hosted.app) — signed in for real, Firestore read shows real 290-word count (no error), generateContent returned a real Gemini response through the production Cloud Function in asia-southeast1.
+  - Extra fix along the way (not in original plan, real deploy gotcha): Firebase Auth requires the App Hosting domain to be added to Authentication > Settings > Authorized domains — signInWithPopup silently opened-and-closed until this was added. Worth remembering for any future new domain.
+  - App Hosting first deploy required manually clicking "Create rollout" in the Console and correcting "App root directory" from its wrong default `/` to `apps/web` — the Console's GitHub-connected deploy flow has its own separate root-directory setting from firebase.json's apphosting.rootDir (CLI config didn't carry over automatically).
+
+## Plan 1 (Backend/infra core) — all 8 tasks complete. Ready for final whole-branch review.
+
+## Final whole-branch review (b9bf4b8..fef7491): Ready to merge: Yes.
+- Verified independently (not just trusted the report): region agreement across all 3 declaration sites (ping.ts, generateContent.ts, firebase.ts), auth pattern zero-drift from ping.ts, BYOK key confined to headers/never logged/never in client errors, backend structurally can't reach Firestore (no firebase-admin dependency at all — stronger than convention).
+- No Critical findings. 6 Important findings — all applied as a follow-up fix batch (commits b93d098..ab53a1a): Node 20->22 runtime bump (matches App Hosting's nodejs22), region regression tests (guards Plan 2's new onCall functions from silently defaulting to us-central1), provider-error-to-HttpsError-code mapping (permission-denied/resource-exhausted/unavailable instead of one generic message — directly informed by the 2 real errors hit during Step 4 testing), maxInstances+timeoutSeconds cost ceiling on generateContent (now that Blaze billing is live), cross-reference comments linking the duplicated client/server request types, typecheck scripts + CLAUDE.md "Deploy gotchas" section (Blaze requirement, Auth authorized domains, App Hosting Console root-dir setting — previously only in this ledger).
+- Minor findings (10 of them) logged as Plan 2/3 follow-ups, not fixed now: AuthProvider context to dedupe 3 independent onAuthStateChanged listeners, shared-types package, BYOK key persistence UX decision, fetch timeouts on provider calls, VocabRecordCount stale-resolution race, gemini.ts multi-part response handling, model-string URL injection guard, GenerateContentPanel not gating on auth state, apphosting.ignore not excluding Flutter dirs (harmless, slower uploads) — see final-review output for full list if picked up later.
+- Final test count: apps/web 14/14, functions 23/23, both typecheck+build clean.
+
+## Plan 1 (Backend/infra core) — COMPLETE. All 8 tasks + final review + fix batch done. Deployed and manually verified end-to-end in production (asia-southeast1).

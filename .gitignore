@@ -64,6 +64,9 @@ scripts/import-vocab/*.json
 # Next.js (apps/web)
 apps/web/.next/
 
+# TypeScript incremental build cache (apps/web, functions)
+*.tsbuildinfo
+
 # Local env files (apps/web) — Firebase web config is not secret, but keep the
 # convention of not committing .env*.local anyway.
 apps/web/.env*.local
