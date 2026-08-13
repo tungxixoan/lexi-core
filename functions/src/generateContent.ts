@@ -4,8 +4,14 @@ import { callGemini } from "./providers/gemini";
 import { callGroq, callOpenRouter } from "./providers/openAiCompatible";
 import { ProviderApiError, type GenerateContentResult } from "./providers/types";
 
+// Keep this in sync with the client-side type of the same name in
+// apps/web/src/lib/generateContent.ts (no shared-types package yet — see
+// docs/superpowers/plans/2026-08-11-web-backend-infra-core.md Task 6/7).
 export type AiProvider = "gemini" | "groq" | "openrouter";
 
+// Keep this in sync with the client-side type of the same name in
+// apps/web/src/lib/generateContent.ts (no shared-types package yet — see
+// docs/superpowers/plans/2026-08-11-web-backend-infra-core.md Task 6/7).
 export interface GenerateContentRequest {
   provider: AiProvider;
   apiKey: string;

@@ -4,6 +4,9 @@ export interface GenerateContentParams {
   prompt: string;
 }
 
+// Keep this in sync with the client-side type of the same name in
+// apps/web/src/lib/generateContent.ts (no shared-types package yet — see
+// docs/superpowers/plans/2026-08-11-web-backend-infra-core.md Task 6/7).
 export interface GenerateContentResult {
   text: string;
 }
