@@ -1,5 +1,16 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { getFirebaseConfig } from "./firebase";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { getFunctions } from "firebase/functions";
+import { getFirebaseConfig, getFirebaseFunctions } from "./firebase";
+
+vi.mock("firebase/app", () => ({
+  initializeApp: vi.fn(() => "mock-app"),
+  getApps: vi.fn(() => []),
+  getApp: vi.fn(() => "mock-app"),
+}));
+vi.mock("firebase/functions", () => ({
+  getFunctions: vi.fn(() => "mock-functions"),
+  connectFunctionsEmulator: vi.fn(),
+}));
 
 const ENV_KEYS = [
   "NEXT_PUBLIC_FIREBASE_API_KEY",
@@ -52,5 +63,32 @@ describe("getFirebaseConfig", () => {
     setAllEnvVars();
     delete process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
     expect(() => getFirebaseConfig()).toThrow(/Missing Firebase config/);
+  });
+});
+
+describe("getFirebaseFunctions", () => {
+  const original: Record<string, string | undefined> = {};
+
+  beforeEach(() => {
+    for (const key of ENV_KEYS) {
+      original[key] = process.env[key];
+    }
+    setAllEnvVars();
+    vi.mocked(getFunctions).mockClear();
+  });
+
+  afterEach(() => {
+    for (const key of ENV_KEYS) {
+      if (original[key] === undefined) delete process.env[key];
+      else process.env[key] = original[key];
+    }
+  });
+
+  // Regression test: client and server must agree on region, or
+  // httpsCallable silently targets the wrong endpoint (defaults to
+  // us-central1) — see CLAUDE.md's region note.
+  it("requests the asia-southeast1 region, matching every onCall in functions/src/", () => {
+    getFirebaseFunctions();
+    expect(getFunctions).toHaveBeenCalledWith("mock-app", "asia-southeast1");
   });
 });

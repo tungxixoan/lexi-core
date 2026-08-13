@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { HttpsError, type CallableRequest } from "firebase-functions/v2/https";
-import { generateContentHandler } from "./generateContent";
+import { generateContentHandler, generateContent } from "./generateContent";
 import { callGemini } from "./providers/gemini";
 import { callGroq, callOpenRouter } from "./providers/openAiCompatible";
 
@@ -111,5 +111,15 @@ describe("generateContentHandler", () => {
     expect(httpsError.message).toBe("AI provider call failed. Please try again.");
     expect(httpsError.message).not.toContain("secret prompt");
     expect(httpsError.message).not.toContain("429");
+  });
+});
+
+describe("generateContent region", () => {
+  // Regression test: client (apps/web/src/lib/firebase.ts's
+  // getFunctions(app, "asia-southeast1")) and server must agree on region,
+  // or an onCall written without an explicit region option silently
+  // defaults to us-central1 and becomes unreachable from the client.
+  it("is configured for asia-southeast1, matching the client's getFunctions region", () => {
+    expect(generateContent.__endpoint.region).toEqual(["asia-southeast1"]);
   });
 });
