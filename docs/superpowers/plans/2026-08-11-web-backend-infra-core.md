@@ -15,7 +15,7 @@
 - Firestore/Auth access is **client-side only**, via the Firebase JS SDK. The backend never proxies Firestore or Auth, and existing Firestore security rules are reused unchanged — no rule changes in this plan.
 - Every AI-proxy Cloud Function must reject unauthenticated callers. `onCall` automatically verifies a token's signature **if one is present**, but does **not** automatically reject a call with no token at all — every handler needs an explicit `if (!request.auth) throw new HttpsError("unauthenticated", ...)` check.
 - BYOK: the user's own provider API key travels in the callable's `data` payload (never a URL query string, which would leak into logs), is used in-memory for one upstream call, and is never logged or persisted server-side.
-- Node 20 (matches the toolchain already installed locally — confirmed via `node --version` → `v20.20.2`).
+- Node 22 (Cloud Functions runtime; bumped from Node 20 post-Plan-1 hardening pass — see `functions/package.json`'s `engines` field and CLAUDE.md's Deploy gotchas).
 - No TTS/STT anywhere in this plan — that's Plan 2 (`getPronunciation`, `transcribeAudio`), a separate deployable Cloud Run service. This plan only builds the `generateContent` LLM proxy.
 - Reference doc for all architecture decisions and their reasoning: `docs/superpowers/specs/2026-08-11-react-web-redesign-design.md`.
 

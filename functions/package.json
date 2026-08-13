@@ -4,7 +4,7 @@
   "private": true,
   "type": "commonjs",
   "main": "lib/index.js",
-  "engines": { "node": "20" },
+  "engines": { "node": "22" },
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
