@@ -10,10 +10,12 @@ export function VocabRecordCount() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setError(null);
     if (!user) {
       setCount(null);
       return;
     }
+    setCount(null);
     countVocabRecords(user.uid)
       .then(setCount)
       .catch((err: unknown) =>
