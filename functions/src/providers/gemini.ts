@@ -1,4 +1,4 @@
-import type { GenerateContentParams, GenerateContentResult } from "./types";
+import { ProviderApiError, type GenerateContentParams, type GenerateContentResult } from "./types";
 
 interface GeminiResponse {
   candidates?: Array<{
@@ -25,7 +25,10 @@ export async function callGemini(
   );
 
   if (!response.ok) {
-    throw new Error(`Gemini API error: ${response.status} ${await response.text()}`);
+    throw new ProviderApiError(
+      `Gemini API error: ${response.status} ${await response.text()}`,
+      response.status
+    );
   }
 
   const data = (await response.json()) as GeminiResponse;

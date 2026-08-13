@@ -1,4 +1,4 @@
-import type { GenerateContentParams, GenerateContentResult } from "./types";
+import { ProviderApiError, type GenerateContentParams, type GenerateContentResult } from "./types";
 
 interface ChatCompletionsResponse {
   choices?: Array<{ message?: { content?: string } }>;
@@ -22,7 +22,10 @@ export async function callOpenAiCompatible(
   });
 
   if (!response.ok) {
-    throw new Error(`${baseUrl} API error: ${response.status} ${await response.text()}`);
+    throw new ProviderApiError(
+      `${baseUrl} API error: ${response.status} ${await response.text()}`,
+      response.status
+    );
   }
 
   const data = (await response.json()) as ChatCompletionsResponse;

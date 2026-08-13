@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { callGemini } from "./gemini";
+import { ProviderApiError } from "./types";
 
 describe("callGemini", () => {
   it("sends the API key as a header, never a query string, and returns the text", async () => {
@@ -48,5 +49,24 @@ describe("callGemini", () => {
         mockFetch as unknown as typeof fetch
       )
     ).rejects.toThrow("Gemini API error: 429 rate limited");
+  });
+
+  it("throws a ProviderApiError carrying the upstream status when the response is not ok", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: async () => "API key not valid",
+    });
+    let caught: unknown;
+    try {
+      await callGemini(
+        { apiKey: "k", model: "gemini-2.5-flash", prompt: "hi" },
+        mockFetch as unknown as typeof fetch
+      );
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(ProviderApiError);
+    expect((caught as ProviderApiError).status).toBe(401);
   });
 });

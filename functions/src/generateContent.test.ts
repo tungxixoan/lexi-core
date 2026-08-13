@@ -3,6 +3,7 @@ import { HttpsError, type CallableRequest } from "firebase-functions/v2/https";
 import { generateContentHandler, generateContent } from "./generateContent";
 import { callGemini } from "./providers/gemini";
 import { callGroq, callOpenRouter } from "./providers/openAiCompatible";
+import { ProviderApiError } from "./providers/types";
 
 vi.mock("./providers/gemini", () => ({ callGemini: vi.fn() }));
 vi.mock("./providers/openAiCompatible", () => ({
@@ -111,6 +112,112 @@ describe("generateContentHandler", () => {
     expect(httpsError.message).toBe("AI provider call failed. Please try again.");
     expect(httpsError.message).not.toContain("secret prompt");
     expect(httpsError.message).not.toContain("429");
+  });
+
+  it("maps a 401 ProviderApiError to permission-denied without leaking the response body", async () => {
+    vi.mocked(callGemini).mockRejectedValue(
+      new ProviderApiError(
+        "Gemini API error: 401 { \"error\": { \"message\": \"API key not valid. Please pass a valid API key.\" } }",
+        401
+      )
+    );
+    let caught: unknown;
+    try {
+      await generateContentHandler(
+        makeRequest({ provider: "gemini", apiKey: "k", model: "gemini-2.5-flash", prompt: "hi" })
+      );
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(HttpsError);
+    const httpsError = caught as HttpsError;
+    expect(httpsError.code).toBe("permission-denied");
+    expect(httpsError.message).toBe(
+      "Provider rejected the API key. Check it's correct and active."
+    );
+    expect(httpsError.message).not.toContain("API key not valid");
+    expect(httpsError.message).not.toContain("401");
+  });
+
+  it("maps a 403 ProviderApiError to permission-denied", async () => {
+    vi.mocked(callGemini).mockRejectedValue(
+      new ProviderApiError("Gemini API error: 403 forbidden", 403)
+    );
+    await expect(
+      generateContentHandler(
+        makeRequest({ provider: "gemini", apiKey: "k", model: "gemini-2.5-flash", prompt: "hi" })
+      )
+    ).rejects.toMatchObject({ code: "permission-denied" });
+  });
+
+  it("maps a 429 ProviderApiError to resource-exhausted without leaking the response body", async () => {
+    vi.mocked(callGroq).mockRejectedValue(
+      new ProviderApiError(
+        "https://api.groq.com/openai/v1 API error: 429 rate limit exceeded, retry after 5s",
+        429
+      )
+    );
+    let caught: unknown;
+    try {
+      await generateContentHandler(
+        makeRequest({
+          provider: "groq",
+          apiKey: "k",
+          model: "llama-3.3-70b-versatile",
+          prompt: "hi",
+        })
+      );
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(HttpsError);
+    const httpsError = caught as HttpsError;
+    expect(httpsError.code).toBe("resource-exhausted");
+    expect(httpsError.message).toBe(
+      "Provider rate limit or quota exceeded. Try again shortly."
+    );
+    expect(httpsError.message).not.toContain("retry after 5s");
+  });
+
+  it("maps a 500 ProviderApiError to unavailable without leaking the response body", async () => {
+    vi.mocked(callOpenRouter).mockRejectedValue(
+      new ProviderApiError(
+        "https://openrouter.ai/api/v1 API error: 500 internal server error, high demand",
+        500
+      )
+    );
+    let caught: unknown;
+    try {
+      await generateContentHandler(
+        makeRequest({
+          provider: "openrouter",
+          apiKey: "k",
+          model: "meta-llama/llama-3.3-70b-instruct",
+          prompt: "hi",
+        })
+      );
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(HttpsError);
+    const httpsError = caught as HttpsError;
+    expect(httpsError.code).toBe("unavailable");
+    expect(httpsError.message).toBe(
+      "Provider is temporarily unavailable. Try again in a moment."
+    );
+    expect(httpsError.message).not.toContain("high demand");
+  });
+
+  it("still falls back to the generic internal error for a plain Error (e.g. 'no text in response')", async () => {
+    vi.mocked(callGemini).mockRejectedValue(new Error("Gemini API returned no text."));
+    await expect(
+      generateContentHandler(
+        makeRequest({ provider: "gemini", apiKey: "k", model: "gemini-2.5-flash", prompt: "hi" })
+      )
+    ).rejects.toMatchObject({
+      code: "internal",
+      message: "AI provider call failed. Please try again.",
+    });
   });
 });
 
