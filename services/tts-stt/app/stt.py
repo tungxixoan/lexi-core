@@ -22,8 +22,11 @@ def _load_model() -> WhisperModel:
 
 def transcribe(audio_bytes: bytes, language: str | None = None) -> str:
     model = _load_model()
-    with tempfile.NamedTemporaryFile(suffix=".wav") as tmp_file:
-        tmp_file.write(audio_bytes)
-        tmp_file.flush()
-        segments, _info = model.transcribe(tmp_file.name, language=language, beam_size=5)
+    tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+    try:
+        tmp.write(audio_bytes)
+        tmp.close()
+        segments, _info = model.transcribe(tmp.name, language=language, beam_size=5)
         return " ".join(segment.text.strip() for segment in segments).strip()
+    finally:
+        Path(tmp.name).unlink(missing_ok=True)
