@@ -35,6 +35,15 @@ def test_transcribe_rejects_unsupported_language():
     assert response.status_code == 400
 
 
+def test_transcribe_rejects_audio_over_10mb():
+    response = client.post(
+        "/transcribe",
+        content=b"a" * 10_000_001,
+        headers={"Content-Type": "audio/wav"},
+    )
+    assert response.status_code == 400
+
+
 def test_transcribe_language_is_optional():
     with patch("app.main.stt.transcribe", return_value="hello") as mock_transcribe:
         response = client.post(

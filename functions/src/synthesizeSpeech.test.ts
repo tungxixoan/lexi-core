@@ -9,7 +9,7 @@ vi.mock("./services/cloudRunClient", async () => {
 });
 
 import { synthesizeViaCloudRun } from "./services/cloudRunClient";
-import { synthesizeSpeechHandler } from "./synthesizeSpeech";
+import { synthesizeSpeechHandler, synthesizeSpeech } from "./synthesizeSpeech";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -33,6 +33,12 @@ describe("synthesizeSpeechHandler", () => {
   it("throws invalid-argument for a malformed payload", async () => {
     await expect(
       synthesizeSpeechHandler(makeRequest({ text: "", language: "vi" }))
+    ).rejects.toMatchObject({ code: "invalid-argument" });
+  });
+
+  it("throws invalid-argument for text over 500 characters", async () => {
+    await expect(
+      synthesizeSpeechHandler(makeRequest({ text: "a".repeat(501), language: "vi" }))
     ).rejects.toMatchObject({ code: "invalid-argument" });
   });
 
@@ -60,5 +66,15 @@ describe("synthesizeSpeechHandler", () => {
     await expect(
       synthesizeSpeechHandler(makeRequest({ text: "hi", language: "vi" }))
     ).rejects.toMatchObject({ code: "internal" });
+  });
+});
+
+describe("synthesizeSpeech region", () => {
+  // Regression test: client (apps/web/src/lib/firebase.ts's
+  // getFunctions(app, "asia-southeast1")) and server must agree on region,
+  // or an onCall written without an explicit region option silently
+  // defaults to us-central1 and becomes unreachable from the client.
+  it("is configured for asia-southeast1, matching the client's getFunctions region", () => {
+    expect(synthesizeSpeech.__endpoint.region).toEqual(["asia-southeast1"]);
   });
 });

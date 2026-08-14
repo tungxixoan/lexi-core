@@ -6,7 +6,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 RUN mkdir -p voices && \
-    apt-get update && apt-get install -y --no-install-recommends curl && \
+    apt-get update && apt-get install -y --no-install-recommends curl libgomp1 && \
     curl -fsSL -o voices/vi_VN-vais1000-medium.onnx \
       https://huggingface.co/rhasspy/piper-voices/resolve/main/vi/vi_VN/vais1000/medium/vi_VN-vais1000-medium.onnx && \
     curl -fsSL -o voices/vi_VN-vais1000-medium.onnx.json \

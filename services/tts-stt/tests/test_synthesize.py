@@ -26,3 +26,8 @@ def test_synthesize_rejects_empty_text():
 def test_synthesize_rejects_unsupported_language():
     response = client.post("/synthesize", json={"text": "hello", "language": "fr"})
     assert response.status_code == 400
+
+
+def test_synthesize_rejects_text_over_500_characters():
+    response = client.post("/synthesize", json={"text": "a" * 501, "language": "vi"})
+    assert response.status_code == 400

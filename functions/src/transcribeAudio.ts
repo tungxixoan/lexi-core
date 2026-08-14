@@ -12,6 +12,7 @@ function isTranscribeAudioRequest(data: unknown): data is TranscribeAudioRequest
   return (
     typeof d.audioBase64 === "string" &&
     d.audioBase64.length > 0 &&
+    d.audioBase64.length <= 10_000_000 &&
     (d.language === undefined || d.language === "vi" || d.language === "en")
   );
 }

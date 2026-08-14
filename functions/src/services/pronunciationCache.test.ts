@@ -58,9 +58,9 @@ describe("cachePath", () => {
 
 describe("publicDownloadUrl", () => {
   it("builds a Firebase Storage download URL with an encoded path", () => {
-    const url = publicDownloadUrl("lexi-core.appspot.com", "tts-cache/word/vi/x/abc.wav");
+    const url = publicDownloadUrl("lexi-core.firebasestorage.app", "tts-cache/word/vi/x/abc.wav");
     expect(url).toBe(
-      "https://firebasestorage.googleapis.com/v0/b/lexi-core.appspot.com/o/tts-cache%2Fword%2Fvi%2Fx%2Fabc.wav?alt=media"
+      "https://firebasestorage.googleapis.com/v0/b/lexi-core.firebasestorage.app/o/tts-cache%2Fword%2Fvi%2Fx%2Fabc.wav?alt=media"
     );
   });
 });
@@ -71,7 +71,7 @@ function fakeBucket(exists: boolean) {
     exists: vi.fn().mockResolvedValue([exists]),
     save,
   });
-  const bucket: MinimalCacheBucket = { name: "lexi-core.appspot.com", file };
+  const bucket: MinimalCacheBucket = { name: "lexi-core.firebasestorage.app", file };
   return { bucket, file, save };
 }
 

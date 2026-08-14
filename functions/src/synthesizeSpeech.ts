@@ -12,6 +12,7 @@ function isSynthesizeSpeechRequest(data: unknown): data is SynthesizeSpeechReque
   return (
     typeof d.text === "string" &&
     d.text.trim().length > 0 &&
+    d.text.trim().length <= 500 &&
     (d.language === "vi" || d.language === "en")
   );
 }

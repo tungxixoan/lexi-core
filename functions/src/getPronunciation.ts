@@ -25,6 +25,7 @@ function isGetPronunciationRequest(data: unknown): data is GetPronunciationReque
   return (
     typeof d.text === "string" &&
     d.text.trim().length > 0 &&
+    d.text.trim().length <= 500 &&
     (d.language === "vi" || d.language === "en") &&
     (d.tier === "word" || d.tier === "sentence")
   );

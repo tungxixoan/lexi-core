@@ -9,7 +9,7 @@ vi.mock("./services/cloudRunClient", async () => {
 });
 
 import { transcribeViaCloudRun } from "./services/cloudRunClient";
-import { transcribeAudioHandler } from "./transcribeAudio";
+import { transcribeAudioHandler, transcribeAudio } from "./transcribeAudio";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -42,6 +42,12 @@ describe("transcribeAudioHandler", () => {
     ).rejects.toMatchObject({ code: "invalid-argument" });
   });
 
+  it("throws invalid-argument for audioBase64 over 10MB", async () => {
+    await expect(
+      transcribeAudioHandler(makeRequest({ audioBase64: "a".repeat(10_000_001) }))
+    ).rejects.toMatchObject({ code: "invalid-argument" });
+  });
+
   it("throws failed-precondition when TTS_STT_SERVICE_URL is unset", async () => {
     vi.stubEnv("TTS_STT_SERVICE_URL", "");
     await expect(
@@ -63,5 +69,15 @@ describe("transcribeAudioHandler", () => {
       "vi"
     );
     expect(result).toEqual({ text: "xin chao", language: "vi" });
+  });
+});
+
+describe("transcribeAudio region", () => {
+  // Regression test: client (apps/web/src/lib/firebase.ts's
+  // getFunctions(app, "asia-southeast1")) and server must agree on region,
+  // or an onCall written without an explicit region option silently
+  // defaults to us-central1 and becomes unreachable from the client.
+  it("is configured for asia-southeast1, matching the client's getFunctions region", () => {
+    expect(transcribeAudio.__endpoint.region).toEqual(["asia-southeast1"]);
   });
 });
