@@ -4,7 +4,9 @@
   "private": true,
   "type": "commonjs",
   "main": "lib/index.js",
-  "engines": { "node": "22" },
+  "engines": {
+    "node": "22"
+  },
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
@@ -12,7 +14,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "firebase-functions": "7.3.2"
+    "firebase-functions": "7.3.2",
+    "google-auth-library": "^10.9.1"
   },
   "devDependencies": {
     "typescript": "7.0.2",
