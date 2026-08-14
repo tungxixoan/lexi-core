@@ -1,8 +1,10 @@
 import { GoogleAuth } from "google-auth-library";
 import { HttpsError } from "firebase-functions/v2/https";
 
+let cachedAuth: GoogleAuth | undefined;
+
 function getAuth(): GoogleAuth {
-  return new GoogleAuth();
+  return (cachedAuth ??= new GoogleAuth());
 }
 
 export class CloudRunCallError extends Error {
