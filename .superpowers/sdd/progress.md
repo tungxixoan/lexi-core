@@ -815,3 +815,25 @@ Reviewer (Opus) independently re-verified plan fidelity across all 6 tasks toget
 ## All 6 tasks complete — proceeding to final whole-branch review.
 
 ## Plan 3 Phase A (Bloom Foundation + Vocab Bank) — COMPLETE. All 6 tasks + final whole-branch review + fix batch (commits 445ee6e..a1cb602) done, all re-reviewed clean. Final test count: apps/web 50/50, typecheck clean, build clean. Manual emulator/production verification (deleting a throwaway word, confirming it doesn't reappear after a Flutter relaunch) still needs to be done live with the user before this is fully done — see Recommendations above.
+
+**Live manual test (2026-08-15, done with the user):** ran `npm run dev`, user opened the real app in their own browser, signed in with Google, and confirmed the real screen against production data — 290 saved words rendered correctly, sidebar/active-state/Bloom styling all correct, sign-in gate worked. Confirmed working end-to-end against real Firestore data, not just mocks.
+
+---
+
+# LexiCore — Vocab Bank Polish (full-width shell, multi-select pagination, edit modal)
+
+**Design:** docs/superpowers/specs/2026-08-15-vocab-bank-polish-design.md
+**Plan:** docs/superpowers/plans/2026-08-15-vocab-bank-polish.md
+**BASE commit:** bfbc2e2 (docs: add Vocab Bank polish implementation plan)
+
+Follow-up work raised by the user after live-testing Plan 3 Phase A against real production data: (1) remove the app-frame's 1440px cap, (2) multi-select filter chips with client-side cached/paginated scroll list (OR within a facet, AND across facets), (3) an edit modal for vocab records (meaning/examples/topics-max-2/notes), closing the "Sửa" gap Phase A deliberately deferred. 7 tasks, same subagent-driven-development process as Phase A, directly on `master`.
+
+## Status
+
+- Task 1 (Full-width app shell): not started
+- Task 2 (Multi-select filters): not started
+- Task 3 (usePaginatedScroll hook): not started
+- Task 4 (Wire pagination into list): not started
+- Task 5 (updateVocabRecord): not started
+- Task 6 (EditVocabModal component): not started
+- Task 7 (Wire Sửa to edit modal): not started
