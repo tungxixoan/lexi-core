@@ -5,17 +5,18 @@ import { useAuthUser } from "@/lib/useAuthUser";
 import { deleteVocabRecord, getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics, type Topic } from "@/lib/topics";
 import { formatDueLabel } from "@/lib/vocabDisplay";
+import { isFilterActive, matchesFilters, type VocabFilterState } from "@/lib/vocabFilters";
 import { SignInButton } from "@/components/SignInButton";
 import { VocabDrawer } from "@/components/vocab-bank/VocabDrawer";
-
-type FilterKey = "all" | "due" | `topic:${string}` | `cefr:${string}`;
 
 export default function VocabBankPage() {
   const { user, loading: authLoading } = useAuthUser();
   const [records, setRecords] = useState<VocabRecord[] | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<FilterKey>("all");
+  const [dueOnly, setDueOnly] = useState(false);
+  const [selectedTopicIds, setSelectedTopicIds] = useState<Set<string>>(new Set());
+  const [selectedCefrLevels, setSelectedCefrLevels] = useState<Set<string>>(new Set());
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -50,21 +51,38 @@ export default function VocabBankPage() {
     return Array.from(new Set(records.map((r) => r.cefrLevel))).sort();
   }, [records]);
 
+  const filters: VocabFilterState = { dueOnly, topicIds: selectedTopicIds, cefrLevels: selectedCefrLevels };
+  const filterActive = isFilterActive(filters);
+
   const filtered = useMemo(() => {
     if (!records) return [];
-    if (filter === "all") return records;
-    if (filter === "due") return records.filter(isDue);
-    if (filter.startsWith("topic:")) {
-      const topicId = filter.slice("topic:".length);
-      return records.filter((r) => r.topicIds.includes(topicId));
-    }
-    if (filter.startsWith("cefr:")) {
-      const level = filter.slice("cefr:".length);
-      return records.filter((r) => r.cefrLevel === level);
-    }
-    return records;
+    return records.filter((r) => matchesFilters(r, filters, isDue));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [records, filter, now]);
+  }, [records, dueOnly, selectedTopicIds, selectedCefrLevels, now]);
+
+  const toggleTopic = (id: string) => {
+    setSelectedTopicIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleCefr = (level: string) => {
+    setSelectedCefrLevels((prev) => {
+      const next = new Set(prev);
+      if (next.has(level)) next.delete(level);
+      else next.add(level);
+      return next;
+    });
+  };
+
+  const clearFilters = () => {
+    setDueOnly(false);
+    setSelectedTopicIds(new Set());
+    setSelectedCefrLevels(new Set());
+  };
 
   const selected = records?.find((r) => r.id === selectedId) ?? null;
 
@@ -102,17 +120,17 @@ export default function VocabBankPage() {
       <p className="scr-sub">{records.length} từ trong Ngân hàng từ vựng.</p>
       {deleteError && <p role="alert">Lỗi xoá từ: {deleteError}</p>}
       <div className="vb-toolbar">
-        <button className={`vb-chip${filter === "all" ? " active" : ""}`} onClick={() => setFilter("all")}>
+        <button className={`vb-chip${!filterActive ? " active" : ""}`} onClick={clearFilters}>
           Tất cả ({records.length})
         </button>
-        <button className={`vb-chip${filter === "due" ? " active" : ""}`} onClick={() => setFilter("due")}>
+        <button className={`vb-chip${dueOnly ? " active" : ""}`} onClick={() => setDueOnly((v) => !v)}>
           Cần ôn hôm nay ({records.filter(isDue).length})
         </button>
         {topicChips.map((t) => (
           <button
             key={t.id}
-            className={`vb-chip${filter === `topic:${t.id}` ? " active" : ""}`}
-            onClick={() => setFilter(`topic:${t.id}`)}
+            className={`vb-chip${selectedTopicIds.has(t.id) ? " active" : ""}`}
+            onClick={() => toggleTopic(t.id)}
           >
             {t.name}
           </button>
@@ -120,12 +138,17 @@ export default function VocabBankPage() {
         {cefrChips.map((level) => (
           <button
             key={level}
-            className={`vb-chip${filter === `cefr:${level}` ? " active" : ""}`}
-            onClick={() => setFilter(`cefr:${level}`)}
+            className={`vb-chip${selectedCefrLevels.has(level) ? " active" : ""}`}
+            onClick={() => toggleCefr(level)}
           >
             {level.toUpperCase()}
           </button>
         ))}
+        {filterActive && (
+          <button className="vb-chip vb-chip-clear" onClick={clearFilters}>
+            ✕ Xoá lọc
+          </button>
+        )}
       </div>
       <div className="vb-shell">
         <div className="vb-list-wrap">

@@ -463,3 +463,9 @@ p.scr-sub {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.vb-chip-clear {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}

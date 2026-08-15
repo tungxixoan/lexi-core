@@ -47,6 +47,24 @@ const RECORD_NOT_DUE = {
   nextReviewAt: "2099-01-01T00:00:00.000Z",
 };
 
+const RECORD_TRAVEL_A1 = {
+  ...RECORD_DUE_TODAY,
+  id: "3",
+  headword: "passport",
+  meaning: "hộ chiếu",
+  topicIds: ["travel"],
+  cefrLevel: "a1",
+  nextReviewAt: "2099-01-01T00:00:00.000Z",
+};
+
+const TOPIC_BUSINESS = {
+  id: "business",
+  name: "Business",
+  emoji: "💼",
+  isPredefined: true,
+  createdAt: "2026-01-01T00:00:00.000Z",
+};
+
 describe("VocabBankPage", () => {
   it("prompts sign-in when logged out", () => {
     vi.mocked(useAuthUser).mockReturnValue({ user: null, loading: false });
@@ -153,5 +171,63 @@ describe("VocabBankPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Xoá" }));
 
     expect(deleteVocabRecord).not.toHaveBeenCalled();
+  });
+
+  it("OR-combines multiple CEFR chips within the same facet", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      [RECORD_DUE_TODAY, RECORD_NOT_DUE, RECORD_TRAVEL_A1] as never
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<VocabBankPage />);
+    await screen.findByText("relocate"); // b2
+    await screen.findByText("meticulous"); // c1
+    await screen.findByText("passport"); // a1
+
+    fireEvent.click(screen.getByRole("button", { name: "B2" }));
+    fireEvent.click(screen.getByRole("button", { name: "C1" }));
+
+    expect(screen.getByText("relocate")).toBeInTheDocument();
+    expect(screen.getByText("meticulous")).toBeInTheDocument();
+    expect(screen.queryByText("passport")).not.toBeInTheDocument();
+  });
+
+  it("AND-combines across facets (topic AND cefr)", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      [RECORD_DUE_TODAY, RECORD_NOT_DUE, RECORD_TRAVEL_A1] as never
+    );
+    vi.mocked(getTopics).mockResolvedValue([TOPIC_BUSINESS] as never);
+
+    render(<VocabBankPage />);
+    await screen.findByText("relocate");
+
+    fireEvent.click(screen.getByText("Business")); // RECORD_DUE_TODAY + RECORD_NOT_DUE both "business"
+    fireEvent.click(screen.getByRole("button", { name: "C1" })); // only RECORD_NOT_DUE is c1
+
+    expect(screen.queryByText("relocate")).not.toBeInTheDocument();
+    expect(screen.getByText("meticulous")).toBeInTheDocument();
+    expect(screen.queryByText("passport")).not.toBeInTheDocument();
+  });
+
+  it("shows Xoá lọc only when a filter is active, and it resets everything", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue([RECORD_DUE_TODAY, RECORD_NOT_DUE] as never);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<VocabBankPage />);
+    await screen.findByText("relocate");
+
+    expect(screen.queryByText("✕ Xoá lọc")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "C1" }));
+    expect(screen.getByText("✕ Xoá lọc")).toBeInTheDocument();
+    expect(screen.queryByText("relocate")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("✕ Xoá lọc"));
+    expect(screen.queryByText("✕ Xoá lọc")).not.toBeInTheDocument();
+    expect(screen.getByText("relocate")).toBeInTheDocument();
+    expect(screen.getByText("meticulous")).toBeInTheDocument();
   });
 });
