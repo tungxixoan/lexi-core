@@ -84,6 +84,13 @@ const MANY_RECORDS = Array.from({ length: 15 }, (_, i) => ({
   meaning: `nghĩa-${i}`,
 }));
 
+const HUGE_RECORDS = Array.from({ length: 250 }, (_, i) => ({
+  ...RECORD_DUE_TODAY,
+  id: `huge-${i}`,
+  headword: `w${i}`,
+  meaning: `m${i}`,
+}));
+
 describe("VocabBankPage", () => {
   it("prompts sign-in when logged out", () => {
     vi.mocked(useAuthUser).mockReturnValue({ user: null, loading: false });
@@ -315,5 +322,22 @@ describe("VocabBankPage", () => {
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(updateVocabRecord).not.toHaveBeenCalled();
+  });
+
+  it("shows a windowed page bar (not all 25 buttons) for a large result set", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue(HUGE_RECORDS as never);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<VocabBankPage />);
+    await screen.findByText("w0");
+
+    // 250 records / 10 per page = 25 pages; windowed around page 1 -> 1, 2, 3, …, 25
+    expect(screen.getByRole("button", { name: "1" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "2" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "3" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "25" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "13" })).not.toBeInTheDocument();
+    expect(screen.getByText("…")).toBeInTheDocument();
   });
 });

@@ -663,3 +663,10 @@ p.scr-sub {
   padding: 9px 0;
   cursor: pointer;
 }
+
+.vb-page-ellipsis {
+  padding: 0 4px;
+  color: var(--ink-faint);
+  font-size: 12.5px;
+  align-self: center;
+}

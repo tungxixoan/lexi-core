@@ -13,6 +13,7 @@ import { getTopics, type Topic } from "@/lib/topics";
 import { formatDueLabel } from "@/lib/vocabDisplay";
 import { isFilterActive, matchesFilters, type VocabFilterState } from "@/lib/vocabFilters";
 import { usePaginatedScroll } from "@/lib/usePaginatedScroll";
+import { getPageWindow } from "@/lib/pageWindow";
 import { SignInButton } from "@/components/SignInButton";
 import { VocabDrawer } from "@/components/vocab-bank/VocabDrawer";
 import { EditVocabModal } from "@/components/vocab-bank/EditVocabModal";
@@ -192,15 +193,21 @@ export default function VocabBankPage() {
       )}
       {totalPages > 1 && (
         <div className="vb-pagination">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button
-              key={page}
-              className={`vb-page-btn${page === currentPage ? " active" : ""}`}
-              onClick={() => jumpToPage(page)}
-            >
-              {page}
-            </button>
-          ))}
+          {getPageWindow(currentPage, totalPages).map((page, i) =>
+            page === "…" ? (
+              <span className="vb-page-ellipsis" key={`ellipsis-${i}`}>
+                …
+              </span>
+            ) : (
+              <button
+                key={page}
+                className={`vb-page-btn${page === currentPage ? " active" : ""}`}
+                onClick={() => jumpToPage(page)}
+              >
+                {page}
+              </button>
+            )
+          )}
         </div>
       )}
     </>
