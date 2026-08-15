@@ -16,6 +16,7 @@ import { usePaginatedScroll } from "@/lib/usePaginatedScroll";
 import { SignInButton } from "@/components/SignInButton";
 import { VocabDrawer } from "@/components/vocab-bank/VocabDrawer";
 import { EditVocabModal } from "@/components/vocab-bank/EditVocabModal";
+import { TopicFilterPopover } from "@/components/vocab-bank/TopicFilterPopover";
 
 export default function VocabBankPage() {
   const { user, loading: authLoading } = useAuthUser();
@@ -49,12 +50,6 @@ export default function VocabBankPage() {
   const isDue = (r: VocabRecord) =>
     r.nextReviewAt === null || new Date(r.nextReviewAt).getTime() <= now.getTime();
 
-  const topicChips = useMemo(() => {
-    if (!records) return [];
-    const idsWithWords = new Set(records.flatMap((r) => r.topicIds));
-    return topics.filter((t) => idsWithWords.has(t.id));
-  }, [records, topics]);
-
   const cefrChips = useMemo(() => {
     if (!records) return [];
     return Array.from(new Set(records.map((r) => r.cefrLevel))).sort();
@@ -75,15 +70,6 @@ export default function VocabBankPage() {
 
   const { visibleItems, totalPages, currentPage, containerRef, sentinelRef, jumpToPage } =
     usePaginatedScroll(filtered, filterSignature);
-
-  const toggleTopic = (id: string) => {
-    setSelectedTopicIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
 
   const toggleCefr = (level: string) => {
     setSelectedCefrLevels((prev) => {
@@ -151,15 +137,7 @@ export default function VocabBankPage() {
         <button className={`vb-chip${dueOnly ? " active" : ""}`} onClick={() => setDueOnly((v) => !v)}>
           Cần ôn hôm nay ({records.filter(isDue).length})
         </button>
-        {topicChips.map((t) => (
-          <button
-            key={t.id}
-            className={`vb-chip${selectedTopicIds.has(t.id) ? " active" : ""}`}
-            onClick={() => toggleTopic(t.id)}
-          >
-            {t.name}
-          </button>
-        ))}
+        <TopicFilterPopover topics={topics} selectedTopicIds={selectedTopicIds} onApply={setSelectedTopicIds} />
         {cefrChips.map((level) => (
           <button
             key={level}

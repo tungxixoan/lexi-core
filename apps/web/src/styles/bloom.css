@@ -624,3 +624,42 @@ p.scr-sub {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.vb-topic-popover-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.vb-topic-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 320px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 18px 40px -14px rgba(54, 42, 51, 0.35);
+  z-index: 10;
+}
+
+.vb-topic-popover-opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 12px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.vb-topic-popover-apply {
+  width: 100%;
+  font-size: 12.5px;
+  font-weight: 700;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: none;
+  border-radius: 999px;
+  padding: 9px 0;
+  cursor: pointer;
+}

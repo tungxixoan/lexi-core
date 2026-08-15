@@ -222,7 +222,9 @@ describe("VocabBankPage", () => {
     render(<VocabBankPage />);
     await screen.findByText("relocate");
 
-    fireEvent.click(screen.getByText("Business")); // RECORD_DUE_TODAY + RECORD_NOT_DUE both "business"
+    fireEvent.click(screen.getByRole("button", { name: "Chủ đề ▾" }));
+    fireEvent.click(screen.getByRole("button", { name: "💼 Business" }));
+    fireEvent.click(screen.getByRole("button", { name: "Áp dụng" }));
     fireEvent.click(screen.getByRole("button", { name: "C1" })); // only RECORD_NOT_DUE is c1
 
     expect(screen.queryByText("relocate")).not.toBeInTheDocument();
