@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import "@/styles/bloom.css";
 
 export const metadata = {
   title: "LexiCore",
