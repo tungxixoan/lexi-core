@@ -1,10 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
-import { getDocs } from "firebase/firestore";
-import { countVocabRecords } from "./vocabRecords";
+import { deleteDoc, doc, getDocs, orderBy, query } from "firebase/firestore";
+import { countVocabRecords, deleteVocabRecord, getVocabRecords } from "./vocabRecords";
 
 vi.mock("firebase/firestore", () => ({
   collection: vi.fn(() => "mock-collection-ref"),
+  doc: vi.fn(() => "mock-doc-ref"),
+  deleteDoc: vi.fn(),
   getDocs: vi.fn(),
+  orderBy: vi.fn(() => "mock-order-by"),
+  query: vi.fn(() => "mock-query"),
 }));
 
 vi.mock("./firebase", () => ({
@@ -16,5 +20,49 @@ describe("countVocabRecords", () => {
     vi.mocked(getDocs).mockResolvedValue({ size: 3 } as never);
     const count = await countVocabRecords("user-123");
     expect(count).toBe(3);
+  });
+});
+
+const RECORD = {
+  id: "abc",
+  headword: "meticulous",
+  inputType: "word",
+  ipa: "/məˈtɪkjələs/",
+  meaning: "tỉ mỉ, cẩn thận",
+  examples: ["She reviewed the contract with meticulous attention to detail."],
+  personalNotes: "",
+  topicIds: ["business"],
+  targetLanguage: "english",
+  cefrLevel: "c1",
+  activeContext: "business",
+  createdAt: "2026-08-10T00:00:00.000Z",
+  updatedAt: "2026-08-10T00:00:00.000Z",
+  nextReviewAt: null,
+  sm2Repetitions: 0,
+  sm2EaseFactor: 2.5,
+  sm2Interval: 1,
+  definition: "",
+  synonyms: [],
+};
+
+describe("getVocabRecords", () => {
+  it("queries the subcollection ordered by createdAt desc and returns the raw docs", async () => {
+    vi.mocked(getDocs).mockResolvedValue({
+      docs: [{ data: () => RECORD }],
+    } as never);
+
+    const records = await getVocabRecords("user-123");
+
+    expect(orderBy).toHaveBeenCalledWith("createdAt", "desc");
+    expect(query).toHaveBeenCalledWith("mock-collection-ref", "mock-order-by");
+    expect(records).toEqual([RECORD]);
+  });
+});
+
+describe("deleteVocabRecord", () => {
+  it("deletes the record document by id", async () => {
+    await deleteVocabRecord("user-123", "abc");
+    expect(doc).toHaveBeenCalledWith("mock-db", "users", "user-123", "vocab_records", "abc");
+    expect(deleteDoc).toHaveBeenCalledWith("mock-doc-ref");
   });
 });
