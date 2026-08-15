@@ -831,7 +831,7 @@ Follow-up work raised by the user after live-testing Plan 3 Phase A against real
 ## Status
 
 - Task 1 (Full-width app shell): complete (commit 500a718, 51/51 tests, review clean — Approved). One-line CSS removal, colocated test extracts the actual `.app-frame` rule block via regex rather than a loose whole-file substring check.
-- Task 2 (Multi-select filters): not started
+- Task 2 (Multi-select filters): complete (commit 94bed35, 61/61 tests, review clean — Approved). OR-within/AND-across semantics hand-verified by reviewer against `matchesFilters` with 2 concrete scenarios. Implementer disclosed and fixed 2 real bugs in the plan's own brief test code (topic chip test needed a `getTopics` fixture to render at all; `getByText("B2")`/`getByText("C1")` were ambiguous against row `.dot` badges showing the same text) — reviewer independently confirmed the ambiguity was real (row is a `role="button"` div with 4 concatenated spans as its accessible name) and the `getByRole` fix correctly disambiguates without weakening intent.
 - Task 3 (usePaginatedScroll hook): not started
 - Task 4 (Wire pagination into list): not started
 - Task 5 (updateVocabRecord): not started
