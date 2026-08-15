@@ -2,11 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import VocabBankPage from "./page";
 import { useAuthUser } from "@/lib/useAuthUser";
-import { deleteVocabRecord, getVocabRecords } from "@/lib/vocabRecords";
+import { deleteVocabRecord, getVocabRecords, updateVocabRecord } from "@/lib/vocabRecords";
 import { getTopics } from "@/lib/topics";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
-vi.mock("@/lib/vocabRecords", () => ({ getVocabRecords: vi.fn(), deleteVocabRecord: vi.fn() }));
+vi.mock("@/lib/vocabRecords", () => ({
+  getVocabRecords: vi.fn(),
+  deleteVocabRecord: vi.fn(),
+  updateVocabRecord: vi.fn(),
+}));
 vi.mock("@/lib/topics", () => ({ getTopics: vi.fn() }));
 vi.mock("@/components/SignInButton", () => ({
   SignInButton: () => <button>Đăng nhập với Google</button>,
@@ -270,5 +274,44 @@ describe("VocabBankPage", () => {
     fireEvent.click(screen.getByText("2"));
 
     expect(screen.getByText("word-14")).toBeInTheDocument();
+  });
+
+  it("opens the edit modal from the drawer and saves changes in place", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue([RECORD_DUE_TODAY, RECORD_NOT_DUE] as never);
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(updateVocabRecord).mockResolvedValue(undefined);
+
+    render(<VocabBankPage />);
+    await screen.findByText("relocate");
+    fireEvent.click(screen.getByText("meticulous"));
+    fireEvent.click(screen.getByRole("button", { name: "Sửa" }));
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByDisplayValue("tỉ mỉ, cẩn thận"), {
+      target: { value: "nghĩa đã sửa" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Lưu" }));
+
+    await waitFor(() => expect(updateVocabRecord).toHaveBeenCalledWith("u1", "2", expect.any(Object)));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    // Both the list row and the still-open drawer reflect the update in place (no refetch).
+    expect(screen.getAllByText("nghĩa đã sửa")).toHaveLength(2);
+  });
+
+  it("closes the edit modal without saving when Huỷ is clicked", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue([RECORD_DUE_TODAY, RECORD_NOT_DUE] as never);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<VocabBankPage />);
+    await screen.findByText("relocate");
+    fireEvent.click(screen.getByText("meticulous"));
+    fireEvent.click(screen.getByRole("button", { name: "Sửa" }));
+    fireEvent.click(screen.getByRole("button", { name: "Huỷ" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(updateVocabRecord).not.toHaveBeenCalled();
   });
 });

@@ -9,9 +9,10 @@ interface VocabDrawerProps {
   topics: Topic[];
   onClose: () => void;
   onDelete: () => void;
+  onEdit: () => void;
 }
 
-export function VocabDrawer({ record, topics, onClose, onDelete }: VocabDrawerProps) {
+export function VocabDrawer({ record, topics, onClose, onDelete, onEdit }: VocabDrawerProps) {
   const mastery = computeMasteryPercent(record);
   const topicNames = resolveTopicNames(record.topicIds, topics);
 
@@ -82,9 +83,7 @@ export function VocabDrawer({ record, topics, onClose, onDelete }: VocabDrawerPr
             </div>
           </div>
           <div className="fa">
-            <button disabled title="Sắp ra mắt">
-              Sửa
-            </button>
+            <button onClick={onEdit}>Sửa</button>
             <button className="danger" onClick={onDelete}>
               Xoá
             </button>

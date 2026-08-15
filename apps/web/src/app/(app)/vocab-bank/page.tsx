@@ -2,13 +2,20 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useAuthUser } from "@/lib/useAuthUser";
-import { deleteVocabRecord, getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
+import {
+  deleteVocabRecord,
+  getVocabRecords,
+  updateVocabRecord,
+  type VocabRecord,
+  type VocabRecordUpdate,
+} from "@/lib/vocabRecords";
 import { getTopics, type Topic } from "@/lib/topics";
 import { formatDueLabel } from "@/lib/vocabDisplay";
 import { isFilterActive, matchesFilters, type VocabFilterState } from "@/lib/vocabFilters";
 import { usePaginatedScroll } from "@/lib/usePaginatedScroll";
 import { SignInButton } from "@/components/SignInButton";
 import { VocabDrawer } from "@/components/vocab-bank/VocabDrawer";
+import { EditVocabModal } from "@/components/vocab-bank/EditVocabModal";
 
 export default function VocabBankPage() {
   const { user, loading: authLoading } = useAuthUser();
@@ -20,6 +27,7 @@ export default function VocabBankPage() {
   const [selectedCefrLevels, setSelectedCefrLevels] = useState<Set<string>>(new Set());
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     setError(null);
@@ -103,6 +111,15 @@ export default function VocabBankPage() {
     }
   };
 
+  const handleUpdate = async (updates: VocabRecordUpdate) => {
+    if (!user || !selected) return;
+    await updateVocabRecord(user.uid, selected.id, updates);
+    setRecords((prev) =>
+      prev ? prev.map((r) => (r.id === selected.id ? { ...r, ...updates } : r)) : prev
+    );
+    setEditing(false);
+  };
+
   if (authLoading) return <p>Đang tải…</p>;
 
   if (!user) {
@@ -179,9 +196,18 @@ export default function VocabBankPage() {
             topics={topics}
             onClose={() => setSelectedId(null)}
             onDelete={() => void handleDelete(selected.id)}
+            onEdit={() => setEditing(true)}
           />
         )}
       </div>
+      {editing && selected && (
+        <EditVocabModal
+          record={selected}
+          topics={topics}
+          onClose={() => setEditing(false)}
+          onSave={handleUpdate}
+        />
+      )}
       {totalPages > 1 && (
         <div className="vb-pagination">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (

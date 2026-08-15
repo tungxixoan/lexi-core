@@ -32,7 +32,7 @@ const TOPICS: Topic[] = [
 
 describe("VocabDrawer", () => {
   it("renders the headword, IPA, CEFR pill, meaning, examples, synonyms, resolved topic names, and notes", () => {
-    render(<VocabDrawer record={RECORD} topics={TOPICS} onClose={vi.fn()} onDelete={vi.fn()} />);
+    render(<VocabDrawer record={RECORD} topics={TOPICS} onClose={vi.fn()} onDelete={vi.fn()} onEdit={vi.fn()} />);
 
     expect(screen.getByRole("heading", { name: "meticulous" })).toBeInTheDocument();
     expect(screen.getByText("/məˈtɪkjələs/")).toBeInTheDocument();
@@ -47,27 +47,31 @@ describe("VocabDrawer", () => {
   });
 
   it("shows the computed mastery percentage", () => {
-    render(<VocabDrawer record={RECORD} topics={TOPICS} onClose={vi.fn()} onDelete={vi.fn()} />);
+    render(<VocabDrawer record={RECORD} topics={TOPICS} onClose={vi.fn()} onDelete={vi.fn()} onEdit={vi.fn()} />);
     // sm2Repetitions=3, sm2EaseFactor=2.5 -> 50% (see vocabDisplay.test.ts)
     expect(screen.getByText("50%")).toBeInTheDocument();
   });
 
   it("calls onClose when the close button is clicked", () => {
     const onClose = vi.fn();
-    render(<VocabDrawer record={RECORD} topics={TOPICS} onClose={onClose} onDelete={vi.fn()} />);
+    render(<VocabDrawer record={RECORD} topics={TOPICS} onClose={onClose} onDelete={vi.fn()} onEdit={vi.fn()} />);
     fireEvent.click(screen.getByLabelText("Đóng"));
     expect(onClose).toHaveBeenCalledOnce();
   });
 
   it("calls onDelete when Xoá is clicked", () => {
     const onDelete = vi.fn();
-    render(<VocabDrawer record={RECORD} topics={TOPICS} onClose={vi.fn()} onDelete={onDelete} />);
+    render(<VocabDrawer record={RECORD} topics={TOPICS} onClose={vi.fn()} onDelete={onDelete} onEdit={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: "Xoá" }));
     expect(onDelete).toHaveBeenCalledOnce();
   });
 
-  it("renders Sửa as disabled (deferred — no edit-flow mockup exists yet)", () => {
-    render(<VocabDrawer record={RECORD} topics={TOPICS} onClose={vi.fn()} onDelete={vi.fn()} />);
-    expect(screen.getByRole("button", { name: "Sửa" })).toBeDisabled();
+  it("calls onEdit when Sửa is clicked", () => {
+    const onEdit = vi.fn();
+    render(
+      <VocabDrawer record={RECORD} topics={TOPICS} onClose={vi.fn()} onDelete={vi.fn()} onEdit={onEdit} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Sửa" }));
+    expect(onEdit).toHaveBeenCalledOnce();
   });
 });
