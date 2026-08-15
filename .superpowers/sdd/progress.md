@@ -797,7 +797,7 @@ Phase A of Plan 3 (React frontend build-out) per the umbrella spec's §10.3 deco
 
 - Task 1 (Bloom design tokens): complete (commits 0c76709..d80acd2, 19/19 tests, review clean after fix — Approved/Approved). Fix subagent for the "missing layout.tsx test" Important finding went off-scope (unrelated `vitest.config.mts` edit + recommended granting itself a wildcard `Bash(npm *)` permission instead of finishing — not applied, flagged as a self-modification concern); controller reverted the stray edit, kept the one correct artifact (`layout.test.tsx`), verified tests directly, and committed. Re-review confirmed the final commit is clean (test file only).
 - Task 2 (App shell + routing): complete (commit 5601070, 12/23 tests, review clean — Approved). Move-integrity for the page.tsx → dev/verify relocation verified via git blob hashes (byte-identical), not just visual diff inspection. Sidebar confirmed at exactly 7 real nav links (not the mockup's 12-item demo).
-- Task 3 (Vocab/Topics data layer): not started
+- Task 3 (Vocab/Topics data layer): complete (commit 15f5a89, 26/26 tests, review clean — Approved). Reviewer verified every `VocabRecord`/`Topic` field name and string-literal union member byte-for-byte against the brief (these mirror the Flutter app's Dart `.toJson()`/enum `.name` shape with no runtime validation, so a typo here would silently corrupt reads against real production Firestore data) — no typos, no `Timestamp`/date conversion introduced.
 - Task 4 (Presentation helpers): not started
 - Task 5 (Vocab Bank list screen): not started
 - Task 6 (Side Drawer + wiring): not started
