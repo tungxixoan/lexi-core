@@ -83,3 +83,16 @@ Saving calls a new `updateVocabRecord(uid, id, updates)` Firestore write (does n
 
 - If the Vocab Bank ever needs to scale past a few thousand records, revisit §3.2's client-side-only decision.
 - A "sửa trước khi lưu" modal for the future Lookup (Tra từ) screen (Phase B) is a separate, not-yet-designed piece of work — this doc only covers editing an *already-saved* record from the Vocab Bank drawer.
+
+---
+
+## 6. Addendum (added after live-testing against production data)
+
+Four follow-on decisions made after the first 7 tasks shipped and were tested live against the real 290-record Vocab Bank:
+
+1. **Pagination must not reset on data mutation.** The final whole-branch review found (and empirically reproduced) that saving an edit or deleting a record collapsed the paginated list back to page 1, because the pagination hook reset whenever the `records` array got a new reference — which happens on every save/delete, not just a filter change. Fix: the hook resets on an explicit filter-identity signal, not on `items` array identity.
+2. **The page-number bar's active state must track the page actually visible on screen, not "how much has been revealed so far."** Confirmed via the same review: clicking page 1 after having scrolled to page 3 left the bar showing page 3 as active. Chosen fix (the more thorough of two options presented): real scroll-position tracking via `IntersectionObserver` watching the first row of each page-group — no DOM contract change for the hook's consumer, still just rows + a trailing sentinel.
+3. **Topic filter shows all synced topics via a popover, not just topics with saved words.** The user found the Flutter app already has 20 predefined topics (plus user-added custom ones) and the web app's Vocab Bank filter was silently limited to only the ~7 topics that happened to have a saved word already, which is inconsistent. Two display strategies were mocked and visually compared (a live HTML/CSS mockup, not just described) — a "Chủ đề ▾" popover trigger (anchored panel, multi-select chips, Áp dụng button, matching spec §7.3's already-established pattern) versus an inline "Xem thêm chủ đề" expand-in-place row. **Popover chosen** — keeps the toolbar's width constant regardless of topic count (7 or 70), and the component is reusable for the not-yet-built Practice hub filters.
+4. **The page-number bar must show a windowed subset of pages, not every page number.** 290 records ÷ 10/page = 29 buttons rendered at once today — the user flagged this will only get worse as the Vocab Bank grows. Chosen pattern (confirmed with the user): `1 … 4 5 [6] 7 8 … 29` — first page, last page, and ±2 pages around the current page, with "…" filling any gap.
+
+These four are folded into the same implementation plan as Tasks 8-11 (see the plan doc) rather than a new plan, since they're fixes/refinements to the same screen this whole document already covers.
