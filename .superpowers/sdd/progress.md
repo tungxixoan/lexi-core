@@ -830,7 +830,7 @@ Follow-up work raised by the user after live-testing Plan 3 Phase A against real
 
 ## Status
 
-- Task 1 (Full-width app shell): not started
+- Task 1 (Full-width app shell): complete (commit 500a718, 51/51 tests, review clean — Approved). One-line CSS removal, colocated test extracts the actual `.app-frame` rule block via regex rather than a loose whole-file substring check.
 - Task 2 (Multi-select filters): not started
 - Task 3 (usePaginatedScroll hook): not started
 - Task 4 (Wire pagination into list): not started
