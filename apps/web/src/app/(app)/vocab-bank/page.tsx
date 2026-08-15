@@ -69,8 +69,12 @@ export default function VocabBankPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [records, dueOnly, selectedTopicIds, selectedCefrLevels, now]);
 
+  const filterSignature = `${dueOnly}|${Array.from(selectedTopicIds).sort().join(",")}|${Array.from(
+    selectedCefrLevels
+  ).sort().join(",")}`;
+
   const { visibleItems, totalPages, currentPage, containerRef, sentinelRef, jumpToPage } =
-    usePaginatedScroll(filtered);
+    usePaginatedScroll(filtered, filterSignature);
 
   const toggleTopic = (id: string) => {
     setSelectedTopicIds((prev) => {
