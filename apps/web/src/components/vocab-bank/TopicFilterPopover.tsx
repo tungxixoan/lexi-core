@@ -11,7 +11,7 @@ interface TopicFilterPopoverProps {
 
 export function TopicFilterPopover({ topics, selectedTopicIds, onApply }: TopicFilterPopoverProps) {
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<Set<string>>(new Set(selectedTopicIds));
+  const [draft, setDraft] = useState<Set<string>>(new Set());
 
   const openPopover = () => {
     setDraft(new Set(selectedTopicIds));

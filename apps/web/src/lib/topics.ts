@@ -12,5 +12,8 @@ export interface Topic {
 export async function getTopics(uid: string): Promise<Topic[]> {
   const col = collection(getFirebaseDb(), "users", uid, "topics");
   const snapshot = await getDocs(col);
-  return snapshot.docs.map((d) => ({ ...(d.data() as Topic), id: d.id }));
+  return snapshot.docs.map((d) => {
+    const data = d.data() as Topic;
+    return { ...data, id: d.id, emoji: data.emoji ?? "📌" };
+  });
 }

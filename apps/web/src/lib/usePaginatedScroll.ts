@@ -10,6 +10,10 @@ export function usePaginatedScroll<T>(items: T[], resetKey: string | number) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const pendingScrollPageRef = useRef<number | null>(null);
+  // Mirrors `visibleCount` so the sentinel callback below can read the
+  // current value without calling a setState updater from inside another
+  // updater (React requires updater functions to be pure).
+  const visibleCountRef = useRef(visibleCount);
 
   // Resets only on a genuine filter change (the caller-provided resetKey),
   // not on every `items` array identity change — `filtered` gets a new
@@ -21,23 +25,26 @@ export function usePaginatedScroll<T>(items: T[], resetKey: string | number) {
   }, [resetKey]);
 
   useEffect(() => {
+    visibleCountRef.current = visibleCount;
+  }, [visibleCount]);
+
+  useEffect(() => {
     const sentinel = sentinelRef.current;
     const container = containerRef.current;
     if (!sentinel || !container) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          setVisibleCount((prev) => {
-            const next = Math.min(prev + PAGE_SIZE, items.length);
-            if (next > prev) {
-              // Optimistic: reaching the sentinel means the user has
-              // scrolled past everything currently revealed, so treat the
-              // newly revealed page as "current" — the scroll-tracking
-              // observer below corrects this if they then scroll back up.
-              setViewedPage(Math.ceil(next / PAGE_SIZE));
-            }
-            return next;
-          });
+          const prev = visibleCountRef.current;
+          const next = Math.min(prev + PAGE_SIZE, items.length);
+          if (next > prev) {
+            setVisibleCount(next);
+            // Optimistic: reaching the sentinel means the user has
+            // scrolled past everything currently revealed, so treat the
+            // newly revealed page as "current" — the scroll-tracking
+            // observer below corrects this if they then scroll back up.
+            setViewedPage(Math.ceil(next / PAGE_SIZE));
+          }
         }
       },
       { root: container, threshold: 0.1 }
@@ -54,7 +61,7 @@ export function usePaginatedScroll<T>(items: T[], resetKey: string | number) {
     if (!container) return;
 
     const pageByElement = new Map<Element, number>();
-    const rows = Array.from(container.children).slice(0, visibleCount);
+    const rows = Array.from(container.children).slice(0, Math.min(visibleCount, items.length));
     rows.forEach((row, i) => {
       if (i % PAGE_SIZE === 0) {
         pageByElement.set(row, Math.floor(i / PAGE_SIZE) + 1);
@@ -77,7 +84,7 @@ export function usePaginatedScroll<T>(items: T[], resetKey: string | number) {
 
     pageByElement.forEach((_, el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [visibleCount]);
+  }, [visibleCount, items]);
 
   const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
 
@@ -115,7 +122,7 @@ export function usePaginatedScroll<T>(items: T[], resetKey: string | number) {
   return {
     visibleItems: items.slice(0, visibleCount),
     totalPages,
-    currentPage: viewedPage,
+    currentPage: Math.min(viewedPage, totalPages),
     containerRef,
     sentinelRef,
     jumpToPage,

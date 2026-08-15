@@ -340,4 +340,50 @@ describe("VocabBankPage", () => {
     expect(screen.queryByRole("button", { name: "13" })).not.toBeInTheDocument();
     expect(screen.getByText("…")).toBeInTheDocument();
   });
+
+  it("re-centers the windowed page bar when a distant page button is clicked", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue(HUGE_RECORDS as never);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<VocabBankPage />);
+    await screen.findByText("w0");
+
+    // Window centered on page 1: 1, 2, 3, …, 25.
+    expect(screen.getByRole("button", { name: "2" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "23" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "25" }));
+
+    // currentPage now feeds getPageWindow as 25, re-centering the window
+    // around the end: 1, …, 23, 24, 25.
+    expect(await screen.findByRole("button", { name: "23" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "24" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "2" })).not.toBeInTheDocument();
+    expect(screen.getByText("w249")).toBeInTheDocument();
+  });
+
+  it("resets pagination back to page 1 when a topic filter is applied via the popover", async () => {
+    // Renders 250 rows twice (full reveal, then reset back down) — jsdom
+    // needs more than the default 5s budget for that much DOM work.
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue(HUGE_RECORDS as never);
+    vi.mocked(getTopics).mockResolvedValue([TOPIC_BUSINESS] as never);
+
+    render(<VocabBankPage />);
+    await screen.findByText("w0");
+
+    fireEvent.click(screen.getByRole("button", { name: "25" }));
+    expect(await screen.findByText("w249")).toBeInTheDocument();
+
+    // Applying the Business filter doesn't narrow HUGE_RECORDS (every record
+    // already has topicIds: ["business"]) — the point here is proving the
+    // "genuine filter change" reset path fires, not that the filter narrows.
+    fireEvent.click(screen.getByRole("button", { name: "Chủ đề ▾" }));
+    fireEvent.click(screen.getByRole("button", { name: "💼 Business" }));
+    fireEvent.click(screen.getByRole("button", { name: "Áp dụng" }));
+
+    expect(screen.getByText("w9")).toBeInTheDocument();
+    expect(screen.queryByText("w249")).not.toBeInTheDocument();
+  }, 10000);
 });
