@@ -1601,9 +1601,808 @@ git commit -m "feat(web): wire Sửa button to the edit modal with in-place save
 
 ---
 
-## Final verification (whole plan)
+## Addendum (added after final whole-branch review + live user testing)
 
-- [ ] Run the full test suite: `npm --prefix apps/web test` — expect all tests (Phase A's + every test added in this plan) to pass.
+Tasks 8-10 below were added after Tasks 1-7 were implemented, reviewed, and tested live against the real 290-word Vocab Bank. They fix two real bugs the whole-branch review found (pagination silently resetting on save/delete, and the page bar's active state never decreasing) and one product-consistency gap the user found (topic filter silently limited to ~7 of 20+ synced topics). See `docs/superpowers/specs/2026-08-15-vocab-bank-polish-design.md` §6 for the full design rationale, including the two options mocked and visually compared for the topic display (a popover was chosen).
+
+**Additional Global Constraint for these 3 tasks:** the `usePaginatedScroll` test file's fake `IntersectionObserver` needs to support *multiple simultaneous instances* (the hook creates two: one watching the reveal sentinel, one watching per-page marker rows for scroll tracking) — tests must trigger the correct instance for a given target element, not assume a single global instance.
+
+---
+
+## Task 8: Fix pagination reset-on-mutation + track real scroll position
+
+**Files:**
+- Modify: `apps/web/src/lib/usePaginatedScroll.ts`
+- Modify: `apps/web/src/lib/usePaginatedScroll.test.tsx`
+- Modify: `apps/web/src/app/(app)/vocab-bank/page.tsx`
+
+**Interfaces:**
+- `usePaginatedScroll<T>` gains a required second parameter, `resetKey: string | number`. Its returned `currentPage` now reflects the row actually visible on screen (via a second `IntersectionObserver`), not "how much has been revealed so far". Everything else about its return shape (`visibleItems`, `totalPages`, `containerRef`, `sentinelRef`, `jumpToPage`) is unchanged.
+- Produces: the DOM contract (rows as the first N children of the container, sentinel as the next sibling) is **unchanged** — the new scroll-tracking observer reads `container.children` positionally, exactly like the existing `scrollToPage` already does. No new elements, no `data-*` attributes required from the consumer.
+
+**Bugs being fixed (both empirically confirmed by the whole-branch review):**
+1. The hook reset `visibleCount` whenever the `items` array got a new reference (`useEffect(..., [items])`). But `filtered` (passed as `items`) gets a new array reference on *every* `setRecords` call, including a successful edit or delete — not just when the user changes a filter. Result: saving an edit or deleting a word from page 12 of 29 silently snapped the list back to page 1.
+2. `currentPage` was derived from `visibleCount` (`Math.ceil(min(visibleCount, items.length) / PAGE_SIZE)`), which only ever increases (revealing more never un-reveals). Clicking page 1 after having scrolled to page 3 left the page bar showing page 3 as active, because `visibleCount` never went down.
+
+- [ ] **Step 1: Write the failing tests**
+
+Replace `apps/web/src/lib/usePaginatedScroll.test.tsx` entirely:
+
+```tsx
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, render, screen } from "@testing-library/react";
+import { usePaginatedScroll } from "./usePaginatedScroll";
+
+class FakeIntersectionObserver {
+  static instances: FakeIntersectionObserver[] = [];
+  callback: IntersectionObserverCallback;
+  observedTargets: Element[] = [];
+  observe = vi.fn((el: Element) => {
+    this.observedTargets.push(el);
+  });
+  disconnect = vi.fn();
+  unobserve = vi.fn();
+  constructor(callback: IntersectionObserverCallback) {
+    this.callback = callback;
+    FakeIntersectionObserver.instances.push(this);
+  }
+  trigger(target: Element, isIntersecting: boolean) {
+    act(() => {
+      this.callback([{ isIntersecting, target } as IntersectionObserverEntry], this as never);
+    });
+  }
+}
+
+// Returns the most recently created fake observer that is watching `target`
+// — the scroll-tracking observer is torn down and recreated every time
+// `visibleCount` changes, so an older, already-disconnected instance may
+// still technically list the same target in its (never-cleared) history.
+function observerFor(target: Element): FakeIntersectionObserver {
+  const matches = FakeIntersectionObserver.instances.filter((o) =>
+    o.observedTargets.includes(target)
+  );
+  const found = matches[matches.length - 1];
+  if (!found) throw new Error("No fake IntersectionObserver is watching this element");
+  return found;
+}
+
+beforeEach(() => {
+  FakeIntersectionObserver.instances = [];
+  vi.stubGlobal("IntersectionObserver", FakeIntersectionObserver as never);
+  Element.prototype.scrollIntoView = vi.fn();
+});
+
+const ITEMS = Array.from({ length: 25 }, (_, i) => `item-${i}`);
+
+function TestList({ items, resetKey }: { items: string[]; resetKey: string | number }) {
+  const { visibleItems, containerRef, sentinelRef, currentPage, totalPages, jumpToPage } =
+    usePaginatedScroll(items, resetKey);
+  return (
+    <div>
+      <div ref={containerRef} data-testid="container">
+        {visibleItems.map((item) => (
+          <div key={item}>{item}</div>
+        ))}
+        <div ref={sentinelRef} data-testid="sentinel" />
+      </div>
+      <p data-testid="page-info">
+        {currentPage}/{totalPages}
+      </p>
+      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+        <button key={page} onClick={() => jumpToPage(page)}>
+          page-{page}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function clickButton(text: string) {
+  act(() => {
+    screen.getByText(text).click();
+  });
+}
+
+function revealSentinel() {
+  const sentinel = screen.getByTestId("sentinel");
+  observerFor(sentinel).trigger(sentinel, true);
+}
+
+function viewRow(text: string) {
+  const row = screen.getByText(text);
+  observerFor(row).trigger(row, true);
+}
+
+describe("usePaginatedScroll", () => {
+  it("starts with only the first 10 of 25 items visible, on page 1", () => {
+    render(<TestList items={ITEMS} resetKey="a" />);
+    expect(screen.getByText("item-0")).toBeInTheDocument();
+    expect(screen.getByText("item-9")).toBeInTheDocument();
+    expect(screen.queryByText("item-10")).not.toBeInTheDocument();
+    expect(screen.getByTestId("page-info")).toHaveTextContent("1/3");
+  });
+
+  it("reveals the next 10 items when the sentinel intersects", () => {
+    render(<TestList items={ITEMS} resetKey="a" />);
+    revealSentinel();
+    expect(screen.getByText("item-19")).toBeInTheDocument();
+    expect(screen.queryByText("item-20")).not.toBeInTheDocument();
+  });
+
+  it("caps visible count at the item list length", () => {
+    render(<TestList items={ITEMS} resetKey="a" />);
+    revealSentinel();
+    revealSentinel();
+    revealSentinel();
+    expect(screen.getByText("item-24")).toBeInTheDocument();
+  });
+
+  it("jumpToPage reveals a not-yet-visible page, scrolls to its first row, and updates the page bar immediately", () => {
+    render(<TestList items={ITEMS} resetKey="a" />);
+    clickButton("page-3");
+    expect(screen.getByText("item-24")).toBeInTheDocument();
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
+    expect(screen.getByTestId("page-info")).toHaveTextContent("3/3");
+  });
+
+  it("jumpToPage scrolls immediately when the target page is already revealed", () => {
+    render(<TestList items={ITEMS} resetKey="a" />);
+    revealSentinel(); // reveal page 2 (20 visible)
+    vi.mocked(Element.prototype.scrollIntoView).mockClear();
+    clickButton("page-1");
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("item-19")).toBeInTheDocument(); // still 20 visible, no extra reveal
+  });
+
+  it("resets to the first page when resetKey changes (a genuine filter change)", () => {
+    const { rerender } = render(<TestList items={ITEMS} resetKey="filter-a" />);
+    revealSentinel();
+    expect(screen.getByTestId("page-info")).toHaveTextContent("2/3");
+
+    const NEW_ITEMS = Array.from({ length: 5 }, (_, i) => `new-${i}`);
+    act(() => {
+      rerender(<TestList items={NEW_ITEMS} resetKey="filter-b" />);
+    });
+    expect(screen.getByTestId("page-info")).toHaveTextContent("1/1");
+    expect(screen.getByText("new-0")).toBeInTheDocument();
+  });
+
+  it("does NOT reset pagination when items changes but resetKey stays the same (e.g. an edit or delete)", () => {
+    const { rerender } = render(<TestList items={ITEMS} resetKey="filter-a" />);
+    revealSentinel();
+    expect(screen.getByTestId("page-info")).toHaveTextContent("2/3");
+
+    // Simulate an edit/delete: a brand-new array reference, one item
+    // removed, but the same filter (same resetKey).
+    const MUTATED_ITEMS = ITEMS.filter((_, i) => i !== 24);
+    act(() => {
+      rerender(<TestList items={MUTATED_ITEMS} resetKey="filter-a" />);
+    });
+    expect(screen.getByText("item-0")).toBeInTheDocument();
+    expect(screen.getByText("item-19")).toBeInTheDocument(); // still showing through page 2
+  });
+
+  it("tracks the real scroll position — the page bar reflects the row actually in view, not just how much is revealed", () => {
+    render(<TestList items={ITEMS} resetKey="a" />);
+    revealSentinel(); // reveal 20 items (page 2)
+    expect(screen.getByTestId("page-info")).toHaveTextContent("2/3");
+
+    // Simulate scrolling back up: page 1's first row becomes the topmost visible row again.
+    viewRow("item-0");
+    expect(screen.getByTestId("page-info")).toHaveTextContent("1/3");
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npm --prefix apps/web test`
+Expected: FAIL — `usePaginatedScroll` doesn't accept a second argument yet, and doesn't do real scroll tracking.
+
+- [ ] **Step 3: Implement**
+
+Replace `apps/web/src/lib/usePaginatedScroll.ts` entirely:
+
+```ts
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+const PAGE_SIZE = 10;
+
+export function usePaginatedScroll<T>(items: T[], resetKey: string | number) {
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [viewedPage, setViewedPage] = useState(1);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const pendingScrollPageRef = useRef<number | null>(null);
+
+  // Resets only on a genuine filter change (the caller-provided resetKey),
+  // not on every `items` array identity change — `filtered` gets a new
+  // array reference on every save/delete too, and those must NOT collapse
+  // the list back to page 1.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+    setViewedPage(1);
+  }, [resetKey]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    const container = containerRef.current;
+    if (!sentinel || !container) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, items.length));
+        }
+      },
+      { root: container, threshold: 0.1 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [items.length]);
+
+  // Real scroll-position tracking: watch the first row of each revealed
+  // page-group so the page bar's "active" state reflects what's actually
+  // visible, not just "how much has been revealed so far".
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const pageByElement = new Map<Element, number>();
+    const rows = Array.from(container.children).slice(0, visibleCount);
+    rows.forEach((row, i) => {
+      if (i % PAGE_SIZE === 0) {
+        pageByElement.set(row, Math.floor(i / PAGE_SIZE) + 1);
+      }
+    });
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let best: number | null = null;
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const page = pageByElement.get(entry.target);
+            if (page !== undefined && (best === null || page > best)) best = page;
+          }
+        }
+        if (best !== null) setViewedPage(best);
+      },
+      { root: container, threshold: 0, rootMargin: "0px 0px -85% 0px" }
+    );
+
+    pageByElement.forEach((_, el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [visibleCount]);
+
+  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+
+  const scrollToPage = (page: number) => {
+    const container = containerRef.current;
+    if (!container) return;
+    const rowIndex = (page - 1) * PAGE_SIZE;
+    const rowEl = container.children[rowIndex] as HTMLElement | undefined;
+    rowEl?.scrollIntoView({ block: "start" });
+  };
+
+  const jumpToPage = (page: number) => {
+    const clamped = Math.min(Math.max(page, 1), totalPages);
+    const neededCount = Math.min(clamped * PAGE_SIZE, items.length);
+    // Optimistic: the scroll-tracking observer above corrects this if the
+    // user then scrolls manually, but the click should feel instant.
+    setViewedPage(clamped);
+    if (neededCount > visibleCount) {
+      pendingScrollPageRef.current = clamped;
+      setVisibleCount(neededCount);
+    } else {
+      scrollToPage(clamped);
+    }
+  };
+
+  useEffect(() => {
+    if (pendingScrollPageRef.current !== null) {
+      const page = pendingScrollPageRef.current;
+      pendingScrollPageRef.current = null;
+      scrollToPage(page);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleCount]);
+
+  return {
+    visibleItems: items.slice(0, visibleCount),
+    totalPages,
+    currentPage: viewedPage,
+    containerRef,
+    sentinelRef,
+    jumpToPage,
+  };
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npm --prefix apps/web test`
+Expected: PASS.
+
+- [ ] **Step 5: Pass a filter-identity resetKey from the Vocab Bank page**
+
+Modify `apps/web/src/app/(app)/vocab-bank/page.tsx` — replace the hook call:
+
+```tsx
+  const filterSignature = `${dueOnly}|${Array.from(selectedTopicIds).sort().join(",")}|${Array.from(
+    selectedCefrLevels
+  ).sort().join(",")}`;
+
+  const { visibleItems, totalPages, currentPage, containerRef, sentinelRef, jumpToPage } =
+    usePaginatedScroll(filtered, filterSignature);
+```
+
+(This replaces the existing `const { visibleItems, totalPages, currentPage, containerRef, sentinelRef, jumpToPage } = usePaginatedScroll(filtered);` line — same destructured variables, now with the second `filterSignature` argument.)
+
+- [ ] **Step 6: Run test to verify it passes**
+
+Run: `npm --prefix apps/web test`
+Expected: PASS — full suite green, including the existing 2-record and 15-record Vocab Bank page tests (both stay well under a filter change during their scenarios, so this change is invisible to them).
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add apps/web/src/lib/usePaginatedScroll.ts apps/web/src/lib/usePaginatedScroll.test.tsx "apps/web/src/app/(app)/vocab-bank/page.tsx"
+git commit -m "fix(web): stop pagination resetting on save/delete, track real scroll position"
+```
+
+---
+
+## Task 9: Topic filter — show all synced topics via a popover
+
+**Files:**
+- Create: `apps/web/src/components/vocab-bank/TopicFilterPopover.tsx`
+- Create: `apps/web/src/components/vocab-bank/TopicFilterPopover.test.tsx`
+- Modify: `apps/web/src/app/(app)/vocab-bank/page.tsx`
+- Modify: `apps/web/src/app/(app)/vocab-bank/page.test.tsx`
+- Modify: `apps/web/src/styles/bloom.css`
+
+**Interfaces:**
+- Produces: `<TopicFilterPopover topics={Topic[]} selectedTopicIds={Set<string>} onApply={(ids: Set<string>) => void} />`. Committing a selection only happens on "Áp dụng" — toggling chips inside the open popover updates a local draft, not the parent's state, until applied.
+
+- [ ] **Step 1: Write the failing test**
+
+Create `apps/web/src/components/vocab-bank/TopicFilterPopover.test.tsx`:
+
+```tsx
+import { describe, expect, it, vi } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { TopicFilterPopover } from "./TopicFilterPopover";
+import type { Topic } from "@/lib/topics";
+
+const TOPICS: Topic[] = [
+  { id: "business", name: "Business", emoji: "💼", isPredefined: true, createdAt: "2026-01-01" },
+  { id: "travel", name: "Travel", emoji: "✈️", isPredefined: true, createdAt: "2026-01-01" },
+  { id: "academic", name: "Academic", emoji: "🎓", isPredefined: true, createdAt: "2026-01-01" },
+];
+
+describe("TopicFilterPopover", () => {
+  it("shows the trigger closed by default, with no count when nothing is selected", () => {
+    render(<TopicFilterPopover topics={TOPICS} selectedTopicIds={new Set()} onApply={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "Chủ đề ▾" })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("shows the selected count on the trigger", () => {
+    render(
+      <TopicFilterPopover
+        topics={TOPICS}
+        selectedTopicIds={new Set(["business", "travel"])}
+        onApply={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("button", { name: "Chủ đề ▾ (2)" })).toBeInTheDocument();
+  });
+
+  it("opens the popover listing every topic, not just ones with saved words", () => {
+    render(<TopicFilterPopover topics={TOPICS} selectedTopicIds={new Set()} onApply={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Chủ đề ▾" }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "💼 Business" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "✈️ Travel" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "🎓 Academic" })).toBeInTheDocument();
+  });
+
+  it("toggling a topic inside the popover does not call onApply until Áp dụng is clicked", () => {
+    const onApply = vi.fn();
+    render(<TopicFilterPopover topics={TOPICS} selectedTopicIds={new Set()} onApply={onApply} />);
+    fireEvent.click(screen.getByRole("button", { name: "Chủ đề ▾" }));
+    fireEvent.click(screen.getByRole("button", { name: "💼 Business" }));
+    expect(onApply).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Áp dụng" }));
+    expect(onApply).toHaveBeenCalledWith(new Set(["business"]));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("reopening the popover starts the draft from the current committed selection, discarding any earlier uncommitted toggle", () => {
+    const onApply = vi.fn();
+    const { rerender } = render(
+      <TopicFilterPopover topics={TOPICS} selectedTopicIds={new Set(["business"])} onApply={onApply} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Chủ đề ▾ (1)" }));
+    fireEvent.click(screen.getByRole("button", { name: "✈️ Travel" })); // draft now business+travel, uncommitted
+    fireEvent.click(screen.getByRole("button", { name: "Chủ đề ▾ (1)" })); // close without applying
+
+    rerender(
+      <TopicFilterPopover topics={TOPICS} selectedTopicIds={new Set(["business"])} onApply={onApply} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Chủ đề ▾ (1)" })); // reopen
+    expect(screen.getByRole("button", { name: "✈️ Travel" })).not.toHaveClass("active");
+    expect(screen.getByRole("button", { name: "💼 Business" })).toHaveClass("active");
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npm --prefix apps/web test`
+Expected: FAIL — `./TopicFilterPopover` does not exist.
+
+- [ ] **Step 3: Implement**
+
+Create `apps/web/src/components/vocab-bank/TopicFilterPopover.tsx`:
+
+```tsx
+"use client";
+
+import { useState } from "react";
+import type { Topic } from "@/lib/topics";
+
+interface TopicFilterPopoverProps {
+  topics: Topic[];
+  selectedTopicIds: Set<string>;
+  onApply: (ids: Set<string>) => void;
+}
+
+export function TopicFilterPopover({ topics, selectedTopicIds, onApply }: TopicFilterPopoverProps) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<Set<string>>(new Set(selectedTopicIds));
+
+  const openPopover = () => {
+    setDraft(new Set(selectedTopicIds));
+    setOpen(true);
+  };
+
+  const toggleDraft = (id: string) => {
+    setDraft((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const apply = () => {
+    onApply(draft);
+    setOpen(false);
+  };
+
+  const label = selectedTopicIds.size > 0 ? `Chủ đề ▾ (${selectedTopicIds.size})` : "Chủ đề ▾";
+
+  return (
+    <div className="vb-topic-popover-wrap">
+      <button
+        type="button"
+        className={`vb-chip${selectedTopicIds.size > 0 ? " active" : ""}`}
+        onClick={() => (open ? setOpen(false) : openPopover())}
+      >
+        {label}
+      </button>
+      {open && (
+        <div className="vb-topic-popover" role="dialog" aria-label="Chọn chủ đề">
+          <div className="vb-topic-popover-opts">
+            {topics.map((t) => (
+              <button
+                type="button"
+                key={t.id}
+                className={`vb-chip${draft.has(t.id) ? " active" : ""}`}
+                onClick={() => toggleDraft(t.id)}
+              >
+                {t.emoji} {t.name}
+              </button>
+            ))}
+          </div>
+          <button type="button" className="vb-topic-popover-apply" onClick={apply}>
+            Áp dụng
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npm --prefix apps/web test`
+Expected: PASS.
+
+- [ ] **Step 5: Wire it into the Vocab Bank page, replacing the "only topics with saved words" chip row**
+
+Modify `apps/web/src/app/(app)/vocab-bank/page.tsx`. Add the import:
+
+```tsx
+import { TopicFilterPopover } from "@/components/vocab-bank/TopicFilterPopover";
+```
+
+Delete the `topicChips` useMemo block entirely (it computed "topics that have ≥1 saved word" — no longer used; the popover now takes the full `topics` state directly).
+
+Delete the `toggleTopic` function entirely (the popover owns its own toggle-then-apply flow now; nothing else in the file calls `toggleTopic`).
+
+Replace the `{topicChips.map((t) => (...))}` block in the toolbar with:
+
+```tsx
+        <TopicFilterPopover topics={topics} selectedTopicIds={selectedTopicIds} onApply={setSelectedTopicIds} />
+```
+
+- [ ] **Step 6: Append the popover CSS**
+
+Modify `apps/web/src/styles/bloom.css` — append at the end:
+
+```css
+
+.vb-topic-popover-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.vb-topic-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 320px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 18px 40px -14px rgba(54, 42, 51, 0.35);
+  z-index: 10;
+}
+
+.vb-topic-popover-opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 12px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.vb-topic-popover-apply {
+  width: 100%;
+  font-size: 12.5px;
+  font-weight: 700;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: none;
+  border-radius: 999px;
+  padding: 9px 0;
+  cursor: pointer;
+}
+```
+
+- [ ] **Step 7: Update the page test that exercised the old inline topic chips**
+
+Modify `apps/web/src/app/(app)/vocab-bank/page.test.tsx` — replace the `"AND-combines across facets (topic AND cefr)"` test body with:
+
+```tsx
+  it("AND-combines across facets (topic AND cefr)", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      [RECORD_DUE_TODAY, RECORD_NOT_DUE, RECORD_TRAVEL_A1] as never
+    );
+    vi.mocked(getTopics).mockResolvedValue([TOPIC_BUSINESS] as never);
+
+    render(<VocabBankPage />);
+    await screen.findByText("relocate");
+
+    fireEvent.click(screen.getByRole("button", { name: "Chủ đề ▾" }));
+    fireEvent.click(screen.getByRole("button", { name: "💼 Business" }));
+    fireEvent.click(screen.getByRole("button", { name: "Áp dụng" }));
+    fireEvent.click(screen.getByRole("button", { name: "C1" })); // only RECORD_NOT_DUE is c1
+
+    expect(screen.queryByText("relocate")).not.toBeInTheDocument();
+    expect(screen.getByText("meticulous")).toBeInTheDocument();
+    expect(screen.queryByText("passport")).not.toBeInTheDocument();
+  });
+```
+
+(`TOPIC_BUSINESS` is the existing fixture already defined earlier in this file — reuse it, don't redefine it. The `"OR-combines multiple CEFR chips..."` and `"shows Xoá lọc..."` tests are untouched — they only interact with CEFR chips, which stay as direct toolbar buttons.)
+
+- [ ] **Step 8: Run test to verify it passes**
+
+Run: `npm --prefix apps/web test`
+Expected: PASS — full suite green.
+
+- [ ] **Step 9: Commit**
+
+```bash
+git add apps/web/src/components/vocab-bank/TopicFilterPopover.tsx apps/web/src/components/vocab-bank/TopicFilterPopover.test.tsx "apps/web/src/app/(app)/vocab-bank" apps/web/src/styles/bloom.css
+git commit -m "feat(web): show all synced topics via a filter popover, not just ones with saved words"
+```
+
+---
+
+## Task 10: Windowed page-number bar
+
+**Files:**
+- Create: `apps/web/src/lib/pageWindow.ts`
+- Create: `apps/web/src/lib/pageWindow.test.ts`
+- Modify: `apps/web/src/app/(app)/vocab-bank/page.tsx`
+- Modify: `apps/web/src/app/(app)/vocab-bank/page.test.tsx`
+- Modify: `apps/web/src/styles/bloom.css`
+
+**Interfaces:**
+- Produces: `getPageWindow(current: number, total: number): (number | "…")[]` — pure function, no React/DOM dependency. Pattern confirmed with the user: first page, last page, and ±2 pages around the current page, with `"…"` filling any gap (e.g. `getPageWindow(6, 29)` → `[1, "…", 4, 5, 6, 7, 8, "…", 29]`).
+
+- [ ] **Step 1: Write the failing test**
+
+Create `apps/web/src/lib/pageWindow.test.ts`:
+
+```ts
+import { describe, expect, it } from "vitest";
+import { getPageWindow } from "./pageWindow";
+
+describe("getPageWindow", () => {
+  it("windows around a middle page with ellipses on both sides", () => {
+    expect(getPageWindow(6, 29)).toEqual([1, "…", 4, 5, 6, 7, 8, "…", 29]);
+  });
+
+  it("has no leading ellipsis when near the first page", () => {
+    expect(getPageWindow(1, 29)).toEqual([1, 2, 3, "…", 29]);
+  });
+
+  it("has no trailing ellipsis when near the last page", () => {
+    expect(getPageWindow(29, 29)).toEqual([1, "…", 27, 28, 29]);
+  });
+
+  it("has no ellipses at all when every page already fits in the window", () => {
+    expect(getPageWindow(1, 3)).toEqual([1, 2, 3]);
+    expect(getPageWindow(2, 5)).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it("returns just [1] for a single page", () => {
+    expect(getPageWindow(1, 1)).toEqual([1]);
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npm --prefix apps/web test`
+Expected: FAIL — `./pageWindow` does not exist.
+
+- [ ] **Step 3: Implement**
+
+Create `apps/web/src/lib/pageWindow.ts`:
+
+```ts
+const SIBLINGS = 2;
+
+export function getPageWindow(current: number, total: number): (number | "…")[] {
+  if (total <= 1) return total === 1 ? [1] : [];
+
+  const left = Math.max(2, current - SIBLINGS);
+  const right = Math.min(total - 1, current + SIBLINGS);
+
+  const window: (number | "…")[] = [1];
+  if (left > 2) window.push("…");
+  for (let page = left; page <= right; page++) window.push(page);
+  if (right < total - 1) window.push("…");
+  window.push(total);
+
+  return window;
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npm --prefix apps/web test`
+Expected: PASS.
+
+- [ ] **Step 5: Wire it into the page-number bar**
+
+Modify `apps/web/src/app/(app)/vocab-bank/page.tsx`. Add the import:
+
+```tsx
+import { getPageWindow } from "@/lib/pageWindow";
+```
+
+Replace the `.vb-pagination` block:
+
+```tsx
+      {totalPages > 1 && (
+        <div className="vb-pagination">
+          {getPageWindow(currentPage, totalPages).map((page, i) =>
+            page === "…" ? (
+              <span className="vb-page-ellipsis" key={`ellipsis-${i}`}>
+                …
+              </span>
+            ) : (
+              <button
+                key={page}
+                className={`vb-page-btn${page === currentPage ? " active" : ""}`}
+                onClick={() => jumpToPage(page)}
+              >
+                {page}
+              </button>
+            )
+          )}
+        </div>
+      )}
+```
+
+- [ ] **Step 6: Append the ellipsis CSS**
+
+Modify `apps/web/src/styles/bloom.css` — append at the end:
+
+```css
+
+.vb-page-ellipsis {
+  padding: 0 4px;
+  color: var(--ink-faint);
+  font-size: 12.5px;
+  align-self: center;
+}
+```
+
+- [ ] **Step 7: Add a test proving the bar is windowed for a large result set**
+
+Modify `apps/web/src/app/(app)/vocab-bank/page.test.tsx` — add this fixture near `MANY_RECORDS`:
+
+```tsx
+const HUGE_RECORDS = Array.from({ length: 250 }, (_, i) => ({
+  ...RECORD_DUE_TODAY,
+  id: `huge-${i}`,
+  headword: `w${i}`,
+  meaning: `m${i}`,
+}));
+```
+
+Add this test inside `describe("VocabBankPage", ...)`:
+
+```tsx
+  it("shows a windowed page bar (not all 25 buttons) for a large result set", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue(HUGE_RECORDS as never);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<VocabBankPage />);
+    await screen.findByText("w0");
+
+    // 250 records / 10 per page = 25 pages; windowed around page 1 -> 1, 2, 3, …, 25
+    expect(screen.getByRole("button", { name: "1" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "2" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "3" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "25" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "13" })).not.toBeInTheDocument();
+    expect(screen.getByText("…")).toBeInTheDocument();
+  });
+```
+
+- [ ] **Step 8: Run test to verify it passes**
+
+Run: `npm --prefix apps/web test`
+Expected: PASS — full suite green.
+
+- [ ] **Step 9: Commit**
+
+```bash
+git add apps/web/src/lib/pageWindow.ts apps/web/src/lib/pageWindow.test.ts "apps/web/src/app/(app)/vocab-bank" apps/web/src/styles/bloom.css
+git commit -m "feat(web): window the page-number bar instead of rendering every page"
+```
+
+---
+
+## Final verification (whole plan, including the addendum)
+
+- [ ] Run the full test suite: `npm --prefix apps/web test` — expect all tests (Phase A's + every test added in this plan, Tasks 1-10) to pass.
 - [ ] Run typecheck: `npm --prefix apps/web run typecheck` — expect no errors.
 - [ ] Run the production build: `npm --prefix apps/web run build` — expect a clean build.
-- [ ] Manually verify against production Firebase: `npm --prefix apps/web run dev`, sign in, confirm the app frame now fills a wide browser window, confirm selecting multiple topic/CEFR chips combines correctly (OR within a facet, AND across facets), confirm "Xoá lọc" appears/resets correctly, confirm scrolling the list reveals more rows and the page-number bar jumps correctly, and confirm editing a real (throwaway, not important) word via "Sửa" actually persists after a page reload.
+- [ ] Manually verify against production Firebase: `npm --prefix apps/web run dev`, sign in, confirm the app frame now fills a wide browser window, confirm selecting multiple topic (via the new popover)/CEFR chips combines correctly (OR within a facet, AND across facets), confirm "Xoá lọc" appears/resets correctly, confirm scrolling the list reveals more rows and the page bar (now windowed) jumps correctly and its active state tracks real scroll position, confirm editing or deleting a real (throwaway, not important) word from a page other than page 1 does **not** snap the list back to page 1, and confirm editing a word via "Sửa" actually persists after a page reload (this also verifies Firestore security rules permit `update`, not just `read`/`delete` — the whole-branch review flagged this as unverified from source since no `firestore.rules` file exists in this repo).
