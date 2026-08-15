@@ -6,6 +6,7 @@ import { deleteVocabRecord, getVocabRecords, type VocabRecord } from "@/lib/voca
 import { getTopics, type Topic } from "@/lib/topics";
 import { formatDueLabel } from "@/lib/vocabDisplay";
 import { isFilterActive, matchesFilters, type VocabFilterState } from "@/lib/vocabFilters";
+import { usePaginatedScroll } from "@/lib/usePaginatedScroll";
 import { SignInButton } from "@/components/SignInButton";
 import { VocabDrawer } from "@/components/vocab-bank/VocabDrawer";
 
@@ -59,6 +60,9 @@ export default function VocabBankPage() {
     return records.filter((r) => matchesFilters(r, filters, isDue));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [records, dueOnly, selectedTopicIds, selectedCefrLevels, now]);
+
+  const { visibleItems, totalPages, currentPage, containerRef, sentinelRef, jumpToPage } =
+    usePaginatedScroll(filtered);
 
   const toggleTopic = (id: string) => {
     setSelectedTopicIds((prev) => {
@@ -151,9 +155,9 @@ export default function VocabBankPage() {
         )}
       </div>
       <div className="vb-shell">
-        <div className="vb-list-wrap">
+        <div className="vb-list-wrap" ref={containerRef}>
           {filtered.length === 0 && <p>Không có từ nào phù hợp.</p>}
-          {filtered.map((r) => (
+          {visibleItems.map((r) => (
             <div
               key={r.id}
               className={`vrow${r.id === selectedId ? " selected" : ""}`}
@@ -167,6 +171,7 @@ export default function VocabBankPage() {
               <span className="due">{formatDueLabel(r.nextReviewAt, now)}</span>
             </div>
           ))}
+          <div ref={sentinelRef} style={{ height: 1 }} />
         </div>
         {selected && (
           <VocabDrawer
@@ -177,6 +182,19 @@ export default function VocabBankPage() {
           />
         )}
       </div>
+      {totalPages > 1 && (
+        <div className="vb-pagination">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <button
+              key={page}
+              className={`vb-page-btn${page === currentPage ? " active" : ""}`}
+              onClick={() => jumpToPage(page)}
+            >
+              {page}
+            </button>
+          ))}
+        </div>
+      )}
     </>
   );
 }

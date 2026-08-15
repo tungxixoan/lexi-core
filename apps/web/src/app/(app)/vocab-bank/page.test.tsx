@@ -14,6 +14,14 @@ vi.mock("@/components/SignInButton", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  Element.prototype.scrollIntoView = vi.fn();
+  class FakeIntersectionObserver {
+    observe = vi.fn();
+    disconnect = vi.fn();
+    unobserve = vi.fn();
+    constructor(_callback: IntersectionObserverCallback) {}
+  }
+  vi.stubGlobal("IntersectionObserver", FakeIntersectionObserver as never);
 });
 
 const RECORD_DUE_TODAY = {
@@ -64,6 +72,13 @@ const TOPIC_BUSINESS = {
   isPredefined: true,
   createdAt: "2026-01-01T00:00:00.000Z",
 };
+
+const MANY_RECORDS = Array.from({ length: 15 }, (_, i) => ({
+  ...RECORD_DUE_TODAY,
+  id: `many-${i}`,
+  headword: `word-${i}`,
+  meaning: `nghĩa-${i}`,
+}));
 
 describe("VocabBankPage", () => {
   it("prompts sign-in when logged out", () => {
@@ -229,5 +244,31 @@ describe("VocabBankPage", () => {
     expect(screen.queryByText("✕ Xoá lọc")).not.toBeInTheDocument();
     expect(screen.getByText("relocate")).toBeInTheDocument();
     expect(screen.getByText("meticulous")).toBeInTheDocument();
+  });
+
+  it("only renders the first 10 rows when more than 10 records match, and shows a page bar", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue(MANY_RECORDS as never);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<VocabBankPage />);
+    await screen.findByText("word-0");
+
+    expect(screen.getByText("word-9")).toBeInTheDocument();
+    expect(screen.queryByText("word-10")).not.toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument(); // page bar button for page 2
+  });
+
+  it("reveals more rows when the page-2 button is clicked", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue(MANY_RECORDS as never);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<VocabBankPage />);
+    await screen.findByText("word-0");
+
+    fireEvent.click(screen.getByText("2"));
+
+    expect(screen.getByText("word-14")).toBeInTheDocument();
   });
 });
