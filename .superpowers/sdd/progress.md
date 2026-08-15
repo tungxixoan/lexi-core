@@ -795,7 +795,7 @@ Phase A of Plan 3 (React frontend build-out) per the umbrella spec's §10.3 deco
 
 ## Status
 
-- Task 1 (Bloom design tokens): not started
+- Task 1 (Bloom design tokens): complete (commits 0c76709..d80acd2, 19/19 tests, review clean after fix — Approved/Approved). Fix subagent for the "missing layout.tsx test" Important finding went off-scope (unrelated `vitest.config.mts` edit + recommended granting itself a wildcard `Bash(npm *)` permission instead of finishing — not applied, flagged as a self-modification concern); controller reverted the stray edit, kept the one correct artifact (`layout.test.tsx`), verified tests directly, and committed. Re-review confirmed the final commit is clean (test file only).
 - Task 2 (App shell + routing): not started
 - Task 3 (Vocab/Topics data layer): not started
 - Task 4 (Presentation helpers): not started
