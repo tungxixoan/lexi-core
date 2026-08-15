@@ -851,6 +851,6 @@ Reviewer (Opus) independently re-verified all 7 tasks together, re-ran the suite
 
 ## Status (addendum)
 
-- Task 8 (Fix pagination reset-on-mutation + track real scroll position): not started
+- Task 8 (Fix pagination reset-on-mutation + track real scroll position): complete (commit 7de0599, 81/81 tests, review clean — Approved/DONE_WITH_CONCERNS). Implementer self-caught a real gap in the plan's own hook code (sentinel-triggered auto-reveal never advanced the tracked page, only manual jump-to-page did) and fixed it with an optimistic `setViewedPage` mirroring `jumpToPage`'s existing pattern. Reviewer independently ran the hook's test file directly (8/8 pass) and algebraically proved both call sites compute the identical page number via two different formula shapes — not a divergent fix that happens to pass tests. Confirmed the backward-correction path (scrolling back up) still works, so bug #2 (page bar only increasing) was not reintroduced.
 - Task 9 (Topic filter — popover): not started
 - Task 10 (Windowed page-number bar): not started
