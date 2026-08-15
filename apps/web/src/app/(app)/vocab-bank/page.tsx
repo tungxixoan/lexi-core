@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useAuthUser } from "@/lib/useAuthUser";
-import { getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
+import { deleteVocabRecord, getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics, type Topic } from "@/lib/topics";
 import { formatDueLabel } from "@/lib/vocabDisplay";
 import { SignInButton } from "@/components/SignInButton";
+import { VocabDrawer } from "@/components/vocab-bank/VocabDrawer";
 
 type FilterKey = "all" | "due" | `topic:${string}` | `cefr:${string}`;
 
@@ -15,6 +16,7 @@ export default function VocabBankPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     setError(null);
@@ -62,6 +64,16 @@ export default function VocabBankPage() {
     return records;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [records, filter, now]);
+
+  const selected = records?.find((r) => r.id === selectedId) ?? null;
+
+  const handleDelete = async (id: string) => {
+    if (!user) return;
+    if (!window.confirm("Xoá từ này khỏi Ngân hàng từ vựng?")) return;
+    await deleteVocabRecord(user.uid, id);
+    setRecords((prev) => (prev ? prev.filter((r) => r.id !== id) : prev));
+    setSelectedId(null);
+  };
 
   if (authLoading) return <p>Đang tải…</p>;
 
@@ -112,7 +124,13 @@ export default function VocabBankPage() {
         <div className="vb-list-wrap">
           {filtered.length === 0 && <p>Không có từ nào phù hợp.</p>}
           {filtered.map((r) => (
-            <div key={r.id} className="vrow">
+            <div
+              key={r.id}
+              className={`vrow${r.id === selectedId ? " selected" : ""}`}
+              onClick={() => setSelectedId(r.id)}
+              role="button"
+              tabIndex={0}
+            >
               <span className="dot">{r.cefrLevel.toUpperCase()}</span>
               <span className="word">{r.headword}</span>
               <span className="meaning">{r.meaning}</span>
@@ -120,6 +138,14 @@ export default function VocabBankPage() {
             </div>
           ))}
         </div>
+        {selected && (
+          <VocabDrawer
+            record={selected}
+            topics={topics}
+            onClose={() => setSelectedId(null)}
+            onDelete={() => void handleDelete(selected.id)}
+          />
+        )}
       </div>
     </>
   );

@@ -1,16 +1,20 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import VocabBankPage from "./page";
 import { useAuthUser } from "@/lib/useAuthUser";
-import { getVocabRecords } from "@/lib/vocabRecords";
+import { deleteVocabRecord, getVocabRecords } from "@/lib/vocabRecords";
 import { getTopics } from "@/lib/topics";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
-vi.mock("@/lib/vocabRecords", () => ({ getVocabRecords: vi.fn() }));
+vi.mock("@/lib/vocabRecords", () => ({ getVocabRecords: vi.fn(), deleteVocabRecord: vi.fn() }));
 vi.mock("@/lib/topics", () => ({ getTopics: vi.fn() }));
 vi.mock("@/components/SignInButton", () => ({
   SignInButton: () => <button>Đăng nhập với Google</button>,
 }));
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 const RECORD_DUE_TODAY = {
   id: "1",
@@ -85,5 +89,48 @@ describe("VocabBankPage", () => {
     render(<VocabBankPage />);
 
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("boom"));
+  });
+
+  it("opens the Side Drawer with the clicked word's detail when a row is clicked", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue([RECORD_DUE_TODAY, RECORD_NOT_DUE] as never);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<VocabBankPage />);
+    await screen.findByText("relocate");
+
+    fireEvent.click(screen.getByText("meticulous"));
+
+    expect(screen.getByRole("heading", { name: "meticulous" })).toBeInTheDocument();
+  });
+
+  it("deletes the selected word after confirmation and closes the drawer", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue([RECORD_DUE_TODAY, RECORD_NOT_DUE] as never);
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(deleteVocabRecord).mockResolvedValue(undefined);
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    render(<VocabBankPage />);
+    await screen.findByText("relocate");
+    fireEvent.click(screen.getByText("meticulous"));
+    fireEvent.click(screen.getByRole("button", { name: "Xoá" }));
+
+    await waitFor(() => expect(deleteVocabRecord).toHaveBeenCalledWith("u1", "2"));
+    await waitFor(() => expect(screen.queryByText("meticulous")).not.toBeInTheDocument());
+  });
+
+  it("does not delete when the confirmation is cancelled", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue([RECORD_DUE_TODAY] as never);
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.spyOn(window, "confirm").mockReturnValue(false);
+
+    render(<VocabBankPage />);
+    await screen.findByText("relocate");
+    fireEvent.click(screen.getByText("relocate"));
+    fireEvent.click(screen.getByRole("button", { name: "Xoá" }));
+
+    expect(deleteVocabRecord).not.toHaveBeenCalled();
   });
 });
