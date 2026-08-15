@@ -325,7 +325,7 @@ p.scr-sub {
   font-size: 10px;
   font-weight: 800;
   background: var(--sage);
-  color: var(--ink);
+  color: var(--accent-ink);
   padding: 3px 8px;
   border-radius: 999px;
 }
