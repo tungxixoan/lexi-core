@@ -238,10 +238,14 @@ Flutter's `FilterTile` → bottom-sheet pattern doesn't fit web. Each of the 3 f
 
 ## 10. Implementation Note (decomposition)
 
-This spec is intentionally broad and covers three logically separable workstreams that should become **separate plans** under `writing-plans`, not one:
+This spec is intentionally broad and covers three logically separable workstreams that became **separate plans** under `writing-plans`, not one:
 
-1. **Backend/infra core** — Next.js scaffold on Firebase App Hosting, client-side Firebase wiring (Auth + Firestore, reusing existing security rules), the LLM-proxy `onCall` function with BYOK header/payload passthrough and built-in ID-token verification, staging/preview-channel deploy. No TTS/STT yet.
-2. **STT/TTS service** — the Piper + faster-whisper Docker container on Cloud Run, the TTS/STT `onCall` proxy functions (reusing Plan 1's auth pattern), and the Firebase Storage pronunciation cache. Depends on Plan 1 existing (Firebase project, auth pattern) but is otherwise a self-contained deployable unit — a genuinely separate service, not just more functions.
-3. **React frontend build-out** — the Bloom design system as real components/tokens, then the screen inventory in §6, roughly in the order: Vocab Bank + Side Drawer (the most-explored pattern) → Dashboard/Lookup/Practice hub (needs Plan 2's cached pronunciation TTS) → Đọc/Nghe hubs and their session/result screens (Nghe needs Plan 2's live TTS/STT) → Cài đặt.
+1. **Plan 1 — Backend/infra core** ✅ complete — Next.js scaffold on Firebase App Hosting, client-side Firebase wiring (Auth + Firestore, reusing existing security rules), the LLM-proxy `onCall` function with BYOK header/payload passthrough and built-in ID-token verification, staging/preview-channel deploy. No TTS/STT yet.
+2. **Plan 2 — STT/TTS service** ✅ complete — the Piper + faster-whisper Docker container on Cloud Run, the TTS/STT `onCall` proxy functions (reusing Plan 1's auth pattern), and the Firebase Storage pronunciation cache. Depended on Plan 1 existing (Firebase project, auth pattern) but is otherwise a self-contained deployable unit — a genuinely separate service, not just more functions.
+3. **Plan 3 — React frontend build-out** — the Bloom design system as real components/tokens, then the screen inventory in §6. Large enough that it is itself split into four phases, in dependency order:
+   - **Phase A — Vocab Bank + Side Drawer** ✅ complete — the most-explored pattern, needs only Plan 1 (Firestore/Auth). See `docs/superpowers/plans/2026-08-15-plan3-phase-a-bloom-foundation-vocab-bank.md` plus the `2026-08-15-vocab-bank-polish*` follow-up plan/spec for post-launch fixes.
+   - **Phase B — Dashboard / Tra từ (Lookup) / Luyện tập (Practice hub)** — needs Plan 2's cached pronunciation TTS.
+   - **Phase C — Đọc/Nghe hubs and their session/result screens** — Nghe needs Plan 2's live TTS/STT.
+   - **Phase D — Cài đặt** (account, BYOK key UI, theme/font-size).
 
-Plan 3 depends on Plan 1 for any screen touching Firestore/Auth/LLM generation, and on Plan 2 specifically for any screen playing pronunciation or listening audio — in practice, most screens need both before they're more than a static mockup.
+Plan 3 depends on Plan 1 for any screen touching Firestore/Auth/LLM generation, and on Plan 2 specifically for any screen playing pronunciation or listening audio — in practice, most screens need both before they're more than a static mockup. The "Phase A/B/C/D" labels are this spec's own naming for Plan 3's internal ordering (introduced when Phase A's plan doc was written) — they do not appear elsewhere in this document outside this section.
