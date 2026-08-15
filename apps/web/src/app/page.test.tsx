@@ -1,16 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { redirect } from "next/navigation";
 import HomePage from "./page";
-import { useAuthUser } from "@/lib/useAuthUser";
 
-vi.mock("@/lib/useAuthUser", () => ({
-  useAuthUser: vi.fn(),
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn(),
 }));
 
-describe("HomePage", () => {
-  it("renders the LexiCore Web heading", () => {
-    vi.mocked(useAuthUser).mockReturnValue({ user: null, loading: false });
-    render(<HomePage />);
-    expect(screen.getByRole("heading", { name: "LexiCore Web" })).toBeInTheDocument();
+describe("HomePage (/)", () => {
+  it("redirects to /vocab-bank", () => {
+    HomePage();
+    expect(redirect).toHaveBeenCalledWith("/vocab-bank");
   });
 });

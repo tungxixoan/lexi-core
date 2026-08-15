@@ -86,3 +86,109 @@ body {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-variant-numeric: tabular-nums;
 }
+
+.app-frame {
+  max-width: 1440px;
+  margin: 0 auto;
+  min-height: calc(100vh - 48px);
+  background: var(--surface);
+  border-radius: 26px;
+  border: 1px solid var(--border);
+  box-shadow: 0 32px 76px -36px rgba(120, 70, 90, 0.38);
+  overflow: hidden;
+  display: flex;
+  position: relative;
+}
+
+.app-frame::before {
+  content: "";
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%);
+  top: -140px;
+  right: -90px;
+  pointer-events: none;
+}
+
+.sidebar {
+  width: 226px;
+  flex-shrink: 0;
+  padding: 24px 14px;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-2);
+  border-right: 1px solid var(--border);
+  z-index: 1;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 22px;
+  padding: 0 8px;
+}
+
+.brand .leaf {
+  width: 22px;
+  height: 22px;
+  border-radius: 50% 50% 50% 4px;
+  background: linear-gradient(135deg, var(--accent), var(--sage));
+  flex-shrink: 0;
+}
+
+.sidenav {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sidenav a {
+  font-size: 13.5px;
+  padding: 10px 13px;
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+}
+
+.sidenav a.active {
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: 0 4px 14px -6px rgba(120, 70, 90, 0.3);
+}
+
+.sidenav .grp-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  font-weight: 700;
+  margin: 14px 0 4px 13px;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 30px 36px;
+  z-index: 1;
+  overflow-y: auto;
+}
+
+h2.scr-title {
+  font-size: 21px;
+  margin: 0 0 4px;
+}
+
+p.scr-sub {
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  margin: 0 0 22px;
+}
