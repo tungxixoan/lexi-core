@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDocs, orderBy, query, updateDoc } from "firebase/firestore";
 import { getFirebaseDb } from "./firebase";
 
 export interface VocabRecord {
@@ -31,6 +31,8 @@ export interface VocabRecord {
   synonyms: string[];
 }
 
+export type VocabRecordUpdate = Pick<VocabRecord, "meaning" | "examples" | "topicIds" | "personalNotes">;
+
 export async function countVocabRecords(uid: string): Promise<number> {
   const col = collection(getFirebaseDb(), "users", uid, "vocab_records");
   const snapshot = await getDocs(col);
@@ -47,4 +49,13 @@ export async function getVocabRecords(uid: string): Promise<VocabRecord[]> {
 export async function deleteVocabRecord(uid: string, id: string): Promise<void> {
   const ref = doc(getFirebaseDb(), "users", uid, "vocab_records", id);
   await deleteDoc(ref);
+}
+
+export async function updateVocabRecord(
+  uid: string,
+  id: string,
+  updates: VocabRecordUpdate
+): Promise<void> {
+  const ref = doc(getFirebaseDb(), "users", uid, "vocab_records", id);
+  await updateDoc(ref, { ...updates, updatedAt: new Date().toISOString() });
 }

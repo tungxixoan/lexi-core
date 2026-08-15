@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { deleteDoc, doc, getDocs, orderBy, query } from "firebase/firestore";
-import { countVocabRecords, deleteVocabRecord, getVocabRecords } from "./vocabRecords";
+import { deleteDoc, doc, getDocs, orderBy, query, updateDoc } from "firebase/firestore";
+import { countVocabRecords, deleteVocabRecord, getVocabRecords, updateVocabRecord } from "./vocabRecords";
 
 vi.mock("firebase/firestore", () => ({
   collection: vi.fn(() => "mock-collection-ref"),
   doc: vi.fn(() => "mock-doc-ref"),
   deleteDoc: vi.fn(),
+  updateDoc: vi.fn(),
   getDocs: vi.fn(),
   orderBy: vi.fn(() => "mock-order-by"),
   query: vi.fn(() => "mock-query"),
@@ -79,5 +80,28 @@ describe("deleteVocabRecord", () => {
     await deleteVocabRecord("user-123", "abc");
     expect(doc).toHaveBeenCalledWith("mock-db", "users", "user-123", "vocab_records", "abc");
     expect(deleteDoc).toHaveBeenCalledWith("mock-doc-ref");
+  });
+});
+
+describe("updateVocabRecord", () => {
+  it("updates the editable fields plus updatedAt, by document id", async () => {
+    await updateVocabRecord("user-123", "abc", {
+      meaning: "nghĩa mới",
+      examples: ["ví dụ mới"],
+      topicIds: ["business"],
+      personalNotes: "ghi chú",
+    });
+
+    expect(doc).toHaveBeenCalledWith("mock-db", "users", "user-123", "vocab_records", "abc");
+    expect(updateDoc).toHaveBeenCalledWith(
+      "mock-doc-ref",
+      expect.objectContaining({
+        meaning: "nghĩa mới",
+        examples: ["ví dụ mới"],
+        topicIds: ["business"],
+        personalNotes: "ghi chú",
+        updatedAt: expect.any(String),
+      })
+    );
   });
 });
