@@ -386,4 +386,29 @@ describe("VocabBankPage", () => {
     expect(screen.getByText("w9")).toBeInTheDocument();
     expect(screen.queryByText("w249")).not.toBeInTheDocument();
   }, 10000);
+
+  it("does NOT reset pagination when deleting a record while deep in a paginated view (same filter, no reset)", async () => {
+    // Renders 250 rows and interacts through them — jsdom needs more than
+    // the default 5s budget for that much DOM work.
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue(HUGE_RECORDS as never);
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(deleteVocabRecord).mockResolvedValue(undefined);
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    render(<VocabBankPage />);
+    await screen.findByText("w0");
+
+    fireEvent.click(screen.getByRole("button", { name: "3" })); // reveal through page 3
+    expect(await screen.findByText("w25")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("w25")); // select a page-3 record
+    fireEvent.click(screen.getByRole("button", { name: "Xoá" }));
+
+    await waitFor(() => expect(deleteVocabRecord).toHaveBeenCalledWith("u1", "huge-25"));
+    // Deleting is a data mutation with an unchanged filter -> filterSignature
+    // is unchanged -> pagination must NOT collapse back to page 1.
+    expect(screen.getByText("w20")).toBeInTheDocument();
+    expect(screen.queryByText("w25")).not.toBeInTheDocument();
+  }, 10000);
 });
