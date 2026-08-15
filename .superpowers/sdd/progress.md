@@ -783,3 +783,21 @@ Reviewer (Opus) independently traced the Python↔TypeScript HTTP contract byte-
 - `functions/scripts/verify-onCall.mjs` committed (c832784) as a reusable manual-verification tool for future debugging, now that there's no frontend yet to click through.
 
 ## Plan 2 (STT/TTS Service) — FULLY COMPLETE. All 9 tasks done, final whole-branch review done, review fix batch applied, Task 9 live deployment done and verified end-to-end in production with real (non-mocked) Piper/faster-whisper inference.
+
+---
+
+# LexiCore — Plan 3 / Phase A: Bloom Foundation + Vocab Bank
+
+**Plan:** docs/superpowers/plans/2026-08-15-plan3-phase-a-bloom-foundation-vocab-bank.md
+**BASE commit:** b2befa8 (docs: add Plan 3 Phase A implementation plan)
+
+Phase A of Plan 3 (React frontend build-out) per the umbrella spec's §10.3 decomposition: Bloom design tokens + app shell (sidebar) + Vocab Bank list + Side Drawer detail screen. 6 tasks, executed via subagent-driven-development directly on `master` (this repo's established practice — solo project, no branches used in Plan 1/2 either).
+
+## Status
+
+- Task 1 (Bloom design tokens): not started
+- Task 2 (App shell + routing): not started
+- Task 3 (Vocab/Topics data layer): not started
+- Task 4 (Presentation helpers): not started
+- Task 5 (Vocab Bank list screen): not started
+- Task 6 (Side Drawer + wiring): not started
