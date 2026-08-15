@@ -30,4 +30,11 @@ describe("bloom.css design tokens", () => {
     expect(css).not.toContain("@import");
     expect(css).not.toContain("fonts.googleapis.com");
   });
+
+  it("app-frame has no max-width cap but keeps the floating-card look", () => {
+    const frameBlock = css.match(/\.app-frame \{[^}]*\}/)?.[0] ?? "";
+    expect(frameBlock).not.toContain("max-width");
+    expect(frameBlock).toContain("border-radius: 26px;");
+    expect(frameBlock).toContain("box-shadow");
+  });
 });
