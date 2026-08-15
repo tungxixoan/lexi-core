@@ -21,8 +21,25 @@ const TOPIC = {
 
 describe("getTopics", () => {
   it("returns the user's topics subcollection docs", async () => {
-    vi.mocked(getDocs).mockResolvedValue({ docs: [{ data: () => TOPIC }] } as never);
+    vi.mocked(getDocs).mockResolvedValue({
+      docs: [{ id: TOPIC.id, data: () => TOPIC }],
+    } as never);
     const topics = await getTopics("user-123");
     expect(topics).toEqual([TOPIC]);
+  });
+
+  it("uses the Firestore snapshot document id, not the id field inside the document data", async () => {
+    vi.mocked(getDocs).mockResolvedValue({
+      docs: [
+        {
+          id: "real-doc-id",
+          data: () => ({ ...TOPIC, id: "stale-field-id" }),
+        },
+      ],
+    } as never);
+
+    const topics = await getTopics("user-123");
+
+    expect(topics[0].id).toBe("real-doc-id");
   });
 });

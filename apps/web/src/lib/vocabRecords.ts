@@ -41,7 +41,7 @@ export async function getVocabRecords(uid: string): Promise<VocabRecord[]> {
   const col = collection(getFirebaseDb(), "users", uid, "vocab_records");
   const q = query(col, orderBy("createdAt", "desc"));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => d.data() as VocabRecord);
+  return snapshot.docs.map((d) => ({ ...(d.data() as VocabRecord), id: d.id }));
 }
 
 export async function deleteVocabRecord(uid: string, id: string): Promise<void> {

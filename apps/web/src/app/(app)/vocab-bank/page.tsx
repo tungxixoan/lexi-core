@@ -17,6 +17,7 @@ export default function VocabBankPage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     setError(null);
@@ -70,9 +71,14 @@ export default function VocabBankPage() {
   const handleDelete = async (id: string) => {
     if (!user) return;
     if (!window.confirm("Xoá từ này khỏi Ngân hàng từ vựng?")) return;
-    await deleteVocabRecord(user.uid, id);
-    setRecords((prev) => (prev ? prev.filter((r) => r.id !== id) : prev));
-    setSelectedId(null);
+    setDeleteError(null);
+    try {
+      await deleteVocabRecord(user.uid, id);
+      setRecords((prev) => (prev ? prev.filter((r) => r.id !== id) : prev));
+      setSelectedId(null);
+    } catch (err: unknown) {
+      setDeleteError(err instanceof Error ? err.message : String(err));
+    }
   };
 
   if (authLoading) return <p>Đang tải…</p>;
@@ -94,6 +100,7 @@ export default function VocabBankPage() {
     <>
       <h2 className="scr-title">Ngân hàng từ vựng</h2>
       <p className="scr-sub">{records.length} từ trong Ngân hàng từ vựng.</p>
+      {deleteError && <p role="alert">Lỗi xoá từ: {deleteError}</p>}
       <div className="vb-toolbar">
         <button className={`vb-chip${filter === "all" ? " active" : ""}`} onClick={() => setFilter("all")}>
           Tất cả ({records.length})

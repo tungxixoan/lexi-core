@@ -1,8 +1,8 @@
+// @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-// @vitest-environment node
 const css = readFileSync(fileURLToPath(new URL("./bloom.css", import.meta.url)), "utf-8");
 
 describe("bloom.css design tokens", () => {

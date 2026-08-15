@@ -120,6 +120,27 @@ describe("VocabBankPage", () => {
     await waitFor(() => expect(screen.queryByText("meticulous")).not.toBeInTheDocument());
   });
 
+  it("shows an alert and keeps the word in the list when delete fails", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue([RECORD_DUE_TODAY, RECORD_NOT_DUE] as never);
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(deleteVocabRecord).mockRejectedValue(new Error("permission-denied"));
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    render(<VocabBankPage />);
+    await screen.findByText("relocate");
+    fireEvent.click(screen.getByText("meticulous"));
+    fireEvent.click(screen.getByRole("button", { name: "Xoá" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent("permission-denied")
+    );
+    const rowStillPresent = screen
+      .getAllByText("meticulous")
+      .some((el) => el.closest(".vrow"));
+    expect(rowStillPresent).toBe(true);
+  });
+
   it("does not delete when the confirmation is cancelled", async () => {
     vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
     vi.mocked(getVocabRecords).mockResolvedValue([RECORD_DUE_TODAY] as never);

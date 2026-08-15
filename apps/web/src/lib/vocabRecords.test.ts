@@ -48,7 +48,7 @@ const RECORD = {
 describe("getVocabRecords", () => {
   it("queries the subcollection ordered by createdAt desc and returns the raw docs", async () => {
     vi.mocked(getDocs).mockResolvedValue({
-      docs: [{ data: () => RECORD }],
+      docs: [{ id: RECORD.id, data: () => RECORD }],
     } as never);
 
     const records = await getVocabRecords("user-123");
@@ -56,6 +56,21 @@ describe("getVocabRecords", () => {
     expect(orderBy).toHaveBeenCalledWith("createdAt", "desc");
     expect(query).toHaveBeenCalledWith("mock-collection-ref", "mock-order-by");
     expect(records).toEqual([RECORD]);
+  });
+
+  it("uses the Firestore snapshot document id, not the id field inside the document data", async () => {
+    vi.mocked(getDocs).mockResolvedValue({
+      docs: [
+        {
+          id: "real-doc-id",
+          data: () => ({ ...RECORD, id: "stale-field-id" }),
+        },
+      ],
+    } as never);
+
+    const records = await getVocabRecords("user-123");
+
+    expect(records[0].id).toBe("real-doc-id");
   });
 });
 
