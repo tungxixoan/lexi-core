@@ -722,9 +722,6 @@ button.btn-danger {
   margin-bottom: 14px;
 }
 
-.settings-card label:last-of-type {
-  margin-bottom: 0;
-}
 
 .settings-card select,
 .settings-card input {
