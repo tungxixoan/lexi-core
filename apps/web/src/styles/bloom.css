@@ -690,10 +690,15 @@ button.btn-danger {
 }
 
 .settings-page {
-  max-width: 620px;
-  display: flex;
-  flex-direction: column;
+  max-width: 980px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 16px;
+  align-items: start;
+}
+
+.settings-page > h2.scr-title {
+  grid-column: 1 / -1;
 }
 
 .settings-card {
