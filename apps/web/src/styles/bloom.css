@@ -679,7 +679,7 @@ p.scr-sub {
   zoom: 1.15;
 }
 
-button.danger {
+button.btn-danger {
   background: var(--danger-bg);
   color: var(--danger);
   border: 1px solid var(--danger);

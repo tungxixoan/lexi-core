@@ -6,7 +6,7 @@ export function DangerZoneSection() {
   return (
     <section>
       <h3 className="scr-title">Vùng nguy hiểm</h3>
-      <button className="danger" onClick={() => void signOutOfFirebase()}>
+      <button className="btn-danger" onClick={() => void signOutOfFirebase()}>
         Đăng xuất
       </button>
     </section>
