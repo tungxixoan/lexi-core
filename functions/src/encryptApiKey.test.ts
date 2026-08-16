@@ -32,7 +32,7 @@ describe("encryptApiKeyHandler", () => {
   it("returns the ciphertext from encryptWithKms for a valid request", async () => {
     vi.mocked(encryptWithKms).mockResolvedValue("ciphertext-base64");
     const result = await encryptApiKeyHandler(makeRequest({ apiKey: "sk-abc" }));
-    expect(encryptWithKms).toHaveBeenCalledWith("sk-abc");
+    expect(encryptWithKms).toHaveBeenCalledWith("sk-abc", "user-123");
     expect(result).toEqual({ ciphertext: "ciphertext-base64" });
   });
 

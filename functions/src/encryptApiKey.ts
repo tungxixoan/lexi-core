@@ -26,7 +26,7 @@ export async function encryptApiKeyHandler(
   }
 
   try {
-    const ciphertext = await encryptWithKms(request.data.apiKey);
+    const ciphertext = await encryptWithKms(request.data.apiKey, request.auth.uid);
     return { ciphertext };
   } catch {
     throw new HttpsError("internal", "Failed to encrypt API key. Please try again.");

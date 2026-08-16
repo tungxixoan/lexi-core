@@ -19,10 +19,16 @@ function getKeyName(): string {
   return getClient().cryptoKeyPath(project, location, keyRing, key);
 }
 
-export async function encryptWithKms(plaintext: string): Promise<string> {
+// `aad` (additional authenticated data) binds a ciphertext to the caller
+// it was created for — pass the requesting user's uid. Without this, any
+// authenticated caller's ciphertext would decrypt identically regardless
+// of who submitted it, removing a defense-in-depth layer beyond Firestore
+// security rules for the single most sensitive value in this system.
+export async function encryptWithKms(plaintext: string, aad: string): Promise<string> {
   const [result] = await getClient().encrypt({
     name: getKeyName(),
     plaintext: Buffer.from(plaintext, "utf8"),
+    additionalAuthenticatedData: Buffer.from(aad, "utf8"),
   });
   if (!result.ciphertext) {
     throw new Error("Cloud KMS encrypt returned no ciphertext.");
@@ -30,10 +36,11 @@ export async function encryptWithKms(plaintext: string): Promise<string> {
   return Buffer.from(result.ciphertext as Uint8Array).toString("base64");
 }
 
-export async function decryptWithKms(ciphertextBase64: string): Promise<string> {
+export async function decryptWithKms(ciphertextBase64: string, aad: string): Promise<string> {
   const [result] = await getClient().decrypt({
     name: getKeyName(),
     ciphertext: Buffer.from(ciphertextBase64, "base64"),
+    additionalAuthenticatedData: Buffer.from(aad, "utf8"),
   });
   if (!result.plaintext) {
     throw new Error("Cloud KMS decrypt returned no plaintext.");

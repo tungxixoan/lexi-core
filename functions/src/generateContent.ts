@@ -59,7 +59,7 @@ export async function generateContentHandler(
   let apiKey: string;
   if (apiKeyCiphertext) {
     try {
-      apiKey = await decryptWithKms(apiKeyCiphertext);
+      apiKey = await decryptWithKms(apiKeyCiphertext, request.auth.uid);
     } catch {
       throw new HttpsError("internal", "Failed to decrypt API key. Please try again.");
     }

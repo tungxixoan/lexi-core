@@ -257,7 +257,7 @@ describe("generateContentHandler", () => {
       })
     );
 
-    expect(decryptWithKms).toHaveBeenCalledWith("cipher-abc");
+    expect(decryptWithKms).toHaveBeenCalledWith("cipher-abc", "user-123");
     expect(callGemini).toHaveBeenCalledWith({
       apiKey: "decrypted-key",
       model: "gemini-2.5-flash",
