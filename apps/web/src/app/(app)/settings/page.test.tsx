@@ -38,6 +38,7 @@ describe("SettingsPage", () => {
     render(<SettingsPage />);
 
     expect(await screen.findByText("Tài khoản")).toBeInTheDocument();
+    expect(screen.getByText("Ngôn ngữ mục tiêu")).toBeInTheDocument();
     expect(screen.getByText("Nhà cung cấp AI & Khoá API")).toBeInTheDocument();
     expect(screen.getByText("Giao diện")).toBeInTheDocument();
     expect(screen.getByText("Vùng nguy hiểm")).toBeInTheDocument();

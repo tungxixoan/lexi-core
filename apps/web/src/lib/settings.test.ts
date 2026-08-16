@@ -13,13 +13,14 @@ vi.mock("./firebase", () => ({
 }));
 
 describe("DEFAULT_SETTINGS", () => {
-  it("defaults to Gemini active, system theme, medium font size, no keys saved", () => {
+  it("defaults to Gemini active, system theme, medium font size, no keys saved, English target language", () => {
     expect(DEFAULT_SETTINGS.activeProvider).toBe("gemini");
     expect(DEFAULT_SETTINGS.theme).toBe("system");
     expect(DEFAULT_SETTINGS.fontSize).toBe("medium");
     expect(DEFAULT_SETTINGS.providers.gemini.apiKeyCiphertext).toBeNull();
     expect(DEFAULT_SETTINGS.providers.groq.apiKeyCiphertext).toBeNull();
     expect(DEFAULT_SETTINGS.providers.openrouter.apiKeyCiphertext).toBeNull();
+    expect(DEFAULT_SETTINGS.targetLanguage).toBe("english");
   });
 });
 

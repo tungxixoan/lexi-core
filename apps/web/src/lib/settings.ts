@@ -1,6 +1,7 @@
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { getFirebaseDb } from "./firebase";
 import { MODEL_PRESETS, type AiProvider } from "./modelPresets";
+import type { TargetLanguage } from "./languages";
 
 export interface ProviderSettings {
   model: string;
@@ -15,6 +16,7 @@ export interface UserSettings {
   providers: Record<AiProvider, ProviderSettings>;
   theme: Theme;
   fontSize: FontSize;
+  targetLanguage: TargetLanguage;
 }
 
 export const DEFAULT_SETTINGS: UserSettings = {
@@ -26,6 +28,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   },
   theme: "system",
   fontSize: "medium",
+  targetLanguage: "english",
 };
 
 function settingsRef(uid: string) {
