@@ -670,3 +670,11 @@ p.scr-sub {
   font-size: 12.5px;
   align-self: center;
 }
+
+.app-frame.fs-small {
+  zoom: 0.9;
+}
+
+.app-frame.fs-large {
+  zoom: 1.15;
+}
