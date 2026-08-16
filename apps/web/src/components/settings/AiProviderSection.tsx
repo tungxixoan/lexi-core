@@ -21,10 +21,11 @@ export function AiProviderSection({ settings, onSave }: AiProviderSectionProps) 
   const active = settings.activeProvider;
   const activeConfig = settings.providers[active];
 
-  // The key draft is provider-specific scratch state — without this reset,
-  // typing a key for one provider then switching the dropdown before
-  // clicking Cập nhật would silently save that key under the NEW provider
-  // instead (a real credential-misrouting bug, not just a display glitch).
+  // Defense-in-depth: the select's onChange already clears the draft
+  // synchronously (see handleProviderChange below), closing the
+  // credential-misrouting window on its own. This effect additionally
+  // covers `active` changing for a reason other than that select — e.g.
+  // useSettings re-fetching a different value after a uid change.
   useEffect(() => {
     setKeyDraft("");
     setError(null);

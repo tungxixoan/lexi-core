@@ -13,7 +13,14 @@ export default function SettingsPage() {
   const { user, loading: authLoading } = useAuthUser();
   const { settings, loading: settingsLoading, error, save } = useSettingsContext();
 
-  if (authLoading) return <p>Đang tải…</p>;
+  if (authLoading) {
+    return (
+      <div>
+        <h2 className="scr-title">Cài đặt</h2>
+        <p>Đang tải…</p>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
