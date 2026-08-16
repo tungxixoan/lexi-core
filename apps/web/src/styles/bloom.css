@@ -678,3 +678,13 @@ p.scr-sub {
 .app-frame.fs-large {
   zoom: 1.15;
 }
+
+button.danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
