@@ -17,7 +17,7 @@ export default function SettingsPage() {
 
   if (!user) {
     return (
-      <div className="settings-page">
+      <div>
         <h2 className="scr-title">Cài đặt</h2>
         <p className="scr-sub">Đăng nhập để xem cài đặt.</p>
         <SignInButton />
@@ -25,8 +25,23 @@ export default function SettingsPage() {
     );
   }
 
-  if (error) return <p role="alert">Lỗi: {error}</p>;
-  if (settingsLoading || !settings) return <p>Đang tải cài đặt…</p>;
+  if (error) {
+    return (
+      <div>
+        <h2 className="scr-title">Cài đặt</h2>
+        <p role="alert">Lỗi: {error}</p>
+      </div>
+    );
+  }
+
+  if (settingsLoading || !settings) {
+    return (
+      <div>
+        <h2 className="scr-title">Cài đặt</h2>
+        <p>Đang tải cài đặt…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="settings-page">
