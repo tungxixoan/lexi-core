@@ -15,7 +15,7 @@ describe("AiProviderSection", () => {
     expect(screen.getByRole("option", { name: "Groq" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "OpenRouter" })).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Provider"), { target: { value: "groq" } });
+    fireEvent.change(screen.getByLabelText("Nhà cung cấp"), { target: { value: "groq" } });
 
     expect(onSave).toHaveBeenCalledWith({ ...DEFAULT_SETTINGS, activeProvider: "groq" });
   });
@@ -44,7 +44,7 @@ describe("AiProviderSection", () => {
       },
     };
     render(<AiProviderSection settings={settings} onSave={vi.fn()} />);
-    expect(screen.getByLabelText("API key")).toHaveAttribute("placeholder", "••••••••");
+    expect(screen.getByLabelText("Khoá API")).toHaveAttribute("placeholder", "••••••••");
   });
 
   it("encrypts and saves a new key when Cập nhật is clicked", async () => {
@@ -52,7 +52,7 @@ describe("AiProviderSection", () => {
     const onSave = vi.fn();
     render(<AiProviderSection settings={DEFAULT_SETTINGS} onSave={onSave} />);
 
-    fireEvent.change(screen.getByLabelText("API key"), { target: { value: "sk-new-key" } });
+    fireEvent.change(screen.getByLabelText("Khoá API"), { target: { value: "sk-new-key" } });
     fireEvent.click(screen.getByRole("button", { name: "Cập nhật" }));
 
     await waitFor(() =>
@@ -65,7 +65,7 @@ describe("AiProviderSection", () => {
       })
     );
     expect(encryptApiKey).toHaveBeenCalledWith({ apiKey: "sk-new-key" });
-    expect(screen.getByLabelText("API key")).toHaveValue("");
+    expect(screen.getByLabelText("Khoá API")).toHaveValue("");
   });
 
   it("shows an alert and does not call onSave when encryptApiKey fails", async () => {
@@ -73,7 +73,7 @@ describe("AiProviderSection", () => {
     const onSave = vi.fn();
     render(<AiProviderSection settings={DEFAULT_SETTINGS} onSave={onSave} />);
 
-    fireEvent.change(screen.getByLabelText("API key"), { target: { value: "sk-new-key" } });
+    fireEvent.change(screen.getByLabelText("Khoá API"), { target: { value: "sk-new-key" } });
     fireEvent.click(screen.getByRole("button", { name: "Cập nhật" }));
 
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("unauthenticated"));

@@ -45,9 +45,9 @@ export function AiProviderSection({ settings, onSave }: AiProviderSectionProps) 
 
   return (
     <section>
-      <h3 className="scr-title">AI Provider &amp; API Key</h3>
+      <h3 className="scr-title">Nhà cung cấp AI &amp; Khoá API</h3>
       <label>
-        Provider
+        Nhà cung cấp
         <select
           value={active}
           onChange={(e) =>
@@ -73,7 +73,7 @@ export function AiProviderSection({ settings, onSave }: AiProviderSectionProps) 
         }
       />
       <label>
-        API key
+        Khoá API
         <input
           type="password"
           value={keyDraft}
