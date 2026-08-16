@@ -16,7 +16,7 @@ export default function SettingsPage() {
 
   if (!user) {
     return (
-      <div>
+      <div className="settings-page">
         <h2 className="scr-title">Cài đặt</h2>
         <p className="scr-sub">Đăng nhập để xem cài đặt.</p>
         <SignInButton />
@@ -28,12 +28,12 @@ export default function SettingsPage() {
   if (settingsLoading || !settings) return <p>Đang tải cài đặt…</p>;
 
   return (
-    <>
+    <div className="settings-page">
       <h2 className="scr-title">Cài đặt</h2>
       <AccountSection user={user} />
       <AiProviderSection settings={settings} onSave={save} />
       <AppearanceSection settings={settings} onSave={save} />
       <DangerZoneSection />
-    </>
+    </div>
   );
 }

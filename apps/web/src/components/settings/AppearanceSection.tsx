@@ -23,7 +23,7 @@ const FONT_SIZE_LABELS: Record<FontSize, string> = {
 
 export function AppearanceSection({ settings, onSave }: AppearanceSectionProps) {
   return (
-    <section>
+    <section className="settings-card">
       <h3 className="scr-title">Giao diện</h3>
       <label>
         Chủ đề

@@ -6,10 +6,10 @@ interface AccountSectionProps {
 
 export function AccountSection({ user }: AccountSectionProps) {
   return (
-    <section>
+    <section className="settings-card">
       <h3 className="scr-title">Tài khoản</h3>
-      <p>{user.displayName}</p>
-      <p>{user.email}</p>
+      <p className="settings-account-name">{user.displayName}</p>
+      <p className="settings-account-email">{user.email}</p>
     </section>
   );
 }

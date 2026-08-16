@@ -44,7 +44,7 @@ export function AiProviderSection({ settings, onSave }: AiProviderSectionProps) 
   }
 
   return (
-    <section>
+    <section className="settings-card">
       <h3 className="scr-title">Nhà cung cấp AI &amp; Khoá API</h3>
       <label>
         Nhà cung cấp
@@ -81,7 +81,7 @@ export function AiProviderSection({ settings, onSave }: AiProviderSectionProps) 
           onChange={(e) => setKeyDraft(e.target.value)}
         />
       </label>
-      <button onClick={() => void handleUpdateKey()} disabled={saving || !keyDraft.trim()}>
+      <button className="btn-primary" onClick={() => void handleUpdateKey()} disabled={saving || !keyDraft.trim()}>
         Cập nhật
       </button>
       {error && <p role="alert">{error}</p>}
