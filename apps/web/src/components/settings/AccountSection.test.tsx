@@ -10,4 +10,10 @@ describe("AccountSection", () => {
     expect(screen.getByText("Tùng Nguyễn")).toBeInTheDocument();
     expect(screen.getByText("tung@example.com")).toBeInTheDocument();
   });
+
+  it("shows a fallback dash when displayName/email are null", () => {
+    const user = { displayName: null, email: null } as unknown as User;
+    render(<AccountSection user={user} />);
+    expect(screen.getAllByText("—")).toHaveLength(2);
+  });
 });
