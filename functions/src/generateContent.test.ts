@@ -3,6 +3,7 @@ import { HttpsError, type CallableRequest } from "firebase-functions/v2/https";
 import { generateContentHandler, generateContent } from "./generateContent";
 import { callGemini } from "./providers/gemini";
 import { callGroq, callOpenRouter } from "./providers/openAiCompatible";
+import { decryptWithKms } from "./services/kms";
 import { ProviderApiError } from "./providers/types";
 
 vi.mock("./providers/gemini", () => ({ callGemini: vi.fn() }));
@@ -10,6 +11,7 @@ vi.mock("./providers/openAiCompatible", () => ({
   callGroq: vi.fn(),
   callOpenRouter: vi.fn(),
 }));
+vi.mock("./services/kms", () => ({ decryptWithKms: vi.fn() }));
 
 function makeRequest(data: unknown, authed = true): CallableRequest<unknown> {
   return {
@@ -218,6 +220,77 @@ describe("generateContentHandler", () => {
       code: "internal",
       message: "AI provider call failed. Please try again.",
     });
+  });
+
+  it("throws invalid-argument when both apiKey and apiKeyCiphertext are provided", async () => {
+    await expect(
+      generateContentHandler(
+        makeRequest({
+          provider: "gemini",
+          apiKey: "k",
+          apiKeyCiphertext: "c",
+          model: "gemini-2.5-flash",
+          prompt: "hi",
+        })
+      )
+    ).rejects.toMatchObject({ code: "invalid-argument" });
+  });
+
+  it("throws invalid-argument when neither apiKey nor apiKeyCiphertext is provided", async () => {
+    await expect(
+      generateContentHandler(
+        makeRequest({ provider: "gemini", model: "gemini-2.5-flash", prompt: "hi" })
+      )
+    ).rejects.toMatchObject({ code: "invalid-argument" });
+  });
+
+  it("decrypts apiKeyCiphertext via Cloud KMS and uses the result as the provider API key", async () => {
+    vi.mocked(decryptWithKms).mockResolvedValue("decrypted-key");
+    vi.mocked(callGemini).mockResolvedValue({ text: "hello" });
+
+    const result = await generateContentHandler(
+      makeRequest({
+        provider: "gemini",
+        apiKeyCiphertext: "cipher-abc",
+        model: "gemini-2.5-flash",
+        prompt: "hi",
+      })
+    );
+
+    expect(decryptWithKms).toHaveBeenCalledWith("cipher-abc");
+    expect(callGemini).toHaveBeenCalledWith({
+      apiKey: "decrypted-key",
+      model: "gemini-2.5-flash",
+      prompt: "hi",
+    });
+    expect(result).toEqual({ text: "hello" });
+  });
+
+  it("wraps a KMS decrypt failure in an internal HttpsError without leaking details, and never calls the provider", async () => {
+    vi.mocked(decryptWithKms).mockRejectedValue(new Error("KMS key not found: projects/..."));
+    // callGemini's mock call history accumulates across this file's other
+    // tests (no clearMocks/afterEach here) — compare a before/after count
+    // instead of asserting not.toHaveBeenCalled(), which would spuriously
+    // fail because of earlier tests' calls.
+    const callsBefore = vi.mocked(callGemini).mock.calls.length;
+    let caught: unknown;
+    try {
+      await generateContentHandler(
+        makeRequest({
+          provider: "gemini",
+          apiKeyCiphertext: "cipher-abc",
+          model: "gemini-2.5-flash",
+          prompt: "hi",
+        })
+      );
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toMatchObject({
+      code: "internal",
+      message: "Failed to decrypt API key. Please try again.",
+    });
+    expect(vi.mocked(callGemini).mock.calls.length).toBe(callsBefore);
   });
 });
 

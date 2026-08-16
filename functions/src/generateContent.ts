@@ -2,6 +2,7 @@ import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/
 import { logger } from "firebase-functions/logger";
 import { callGemini } from "./providers/gemini";
 import { callGroq, callOpenRouter } from "./providers/openAiCompatible";
+import { decryptWithKms } from "./services/kms";
 import { ProviderApiError, type GenerateContentResult } from "./providers/types";
 
 // Keep this in sync with the client-side type of the same name in
@@ -12,9 +13,15 @@ export type AiProvider = "gemini" | "groq" | "openrouter";
 // Keep this in sync with the client-side type of the same name in
 // apps/web/src/lib/generateContent.ts (no shared-types package yet — see
 // docs/superpowers/plans/2026-08-11-web-backend-infra-core.md Task 6/7).
+//
+// Exactly one of apiKey/apiKeyCiphertext must be set: apiKey is the raw BYOK
+// key (original React Web Plan 1 behavior); apiKeyCiphertext is a Cloud
+// KMS ciphertext (base64) produced by encryptApiKey and read back from
+// users/{uid}/settings/config — added in React Web Plan 3 Phase B.
 export interface GenerateContentRequest {
   provider: AiProvider;
-  apiKey: string;
+  apiKey?: string;
+  apiKeyCiphertext?: string;
   model: string;
   prompt: string;
 }
@@ -22,10 +29,11 @@ export interface GenerateContentRequest {
 function isGenerateContentRequest(data: unknown): data is GenerateContentRequest {
   if (typeof data !== "object" || data === null) return false;
   const d = data as Record<string, unknown>;
+  const hasRawKey = typeof d.apiKey === "string" && d.apiKey.length > 0;
+  const hasCiphertext = typeof d.apiKeyCiphertext === "string" && d.apiKeyCiphertext.length > 0;
   return (
     (d.provider === "gemini" || d.provider === "groq" || d.provider === "openrouter") &&
-    typeof d.apiKey === "string" &&
-    d.apiKey.length > 0 &&
+    hasRawKey !== hasCiphertext &&
     typeof d.model === "string" &&
     d.model.length > 0 &&
     typeof d.prompt === "string" &&
@@ -42,11 +50,24 @@ export async function generateContentHandler(
   if (!isGenerateContentRequest(request.data)) {
     throw new HttpsError(
       "invalid-argument",
-      "Expected { provider, apiKey, model, prompt } (all non-empty strings)."
+      "Expected { provider, model, prompt, and exactly one of apiKey/apiKeyCiphertext }."
     );
   }
 
-  const { provider, ...params } = request.data;
+  const { provider, model, prompt, apiKeyCiphertext } = request.data;
+
+  let apiKey: string;
+  if (apiKeyCiphertext) {
+    try {
+      apiKey = await decryptWithKms(apiKeyCiphertext);
+    } catch {
+      throw new HttpsError("internal", "Failed to decrypt API key. Please try again.");
+    }
+  } else {
+    apiKey = request.data.apiKey as string;
+  }
+
+  const params = { apiKey, model, prompt };
 
   try {
     switch (provider) {

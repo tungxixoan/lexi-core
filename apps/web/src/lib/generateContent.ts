@@ -7,11 +7,12 @@ import { getFirebaseFunctions } from "./firebase";
 export type AiProvider = "gemini" | "groq" | "openrouter";
 
 // Keep this in sync with the server-side type of the same name in
-// functions/src/generateContent.ts (no shared-types package yet — see
-// docs/superpowers/plans/2026-08-11-web-backend-infra-core.md Task 6/7).
+// functions/src/generateContent.ts. Exactly one of apiKey/apiKeyCiphertext
+// must be set — see that file's comment for details.
 export interface GenerateContentRequest {
   provider: AiProvider;
-  apiKey: string;
+  apiKey?: string;
+  apiKeyCiphertext?: string;
   model: string;
   prompt: string;
 }
