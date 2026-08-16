@@ -2,11 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import SettingsPage from "./page";
 import { useAuthUser } from "@/lib/useAuthUser";
-import { useSettings } from "@/lib/useSettings";
+import { useSettingsContext } from "@/lib/SettingsContext";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
-vi.mock("@/lib/useSettings", () => ({ useSettings: vi.fn() }));
+vi.mock("@/lib/SettingsContext", () => ({ useSettingsContext: vi.fn() }));
 vi.mock("@/components/SignInButton", () => ({
   SignInButton: () => <button>Đăng nhập với Google</button>,
 }));
@@ -14,7 +14,7 @@ vi.mock("@/components/SignInButton", () => ({
 describe("SettingsPage", () => {
   it("prompts sign-in when logged out", () => {
     vi.mocked(useAuthUser).mockReturnValue({ user: null, loading: false } as never);
-    vi.mocked(useSettings).mockReturnValue({
+    vi.mocked(useSettingsContext).mockReturnValue({
       settings: null,
       loading: false,
       error: null,
@@ -28,7 +28,7 @@ describe("SettingsPage", () => {
   it("renders every section once settings have loaded", async () => {
     const user = { uid: "u1", displayName: "Tùng", email: "tung@example.com" };
     vi.mocked(useAuthUser).mockReturnValue({ user, loading: false } as never);
-    vi.mocked(useSettings).mockReturnValue({
+    vi.mocked(useSettingsContext).mockReturnValue({
       settings: DEFAULT_SETTINGS,
       loading: false,
       error: null,
@@ -45,7 +45,7 @@ describe("SettingsPage", () => {
 
   it("shows a loading state while settings are loading", () => {
     vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
-    vi.mocked(useSettings).mockReturnValue({
+    vi.mocked(useSettingsContext).mockReturnValue({
       settings: null,
       loading: true,
       error: null,
@@ -58,7 +58,7 @@ describe("SettingsPage", () => {
 
   it("shows an alert when settings fail to load", async () => {
     vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
-    vi.mocked(useSettings).mockReturnValue({
+    vi.mocked(useSettingsContext).mockReturnValue({
       settings: null,
       loading: false,
       error: "offline",

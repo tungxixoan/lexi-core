@@ -2,15 +2,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { AppShell } from "./AppShell";
 import { usePathname } from "next/navigation";
-import { useAuthUser } from "@/lib/useAuthUser";
-import { useSettings } from "@/lib/useSettings";
+import { useSettingsContext } from "@/lib/SettingsContext";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
 
 vi.mock("next/navigation", () => ({
   usePathname: vi.fn(() => "/vocab-bank"),
 }));
-vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
-vi.mock("@/lib/useSettings", () => ({ useSettings: vi.fn() }));
+vi.mock("@/lib/SettingsContext", () => ({ useSettingsContext: vi.fn() }));
 
 afterEach(() => {
   document.documentElement.removeAttribute("data-theme");
@@ -18,8 +16,7 @@ afterEach(() => {
 
 describe("AppShell", () => {
   it("renders the sidebar brand and the children inside the main content area", () => {
-    vi.mocked(useAuthUser).mockReturnValue({ user: null, loading: false } as never);
-    vi.mocked(useSettings).mockReturnValue({
+    vi.mocked(useSettingsContext).mockReturnValue({
       settings: DEFAULT_SETTINGS,
       loading: false,
       error: null,
@@ -37,8 +34,7 @@ describe("AppShell", () => {
   });
 
   it("sets data-theme='dark' on <html> when the loaded settings say theme is dark", async () => {
-    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
-    vi.mocked(useSettings).mockReturnValue({
+    vi.mocked(useSettingsContext).mockReturnValue({
       settings: { ...DEFAULT_SETTINGS, theme: "dark" },
       loading: false,
       error: null,
@@ -58,8 +54,7 @@ describe("AppShell", () => {
 
   it("removes data-theme from <html> when theme is 'system'", async () => {
     document.documentElement.setAttribute("data-theme", "dark");
-    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
-    vi.mocked(useSettings).mockReturnValue({
+    vi.mocked(useSettingsContext).mockReturnValue({
       settings: { ...DEFAULT_SETTINGS, theme: "system" },
       loading: false,
       error: null,
@@ -78,8 +73,7 @@ describe("AppShell", () => {
   });
 
   it("applies the fs-large class to .app-frame when font size is large", () => {
-    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
-    vi.mocked(useSettings).mockReturnValue({
+    vi.mocked(useSettingsContext).mockReturnValue({
       settings: { ...DEFAULT_SETTINGS, fontSize: "large" },
       loading: false,
       error: null,
@@ -96,8 +90,7 @@ describe("AppShell", () => {
   });
 
   it("applies no font-size class for the medium (default) size", () => {
-    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
-    vi.mocked(useSettings).mockReturnValue({
+    vi.mocked(useSettingsContext).mockReturnValue({
       settings: DEFAULT_SETTINGS,
       loading: false,
       error: null,

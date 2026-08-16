@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthUser } from "@/lib/useAuthUser";
-import { useSettings } from "@/lib/useSettings";
+import { useSettingsContext } from "@/lib/SettingsContext";
 import { SignInButton } from "@/components/SignInButton";
 import { AccountSection } from "@/components/settings/AccountSection";
 import { AiProviderSection } from "@/components/settings/AiProviderSection";
@@ -10,7 +10,7 @@ import { DangerZoneSection } from "@/components/settings/DangerZoneSection";
 
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuthUser();
-  const { settings, loading: settingsLoading, error, save } = useSettings(user?.uid ?? null);
+  const { settings, loading: settingsLoading, error, save } = useSettingsContext();
 
   if (authLoading) return <p>Đang tải…</p>;
 

@@ -3,12 +3,10 @@
 import { useEffect } from "react";
 import type { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
-import { useAuthUser } from "@/lib/useAuthUser";
-import { useSettings } from "@/lib/useSettings";
+import { useSettingsContext } from "@/lib/SettingsContext";
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { user } = useAuthUser();
-  const { settings } = useSettings(user?.uid ?? null);
+  const { settings } = useSettingsContext();
 
   useEffect(() => {
     if (!settings) return;
