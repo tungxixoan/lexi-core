@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ModelPicker } from "./ModelPicker";
 import { encryptApiKey } from "@/lib/encryptApiKey";
 import { PROVIDER_LABELS, type AiProvider } from "@/lib/modelPresets";
@@ -20,6 +20,36 @@ export function AiProviderSection({ settings, onSave }: AiProviderSectionProps) 
 
   const active = settings.activeProvider;
   const activeConfig = settings.providers[active];
+
+  // The key draft is provider-specific scratch state — without this reset,
+  // typing a key for one provider then switching the dropdown before
+  // clicking Cập nhật would silently save that key under the NEW provider
+  // instead (a real credential-misrouting bug, not just a display glitch).
+  useEffect(() => {
+    setKeyDraft("");
+    setError(null);
+  }, [active]);
+
+  async function handleSave(next: UserSettings) {
+    setError(null);
+    try {
+      await onSave(next);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  // Clear the draft synchronously the moment the user picks a different
+  // provider, rather than waiting on the useEffect above (which only fires
+  // once the `settings` prop actually round-trips through a successful
+  // save). This closes the credential-misrouting race at the source: the
+  // draft is gone before `onSave` is even called, regardless of whether
+  // that save succeeds, fails, or is still in flight.
+  function handleProviderChange(nextProvider: AiProvider) {
+    setKeyDraft("");
+    setError(null);
+    void handleSave({ ...settings, activeProvider: nextProvider });
+  }
 
   async function handleUpdateKey() {
     const trimmed = keyDraft.trim();
@@ -50,9 +80,7 @@ export function AiProviderSection({ settings, onSave }: AiProviderSectionProps) 
         Nhà cung cấp
         <select
           value={active}
-          onChange={(e) =>
-            void onSave({ ...settings, activeProvider: e.target.value as AiProvider })
-          }
+          onChange={(e) => handleProviderChange(e.target.value as AiProvider)}
         >
           {PROVIDERS.map((p) => (
             <option key={p} value={p}>
@@ -66,7 +94,7 @@ export function AiProviderSection({ settings, onSave }: AiProviderSectionProps) 
         provider={active}
         model={activeConfig.model}
         onChange={(model) =>
-          void onSave({
+          void handleSave({
             ...settings,
             providers: { ...settings.providers, [active]: { ...activeConfig, model } },
           })

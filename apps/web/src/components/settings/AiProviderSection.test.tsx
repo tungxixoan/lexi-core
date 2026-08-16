@@ -84,4 +84,34 @@ describe("AiProviderSection", () => {
     render(<AiProviderSection settings={DEFAULT_SETTINGS} onSave={vi.fn()} />);
     expect(screen.getByRole("button", { name: "Cập nhật" })).toBeDisabled();
   });
+
+  it("clears the API key draft when switching provider", () => {
+    const onSave = vi.fn();
+    render(<AiProviderSection settings={DEFAULT_SETTINGS} onSave={onSave} />);
+
+    fireEvent.change(screen.getByLabelText("Khoá API"), { target: { value: "sk-partial-typed" } });
+    expect(screen.getByLabelText("Khoá API")).toHaveValue("sk-partial-typed");
+
+    fireEvent.change(screen.getByLabelText("Nhà cung cấp"), { target: { value: "groq" } });
+
+    expect(screen.getByLabelText("Khoá API")).toHaveValue("");
+  });
+
+  it("shows an alert when saving a provider change fails", async () => {
+    const onSave = vi.fn().mockRejectedValue(new Error("offline"));
+    render(<AiProviderSection settings={DEFAULT_SETTINGS} onSave={onSave} />);
+
+    fireEvent.change(screen.getByLabelText("Nhà cung cấp"), { target: { value: "groq" } });
+
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("offline"));
+  });
+
+  it("shows an alert when saving a model change fails", async () => {
+    const onSave = vi.fn().mockRejectedValue(new Error("offline"));
+    render(<AiProviderSection settings={DEFAULT_SETTINGS} onSave={onSave} />);
+
+    fireEvent.change(screen.getByLabelText("Model"), { target: { value: "gemini-2.5-pro" } });
+
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("offline"));
+  });
 });
