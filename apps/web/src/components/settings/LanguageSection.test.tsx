@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { LanguageSection } from "./LanguageSection";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
 
@@ -28,5 +28,12 @@ describe("LanguageSection", () => {
       />
     );
     expect(screen.getByLabelText("Ngôn ngữ đang học")).toHaveValue("korean");
+  });
+
+  it("shows an alert when saving the target language fails", async () => {
+    const onSave = vi.fn().mockRejectedValue(new Error("offline"));
+    render(<LanguageSection settings={DEFAULT_SETTINGS} onSave={onSave} />);
+    fireEvent.change(screen.getByLabelText("Ngôn ngữ đang học"), { target: { value: "japanese" } });
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("offline"));
   });
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { FontSize, Theme, UserSettings } from "@/lib/settings";
 
 interface AppearanceSectionProps {
@@ -22,6 +23,17 @@ const FONT_SIZE_LABELS: Record<FontSize, string> = {
 };
 
 export function AppearanceSection({ settings, onSave }: AppearanceSectionProps) {
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSave(next: UserSettings) {
+    setError(null);
+    try {
+      await onSave(next);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
   return (
     <section className="settings-card">
       <h3 className="scr-title">Giao diện</h3>
@@ -29,7 +41,7 @@ export function AppearanceSection({ settings, onSave }: AppearanceSectionProps) 
         Chủ đề
         <select
           value={settings.theme}
-          onChange={(e) => void onSave({ ...settings, theme: e.target.value as Theme })}
+          onChange={(e) => void handleSave({ ...settings, theme: e.target.value as Theme })}
         >
           {THEMES.map((t) => (
             <option key={t} value={t}>
@@ -42,7 +54,7 @@ export function AppearanceSection({ settings, onSave }: AppearanceSectionProps) 
         Cỡ chữ
         <select
           value={settings.fontSize}
-          onChange={(e) => void onSave({ ...settings, fontSize: e.target.value as FontSize })}
+          onChange={(e) => void handleSave({ ...settings, fontSize: e.target.value as FontSize })}
         >
           {FONT_SIZES.map((f) => (
             <option key={f} value={f}>
@@ -51,6 +63,7 @@ export function AppearanceSection({ settings, onSave }: AppearanceSectionProps) 
           ))}
         </select>
       </label>
+      {error && <p role="alert">{error}</p>}
     </section>
   );
 }
