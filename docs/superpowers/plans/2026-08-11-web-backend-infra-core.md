@@ -1,4 +1,4 @@
-# LexiCore Web — Backend/Infra Core (Plan 1 of 3) Implementation Plan
+# LexiCore Web — Backend/Infra Core (React Web Plan 1 of 3) Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -16,7 +16,7 @@
 - Every AI-proxy Cloud Function must reject unauthenticated callers. `onCall` automatically verifies a token's signature **if one is present**, but does **not** automatically reject a call with no token at all — every handler needs an explicit `if (!request.auth) throw new HttpsError("unauthenticated", ...)` check.
 - BYOK: the user's own provider API key travels in the callable's `data` payload (never a URL query string, which would leak into logs), is used in-memory for one upstream call, and is never logged or persisted server-side.
 - Node 22 (Cloud Functions runtime; bumped from Node 20 post-Plan-1 hardening pass — see `functions/package.json`'s `engines` field and CLAUDE.md's Deploy gotchas).
-- No TTS/STT anywhere in this plan — that's Plan 2 (`getPronunciation`, `transcribeAudio`), a separate deployable Cloud Run service. This plan only builds the `generateContent` LLM proxy.
+- No TTS/STT anywhere in this plan — that's React Web Plan 2 (`getPronunciation`, `transcribeAudio`), a separate deployable Cloud Run service. This plan only builds the `generateContent` LLM proxy.
 - Reference doc for all architecture decisions and their reasoning: `docs/superpowers/specs/2026-08-11-react-web-redesign-design.md`.
 
 ---

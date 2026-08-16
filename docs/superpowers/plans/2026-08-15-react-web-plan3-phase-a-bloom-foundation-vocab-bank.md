@@ -1,4 +1,4 @@
-# Plan 3 / Phase A — Bloom Foundation + Vocab Bank Implementation Plan
+# React Web Plan 3 / Phase A — Bloom Foundation + Vocab Bank Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -20,13 +20,13 @@
 
 ## Scope for this phase (and what's deferred)
 
-This is Phase A of Plan 3 (see `docs/superpowers/specs/2026-08-11-react-web-redesign-design.md` §10.3): design tokens + app shell + Vocab Bank + Side Drawer only. Explicitly **not** in this phase (deferred to later phases per the spec's own dependency ordering):
+This is Phase A of React Web Plan 3 (see `docs/superpowers/specs/2026-08-11-react-web-redesign-design.md` §10.3): design tokens + app shell + Vocab Bank + Side Drawer only. Explicitly **not** in this phase (deferred to later phases per the spec's own dependency ordering):
 
 - Dashboard, Tra từ (Lookup), Luyện tập (Practice hub), Đọc/Nghe hubs, Cài đặt — later phases. Their sidebar links are wired (real hrefs) but the routes don't exist yet in this phase, so they 404 until built — expected during incremental frontend build, not a regression.
 - The 5 nav items that only appear "for demo purposes" in the mockup (Đọc & gõ, Part 7 · Làm bài, Part 7 · Kết quả, Nghe chép, Nghe hiểu — each suffixed "(ví dụ)" in the mockup's sidebar HTML) are **not** real sidebar entries. They're reached from their hub's mode cards once those hubs exist, not from the sidebar directly. The production sidebar has 7 items, not the mockup demo's 12.
 - The sidebar's `.card-mini` streak widget (mockup shows hardcoded "7🔥 ngày liên tiếp") — streak computation is a Dashboard/stats concern, not built here.
 - "Gợi ý từ mới" (new-word suggestion grid, spec §7.2) below the Vocab Bank list — in Flutter this is a generic `VocabSuggestionsSection` widget fed by a suggestion source elsewhere (Word Radar, a just-finished practice session); no such source exists yet in the web app. Building a real trigger for it here would mean inventing scope with no upstream data. Deferred to whichever later phase first produces suggestion-worthy results.
-- Pronunciation playback (the drawer's `▶` speaker button) — needs the `getPronunciation` onCall function (Plan 2, already deployed) wired up; spec §10.3 attaches that dependency to the *next* phase (Dashboard/Lookup/Practice hub), not this one. Button renders per the mockup but is inert.
+- Pronunciation playback (the drawer's `▶` speaker button) — needs the `getPronunciation` onCall function (React Web Plan 2, already deployed) wired up; spec §10.3 attaches that dependency to the *next* phase (Dashboard/Lookup/Practice hub), not this one. Button renders per the mockup but is inert.
 - "Sửa" (edit) — no edit-form mockup exists anywhere in the spec. Button renders (disabled, with a tooltip) but does nothing yet.
 - Responsive/mobile breakpoints — spec's own non-goal, desktop-only for all phases.
 
@@ -217,7 +217,7 @@ git commit -m "feat(web): add Bloom design-system color tokens"
 
 ---
 
-## Task 2: App shell — sidebar + routing, and relocate the Plan 1 verification page
+## Task 2: App shell — sidebar + routing, and relocate the React Web Plan 1 verification page
 
 **Files:**
 - Create: `apps/web/src/components/shell/Sidebar.tsx`
@@ -530,7 +530,7 @@ export default function AppGroupLayout({ children }: { children: ReactNode }) {
 }
 ```
 
-- [ ] **Step 11: Relocate the Plan 1 verification page out of `/`**
+- [ ] **Step 11: Relocate the React Web Plan 1 verification page out of `/`**
 
 Create `apps/web/src/app/dev/verify/page.tsx` with exactly the current contents of `apps/web/src/app/page.tsx`:
 
@@ -593,7 +593,7 @@ Expected: PASS — includes the relocated `dev/verify/page.test.tsx`, the new `p
 
 ```bash
 git add apps/web/src/components/shell apps/web/src/app/\(app\) apps/web/src/app/dev apps/web/src/app/page.tsx apps/web/src/app/page.test.tsx apps/web/src/styles/bloom.css
-git commit -m "feat(web): add Bloom app shell with sidebar routing, move Plan 1 scaffold to /dev/verify"
+git commit -m "feat(web): add Bloom app shell with sidebar routing, move React Web Plan 1 scaffold to /dev/verify"
 ```
 
 ---
@@ -1849,7 +1849,7 @@ git commit -m "feat(web): add Vocab Bank Side Drawer with mastery bar and delete
 
 ## Final verification (whole phase)
 
-- [ ] Run the full test suite: `npm --prefix apps/web test` — expect all tests (existing Plan 1 tests + every test added in this plan) to pass.
+- [ ] Run the full test suite: `npm --prefix apps/web test` — expect all tests (existing React Web Plan 1 tests + every test added in this plan) to pass.
 - [ ] Run typecheck: `npm --prefix apps/web run typecheck` — expect no errors.
 - [ ] Run the production build: `npm --prefix apps/web run build` — expect a clean build (this also catches any Server/Client Component boundary mistakes that tests alone wouldn't).
 - [ ] Manually verify in the emulator or against production Firebase (per `CLAUDE.md`'s Deploy gotchas): `npm --prefix apps/web run dev`, sign in, confirm `/` redirects to `/vocab-bank`, the sidebar shows all 7 items with a pill highlight on "Ngân hàng từ vựng", the real saved words render with correct due labels, clicking a row opens the Side Drawer with correct accordion content and mastery %, and Xoá actually removes a (test) word from Firestore after confirming.

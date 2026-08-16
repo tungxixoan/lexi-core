@@ -2,8 +2,8 @@
 
 **Date:** 2026-08-15
 **Status:** Approved
-**Covers:** Three follow-up enhancements to the already-shipped Plan 3 Phase A Vocab Bank screen (`apps/web/src/app/(app)/vocab-bank/page.tsx`), raised after live-testing the real screen against production data (290 saved words): (1) the app shell no longer caps at 1440px, (2) filter chips become multi-select with a client-side, cached, page-jumpable pagination mechanism, (3) a "Sửa" (edit) modal for vocab records, closing the gap Plan 3 Phase A deliberately left open.
-**Depends on:** Plan 3 Phase A (`docs/superpowers/plans/2026-08-15-plan3-phase-a-bloom-foundation-vocab-bank.md`) — modifies files it created.
+**Covers:** Three follow-up enhancements to the already-shipped React Web Plan 3 Phase A Vocab Bank screen (`apps/web/src/app/(app)/vocab-bank/page.tsx`), raised after live-testing the real screen against production data (290 saved words): (1) the app shell no longer caps at 1440px, (2) filter chips become multi-select with a client-side, cached, page-jumpable pagination mechanism, (3) a "Sửa" (edit) modal for vocab records, closing the gap React Web Plan 3 Phase A deliberately left open.
+**Depends on:** React Web Plan 3 Phase A (`docs/superpowers/plans/2026-08-15-react-web-plan3-phase-a-bloom-foundation-vocab-bank.md`) — modifies files it created.
 
 ---
 

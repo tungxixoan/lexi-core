@@ -685,7 +685,7 @@ Root cause: the app-wide `SelectionArea` (main.dart) wraps the single Navigator;
 
 ## Plan complete — Ready to merge: Yes.
 
-# LexiCore — React Web Redesign: Backend/Infra Core (Plan 1 of 3)
+# LexiCore — React Web Redesign: Backend/Infra Core (React Web Plan 1 of 3)
 
 Plan: `docs/superpowers/plans/2026-08-11-web-backend-infra-core.md`
 
@@ -719,7 +719,7 @@ Plan: `docs/superpowers/plans/2026-08-11-web-backend-infra-core.md`
   - Steps 4-8 (interactive emulator test, production deploy, App Hosting setup, live E2E verification) deliberately NOT dispatched to a subagent — requires live infra changes + human interaction (real Google sign-in, real API key). Controller stopped here to coordinate directly with user.
 - Task 08 (steps 4-6, live infra, done with user): 
   - Step 4 (local emulator E2E): verified working end-to-end after 2 real debugging sessions — root causes found: (a) Next.js only reads .env.local at server start, requires full restart after changing NEXT_PUBLIC_USE_FUNCTIONS_EMULATOR (not hot-reloaded); (b) user initially edited .env.local.example instead of .env.local. Real Gemini response confirmed rendering on localhost:3000 via emulator.
-  - Step 5 (deploy functions to production): done. Required Blaze plan upgrade first (Cloud Functions 2nd gen / Cloud Build mandatory, not available on free Spark plan) — not previously called out explicitly in the spec's "genuinely free" framing, worth remembering for Plan 2 (Cloud Run has the same Blaze requirement).
+  - Step 5 (deploy functions to production): done. Required Blaze plan upgrade first (Cloud Functions 2nd gen / Cloud Build mandatory, not available on free Spark plan) — not previously called out explicitly in the spec's "genuinely free" framing, worth remembering for React Web Plan 2 (Cloud Run has the same Blaze requirement).
   - Mid-flow architecture improvement (user-initiated): moved App Hosting backend + both Cloud Functions from default us-central1 to asia-southeast1 (Singapore) — ~200ms+ RTT from Vietnam to us-central1 vs ~30-50ms to asia-southeast1, meaningful for an interactive AI-calling app. Code changed: onCall({region: "asia-southeast1"}, handler) in both functions/src/ping.ts and generateContent.ts, client's getFunctions(app, "asia-southeast1") in apps/web/src/lib/firebase.ts. Tests re-verified (14/14 + 13/13), redeployed — old us-central1 functions cleaned up via firebase deploy's own prompt.
   - Known follow-up (not urgent, ~2.5 months runway from 2026-08-13): Cloud Functions Node 20 runtime deprecated 2026-04-30, decommissioned 2026-10-30 — needs bumping to Node 22 before then (App Hosting backend was created on nodejs22 already; functions/ should follow for consistency).
   - App Hosting backend created: project lexi-core, region asia-southeast1, backend id "lexicore-web", root directory apps/web, runtime nodejs22.
@@ -727,19 +727,19 @@ Plan: `docs/superpowers/plans/2026-08-11-web-backend-infra-core.md`
   - Extra fix along the way (not in original plan, real deploy gotcha): Firebase Auth requires the App Hosting domain to be added to Authentication > Settings > Authorized domains — signInWithPopup silently opened-and-closed until this was added. Worth remembering for any future new domain.
   - App Hosting first deploy required manually clicking "Create rollout" in the Console and correcting "App root directory" from its wrong default `/` to `apps/web` — the Console's GitHub-connected deploy flow has its own separate root-directory setting from firebase.json's apphosting.rootDir (CLI config didn't carry over automatically).
 
-## Plan 1 (Backend/infra core) — all 8 tasks complete. Ready for final whole-branch review.
+## React Web Plan 1 (Backend/infra core) — all 8 tasks complete. Ready for final whole-branch review.
 
 ## Final whole-branch review (b9bf4b8..fef7491): Ready to merge: Yes.
 - Verified independently (not just trusted the report): region agreement across all 3 declaration sites (ping.ts, generateContent.ts, firebase.ts), auth pattern zero-drift from ping.ts, BYOK key confined to headers/never logged/never in client errors, backend structurally can't reach Firestore (no firebase-admin dependency at all — stronger than convention).
-- No Critical findings. 6 Important findings — all applied as a follow-up fix batch (commits b93d098..ab53a1a): Node 20->22 runtime bump (matches App Hosting's nodejs22), region regression tests (guards Plan 2's new onCall functions from silently defaulting to us-central1), provider-error-to-HttpsError-code mapping (permission-denied/resource-exhausted/unavailable instead of one generic message — directly informed by the 2 real errors hit during Step 4 testing), maxInstances+timeoutSeconds cost ceiling on generateContent (now that Blaze billing is live), cross-reference comments linking the duplicated client/server request types, typecheck scripts + CLAUDE.md "Deploy gotchas" section (Blaze requirement, Auth authorized domains, App Hosting Console root-dir setting — previously only in this ledger).
-- Minor findings (10 of them) logged as Plan 2/3 follow-ups, not fixed now: AuthProvider context to dedupe 3 independent onAuthStateChanged listeners, shared-types package, BYOK key persistence UX decision, fetch timeouts on provider calls, VocabRecordCount stale-resolution race, gemini.ts multi-part response handling, model-string URL injection guard, GenerateContentPanel not gating on auth state, apphosting.ignore not excluding Flutter dirs (harmless, slower uploads) — see final-review output for full list if picked up later.
+- No Critical findings. 6 Important findings — all applied as a follow-up fix batch (commits b93d098..ab53a1a): Node 20->22 runtime bump (matches App Hosting's nodejs22), region regression tests (guards React Web Plan 2's new onCall functions from silently defaulting to us-central1), provider-error-to-HttpsError-code mapping (permission-denied/resource-exhausted/unavailable instead of one generic message — directly informed by the 2 real errors hit during Step 4 testing), maxInstances+timeoutSeconds cost ceiling on generateContent (now that Blaze billing is live), cross-reference comments linking the duplicated client/server request types, typecheck scripts + CLAUDE.md "Deploy gotchas" section (Blaze requirement, Auth authorized domains, App Hosting Console root-dir setting — previously only in this ledger).
+- Minor findings (10 of them) logged as React Web Plan 2/3 follow-ups, not fixed now: AuthProvider context to dedupe 3 independent onAuthStateChanged listeners, shared-types package, BYOK key persistence UX decision, fetch timeouts on provider calls, VocabRecordCount stale-resolution race, gemini.ts multi-part response handling, model-string URL injection guard, GenerateContentPanel not gating on auth state, apphosting.ignore not excluding Flutter dirs (harmless, slower uploads) — see final-review output for full list if picked up later.
 - Final test count: apps/web 14/14, functions 23/23, both typecheck+build clean.
 
-## Plan 1 (Backend/infra core) — COMPLETE. All 8 tasks + final review + fix batch done. Deployed and manually verified end-to-end in production (asia-southeast1).
+## React Web Plan 1 (Backend/infra core) — COMPLETE. All 8 tasks + final review + fix batch done. Deployed and manually verified end-to-end in production (asia-southeast1).
 
 ---
 
-# LexiCore — Plan 2: STT/TTS Service (Piper + faster-whisper on Cloud Run)
+# LexiCore — React Web Plan 2: STT/TTS Service (Piper + faster-whisper on Cloud Run)
 
 **Plan:** docs/superpowers/plans/2026-08-14-plan2-tts-stt-service.md
 **BASE commit:** dd20425289932fdb99669e3c692fa674b0cc4354
@@ -765,11 +765,11 @@ Reviewer (Opus) independently traced the Python↔TypeScript HTTP contract byte-
 
 **Fix batch applied (commit 898c9c1):** all 1 Critical + 6 Important findings fixed — `libgomp1` added to Dockerfile (verified survives the `curl` purge), `/transcribe` now uses `run_in_threadpool`, bucket name corrected to `lexi-core.firebasestorage.app` everywhere (plan doc + 2 test files, zero remaining `appspot.com` references), input caps added (500 chars text / 10MB audio) to all 3 onCall functions AND mirrored in the Python service with matching new tests, `requirements.txt` pinned to exact installed versions, region-regression tests added to all 3 new onCall test files (matching `ping.test.ts`'s exact pattern), Storage emulator added to `firebase.json` (port 9199). Final counts: functions 57/57, services/tts-stt 12/12 pytest — both independently re-verified by direct test run (not just trusted the fix report), plus direct file inspection of all 7 fixes (the dispatched re-reviewer hit a session-limit mid-task, so verification was completed directly instead of re-dispatching).
 
-## Plan 2 (Tasks 1-8 + final review + fix batch) — COMPLETE. Task 9 (Docker build/push, gcloud run deploy, IAM grants, live E2E verification) remains — requires Docker + gcloud CLI + real Firebase project access unavailable in this sandbox; must be done on the user's own machine, coordinated directly per the plan.
+## React Web Plan 2 (Tasks 1-8 + final review + fix batch) — COMPLETE. Task 9 (Docker build/push, gcloud run deploy, IAM grants, live E2E verification) remains — requires Docker + gcloud CLI + real Firebase project access unavailable in this sandbox; must be done on the user's own machine, coordinated directly per the plan.
 
 ## Task 9 (deploy + live E2E verification) — COMPLETE, done live with the user on their machine.
 
-- Prerequisites: installed Docker Desktop (required enabling Windows "Virtual Machine Platform" feature + reboot — Docker's generic "virtualization not detected" error was actually a missing WSL2 component, not a BIOS/firmware issue, which was already enabled) and Google Cloud CLI; authenticated both `gcloud` and Firebase CLI (already logged in from Plan 1) to `tungxixoan@gmail.com` / project `lexi-core`.
+- Prerequisites: installed Docker Desktop (required enabling Windows "Virtual Machine Platform" feature + reboot — Docker's generic "virtualization not detected" error was actually a missing WSL2 component, not a BIOS/firmware issue, which was already enabled) and Google Cloud CLI; authenticated both `gcloud` and Firebase CLI (already logged in from React Web Plan 1) to `tungxixoan@gmail.com` / project `lexi-core`.
 - Artifact Registry repo `tts-stt` created in `asia-southeast1`; Docker configured to auth against it.
 - Firebase Storage enabled for the first time ever on this project via Console wizard — bucket created in `asia-southeast1` (deliberate choice: the newer `.firebasestorage.app` free tier is region-restricted to `us-central1`/`us-west1`/`us-east1` only, confirmed via Firebase's pricing docs; user chose to accept a small real cost (~cents/month at this scale) for lower read latency over a free US-region bucket, and separately the project is still inside GCP's 90-day/$300 free-trial credit window (expires 2026-11-12) so nothing is actually billed to the card yet regardless).
 - Docker build succeeded first try (1.44GB image) — confirms the final-review fix batch's `libgomp1` addition was in fact necessary and correct (the faster-whisper model pre-bake step, which needs `ctranslate2`→`libgomp.so.1`, completed cleanly).
@@ -782,16 +782,16 @@ Reviewer (Opus) independently traced the Python↔TypeScript HTTP contract byte-
 - 90-day Storage lifecycle rule applied to `tts-cache/sentence/**` only (confirmed via `gcloud storage buckets describe`), `tts-cache/word/**` correctly untouched (no expiry, per spec).
 - `functions/scripts/verify-onCall.mjs` committed (c832784) as a reusable manual-verification tool for future debugging, now that there's no frontend yet to click through.
 
-## Plan 2 (STT/TTS Service) — FULLY COMPLETE. All 9 tasks done, final whole-branch review done, review fix batch applied, Task 9 live deployment done and verified end-to-end in production with real (non-mocked) Piper/faster-whisper inference.
+## React Web Plan 2 (STT/TTS Service) — FULLY COMPLETE. All 9 tasks done, final whole-branch review done, review fix batch applied, Task 9 live deployment done and verified end-to-end in production with real (non-mocked) Piper/faster-whisper inference.
 
 ---
 
-# LexiCore — Plan 3 / Phase A: Bloom Foundation + Vocab Bank
+# LexiCore — React Web Plan 3 / Phase A: Bloom Foundation + Vocab Bank
 
-**Plan:** docs/superpowers/plans/2026-08-15-plan3-phase-a-bloom-foundation-vocab-bank.md
-**BASE commit:** b2befa8 (docs: add Plan 3 Phase A implementation plan)
+**Plan:** docs/superpowers/plans/2026-08-15-react-web-plan3-phase-a-bloom-foundation-vocab-bank.md
+**BASE commit:** b2befa8 (docs: add React Web Plan 3 Phase A implementation plan)
 
-Phase A of Plan 3 (React frontend build-out) per the umbrella spec's §10.3 decomposition: Bloom design tokens + app shell (sidebar) + Vocab Bank list + Side Drawer detail screen. 6 tasks, executed via subagent-driven-development directly on `master` (this repo's established practice — solo project, no branches used in Plan 1/2 either).
+Phase A of React Web Plan 3 (React frontend build-out) per the umbrella spec's §10.3 decomposition: Bloom design tokens + app shell (sidebar) + Vocab Bank list + Side Drawer detail screen. 6 tasks, executed via subagent-driven-development directly on `master` (this repo's established practice — solo project, no branches used in React Web Plan 1/2 either).
 
 ## Status
 
@@ -814,7 +814,7 @@ Reviewer (Opus) independently re-verified plan fidelity across all 6 tasks toget
 
 ## All 6 tasks complete — proceeding to final whole-branch review.
 
-## Plan 3 Phase A (Bloom Foundation + Vocab Bank) — COMPLETE. All 6 tasks + final whole-branch review + fix batch (commits 445ee6e..a1cb602) done, all re-reviewed clean. Final test count: apps/web 50/50, typecheck clean, build clean. Manual emulator/production verification (deleting a throwaway word, confirming it doesn't reappear after a Flutter relaunch) still needs to be done live with the user before this is fully done — see Recommendations above.
+## React Web Plan 3 Phase A (Bloom Foundation + Vocab Bank) — COMPLETE. All 6 tasks + final whole-branch review + fix batch (commits 445ee6e..a1cb602) done, all re-reviewed clean. Final test count: apps/web 50/50, typecheck clean, build clean. Manual emulator/production verification (deleting a throwaway word, confirming it doesn't reappear after a Flutter relaunch) still needs to be done live with the user before this is fully done — see Recommendations above.
 
 **Live manual test (2026-08-15, done with the user):** ran `npm run dev`, user opened the real app in their own browser, signed in with Google, and confirmed the real screen against production data — 290 saved words rendered correctly, sidebar/active-state/Bloom styling all correct, sign-in gate worked. Confirmed working end-to-end against real Firestore data, not just mocks.
 
@@ -826,7 +826,7 @@ Reviewer (Opus) independently re-verified plan fidelity across all 6 tasks toget
 **Plan:** docs/superpowers/plans/2026-08-15-vocab-bank-polish.md
 **BASE commit:** bfbc2e2 (docs: add Vocab Bank polish implementation plan)
 
-Follow-up work raised by the user after live-testing Plan 3 Phase A against real production data: (1) remove the app-frame's 1440px cap, (2) multi-select filter chips with client-side cached/paginated scroll list (OR within a facet, AND across facets), (3) an edit modal for vocab records (meaning/examples/topics-max-2/notes), closing the "Sửa" gap Phase A deliberately deferred. 7 tasks, same subagent-driven-development process as Phase A, directly on `master`.
+Follow-up work raised by the user after live-testing React Web Plan 3 Phase A against real production data: (1) remove the app-frame's 1440px cap, (2) multi-select filter chips with client-side cached/paginated scroll list (OR within a facet, AND across facets), (3) an edit modal for vocab records (meaning/examples/topics-max-2/notes), closing the "Sửa" gap Phase A deliberately deferred. 7 tasks, same subagent-driven-development process as Phase A, directly on `master`.
 
 ## Status
 

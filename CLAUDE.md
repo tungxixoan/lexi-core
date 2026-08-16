@@ -27,7 +27,7 @@ Both classic Firebase Hosting (Flutter Web, `build/web`) and Firebase App Hostin
 - **TTS/STT use self-hosted open-source models** (Piper for TTS, faster-whisper for STT — not a paid third-party API), packaged in a Docker container on **Google Cloud Run** (free tier, scale-to-zero), called by the Cloud Functions proxy via same-project IAM (no public ingress, no hand-rolled shared secret). A separate deployable unit from the Next.js app/functions.
 - **Pronunciation TTS (dictionary/vocab-example audio) is cached as real audio files** in Firebase Storage (= Google Cloud Storage, same category as S3/Azure Blob), keyed by `sha256(text+lang+voice)`, **shared across all users** — the first lookup of a word generates the file, everyone after that hits the same cached file, Cloud Run isn't called again for it. Nghe (Listening) audio is never cached — it's freshly AI-generated per session and always calls Cloud Run live.
 
-## Deploy gotchas (learned the hard way during Plan 1)
+## Deploy gotchas (learned the hard way during React Web Plan 1)
 
 - **Cloud Functions 2nd gen and Cloud Run both require the Blaze (pay-as-you-go) plan** — not available on the free Spark plan, even though usage stays within Blaze's free tier for a project this size. Upgrade at `https://console.firebase.google.com/project/lexi-core/usage/details` before the first `firebase deploy --only functions`.
 - **New domains need adding to Firebase Auth's Authorized domains** (Console → Authentication → Settings → Authorized domains) or `signInWithPopup` silently opens and closes the OAuth popup with no visible error. Every new App Hosting domain (preview or production) needs this.

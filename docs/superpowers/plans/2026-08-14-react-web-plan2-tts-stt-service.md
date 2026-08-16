@@ -1,8 +1,8 @@
-# STT/TTS Service (Piper + faster-whisper on Cloud Run) Implementation Plan
+# STT/TTS Service (Piper + faster-whisper on Cloud Run) — React Web Plan 2 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. **Task 9 is deployment/live-infra work and must NOT be dispatched to a subagent** — do it directly with the user, mirroring Plan 1's Task 08 Steps 4-8.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. **Task 9 is deployment/live-infra work and must NOT be dispatched to a subagent** — do it directly with the user, mirroring React Web Plan 1's Task 08 Steps 4-8.
 
-**Goal:** Stand up a self-hosted TTS (Piper) + STT (faster-whisper) Docker service on Cloud Run, plus three Cloud Functions `onCall` proxies (`getPronunciation` cached, `synthesizeSpeech` live/uncached, `transcribeAudio`) and the Firebase Storage pronunciation cache — the backend groundwork Plan 3 (React frontend build-out) depends on for any screen that plays pronunciation or listening audio.
+**Goal:** Stand up a self-hosted TTS (Piper) + STT (faster-whisper) Docker service on Cloud Run, plus three Cloud Functions `onCall` proxies (`getPronunciation` cached, `synthesizeSpeech` live/uncached, `transcribeAudio`) and the Firebase Storage pronunciation cache — the backend groundwork React Web Plan 3 (React frontend build-out) depends on for any screen that plays pronunciation or listening audio.
 
 **Architecture:** A new top-level `services/tts-stt/` directory holds a small Python FastAPI app that wraps Piper (TTS) and faster-whisper (STT), packaged into one Docker image and deployed to Cloud Run with no public ingress (private, invoked only by Cloud Functions via same-project IAM ID-token auth). `functions/src/` gains a `services/cloudRunClient.ts` helper (mints an ID token and calls the Cloud Run service, or talks to `localhost` directly for local dev) and three new `onCall` functions reusing Plan 1's auth pattern. `getPronunciation` additionally checks/writes a content-addressable cache in Firebase Storage (`tts-cache/{word|sentence}/{language}/{voiceId}/{sha256}.wav`) before falling back to Cloud Run — this is the first Cloud Function to touch Storage (via `firebase-admin`, scoped to Storage only; Firestore stays client-only per spec §3.3, unchanged).
 
@@ -1582,7 +1582,7 @@ git commit -m "chore(functions): add Storage rules for tts-cache and local-dev e
 
 ### Task 9: Deploy Cloud Run service, wire production env, verify end-to-end
 
-**This task requires live infrastructure changes and human interaction (gcloud/Firebase CLI auth, IAM grants, real deployed URLs) — do NOT dispatch this task to a subagent. Work through it directly with the user, the same way Plan 1's Task 08 Steps 4-8 were done.**
+**This task requires live infrastructure changes and human interaction (gcloud/Firebase CLI auth, IAM grants, real deployed URLs) — do NOT dispatch this task to a subagent. Work through it directly with the user, the same way React Web Plan 1's Task 08 Steps 4-8 were done.**
 
 **Files:**
 - Create: `functions/.env` (committed, non-secret — the deployed Cloud Run URL)
@@ -1664,7 +1664,7 @@ Use the emulator UI (or the verification script from Step 7, pointed at the emul
 
 - [ ] **Step 7: Production end-to-end verification**
 
-There's no frontend yet to click through (Plan 3 hasn't been built), so verify by directly invoking the deployed callable functions' HTTPS endpoints with a real Firebase Auth ID token.
+There's no frontend yet to click through (React Web Plan 3 hasn't been built), so verify by directly invoking the deployed callable functions' HTTPS endpoints with a real Firebase Auth ID token.
 
 `functions/scripts/verify-onCall.mjs`:
 ```js
@@ -1736,7 +1736,7 @@ Expected: the describe command echoes back the rule just set, confirming `tts-ca
 
 - [ ] **Step 9: Record the outcome**
 
-Once all three functions are verified working in production, update `.superpowers/sdd/progress.md` with the Plan 2 ledger entry (task-by-task, mirroring the Plan 1 entry's format) and note the final test counts (`services/tts-stt`: pytest count; `functions/`: vitest count).
+Once all three functions are verified working in production, update `.superpowers/sdd/progress.md` with the React Web Plan 2 ledger entry (task-by-task, mirroring the React Web Plan 1 entry's format) and note the final test counts (`services/tts-stt`: pytest count; `functions/`: vitest count).
 
 ---
 

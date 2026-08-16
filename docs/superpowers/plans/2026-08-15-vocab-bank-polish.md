@@ -4,9 +4,9 @@
 
 **Goal:** Three follow-up enhancements to the already-shipped Vocab Bank screen: the app shell fills the full viewport width, filter chips become multi-select with a client-side cached/paginated scroll list, and vocab records become editable (meaning, examples, topics, notes) via a modal.
 
-**Architecture:** All three pieces build directly on Plan 3 Phase A's existing files (`apps/web/src/app/(app)/vocab-bank/page.tsx`, `apps/web/src/components/vocab-bank/VocabDrawer.tsx`, `apps/web/src/lib/vocabRecords.ts`, `apps/web/src/styles/bloom.css`) — no new routes, no new Cloud Functions. Filtering and pagination both operate entirely on the already-fully-loaded in-memory `records` array (no new Firestore queries); only the new edit flow adds one new Firestore write (`updateVocabRecord`).
+**Architecture:** All three pieces build directly on React Web Plan 3 Phase A's existing files (`apps/web/src/app/(app)/vocab-bank/page.tsx`, `apps/web/src/components/vocab-bank/VocabDrawer.tsx`, `apps/web/src/lib/vocabRecords.ts`, `apps/web/src/styles/bloom.css`) — no new routes, no new Cloud Functions. Filtering and pagination both operate entirely on the already-fully-loaded in-memory `records` array (no new Firestore queries); only the new edit flow adds one new Firestore write (`updateVocabRecord`).
 
-**Tech Stack:** Same as Plan 3 Phase A — Next.js 16 App Router, React 19, Firebase JS SDK v12 (`firebase/firestore`), Vitest + React Testing Library + jsdom.
+**Tech Stack:** Same as React Web Plan 3 Phase A — Next.js 16 App Router, React 19, Firebase JS SDK v12 (`firebase/firestore`), Vitest + React Testing Library + jsdom.
 
 ## Global Constraints
 
