@@ -48,6 +48,10 @@ describe("getSettings", () => {
     expect(result.theme).toBe("dark");
     expect(result.fontSize).toBe("medium");
     expect(result.providers).toEqual(DEFAULT_SETTINGS.providers);
+    // Regression guard: a real pre-existing Firestore doc written before
+    // targetLanguage existed has no such key at all, so the merge must fall
+    // through to the default rather than leaving it undefined.
+    expect(result.targetLanguage).toBe("english");
   });
 });
 
