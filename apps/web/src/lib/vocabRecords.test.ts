@@ -7,6 +7,7 @@ import {
   getVocabRecords,
   saveVocabRecord,
   updateVocabRecord,
+  type VocabRecord,
 } from "./vocabRecords";
 
 vi.mock("firebase/firestore", () => ({
@@ -33,7 +34,7 @@ describe("countVocabRecords", () => {
   });
 });
 
-const RECORD = {
+const RECORD: VocabRecord = {
   id: "abc",
   headword: "meticulous",
   inputType: "word",
