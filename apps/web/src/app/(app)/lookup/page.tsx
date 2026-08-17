@@ -26,12 +26,26 @@ import {
 
 const MAX_PRESELECTED_TOPICS = 2;
 
+// Loose match instead of a strict case-insensitive equality: the AI is
+// prompted with a fixed English topic list ("Food & Drink", "Social/Casual",
+// ...) but doesn't always echo it back byte-for-byte (different punctuation,
+// "and" instead of "&", extra whitespace) — collapse both sides down to
+// bare alphanumerics before comparing so those variations still match.
+function normalizeTopicName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
 function preselectTopicIds(suggestedTopics: string[], topics: Topic[]): string[] {
   const selected: string[] = [];
   for (const suggestion of suggestedTopics) {
     if (selected.length >= MAX_PRESELECTED_TOPICS) break;
-    const match = topics.find((t) => t.name.toLowerCase() === suggestion.toLowerCase());
-    if (match) selected.push(match.id);
+    const normalizedSuggestion = normalizeTopicName(suggestion);
+    const match = topics.find((t) => normalizeTopicName(t.name) === normalizedSuggestion);
+    if (match && !selected.includes(match.id)) selected.push(match.id);
   }
   return selected;
 }

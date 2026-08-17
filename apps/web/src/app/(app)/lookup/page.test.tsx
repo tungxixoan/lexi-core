@@ -270,4 +270,50 @@ describe("LookupPage", () => {
 
     expect(screen.getByRole("button", { name: "Business" })).toHaveClass("active");
   });
+
+  it("pre-selects a suggested topic despite punctuation/wording differences from the AI", async () => {
+    mockSignedIn();
+    vi.mocked(getTopics).mockResolvedValue([
+      { id: "food-1", name: "Food & Drink", emoji: "🍜", isPredefined: true, createdAt: "2026-01-01" },
+    ]);
+    vi.mocked(getVocabRecordByHeadword).mockResolvedValue(null);
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        headword: "savory",
+        meaning: "đậm đà",
+        suggestedTopics: ["food and drink"],
+      }),
+    });
+
+    render(<LookupPage />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "savory" } });
+    fireEvent.click(screen.getByRole("button", { name: "Tra từ" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Lưu vào Ngân hàng từ vựng/ }));
+
+    expect(screen.getByRole("button", { name: "Food & Drink" })).toHaveClass("active");
+  });
+
+  it("does not preselect the same topic twice when the AI suggests it under two different names", async () => {
+    mockSignedIn();
+    vi.mocked(getTopics).mockResolvedValue([
+      { id: "biz-1", name: "Business", emoji: "💼", isPredefined: true, createdAt: "2026-01-01" },
+      { id: "tech-1", name: "Technology", emoji: "💻", isPredefined: true, createdAt: "2026-01-01" },
+    ]);
+    vi.mocked(getVocabRecordByHeadword).mockResolvedValue(null);
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        headword: "synergy",
+        meaning: "hợp lực",
+        suggestedTopics: ["Business", "business", "Technology"],
+      }),
+    });
+
+    render(<LookupPage />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "synergy" } });
+    fireEvent.click(screen.getByRole("button", { name: "Tra từ" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Lưu vào Ngân hàng từ vựng/ }));
+
+    expect(screen.getByRole("button", { name: "Business" })).toHaveClass("active");
+    expect(screen.getByRole("button", { name: "Technology" })).toHaveClass("active");
+  });
 });
