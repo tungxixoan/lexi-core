@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, getDocs, orderBy, query, updateDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDocs, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { getFirebaseDb } from "./firebase";
 
 export interface VocabRecord {
@@ -32,6 +32,11 @@ export interface VocabRecord {
 }
 
 export type VocabRecordUpdate = Pick<VocabRecord, "meaning" | "examples" | "topicIds" | "personalNotes">;
+export type NewVocabRecord = Omit<VocabRecord, "id">;
+
+function vocabRecordsCol(uid: string) {
+  return collection(getFirebaseDb(), "users", uid, "vocab_records");
+}
 
 export async function countVocabRecords(uid: string): Promise<number> {
   const col = collection(getFirebaseDb(), "users", uid, "vocab_records");
@@ -40,8 +45,7 @@ export async function countVocabRecords(uid: string): Promise<number> {
 }
 
 export async function getVocabRecords(uid: string): Promise<VocabRecord[]> {
-  const col = collection(getFirebaseDb(), "users", uid, "vocab_records");
-  const q = query(col, orderBy("createdAt", "desc"));
+  const q = query(vocabRecordsCol(uid), orderBy("createdAt", "desc"));
   const snapshot = await getDocs(q);
   return snapshot.docs.map((d) => ({ ...(d.data() as VocabRecord), id: d.id }));
 }
@@ -58,4 +62,26 @@ export async function updateVocabRecord(
 ): Promise<void> {
   const ref = doc(getFirebaseDb(), "users", uid, "vocab_records", id);
   await updateDoc(ref, { ...updates, updatedAt: new Date().toISOString() });
+}
+
+export async function getVocabRecordByHeadword(
+  uid: string,
+  headword: string,
+  targetLanguage: VocabRecord["targetLanguage"]
+): Promise<VocabRecord | null> {
+  const q = query(
+    vocabRecordsCol(uid),
+    where("headword", "==", headword),
+    where("targetLanguage", "==", targetLanguage)
+  );
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  const d = snapshot.docs[0];
+  return { ...(d.data() as VocabRecord), id: d.id };
+}
+
+export async function saveVocabRecord(uid: string, record: NewVocabRecord): Promise<string> {
+  const ref = doc(vocabRecordsCol(uid));
+  await setDoc(ref, record);
+  return ref.id;
 }

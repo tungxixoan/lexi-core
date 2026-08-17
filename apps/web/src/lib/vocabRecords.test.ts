@@ -1,15 +1,24 @@
 import { describe, expect, it, vi } from "vitest";
-import { deleteDoc, doc, getDocs, orderBy, query, updateDoc } from "firebase/firestore";
-import { countVocabRecords, deleteVocabRecord, getVocabRecords, updateVocabRecord } from "./vocabRecords";
+import { deleteDoc, doc, getDocs, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
+import {
+  countVocabRecords,
+  deleteVocabRecord,
+  getVocabRecordByHeadword,
+  getVocabRecords,
+  saveVocabRecord,
+  updateVocabRecord,
+} from "./vocabRecords";
 
 vi.mock("firebase/firestore", () => ({
   collection: vi.fn(() => "mock-collection-ref"),
   doc: vi.fn(() => "mock-doc-ref"),
   deleteDoc: vi.fn(),
   updateDoc: vi.fn(),
+  setDoc: vi.fn(),
   getDocs: vi.fn(),
   orderBy: vi.fn(() => "mock-order-by"),
   query: vi.fn(() => "mock-query"),
+  where: vi.fn(() => "mock-where"),
 }));
 
 vi.mock("./firebase", () => ({
@@ -103,5 +112,43 @@ describe("updateVocabRecord", () => {
         updatedAt: expect.any(String),
       })
     );
+  });
+});
+
+describe("getVocabRecordByHeadword", () => {
+  it("queries by headword and targetLanguage, and returns null when nothing matches", async () => {
+    vi.mocked(getDocs).mockResolvedValue({ empty: true, docs: [] } as never);
+
+    const result = await getVocabRecordByHeadword("user-123", "meticulous", "english");
+
+    expect(where).toHaveBeenCalledWith("headword", "==", "meticulous");
+    expect(where).toHaveBeenCalledWith("targetLanguage", "==", "english");
+    expect(query).toHaveBeenCalledWith("mock-collection-ref", "mock-where", "mock-where");
+    expect(result).toBeNull();
+  });
+
+  it("returns the first matching record with its real Firestore document id", async () => {
+    vi.mocked(getDocs).mockResolvedValue({
+      empty: false,
+      docs: [{ id: "real-doc-id", data: () => RECORD }],
+    } as never);
+
+    const result = await getVocabRecordByHeadword("user-123", "meticulous", "english");
+
+    expect(result?.id).toBe("real-doc-id");
+    expect(result?.headword).toBe("meticulous");
+  });
+});
+
+describe("saveVocabRecord", () => {
+  it("creates a new document with an auto-generated id and returns it", async () => {
+    vi.mocked(doc).mockReturnValue({ id: "new-doc-id" } as never);
+    const { id: _omit, ...newRecord } = RECORD;
+
+    const newId = await saveVocabRecord("user-123", newRecord);
+
+    expect(doc).toHaveBeenCalledWith("mock-collection-ref");
+    expect(setDoc).toHaveBeenCalledWith({ id: "new-doc-id" }, newRecord);
+    expect(newId).toBe("new-doc-id");
   });
 });
