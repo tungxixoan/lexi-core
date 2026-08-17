@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { selectSessionWords } from "./practiceSession";
 import type { VocabRecord } from "./vocabRecords";
 
@@ -103,5 +103,27 @@ describe("selectSessionWords", () => {
     const result = selectSessionWords(records, { topicIds: new Set(), maxCefr: null, count: null }, NOW);
 
     expect(result).toHaveLength(10);
+  });
+
+  it("shuffles the pool via Fisher-Yates driven by Math.random, not identity order", () => {
+    // Pin Math.random so every `j = floor(random() * (i + 1))` pick is 0. Hand-tracing
+    // the Fisher-Yates loop in selectSessionWords/shuffle for a 5-item pool under that
+    // pin yields a specific, non-identity permutation (rotate-left-by-one). An identity
+    // "shuffle" (`return items`) — or any implementation that ignores Math.random —
+    // would instead produce ["w0", "w1", "w2", "w3", "w4"] here and fail this assertion.
+    const records = Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}` }));
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
+
+    try {
+      const result = selectSessionWords(
+        records,
+        { topicIds: new Set(), maxCefr: null, count: null },
+        NOW
+      );
+
+      expect(result.map((r) => r.id)).toEqual(["w1", "w2", "w3", "w4", "w0"]);
+    } finally {
+      randomSpy.mockRestore();
+    }
   });
 });
