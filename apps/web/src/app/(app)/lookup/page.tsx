@@ -17,7 +17,7 @@ import { getVocabRecordByHeadword, type VocabRecord } from "@/lib/vocabRecords";
 
 export default function LookupPage() {
   const { user, loading: authLoading } = useAuthUser();
-  const { settings } = useSettingsContext();
+  const { settings, loading: settingsLoading } = useSettingsContext();
 
   const [queryText, setQueryText] = useState("");
   const [result, setResult] = useState<LookupResult | null>(null);
@@ -101,6 +101,15 @@ export default function LookupPage() {
         <h2 className="scr-title">Tra từ</h2>
         <p className="scr-sub">Đăng nhập để tra từ.</p>
         <SignInButton />
+      </div>
+    );
+  }
+
+  if (settingsLoading || !settings) {
+    return (
+      <div>
+        <h2 className="scr-title">Tra từ</h2>
+        <p>Đang tải…</p>
       </div>
     );
   }
