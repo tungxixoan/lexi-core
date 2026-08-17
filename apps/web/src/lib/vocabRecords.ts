@@ -1,5 +1,6 @@
 import { collection, deleteDoc, doc, getDocs, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { getFirebaseDb } from "./firebase";
+import type { Sm2Fields } from "./sm2";
 
 export interface VocabRecord {
   id: string;
@@ -84,4 +85,9 @@ export async function saveVocabRecord(uid: string, record: NewVocabRecord): Prom
   const ref = doc(vocabRecordsCol(uid));
   await setDoc(ref, record);
   return ref.id;
+}
+
+export async function updateVocabRecordSm2(uid: string, id: string, sm2Fields: Sm2Fields): Promise<void> {
+  const ref = doc(getFirebaseDb(), "users", uid, "vocab_records", id);
+  await updateDoc(ref, { ...sm2Fields });
 }

@@ -7,8 +7,10 @@ import {
   getVocabRecords,
   saveVocabRecord,
   updateVocabRecord,
+  updateVocabRecordSm2,
   type VocabRecord,
 } from "./vocabRecords";
+import type { Sm2Fields } from "./sm2";
 
 vi.mock("firebase/firestore", () => ({
   collection: vi.fn(() => "mock-collection-ref"),
@@ -151,5 +153,28 @@ describe("saveVocabRecord", () => {
     expect(doc).toHaveBeenCalledWith("mock-collection-ref");
     expect(setDoc).toHaveBeenCalledWith({ id: "new-doc-id" }, newRecord);
     expect(newId).toBe("new-doc-id");
+  });
+});
+
+describe("updateVocabRecordSm2", () => {
+  it("writes exactly the SM-2 fields, by document id, with no updatedAt override of its own", async () => {
+    // The saveVocabRecord test above overrides doc()'s mock return value
+    // (via mockReturnValue, not mockReturnValueOnce) and this suite has no
+    // afterEach/resetAllMocks, so it leaks into later tests. Restore the
+    // shared default explicitly rather than relying on run order.
+    vi.mocked(doc).mockReturnValue("mock-doc-ref" as never);
+
+    const sm2Fields: Sm2Fields = {
+      sm2Repetitions: 3,
+      sm2EaseFactor: 2.4,
+      sm2Interval: 12,
+      nextReviewAt: "2026-08-28T12:00:00.000Z",
+      updatedAt: "2026-08-16T12:00:00.000Z",
+    };
+
+    await updateVocabRecordSm2("user-123", "abc", sm2Fields);
+
+    expect(doc).toHaveBeenCalledWith("mock-db", "users", "user-123", "vocab_records", "abc");
+    expect(updateDoc).toHaveBeenCalledWith("mock-doc-ref", sm2Fields);
   });
 });
