@@ -964,3 +964,25 @@ button.btn-primary:disabled {
   color: var(--accent-ink);
   border: none;
 }
+
+.practice-filters {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.practice-filters select {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.practice-preview-count {
+  color: var(--ink-soft);
+  font-size: 13px;
+  margin-bottom: 18px;
+}
