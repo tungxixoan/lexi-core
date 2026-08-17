@@ -144,6 +144,18 @@ export default function LookupPage() {
   async function handleSaveNewRecord(updates: VocabRecordUpdate) {
     if (!user || result?.kind !== "wordPhrase") return;
     const draft = buildDraftRecord(result);
+    // Re-check right before writing: the AI can return a re-cased/re-lemmatized
+    // headword that differs from what the user typed, so the cache-check done
+    // at lookup time (against the raw query) can miss a record that actually
+    // already exists under this exact headword — this second check catches
+    // that case, and a concurrent save from another tab, before creating a
+    // duplicate document.
+    const duplicate = await getVocabRecordByHeadword(user.uid, draft.headword, draft.targetLanguage);
+    if (duplicate) {
+      setSaveModalOpen(false);
+      setExistingRecord(duplicate);
+      return;
+    }
     const { id: _omit, ...newRecord }: { id: string } & NewVocabRecord = { ...draft, ...updates };
     const newId = await saveVocabRecord(user.uid, newRecord);
     setSaveModalOpen(false);
