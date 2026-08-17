@@ -20,7 +20,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/dashboard", label: "🏠 Tổng quan" },
       { href: "/lookup", label: "🔍 Tra từ" },
       { href: "/vocab-bank", label: "📚 Ngân hàng từ vựng" },
-      { href: "/practice", label: "🎯 Luyện tập" },
+      { href: "/practice", label: "🎯 Ôn tập" },
     ],
   },
   { label: "Đọc", items: [{ href: "/reading", label: "📖 Đọc — tổng quan" }] },

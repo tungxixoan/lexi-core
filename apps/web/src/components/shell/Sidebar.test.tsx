@@ -30,4 +30,11 @@ describe("Sidebar", () => {
     render(<Sidebar />);
     expect(screen.getAllByRole("link")).toHaveLength(7);
   });
+
+  it("labels the practice nav item 'Ôn tập', not 'Luyện tập'", () => {
+    vi.mocked(usePathname).mockReturnValue("/vocab-bank");
+    render(<Sidebar />);
+    expect(screen.getByRole("link", { name: /Ôn tập/ })).toHaveAttribute("href", "/practice");
+    expect(screen.queryByText(/Luyện tập/)).not.toBeInTheDocument();
+  });
 });
