@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildWordPhrasePrompt,
   buildSentencePrompt,
-  buildDiscoverWordPrompt,
-  parseDiscoveredWord,
+  buildDiscoverPrompt,
   parseLookupResult,
   splitMeaningSenses,
   type WordPhraseResult,
@@ -31,28 +30,18 @@ describe("buildSentencePrompt", () => {
   });
 });
 
-describe("buildDiscoverWordPrompt", () => {
-  it("asks for one word in the target language's label, JSON only", () => {
-    const prompt = buildDiscoverWordPrompt("english");
+describe("buildDiscoverPrompt", () => {
+  it("asks for one word in the target language's label, and the full entry, JSON only", () => {
+    const prompt = buildDiscoverPrompt("english");
     expect(prompt).toContain("English");
     expect(prompt).toContain("JSON only");
-    expect(prompt).toContain('"word"');
+    expect(prompt).toContain('"headword"');
+    expect(prompt).toContain('"meaning"');
   });
 
   it("uses the target language's own label, not always English", () => {
-    const prompt = buildDiscoverWordPrompt("korean");
+    const prompt = buildDiscoverPrompt("korean");
     expect(prompt).toContain("한국어");
-  });
-});
-
-describe("parseDiscoveredWord", () => {
-  it("returns the trimmed word field", () => {
-    expect(parseDiscoveredWord({ word: "  meticulous  " })).toBe("meticulous");
-  });
-
-  it("returns an empty string when the field is missing or not a string", () => {
-    expect(parseDiscoveredWord({})).toBe("");
-    expect(parseDiscoveredWord({ word: 42 })).toBe("");
   });
 });
 

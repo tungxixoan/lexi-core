@@ -49,19 +49,27 @@ export function buildWordPhrasePrompt(query: string, targetLanguage: TargetLangu
   );
 }
 
-// Ports gemini_dictionary_source.dart's discoverWord prompt (minus the
-// "Context: ..." clause — no "ngữ cảnh" setting exists in Cài đặt yet,
-// same documented gap as buildWordPhrasePrompt above).
-export function buildDiscoverWordPrompt(targetLanguage: TargetLanguage): string {
+// Flutter's discover flow (lookup_provider.dart's discover()) makes 2 AI
+// calls: discoverWord() picks a word, then a second call looks it up in
+// full. Deliberately merged into one call here — same "pick a word" intent
+// as discoverWord() folded into buildWordPhrasePrompt's own response shape,
+// so a single response carries both the chosen word and its full entry.
+export function buildDiscoverPrompt(targetLanguage: TargetLanguage): string {
   const languageLabel = LANGUAGE_LABELS[targetLanguage];
   return (
-    `Suggest one ${languageLabel} vocabulary word for an intermediate learner. ` +
-    `Respond with JSON only: {"word": "the word"}`
+    `You are a language learning assistant helping a Vietnamese speaker learn ${languageLabel}. ` +
+    `Pick one ${languageLabel} vocabulary word suitable for an intermediate learner, then look it up ` +
+    `and respond with JSON only (no markdown, no code fences): ` +
+    `{"headword":"the word you picked","ipa":"IPA transcription",` +
+    `"meaning":"Vietnamese definition",` +
+    `"definition":"English definition",` +
+    `"synonyms":["2-4 English synonyms for this sense, or empty array if none fit"],` +
+    `"examples":["example 1 in ${languageLabel}","example 2"],` +
+    `"suggestedTopics":["one topic from: Daily Life, Travel, Food & Drink, Business, Technology, Health, Education, Entertainment, Nature, Emotion, Academic, Idioms, Phrasal Verbs, Slang, Social/Casual, Sports, Art & Culture, Science, Law & Politics, Other"],` +
+    `"cefrLevel":"a1, a2, b1, b2, c1, or c2 — the CEFR difficulty level of this word"} ` +
+    `The "meaning" field must use only Vietnamese script — ` +
+    `never Chinese, Japanese, or other non-Vietnamese characters.`
   );
-}
-
-export function parseDiscoveredWord(json: Record<string, unknown>): string {
-  return typeof json.word === "string" ? json.word.trim() : "";
 }
 
 // Ports gemini_dictionary_source.dart's _sentencePrompt exactly.

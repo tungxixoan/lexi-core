@@ -534,6 +534,13 @@ p.scr-sub {
   font-size: 18px;
 }
 
+.modal-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
 .modal-body {
   padding: 18px 20px;
   overflow-y: auto;
@@ -867,6 +874,13 @@ button.btn-primary:disabled {
 .lookup-example {
   color: var(--ink-soft);
   font-size: 13.5px;
+  margin: 0;
+}
+
+.lookup-example-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 6px 0;
 }
 
@@ -1022,6 +1036,11 @@ button.btn-primary:disabled {
   color: var(--accent-ink);
 }
 
+.practice-filters select.practice-select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .practice-preview-count {
   color: var(--ink-soft);
   font-size: 13px;
@@ -1148,4 +1167,31 @@ button.btn-secondary {
   font-weight: 700;
   font-size: 13px;
   cursor: pointer;
+}
+
+.pron-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.pron-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.pron-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

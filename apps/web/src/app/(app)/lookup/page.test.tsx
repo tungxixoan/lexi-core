@@ -319,14 +319,12 @@ describe("LookupPage", () => {
 });
 
 describe("LookupPage (Khám phá từ mới)", () => {
-  it("asks the AI for a word, fills the search box, and looks it up", async () => {
+  it("asks the AI for a word and its full entry in a single call, fills the search box", async () => {
     mockSignedIn();
     vi.mocked(getVocabRecordByHeadword).mockResolvedValue(null);
-    vi.mocked(generateContent)
-      .mockResolvedValueOnce({ text: JSON.stringify({ word: "ephemeral" }) })
-      .mockResolvedValueOnce({
-        text: JSON.stringify({ headword: "ephemeral", meaning: "phù du" }),
-      });
+    vi.mocked(generateContent).mockResolvedValueOnce({
+      text: JSON.stringify({ headword: "ephemeral", meaning: "phù du" }),
+    });
 
     render(<LookupPage />);
     fireEvent.click(screen.getByRole("button", { name: /Khám phá/ }));
@@ -334,13 +332,15 @@ describe("LookupPage (Khám phá từ mới)", () => {
     expect(await screen.findByText("ephemeral")).toBeInTheDocument();
     expect(screen.getByText("phù du")).toBeInTheDocument();
     expect(screen.getByRole("textbox")).toHaveValue("ephemeral");
-    expect(generateContent).toHaveBeenCalledTimes(2);
+    expect(generateContent).toHaveBeenCalledTimes(1);
     expect(getVocabRecordByHeadword).toHaveBeenCalledWith("u1", "ephemeral", "english");
   });
 
-  it("shows the cached record with no second AI call when the discovered word is already saved", async () => {
+  it("shows the cached record with no wasted save-modal state when the discovered word is already saved", async () => {
     mockSignedIn();
-    vi.mocked(generateContent).mockResolvedValueOnce({ text: JSON.stringify({ word: "meticulous" }) });
+    vi.mocked(generateContent).mockResolvedValueOnce({
+      text: JSON.stringify({ headword: "meticulous", meaning: "tỉ mỉ" }),
+    });
     vi.mocked(getVocabRecordByHeadword).mockResolvedValue({
       id: "existing-1",
       headword: "meticulous",
@@ -370,7 +370,7 @@ describe("LookupPage (Khám phá từ mới)", () => {
     expect(generateContent).toHaveBeenCalledTimes(1);
   });
 
-  it("shows an error and does not call generateContent a second time when the AI returns no usable word", async () => {
+  it("shows an error when the AI response has no usable headword", async () => {
     mockSignedIn();
     vi.mocked(generateContent).mockResolvedValueOnce({ text: JSON.stringify({}) });
 

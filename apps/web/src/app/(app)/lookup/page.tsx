@@ -7,10 +7,9 @@ import { SignInButton } from "@/components/SignInButton";
 import { EditVocabModal } from "@/components/vocab-bank/EditVocabModal";
 import { detectInputType } from "@/lib/inputDetector";
 import {
-  buildDiscoverWordPrompt,
+  buildDiscoverPrompt,
   buildSentencePrompt,
   buildWordPhrasePrompt,
-  parseDiscoveredWord,
   parseLookupResult,
   splitMeaningSenses,
   type LookupResult,
@@ -19,6 +18,8 @@ import {
 import { parseAiJsonObject } from "@/lib/parseAiJson";
 import { generateContent } from "@/lib/generateContent";
 import { getTopics, type Topic } from "@/lib/topics";
+import { ttsLanguageCode } from "@/lib/pronunciation";
+import { PronunciationButton } from "@/components/shared/PronunciationButton";
 import {
   getVocabRecordByHeadword,
   saveVocabRecord,
@@ -51,6 +52,21 @@ function preselectTopicIds(suggestedTopics: string[], topics: Topic[]): string[]
     if (match && !selected.includes(match.id)) selected.push(match.id);
   }
   return selected;
+}
+
+function cachedRecordToResult(cached: VocabRecord): WordPhraseResult {
+  return {
+    kind: "wordPhrase",
+    headword: cached.headword,
+    inputType: cached.inputType === "sentence" ? "word" : cached.inputType,
+    ipa: cached.ipa,
+    meaning: cached.meaning,
+    examples: cached.examples,
+    definition: cached.definition,
+    synonyms: cached.synonyms,
+    suggestedTopics: [],
+    cefrLevel: cached.cefrLevel,
+  };
 }
 
 export default function LookupPage() {
@@ -86,18 +102,7 @@ export default function LookupPage() {
         const cached = await getVocabRecordByHeadword(user.uid, trimmed, settings.targetLanguage);
         if (cached) {
           setExistingRecord(cached);
-          setResult({
-            kind: "wordPhrase",
-            headword: cached.headword,
-            inputType: cached.inputType === "sentence" ? "word" : cached.inputType,
-            ipa: cached.ipa,
-            meaning: cached.meaning,
-            examples: cached.examples,
-            definition: cached.definition,
-            synonyms: cached.synonyms,
-            suggestedTopics: [],
-            cefrLevel: cached.cefrLevel,
-          });
+          setResult(cachedRecordToResult(cached));
           setLoading(false);
           return;
         }
@@ -131,10 +136,10 @@ export default function LookupPage() {
     }
   }
 
-  // "Khám phá từ mới": ask the AI for a word not tied to anything the user
-  // typed, then run it through the normal handleLookup flow (cache-check
-  // still applies — if the discovered word happens to already be saved,
-  // no AI call is wasted looking it up a second time).
+  // "Khám phá từ mới": one AI call picks a word AND returns its full entry
+  // (buildDiscoverPrompt folds both into one response) — no separate
+  // "pick a word, then look it up" round trip. The Vocab Bank cache check
+  // afterward is a Firestore read, not a second AI call.
   async function handleDiscover() {
     if (!user || !settings) return;
     const activeConfig = settings.providers[settings.activeProvider];
@@ -145,19 +150,32 @@ export default function LookupPage() {
 
     setLoading(true);
     setError(null);
+    setResult(null);
+    setExistingRecord(null);
     try {
       const response = await generateContent({
         provider: settings.activeProvider,
         model: activeConfig.model,
         apiKeyCiphertext: activeConfig.apiKeyCiphertext,
-        prompt: buildDiscoverWordPrompt(settings.targetLanguage),
+        prompt: buildDiscoverPrompt(settings.targetLanguage),
       });
-      const word = parseDiscoveredWord(parseAiJsonObject(response.text));
-      if (!word) throw new Error("AI không trả về từ hợp lệ.");
-      setQueryText(word);
-      await handleLookup(word);
+      const json = parseAiJsonObject(response.text);
+      const discovered = parseLookupResult(json, "word", "");
+      if (discovered.kind !== "wordPhrase" || !discovered.headword) {
+        throw new Error("AI không trả về từ hợp lệ.");
+      }
+      setQueryText(discovered.headword);
+
+      const cached = await getVocabRecordByHeadword(user.uid, discovered.headword, settings.targetLanguage);
+      if (cached) {
+        setExistingRecord(cached);
+        setResult(cachedRecordToResult(cached));
+        return;
+      }
+      setResult(discovered);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+    } finally {
       setLoading(false);
     }
   }
@@ -238,6 +256,8 @@ export default function LookupPage() {
     );
   }
 
+  const ttsLang = ttsLanguageCode(settings.targetLanguage);
+
   return (
     <div>
       <h2 className="scr-title">Tra từ</h2>
@@ -264,7 +284,10 @@ export default function LookupPage() {
       {error && <p role="alert">{error}</p>}
       {result?.kind === "sentence" && (
         <div className="lookup-result-card">
-          <p className="lookup-sentence-original">{result.original}</p>
+          <div className="lookup-headword-row">
+            <p className="lookup-sentence-original">{result.original}</p>
+            <PronunciationButton text={result.original} language={ttsLang} tier="sentence" />
+          </div>
           <p className="lookup-sentence-translation">{result.translation}</p>
         </div>
       )}
@@ -276,6 +299,7 @@ export default function LookupPage() {
           <div className="lookup-headword-row">
             <h3>{result.headword}</h3>
             {result.cefrLevel && <span className="cefr-pill">{result.cefrLevel.toUpperCase()}</span>}
+            <PronunciationButton text={result.headword} language={ttsLang} tier="word" />
           </div>
           {result.ipa && <p className="lookup-ipa">{result.ipa}</p>}
           <div className="lookup-meaning">
@@ -294,9 +318,10 @@ export default function LookupPage() {
             </div>
           )}
           {result.examples.map((ex, i) => (
-            <p className="lookup-example" key={i}>
-              {ex}
-            </p>
+            <div className="lookup-example-row" key={i}>
+              <p className="lookup-example">{ex}</p>
+              <PronunciationButton text={ex} language={ttsLang} tier="sentence" />
+            </div>
           ))}
           {!existingRecord && (
             <button className="btn-primary lookup-save-btn" onClick={() => setSaveModalOpen(true)}>
