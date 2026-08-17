@@ -132,6 +132,7 @@ describe("LookupPage", () => {
 
     expect(await screen.findByText("Xin chào thế giới.")).toBeInTheDocument();
     expect(getVocabRecordByHeadword).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: /Lưu vào Ngân hàng từ vựng/ })).not.toBeInTheDocument();
   });
 
   it("shows a helpful message instead of calling the AI when the active provider has no API key saved", async () => {
@@ -161,7 +162,7 @@ describe("LookupPage", () => {
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("unavailable"));
   });
 
-  it("shows a Lưu button for a fresh word/phrase result, but not for an already-saved one or a sentence", async () => {
+  it("shows a Lưu button for a fresh word/phrase result", async () => {
     mockSignedIn();
     vi.mocked(getVocabRecordByHeadword).mockResolvedValue(null);
     vi.mocked(generateContent).mockResolvedValue({
@@ -173,6 +174,38 @@ describe("LookupPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tra từ" }));
 
     expect(await screen.findByRole("button", { name: /Lưu vào Ngân hàng từ vựng/ })).toBeInTheDocument();
+  });
+
+  it("does not show a Lưu button for an already-saved word/phrase result", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecordByHeadword).mockResolvedValue({
+      id: "existing-1",
+      headword: "meticulous",
+      inputType: "word",
+      ipa: "/məˈtɪkjələs/",
+      meaning: "tỉ mỉ, cẩn thận",
+      examples: ["She is meticulous."],
+      personalNotes: "",
+      topicIds: [],
+      targetLanguage: "english",
+      cefrLevel: "c1",
+      activeContext: "general",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      nextReviewAt: null,
+      sm2Repetitions: 0,
+      sm2EaseFactor: 2.5,
+      sm2Interval: 1,
+      definition: "",
+      synonyms: [],
+    });
+
+    render(<LookupPage />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "meticulous" } });
+    fireEvent.click(screen.getByRole("button", { name: "Tra từ" }));
+
+    expect(await screen.findByText(/đã có trong Ngân hàng từ vựng/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Lưu vào Ngân hàng từ vựng/ })).not.toBeInTheDocument();
   });
 
   it("opens EditVocabModal in create mode when Lưu is clicked, and saves via saveVocabRecord", async () => {
