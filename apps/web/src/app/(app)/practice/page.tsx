@@ -8,7 +8,7 @@ import { getTopics, type Topic } from "@/lib/topics";
 import { TopicFilterPopover } from "@/components/vocab-bank/TopicFilterPopover";
 import { selectSessionWords, type SessionWordFilters } from "@/lib/practiceSession";
 import { FlashcardCard } from "@/components/practice/FlashcardCard";
-import { computeSm2 } from "@/lib/sm2";
+import { computeSm2, type Sm2Fields } from "@/lib/sm2";
 
 type CefrLevel = VocabRecord["cefrLevel"];
 const CEFR_LEVELS: CefrLevel[] = ["a1", "a2", "b1", "b2", "c1", "c2"];
@@ -52,14 +52,29 @@ export default function PracticePage() {
     if (phase !== "result" || sm2WrittenRef.current || !user) return;
     sm2WrittenRef.current = true;
     const now = new Date();
+    const updatedFieldsById = new Map<string, Sm2Fields>();
     for (const result of sessionResults) {
       const record = sessionWords.find((w) => w.id === result.vocabRecordId);
       if (!record) continue;
       const fields = computeSm2(record, result.quality, now);
+      updatedFieldsById.set(result.vocabRecordId, fields);
       updateVocabRecordSm2(user.uid, result.vocabRecordId, fields).catch((err: unknown) => {
         console.error("Failed to save SM-2 result", err);
       });
     }
+    // Merge the just-written SM-2 fields into local state so a second
+    // "Ôn tập lại" session (still within this page load) selects from
+    // up-to-date nextReviewAt/repetitions instead of the pre-session
+    // snapshot — otherwise a just-reviewed word would still look due and
+    // computeSm2 would run from its stale base on a repeat grade.
+    setRecords((prev) =>
+      prev
+        ? prev.map((r) => {
+            const updated = updatedFieldsById.get(r.id);
+            return updated ? { ...r, ...updated } : r;
+          })
+        : prev
+    );
   }, [phase, sessionResults, sessionWords, user]);
 
   function handleStart() {
