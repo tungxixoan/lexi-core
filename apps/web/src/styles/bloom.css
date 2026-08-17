@@ -793,6 +793,23 @@ button.btn-primary:disabled {
   font-size: 14px;
 }
 
+.lookup-discover-btn {
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--sage);
+  background: var(--sage-bg);
+  color: var(--sage);
+  font-weight: 700;
+  font-size: 13.5px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.lookup-discover-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .lookup-result-card {
   max-width: 560px;
   background: var(--surface);

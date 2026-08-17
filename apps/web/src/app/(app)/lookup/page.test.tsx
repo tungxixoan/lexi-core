@@ -317,3 +317,67 @@ describe("LookupPage", () => {
     expect(screen.getByRole("button", { name: "Technology" })).toHaveClass("active");
   });
 });
+
+describe("LookupPage (Khám phá từ mới)", () => {
+  it("asks the AI for a word, fills the search box, and looks it up", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecordByHeadword).mockResolvedValue(null);
+    vi.mocked(generateContent)
+      .mockResolvedValueOnce({ text: JSON.stringify({ word: "ephemeral" }) })
+      .mockResolvedValueOnce({
+        text: JSON.stringify({ headword: "ephemeral", meaning: "phù du" }),
+      });
+
+    render(<LookupPage />);
+    fireEvent.click(screen.getByRole("button", { name: /Khám phá/ }));
+
+    expect(await screen.findByText("ephemeral")).toBeInTheDocument();
+    expect(screen.getByText("phù du")).toBeInTheDocument();
+    expect(screen.getByRole("textbox")).toHaveValue("ephemeral");
+    expect(generateContent).toHaveBeenCalledTimes(2);
+    expect(getVocabRecordByHeadword).toHaveBeenCalledWith("u1", "ephemeral", "english");
+  });
+
+  it("shows the cached record with no second AI call when the discovered word is already saved", async () => {
+    mockSignedIn();
+    vi.mocked(generateContent).mockResolvedValueOnce({ text: JSON.stringify({ word: "meticulous" }) });
+    vi.mocked(getVocabRecordByHeadword).mockResolvedValue({
+      id: "existing-1",
+      headword: "meticulous",
+      inputType: "word",
+      ipa: "",
+      meaning: "tỉ mỉ",
+      examples: [],
+      personalNotes: "",
+      topicIds: [],
+      targetLanguage: "english",
+      cefrLevel: "b1",
+      activeContext: "general",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      nextReviewAt: null,
+      sm2Repetitions: 0,
+      sm2EaseFactor: 2.5,
+      sm2Interval: 1,
+      definition: "",
+      synonyms: [],
+    });
+
+    render(<LookupPage />);
+    fireEvent.click(screen.getByRole("button", { name: /Khám phá/ }));
+
+    expect(await screen.findByText("Từ này đã có trong Ngân hàng từ vựng của bạn.")).toBeInTheDocument();
+    expect(generateContent).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows an error and does not call generateContent a second time when the AI returns no usable word", async () => {
+    mockSignedIn();
+    vi.mocked(generateContent).mockResolvedValueOnce({ text: JSON.stringify({}) });
+
+    render(<LookupPage />);
+    fireEvent.click(screen.getByRole("button", { name: /Khám phá/ }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("AI không trả về từ hợp lệ.");
+    expect(generateContent).toHaveBeenCalledTimes(1);
+  });
+});

@@ -7,8 +7,10 @@ import { SignInButton } from "@/components/SignInButton";
 import { EditVocabModal } from "@/components/vocab-bank/EditVocabModal";
 import { detectInputType } from "@/lib/inputDetector";
 import {
+  buildDiscoverWordPrompt,
   buildSentencePrompt,
   buildWordPhrasePrompt,
+  parseDiscoveredWord,
   parseLookupResult,
   splitMeaningSenses,
   type LookupResult,
@@ -68,8 +70,8 @@ export default function LookupPage() {
     getTopics(user.uid).then(setTopics).catch(() => setTopics([]));
   }, [user]);
 
-  async function handleLookup() {
-    const trimmed = queryText.trim();
+  async function handleLookup(queryOverride?: string) {
+    const trimmed = (queryOverride ?? queryText).trim();
     if (!trimmed || !user || !settings) return;
 
     setLoading(true);
@@ -125,6 +127,37 @@ export default function LookupPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
+      setLoading(false);
+    }
+  }
+
+  // "Khám phá từ mới": ask the AI for a word not tied to anything the user
+  // typed, then run it through the normal handleLookup flow (cache-check
+  // still applies — if the discovered word happens to already be saved,
+  // no AI call is wasted looking it up a second time).
+  async function handleDiscover() {
+    if (!user || !settings) return;
+    const activeConfig = settings.providers[settings.activeProvider];
+    if (!activeConfig.apiKeyCiphertext) {
+      setError("Chưa có API key cho nhà cung cấp AI đang chọn — vào Cài đặt để thêm.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await generateContent({
+        provider: settings.activeProvider,
+        model: activeConfig.model,
+        apiKeyCiphertext: activeConfig.apiKeyCiphertext,
+        prompt: buildDiscoverWordPrompt(settings.targetLanguage),
+      });
+      const word = parseDiscoveredWord(parseAiJsonObject(response.text));
+      if (!word) throw new Error("AI không trả về từ hợp lệ.");
+      setQueryText(word);
+      await handleLookup(word);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
       setLoading(false);
     }
   }
@@ -217,6 +250,15 @@ export default function LookupPage() {
         />
         <button className="btn-primary" onClick={() => void handleLookup()} disabled={loading || !queryText.trim()}>
           {loading ? "Đang tra…" : "Tra từ"}
+        </button>
+        <button
+          type="button"
+          className="lookup-discover-btn"
+          onClick={() => void handleDiscover()}
+          disabled={loading}
+          title="Khám phá một từ mới"
+        >
+          ✨ Khám phá
         </button>
       </div>
       {error && <p role="alert">{error}</p>}

@@ -49,6 +49,21 @@ export function buildWordPhrasePrompt(query: string, targetLanguage: TargetLangu
   );
 }
 
+// Ports gemini_dictionary_source.dart's discoverWord prompt (minus the
+// "Context: ..." clause — no "ngữ cảnh" setting exists in Cài đặt yet,
+// same documented gap as buildWordPhrasePrompt above).
+export function buildDiscoverWordPrompt(targetLanguage: TargetLanguage): string {
+  const languageLabel = LANGUAGE_LABELS[targetLanguage];
+  return (
+    `Suggest one ${languageLabel} vocabulary word for an intermediate learner. ` +
+    `Respond with JSON only: {"word": "the word"}`
+  );
+}
+
+export function parseDiscoveredWord(json: Record<string, unknown>): string {
+  return typeof json.word === "string" ? json.word.trim() : "";
+}
+
 // Ports gemini_dictionary_source.dart's _sentencePrompt exactly.
 export function buildSentencePrompt(sentence: string): string {
   return (
