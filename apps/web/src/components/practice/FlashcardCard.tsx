@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { VocabRecord } from "@/lib/vocabRecords";
+import { splitMeaningSenses } from "@/lib/lookup";
 
 interface FlashcardCardProps {
   record: VocabRecord;
@@ -45,7 +46,11 @@ export function FlashcardCard({ record, onGrade }: FlashcardCardProps) {
           <div className="fc-hint">👆 Chạm vào thẻ để xem đáp án</div>
         </div>
         <div className="fc-face fc-face-back" onClick={handlePeekClick}>
-          <p className="fc-meaning">{record.meaning}</p>
+          <div className="fc-meaning">
+            {splitMeaningSenses(record.meaning).map((sense, i) => (
+              <p key={i}>{sense}</p>
+            ))}
+          </div>
           {record.examples[0] && <p className="fc-example">&quot;{record.examples[0]}&quot;</p>}
           <div className="fc-back-hint">↩ Chạm vùng này để xem lại mặt trước</div>
           <div className="fc-grade-row">

@@ -832,6 +832,14 @@ button.btn-primary:disabled {
   margin: 0 0 8px;
 }
 
+.lookup-meaning p {
+  margin: 0;
+}
+
+.lookup-meaning p + p {
+  margin-top: 4px;
+}
+
 .lookup-definition {
   color: var(--ink-soft);
   font-style: italic;
@@ -920,6 +928,14 @@ button.btn-primary:disabled {
   font-size: 17px;
   font-weight: 600;
   margin: 0;
+}
+
+.fc-meaning p {
+  margin: 0;
+}
+
+.fc-meaning p + p {
+  margin-top: 6px;
 }
 
 .fc-example {

@@ -70,4 +70,16 @@ describe("FlashcardCard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Chưa hiểu" }));
     expect(onGrade).toHaveBeenCalledWith(1);
   });
+
+  it("renders a semicolon-separated multi-sense meaning as separate lines", () => {
+    render(
+      <FlashcardCard
+        record={{ ...RECORD, meaning: "đề xuất; khuyên" }}
+        onGrade={vi.fn()}
+      />
+    );
+    expect(screen.getByText("đề xuất")).toBeInTheDocument();
+    expect(screen.getByText("khuyên")).toBeInTheDocument();
+    expect(screen.queryByText("đề xuất; khuyên")).not.toBeInTheDocument();
+  });
 });

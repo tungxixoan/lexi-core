@@ -10,6 +10,7 @@ import {
   buildSentencePrompt,
   buildWordPhrasePrompt,
   parseLookupResult,
+  splitMeaningSenses,
   type LookupResult,
   type WordPhraseResult,
 } from "@/lib/lookup";
@@ -235,7 +236,11 @@ export default function LookupPage() {
             {result.cefrLevel && <span className="cefr-pill">{result.cefrLevel.toUpperCase()}</span>}
           </div>
           {result.ipa && <p className="lookup-ipa">{result.ipa}</p>}
-          <p className="lookup-meaning">{result.meaning}</p>
+          <div className="lookup-meaning">
+            {splitMeaningSenses(result.meaning).map((sense, i) => (
+              <p key={i}>{sense}</p>
+            ))}
+          </div>
           {result.definition && <p className="lookup-definition">{result.definition}</p>}
           {result.synonyms.length > 0 && (
             <div className="chip-row">

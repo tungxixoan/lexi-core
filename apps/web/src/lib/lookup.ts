@@ -40,6 +40,10 @@ export function buildWordPhrasePrompt(query: string, targetLanguage: TargetLangu
     `If the word has multiple common parts of speech (e.g. "record" as both noun and verb), ` +
     `cover each sense in both "meaning" and "definition" using this format: "(n) ...; (v) ...", ` +
     `and give an IPA per sense too, e.g. "N: /ˈrekɔːrd/; V: /rɪˈkɔːrd/". ` +
+    `If the word has multiple distinct senses within the SAME part of speech ` +
+    `(e.g. "recommend" meaning both "to suggest" and "to advise"), ` +
+    `separate each sense in "meaning" and "definition" with "; " too, ` +
+    `e.g. "đề xuất; khuyên" — never run separate senses together with no delimiter. ` +
     `The "meaning" field must use only Vietnamese script — ` +
     `never Chinese, Japanese, or other non-Vietnamese characters.`
   );
@@ -56,6 +60,17 @@ export function buildSentencePrompt(sentence: string): string {
 }
 
 const CEFR_LEVELS = new Set(["a1", "a2", "b1", "b2", "c1", "c2"]);
+
+// The AI is asked to separate distinct senses with "; " (see the prompt
+// above) — split back into a list so the UI can render each sense on its
+// own line instead of one run-together paragraph. A "meaning" with no
+// semicolon (the common single-sense case) yields a single-item list.
+export function splitMeaningSenses(meaning: string): string[] {
+  return meaning
+    .split(";")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
 
 export function parseLookupResult(
   json: Record<string, unknown>,

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildWordPhrasePrompt, buildSentencePrompt, parseLookupResult, type WordPhraseResult } from "./lookup";
+import {
+  buildWordPhrasePrompt,
+  buildSentencePrompt,
+  parseLookupResult,
+  splitMeaningSenses,
+  type WordPhraseResult,
+} from "./lookup";
 
 describe("buildWordPhrasePrompt", () => {
   it("includes the query and target language label, and asks for JSON only", () => {
@@ -81,5 +87,23 @@ describe("parseLookupResult", () => {
       original: "Hello world.",
       translation: "Xin chào thế giới.",
     });
+  });
+});
+
+describe("splitMeaningSenses", () => {
+  it("returns a single-item list for a meaning with no semicolon", () => {
+    expect(splitMeaningSenses("tỉ mỉ, cẩn thận")).toEqual(["tỉ mỉ, cẩn thận"]);
+  });
+
+  it("splits a semicolon-separated meaning into one entry per sense, trimmed", () => {
+    expect(splitMeaningSenses("đề xuất ;  khuyên ")).toEqual(["đề xuất", "khuyên"]);
+  });
+
+  it("splits a part-of-speech-tagged multi-sense meaning", () => {
+    expect(splitMeaningSenses("(n) hồ sơ; (v) ghi âm")).toEqual(["(n) hồ sơ", "(v) ghi âm"]);
+  });
+
+  it("drops empty segments from a trailing or doubled semicolon", () => {
+    expect(splitMeaningSenses("đề xuất;; khuyên;")).toEqual(["đề xuất", "khuyên"]);
   });
 });
