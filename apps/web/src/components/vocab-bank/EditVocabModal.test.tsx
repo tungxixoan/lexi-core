@@ -1,8 +1,19 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { EditVocabModal } from "./EditVocabModal";
+import { getPronunciationUrl } from "@/lib/pronunciation";
 import type { VocabRecord } from "@/lib/vocabRecords";
 import type { Topic } from "@/lib/topics";
+
+vi.mock("@/lib/pronunciation", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/pronunciation")>("@/lib/pronunciation");
+  return { ...actual, getPronunciationUrl: vi.fn() };
+});
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  window.HTMLMediaElement.prototype.play = vi.fn().mockResolvedValue(undefined);
+});
 
 const RECORD: VocabRecord = {
   id: "1",
@@ -135,5 +146,36 @@ describe("EditVocabModal", () => {
 
     fireEvent.click(screen.getByRole("presentation"));
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("plays pronunciation for the headword and for an example sentence", async () => {
+    vi.mocked(getPronunciationUrl).mockResolvedValue("https://example.com/a.wav");
+    render(<EditVocabModal record={RECORD} topics={TOPICS} onClose={vi.fn()} onSave={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Nghe phát âm: meticulous" }));
+    await waitFor(() =>
+      expect(getPronunciationUrl).toHaveBeenCalledWith({ text: "meticulous", language: "en", tier: "word" })
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Nghe phát âm: Câu ví dụ 1" }));
+    await waitFor(() =>
+      expect(getPronunciationUrl).toHaveBeenCalledWith({
+        text: "Câu ví dụ 1",
+        language: "en",
+        tier: "sentence",
+      })
+    );
+  });
+
+  it("hides pronunciation buttons for a record in a language with no TTS voice", () => {
+    render(
+      <EditVocabModal
+        record={{ ...RECORD, targetLanguage: "japanese" }}
+        topics={TOPICS}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+      />
+    );
+    expect(screen.queryByRole("button", { name: "Nghe phát âm: meticulous" })).not.toBeInTheDocument();
   });
 });

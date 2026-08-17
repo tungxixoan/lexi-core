@@ -3,6 +3,8 @@
 import { useState } from "react";
 import type { Topic } from "@/lib/topics";
 import type { VocabRecord, VocabRecordUpdate } from "@/lib/vocabRecords";
+import { ttsLanguageCode } from "@/lib/pronunciation";
+import { PronunciationButton } from "@/components/shared/PronunciationButton";
 
 interface EditVocabModalProps {
   record: VocabRecord;
@@ -21,6 +23,7 @@ export function EditVocabModal({ record, topics, mode = "edit", onClose, onSave 
   const [personalNotes, setPersonalNotes] = useState(record.personalNotes);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const ttsLang = ttsLanguageCode(record.targetLanguage);
 
   const toggleTopic = (id: string) => {
     setTopicIds((prev) => {
@@ -67,11 +70,14 @@ export function EditVocabModal({ record, topics, mode = "edit", onClose, onSave 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
-          <h3>
-            {mode === "create"
-              ? `Lưu "${record.headword}" vào Ngân hàng từ vựng`
-              : `Sửa "${record.headword}"`}
-          </h3>
+          <div className="modal-header-title">
+            <h3>
+              {mode === "create"
+                ? `Lưu "${record.headword}" vào Ngân hàng từ vựng`
+                : `Sửa "${record.headword}"`}
+            </h3>
+            <PronunciationButton text={record.headword} language={ttsLang} tier="word" />
+          </div>
           <button className="closex" onClick={onClose} aria-label="Đóng">
             ✕
           </button>
@@ -87,6 +93,7 @@ export function EditVocabModal({ record, topics, mode = "edit", onClose, onSave 
             {examples.map((ex, i) => (
               <div className="modal-example-row" key={i}>
                 <input value={ex} onChange={(e) => updateExample(i, e.target.value)} />
+                <PronunciationButton text={ex} language={ttsLang} tier="sentence" />
                 <button
                   type="button"
                   className="closex"
