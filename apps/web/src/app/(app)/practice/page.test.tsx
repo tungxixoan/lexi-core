@@ -101,6 +101,24 @@ describe("PracticePage (setup phase)", () => {
     expect(await screen.findByText("1 từ khớp bộ lọc hiện tại.")).toBeInTheDocument();
   });
 
+  it("highlights the CEFR and word-count selects when set away from their defaults", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
+    vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1" })]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<PracticePage />);
+    const cefrSelect = await screen.findByDisplayValue("Mọi trình độ");
+    const countSelect = screen.getByDisplayValue("10 từ");
+    expect(cefrSelect).not.toHaveClass("active");
+    expect(countSelect).not.toHaveClass("active");
+
+    fireEvent.change(cefrSelect, { target: { value: "a1" } });
+    fireEvent.change(countSelect, { target: { value: "5" } });
+
+    expect(cefrSelect).toHaveClass("active");
+    expect(countSelect).toHaveClass("active");
+  });
+
   it("leaves the setup screen when Bắt đầu is clicked with matching words", async () => {
     vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
     vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1" })]);
@@ -197,7 +215,7 @@ describe("PracticePage (result phase)", () => {
     expect(computeSm2).toHaveBeenCalledTimes(1);
   });
 
-  it('returns to the setup phase when "Ôn tập lại" is clicked', async () => {
+  it('returns to the setup phase when "Về Ôn tập" is clicked', async () => {
     vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
     vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1", headword: "first" })]);
     vi.mocked(getTopics).mockResolvedValue([]);
@@ -216,7 +234,36 @@ describe("PracticePage (result phase)", () => {
     fireEvent.click(screen.getByTestId("flashcard-card"));
     fireEvent.click(screen.getByRole("button", { name: "Đã hiểu" }));
 
-    fireEvent.click(await screen.findByRole("button", { name: "Ôn tập lại" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Về Ôn tập" }));
     expect(await screen.findByRole("button", { name: "Bắt đầu" })).toBeInTheDocument();
+  });
+
+  it('"Ôn tập lại ngay" starts a new session immediately, without returning to setup', async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
+    vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1", headword: "first" })]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(computeSm2).mockReturnValue({
+      sm2Repetitions: 1,
+      sm2EaseFactor: 2.5,
+      sm2Interval: 1,
+      nextReviewAt: "2026-08-18T00:00:00.000Z",
+      updatedAt: "2026-08-17T00:00:00.000Z",
+    });
+    vi.mocked(updateVocabRecordSm2).mockResolvedValue(undefined);
+
+    render(<PracticePage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
+    await screen.findByText("first");
+    fireEvent.click(screen.getByTestId("flashcard-card"));
+    fireEvent.click(screen.getByRole("button", { name: "Đã hiểu" }));
+    await screen.findByText("100%");
+
+    fireEvent.click(screen.getByRole("button", { name: "Ôn tập lại ngay" }));
+
+    // Straight back into the session phase (progress indicator + flashcard),
+    // not the setup phase's filters/"Bắt đầu" button.
+    expect(await screen.findByText("Từ 1 / 1")).toBeInTheDocument();
+    expect(screen.getByTestId("flashcard-card")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Bắt đầu" })).not.toBeInTheDocument();
   });
 });

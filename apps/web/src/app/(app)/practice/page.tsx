@@ -13,6 +13,7 @@ import { computeSm2, type Sm2Fields } from "@/lib/sm2";
 type CefrLevel = VocabRecord["cefrLevel"];
 const CEFR_LEVELS: CefrLevel[] = ["a1", "a2", "b1", "b2", "c1", "c2"];
 const WORD_COUNT_OPTIONS = [5, 10, 20, null] as const;
+const DEFAULT_WORD_COUNT = 10;
 
 type Phase = "setup" | "session" | "result";
 
@@ -29,7 +30,7 @@ export default function PracticePage() {
 
   const [selectedTopicIds, setSelectedTopicIds] = useState<Set<string>>(new Set());
   const [maxCefr, setMaxCefr] = useState<CefrLevel | null>(null);
-  const [wordCount, setWordCount] = useState<number | null>(10);
+  const [wordCount, setWordCount] = useState<number | null>(DEFAULT_WORD_COUNT);
 
   const [phase, setPhase] = useState<Phase>("setup");
   const [sessionWords, setSessionWords] = useState<VocabRecord[]>([]);
@@ -135,6 +136,7 @@ export default function PracticePage() {
             onApply={setSelectedTopicIds}
           />
           <select
+            className={`practice-select${maxCefr ? " active" : ""}`}
             value={maxCefr ?? ""}
             onChange={(e) => setMaxCefr((e.target.value || null) as CefrLevel | null)}
           >
@@ -146,6 +148,7 @@ export default function PracticePage() {
             ))}
           </select>
           <select
+            className={`practice-select${wordCount !== DEFAULT_WORD_COUNT ? " active" : ""}`}
             value={wordCount ?? "all"}
             onChange={(e) => setWordCount(e.target.value === "all" ? null : Number(e.target.value))}
           >
@@ -211,9 +214,14 @@ export default function PracticePage() {
           );
         })}
       </ul>
-      <button className="btn-primary" onClick={() => setPhase("setup")}>
-        Ôn tập lại
-      </button>
+      <div className="practice-result-actions">
+        <button type="button" className="btn-secondary" onClick={() => setPhase("setup")}>
+          Về Ôn tập
+        </button>
+        <button type="button" className="btn-primary" onClick={handleStart}>
+          Ôn tập lại ngay
+        </button>
+      </div>
     </div>
   );
 }
