@@ -7,12 +7,18 @@ import { getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics, type Topic } from "@/lib/topics";
 import { TopicFilterPopover } from "@/components/vocab-bank/TopicFilterPopover";
 import { selectSessionWords, type SessionWordFilters } from "@/lib/practiceSession";
+import { FlashcardCard } from "@/components/practice/FlashcardCard";
 
 type CefrLevel = VocabRecord["cefrLevel"];
 const CEFR_LEVELS: CefrLevel[] = ["a1", "a2", "b1", "b2", "c1", "c2"];
 const WORD_COUNT_OPTIONS = [5, 10, 20, null] as const;
 
 type Phase = "setup" | "session" | "result";
+
+export interface SessionGradeResult {
+  vocabRecordId: string;
+  quality: 1 | 5;
+}
 
 export default function PracticePage() {
   const { user, loading: authLoading } = useAuthUser();
@@ -25,6 +31,9 @@ export default function PracticePage() {
   const [wordCount, setWordCount] = useState<number | null>(10);
 
   const [phase, setPhase] = useState<Phase>("setup");
+  const [sessionWords, setSessionWords] = useState<VocabRecord[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [sessionResults, setSessionResults] = useState<SessionGradeResult[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -42,8 +51,23 @@ export default function PracticePage() {
     const filters: SessionWordFilters = { topicIds: selectedTopicIds, maxCefr, count: wordCount };
     const words = selectSessionWords(records, filters);
     if (words.length === 0) return;
+    setSessionWords(words);
+    setCurrentIndex(0);
+    setSessionResults([]);
     setPhase("session");
-    // Session-phase state (current word, results-so-far) is wired in Task 11.
+  }
+
+  function handleGrade(quality: 1 | 5) {
+    const current = sessionWords[currentIndex];
+    const nextResults = [...sessionResults, { vocabRecordId: current.id, quality }];
+    setSessionResults(nextResults);
+
+    if (currentIndex + 1 < sessionWords.length) {
+      setCurrentIndex(currentIndex + 1);
+    } else {
+      setPhase("result");
+      // The batch SM-2 update runs on entering the result phase — wired in Task 12.
+    }
   }
 
   if (authLoading) return <p>Đang tải…</p>;
@@ -108,5 +132,23 @@ export default function PracticePage() {
     );
   }
 
-  return null; // "session"/"result" phases wired in Tasks 11-12
+  if (phase === "session") {
+    const progressPct = Math.round(((currentIndex + 1) / sessionWords.length) * 100);
+    return (
+      <div>
+        <div className="practice-progress-row">
+          <span>
+            Từ {currentIndex + 1} / {sessionWords.length}
+          </span>
+          <span>Ôn tập</span>
+        </div>
+        <div className="practice-progress-track">
+          <div className="practice-progress-fill" style={{ width: `${progressPct}%` }} />
+        </div>
+        <FlashcardCard record={sessionWords[currentIndex]} onGrade={handleGrade} />
+      </div>
+    );
+  }
+
+  return null; // "result" phase wired in Task 12
 }

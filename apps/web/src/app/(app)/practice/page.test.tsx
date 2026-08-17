@@ -95,3 +95,48 @@ describe("PracticePage (setup phase)", () => {
     );
   });
 });
+
+describe("PracticePage (session phase)", () => {
+  it("shows the current word's flashcard and a progress indicator, advancing on each grade", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
+    vi.mocked(getVocabRecords).mockResolvedValue([
+      makeRecord({ id: "1", headword: "first" }),
+      makeRecord({ id: "2", headword: "second" }),
+    ]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    // selectSessionWords shuffles its pool via Math.random (Fisher-Yates) before returning it
+    // (see src/lib/practiceSession.ts). Pin it so the session's word order is deterministic —
+    // random() >= 0.5 makes every swap a no-op, preserving the input order.
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.99);
+
+    render(<PracticePage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
+
+    expect(await screen.findByText("Từ 1 / 2")).toBeInTheDocument();
+    expect(screen.getByText("first")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("flashcard-card"));
+    fireEvent.click(screen.getByRole("button", { name: "Đã hiểu" }));
+
+    expect(await screen.findByText("Từ 2 / 2")).toBeInTheDocument();
+    expect(screen.getByText("second")).toBeInTheDocument();
+
+    randomSpy.mockRestore();
+  });
+
+  it("transitions past the session UI once the last word is graded", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
+    vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1", headword: "only" })]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<PracticePage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
+    await screen.findByText("only");
+
+    fireEvent.click(screen.getByTestId("flashcard-card"));
+    fireEvent.click(screen.getByRole("button", { name: "Chưa hiểu" }));
+
+    await waitFor(() => expect(screen.queryByTestId("flashcard-card")).not.toBeInTheDocument());
+  });
+});
