@@ -83,7 +83,10 @@ export async function getVocabRecordByHeadword(
 
 export async function saveVocabRecord(uid: string, record: NewVocabRecord): Promise<string> {
   const ref = doc(vocabRecordsCol(uid));
-  await setDoc(ref, record);
+  // Flutter's sync_service.dart caches the raw document body into Hive and
+  // reads `json['id']` from it directly (non-nullable) — the doc must carry
+  // its own id field, not rely on the caller reading ref.id separately.
+  await setDoc(ref, { ...record, id: ref.id });
   return ref.id;
 }
 

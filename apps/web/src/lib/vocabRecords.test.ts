@@ -151,7 +151,7 @@ describe("saveVocabRecord", () => {
     const newId = await saveVocabRecord("user-123", newRecord);
 
     expect(doc).toHaveBeenCalledWith("mock-collection-ref");
-    expect(setDoc).toHaveBeenCalledWith({ id: "new-doc-id" }, newRecord);
+    expect(setDoc).toHaveBeenCalledWith({ id: "new-doc-id" }, { ...newRecord, id: "new-doc-id" });
     expect(newId).toBe("new-doc-id");
   });
 });
