@@ -41,6 +41,27 @@ describe("EditVocabModal", () => {
     expect(screen.getByRole("button", { name: "Business" })).toHaveClass("active");
   });
 
+  it("shows 'save' wording instead of 'edit' wording when mode is 'create'", () => {
+    render(
+      <EditVocabModal
+        record={RECORD}
+        topics={TOPICS}
+        mode="create"
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("dialog", { name: /Lưu từ meticulous/ })).toBeInTheDocument();
+    expect(screen.getByText(/Lưu "meticulous" vào Ngân hàng từ vựng/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Sửa/)).not.toBeInTheDocument();
+  });
+
+  it("defaults to 'edit' wording when mode is omitted (existing Vocab Bank usage)", () => {
+    render(<EditVocabModal record={RECORD} topics={TOPICS} onClose={vi.fn()} onSave={vi.fn()} />);
+    expect(screen.getByRole("dialog", { name: /Sửa từ meticulous/ })).toBeInTheDocument();
+    expect(screen.getByText('Sửa "meticulous"')).toBeInTheDocument();
+  });
+
   it("adds and removes example rows", () => {
     render(<EditVocabModal record={RECORD} topics={TOPICS} onClose={vi.fn()} onSave={vi.fn()} />);
     fireEvent.click(screen.getByText("+ Thêm ví dụ"));

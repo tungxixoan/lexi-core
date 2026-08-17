@@ -7,13 +7,14 @@ import type { VocabRecord, VocabRecordUpdate } from "@/lib/vocabRecords";
 interface EditVocabModalProps {
   record: VocabRecord;
   topics: Topic[];
+  mode?: "edit" | "create";
   onClose: () => void;
   onSave: (updates: VocabRecordUpdate) => Promise<void>;
 }
 
 const MAX_TOPICS = 2;
 
-export function EditVocabModal({ record, topics, onClose, onSave }: EditVocabModalProps) {
+export function EditVocabModal({ record, topics, mode = "edit", onClose, onSave }: EditVocabModalProps) {
   const [meaning, setMeaning] = useState(record.meaning);
   const [examples, setExamples] = useState<string[]>(record.examples);
   const [topicIds, setTopicIds] = useState<string[]>(record.topicIds);
@@ -62,11 +63,15 @@ export function EditVocabModal({ record, topics, onClose, onSave }: EditVocabMod
       <div
         className="modal"
         role="dialog"
-        aria-label={`Sửa từ ${record.headword}`}
+        aria-label={mode === "create" ? `Lưu từ ${record.headword}` : `Sửa từ ${record.headword}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
-          <h3>Sửa &quot;{record.headword}&quot;</h3>
+          <h3>
+            {mode === "create"
+              ? `Lưu "${record.headword}" vào Ngân hàng từ vựng`
+              : `Sửa "${record.headword}"`}
+          </h3>
           <button className="closex" onClick={onClose} aria-label="Đóng">
             ✕
           </button>
