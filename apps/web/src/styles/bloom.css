@@ -855,3 +855,7 @@ button.btn-primary:disabled {
   font-size: 15px;
   margin: 0;
 }
+
+.lookup-save-btn {
+  margin-top: 18px;
+}

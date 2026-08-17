@@ -3,13 +3,15 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import LookupPage from "./page";
 import { useAuthUser } from "@/lib/useAuthUser";
 import { useSettingsContext } from "@/lib/SettingsContext";
-import { getVocabRecordByHeadword } from "@/lib/vocabRecords";
+import { getVocabRecordByHeadword, saveVocabRecord } from "@/lib/vocabRecords";
+import { getTopics } from "@/lib/topics";
 import { generateContent } from "@/lib/generateContent";
 import { DEFAULT_SETTINGS, type UserSettings } from "@/lib/settings";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
 vi.mock("@/lib/SettingsContext", () => ({ useSettingsContext: vi.fn() }));
-vi.mock("@/lib/vocabRecords", () => ({ getVocabRecordByHeadword: vi.fn() }));
+vi.mock("@/lib/vocabRecords", () => ({ getVocabRecordByHeadword: vi.fn(), saveVocabRecord: vi.fn() }));
+vi.mock("@/lib/topics", () => ({ getTopics: vi.fn() }));
 vi.mock("@/lib/generateContent", () => ({ generateContent: vi.fn() }));
 vi.mock("@/components/SignInButton", () => ({
   SignInButton: () => <button>Đăng nhập với Google</button>,
@@ -36,6 +38,7 @@ function mockSignedIn(settings: UserSettings = SETTINGS_WITH_KEY) {
     error: null,
     save: vi.fn(),
   });
+  vi.mocked(getTopics).mockResolvedValue([]);
 }
 
 describe("LookupPage", () => {
@@ -156,5 +159,82 @@ describe("LookupPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tra từ" }));
 
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("unavailable"));
+  });
+
+  it("shows a Lưu button for a fresh word/phrase result, but not for an already-saved one or a sentence", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecordByHeadword).mockResolvedValue(null);
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({ headword: "meticulous", meaning: "tỉ mỉ" }),
+    });
+
+    render(<LookupPage />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "meticulous" } });
+    fireEvent.click(screen.getByRole("button", { name: "Tra từ" }));
+
+    expect(await screen.findByRole("button", { name: /Lưu vào Ngân hàng từ vựng/ })).toBeInTheDocument();
+  });
+
+  it("opens EditVocabModal in create mode when Lưu is clicked, and saves via saveVocabRecord", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecordByHeadword).mockResolvedValue(null);
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        headword: "meticulous",
+        ipa: "/məˈtɪkjələs/",
+        meaning: "tỉ mỉ, cẩn thận",
+        examples: ["She is meticulous."],
+        cefrLevel: "C1",
+      }),
+    });
+    vi.mocked(saveVocabRecord).mockResolvedValue("new-id");
+
+    render(<LookupPage />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "meticulous" } });
+    fireEvent.click(screen.getByRole("button", { name: "Tra từ" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Lưu vào Ngân hàng từ vựng/ }));
+
+    expect(screen.getByRole("dialog", { name: /Lưu từ meticulous/ })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Lưu" }));
+
+    await waitFor(() =>
+      expect(saveVocabRecord).toHaveBeenCalledWith(
+        "u1",
+        expect.objectContaining({
+          headword: "meticulous",
+          ipa: "/məˈtɪkjələs/",
+          meaning: "tỉ mỉ, cẩn thận",
+          examples: ["She is meticulous."],
+          cefrLevel: "c1",
+          targetLanguage: "english",
+          activeContext: "general",
+          topicIds: [],
+          personalNotes: "",
+        })
+      )
+    );
+  });
+
+  it("pre-selects a suggested topic that matches an existing topic name (case-insensitive), capped at 2", async () => {
+    mockSignedIn();
+    vi.mocked(getTopics).mockResolvedValue([
+      { id: "biz-1", name: "Business", emoji: "💼", isPredefined: true, createdAt: "2026-01-01" },
+    ]);
+    vi.mocked(getVocabRecordByHeadword).mockResolvedValue(null);
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        headword: "meticulous",
+        meaning: "tỉ mỉ",
+        suggestedTopics: ["business"],
+      }),
+    });
+
+    render(<LookupPage />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "meticulous" } });
+    fireEvent.click(screen.getByRole("button", { name: "Tra từ" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Lưu vào Ngân hàng từ vựng/ }));
+
+    expect(screen.getByRole("button", { name: "Business" })).toHaveClass("active");
   });
 });

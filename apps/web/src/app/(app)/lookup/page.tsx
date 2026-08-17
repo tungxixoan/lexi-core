@@ -1,19 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuthUser } from "@/lib/useAuthUser";
 import { useSettingsContext } from "@/lib/SettingsContext";
 import { SignInButton } from "@/components/SignInButton";
+import { EditVocabModal } from "@/components/vocab-bank/EditVocabModal";
 import { detectInputType } from "@/lib/inputDetector";
 import {
   buildSentencePrompt,
   buildWordPhrasePrompt,
   parseLookupResult,
   type LookupResult,
+  type WordPhraseResult,
 } from "@/lib/lookup";
 import { parseAiJsonObject } from "@/lib/parseAiJson";
 import { generateContent } from "@/lib/generateContent";
-import { getVocabRecordByHeadword, type VocabRecord } from "@/lib/vocabRecords";
+import { getTopics, type Topic } from "@/lib/topics";
+import {
+  getVocabRecordByHeadword,
+  saveVocabRecord,
+  type NewVocabRecord,
+  type VocabRecord,
+  type VocabRecordUpdate,
+} from "@/lib/vocabRecords";
+
+const MAX_PRESELECTED_TOPICS = 2;
+
+function preselectTopicIds(suggestedTopics: string[], topics: Topic[]): string[] {
+  const selected: string[] = [];
+  for (const suggestion of suggestedTopics) {
+    if (selected.length >= MAX_PRESELECTED_TOPICS) break;
+    const match = topics.find((t) => t.name.toLowerCase() === suggestion.toLowerCase());
+    if (match) selected.push(match.id);
+  }
+  return selected;
+}
 
 export default function LookupPage() {
   const { user, loading: authLoading } = useAuthUser();
@@ -24,6 +45,13 @@ export default function LookupPage() {
   const [existingRecord, setExistingRecord] = useState<VocabRecord | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    getTopics(user.uid).then(setTopics).catch(() => setTopics([]));
+  }, [user]);
 
   async function handleLookup() {
     const trimmed = queryText.trim();
@@ -84,6 +112,42 @@ export default function LookupPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function buildDraftRecord(wordResult: WordPhraseResult): VocabRecord {
+    const now = new Date().toISOString();
+    return {
+      id: "",
+      headword: wordResult.headword,
+      inputType: wordResult.inputType,
+      ipa: wordResult.ipa,
+      meaning: wordResult.meaning,
+      examples: wordResult.examples,
+      personalNotes: "",
+      topicIds: preselectTopicIds(wordResult.suggestedTopics, topics),
+      // No "ngữ cảnh" (context) setting exists in Cài đặt yet — default to
+      // "general" for every web-saved record (see Task 5's plan note).
+      targetLanguage: settings?.targetLanguage ?? "english",
+      cefrLevel: wordResult.cefrLevel ?? "b1",
+      activeContext: "general",
+      createdAt: now,
+      updatedAt: now,
+      nextReviewAt: null,
+      sm2Repetitions: 0,
+      sm2EaseFactor: 2.5,
+      sm2Interval: 1,
+      definition: wordResult.definition,
+      synonyms: wordResult.synonyms,
+    };
+  }
+
+  async function handleSaveNewRecord(updates: VocabRecordUpdate) {
+    if (!user || result?.kind !== "wordPhrase") return;
+    const draft = buildDraftRecord(result);
+    const { id: _omit, ...newRecord }: { id: string } & NewVocabRecord = { ...draft, ...updates };
+    const newId = await saveVocabRecord(user.uid, newRecord);
+    setSaveModalOpen(false);
+    setExistingRecord({ ...draft, ...updates, id: newId });
   }
 
   if (authLoading) {
@@ -161,7 +225,21 @@ export default function LookupPage() {
               {ex}
             </p>
           ))}
+          {!existingRecord && (
+            <button className="btn-primary lookup-save-btn" onClick={() => setSaveModalOpen(true)}>
+              Lưu vào Ngân hàng từ vựng
+            </button>
+          )}
         </div>
+      )}
+      {saveModalOpen && result?.kind === "wordPhrase" && (
+        <EditVocabModal
+          record={buildDraftRecord(result)}
+          topics={topics}
+          mode="create"
+          onClose={() => setSaveModalOpen(false)}
+          onSave={handleSaveNewRecord}
+        />
       )}
     </div>
   );
