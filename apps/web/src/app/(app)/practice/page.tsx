@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuthUser } from "@/lib/useAuthUser";
 import { SignInButton } from "@/components/SignInButton";
-import { getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
+import { getVocabRecords, updateVocabRecordSm2, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics, type Topic } from "@/lib/topics";
 import { TopicFilterPopover } from "@/components/vocab-bank/TopicFilterPopover";
 import { selectSessionWords, type SessionWordFilters } from "@/lib/practiceSession";
 import { FlashcardCard } from "@/components/practice/FlashcardCard";
+import { computeSm2 } from "@/lib/sm2";
 
 type CefrLevel = VocabRecord["cefrLevel"];
 const CEFR_LEVELS: CefrLevel[] = ["a1", "a2", "b1", "b2", "c1", "c2"];
@@ -34,6 +35,7 @@ export default function PracticePage() {
   const [sessionWords, setSessionWords] = useState<VocabRecord[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sessionResults, setSessionResults] = useState<SessionGradeResult[]>([]);
+  const sm2WrittenRef = useRef(false);
 
   useEffect(() => {
     if (!user) return;
@@ -46,6 +48,20 @@ export default function PracticePage() {
       .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
   }, [user]);
 
+  useEffect(() => {
+    if (phase !== "result" || sm2WrittenRef.current || !user) return;
+    sm2WrittenRef.current = true;
+    const now = new Date();
+    for (const result of sessionResults) {
+      const record = sessionWords.find((w) => w.id === result.vocabRecordId);
+      if (!record) continue;
+      const fields = computeSm2(record, result.quality, now);
+      updateVocabRecordSm2(user.uid, result.vocabRecordId, fields).catch((err: unknown) => {
+        console.error("Failed to save SM-2 result", err);
+      });
+    }
+  }, [phase, sessionResults, sessionWords, user]);
+
   function handleStart() {
     if (!records) return;
     const filters: SessionWordFilters = { topicIds: selectedTopicIds, maxCefr, count: wordCount };
@@ -54,6 +70,7 @@ export default function PracticePage() {
     setSessionWords(words);
     setCurrentIndex(0);
     setSessionResults([]);
+    sm2WrittenRef.current = false;
     setPhase("session");
   }
 
@@ -66,7 +83,7 @@ export default function PracticePage() {
       setCurrentIndex(currentIndex + 1);
     } else {
       setPhase("result");
-      // The batch SM-2 update runs on entering the result phase — wired in Task 12.
+      // The batch SM-2 update runs in the useEffect above once phase becomes "result".
     }
   }
 
@@ -150,5 +167,38 @@ export default function PracticePage() {
     );
   }
 
-  return null; // "result" phase wired in Task 12
+  const correctCount = sessionResults.filter((r) => r.quality === 5).length;
+  const totalCount = sessionResults.length;
+  const percent = totalCount === 0 ? 0 : Math.round((correctCount / totalCount) * 100);
+
+  return (
+    <div>
+      <h2 className="scr-title">Kết quả ôn tập</h2>
+      <div className="practice-result-circle" style={{ ["--pct" as unknown as string]: `${percent}%` }}>
+        <span>{percent}%</span>
+      </div>
+      <p className="practice-result-sub">
+        Đúng {correctCount} / {totalCount} từ
+      </p>
+      <ul className="practice-result-list">
+        {sessionResults.map((result) => {
+          const record = sessionWords.find((w) => w.id === result.vocabRecordId);
+          if (!record) return null;
+          return (
+            <li
+              key={result.vocabRecordId}
+              className={result.quality === 5 ? "practice-result-item-ok" : "practice-result-item-no"}
+            >
+              <span>{result.quality === 5 ? "✔" : "✘"}</span>
+              <span className="practice-result-headword">{record.headword}</span>
+              <span className="practice-result-meaning">{record.meaning}</span>
+            </li>
+          );
+        })}
+      </ul>
+      <button className="btn-primary" onClick={() => setPhase("setup")}>
+        Ôn tập lại
+      </button>
+    </div>
+  );
 }

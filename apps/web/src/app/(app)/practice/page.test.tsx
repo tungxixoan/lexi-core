@@ -1,13 +1,32 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import PracticePage from "./page";
 import { useAuthUser } from "@/lib/useAuthUser";
-import { getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
+import { getVocabRecords, updateVocabRecordSm2, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics } from "@/lib/topics";
+import { computeSm2 } from "@/lib/sm2";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
-vi.mock("@/lib/vocabRecords", () => ({ getVocabRecords: vi.fn() }));
+vi.mock("@/lib/vocabRecords", () => ({ getVocabRecords: vi.fn(), updateVocabRecordSm2: vi.fn() }));
 vi.mock("@/lib/topics", () => ({ getTopics: vi.fn() }));
+vi.mock("@/lib/sm2", () => ({ computeSm2: vi.fn() }));
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  // Every session-phase test can reach the "result" phase by grading the last word, which
+  // fires the batch SM-2 write effect — give it harmless defaults so tests that don't care
+  // about SM-2 output (e.g. the session-phase progression tests) don't crash on an
+  // unconfigured mock. Result-phase tests override these with their own assertions-relevant
+  // return values.
+  vi.mocked(computeSm2).mockReturnValue({
+    sm2Repetitions: 1,
+    sm2EaseFactor: 2.5,
+    sm2Interval: 1,
+    nextReviewAt: "2026-08-18T00:00:00.000Z",
+    updatedAt: "2026-08-17T00:00:00.000Z",
+  });
+  vi.mocked(updateVocabRecordSm2).mockResolvedValue(undefined);
+});
 vi.mock("@/components/SignInButton", () => ({
   SignInButton: () => <button>Đăng nhập với Google</button>,
 }));
@@ -138,5 +157,66 @@ describe("PracticePage (session phase)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Chưa hiểu" }));
 
     await waitFor(() => expect(screen.queryByTestId("flashcard-card")).not.toBeInTheDocument());
+  });
+});
+
+describe("PracticePage (result phase)", () => {
+  it("shows the percentage and per-word results, and writes one batch SM-2 update per word", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
+    vi.mocked(getVocabRecords).mockResolvedValue([
+      makeRecord({ id: "1", headword: "first", meaning: "nghĩa 1" }),
+    ]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(computeSm2).mockReturnValue({
+      sm2Repetitions: 1,
+      sm2EaseFactor: 2.5,
+      sm2Interval: 1,
+      nextReviewAt: "2026-08-18T00:00:00.000Z",
+      updatedAt: "2026-08-17T00:00:00.000Z",
+    });
+    vi.mocked(updateVocabRecordSm2).mockResolvedValue(undefined);
+
+    render(<PracticePage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
+    await screen.findByText("first");
+
+    fireEvent.click(screen.getByTestId("flashcard-card"));
+    fireEvent.click(screen.getByRole("button", { name: "Đã hiểu" }));
+
+    expect(await screen.findByText("100%")).toBeInTheDocument();
+    expect(screen.getByText("Đúng 1 / 1 từ")).toBeInTheDocument();
+    expect(screen.getByText("nghĩa 1")).toBeInTheDocument();
+
+    await waitFor(() =>
+      expect(updateVocabRecordSm2).toHaveBeenCalledWith(
+        "u1",
+        "1",
+        expect.objectContaining({ sm2Repetitions: 1 })
+      )
+    );
+    expect(computeSm2).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns to the setup phase when "Ôn tập lại" is clicked', async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
+    vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1", headword: "first" })]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(computeSm2).mockReturnValue({
+      sm2Repetitions: 1,
+      sm2EaseFactor: 2.5,
+      sm2Interval: 1,
+      nextReviewAt: "2026-08-18T00:00:00.000Z",
+      updatedAt: "2026-08-17T00:00:00.000Z",
+    });
+    vi.mocked(updateVocabRecordSm2).mockResolvedValue(undefined);
+
+    render(<PracticePage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
+    await screen.findByText("first");
+    fireEvent.click(screen.getByTestId("flashcard-card"));
+    fireEvent.click(screen.getByRole("button", { name: "Đã hiểu" }));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Ôn tập lại" }));
+    expect(await screen.findByRole("button", { name: "Bắt đầu" })).toBeInTheDocument();
   });
 });
