@@ -64,6 +64,17 @@ describe("aggregateSentenceStats", () => {
     expect(result.finalScore).toBe(0);
   });
 
+  it("clamps finalScore to a maximum of 1 when overallAccuracy alone would exceed 1", () => {
+    // A malformed stat (correctChars > totalChars) shouldn't be possible from
+    // computeSentenceStats, but aggregateSentenceStats accepts any
+    // SentenceStats[] — the Math.min(1, ...) clamp must still engage.
+    const result = aggregateSentenceStats([
+      { correctChars: 15, totalChars: 10, deletedChars: 0, durationMs: 5000 },
+    ]);
+    expect(result.overallAccuracy).toBe(1.5);
+    expect(result.finalScore).toBe(1);
+  });
+
   it("returns all-zero stats for an empty sentence list, with no division by zero", () => {
     const result = aggregateSentenceStats([]);
     expect(result).toEqual({ overallAccuracy: 0, deletionRatio: 0, finalScore: 0, wpm: 0 });
