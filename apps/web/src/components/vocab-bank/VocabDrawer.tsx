@@ -3,6 +3,8 @@
 import type { Topic } from "@/lib/topics";
 import type { VocabRecord } from "@/lib/vocabRecords";
 import { computeMasteryPercent, resolveTopicNames } from "@/lib/vocabDisplay";
+import { ttsLanguageCode } from "@/lib/pronunciation";
+import { PronunciationButton } from "@/components/shared/PronunciationButton";
 
 interface VocabDrawerProps {
   record: VocabRecord;
@@ -15,6 +17,7 @@ interface VocabDrawerProps {
 export function VocabDrawer({ record, topics, onClose, onDelete, onEdit }: VocabDrawerProps) {
   const mastery = computeMasteryPercent(record);
   const topicNames = resolveTopicNames(record.topicIds, topics);
+  const ttsLang = ttsLanguageCode(record.targetLanguage);
 
   return (
     <aside className="vb-drawer">
@@ -22,7 +25,10 @@ export function VocabDrawer({ record, topics, onClose, onDelete, onEdit }: Vocab
         <div className="dh">
           <div className="titles">
             <h3>{record.headword}</h3>
-            <div className="pr">{record.ipa}</div>
+            <div className="pr">
+              {record.ipa}
+              <PronunciationButton text={record.headword} language={ttsLang} tier="word" />
+            </div>
           </div>
           <span className="cefr-pill">{record.cefrLevel.toUpperCase()}</span>
           <button className="closex" onClick={onClose} aria-label="Đóng">
@@ -43,7 +49,10 @@ export function VocabDrawer({ record, topics, onClose, onDelete, onEdit }: Vocab
               {record.examples.length === 0 && <p>Chưa có ví dụ.</p>}
               {record.examples.map((ex, i) => (
                 <div className="ex-item" key={ex}>
-                  {i + 1}. {ex}
+                  <span className="ex-item-text">
+                    {i + 1}. {ex}
+                  </span>
+                  <PronunciationButton text={ex} language={ttsLang} tier="sentence" />
                 </div>
               ))}
             </div>
