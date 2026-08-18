@@ -1,6 +1,8 @@
 import { LANGUAGE_LABELS, type TargetLanguage } from "./languages";
 import type { VocabRecord } from "./vocabRecords";
 
+type CefrLevel = VocabRecord["cefrLevel"];
+
 export interface BilingualSentence {
   target: string;
   vietnamese: string;
@@ -14,15 +16,29 @@ export interface ReadingPassage {
 
 // Ports lib/features/reading/data/sources/reading_passage_source.dart's
 // prompt: ~0.75 sentences per headword, clamped 6-12, one coherent
-// narrative using as many given headwords as possible.
-export function buildReadingPassagePrompt(headwords: string[], targetLanguage: TargetLanguage): string {
+// narrative using as many given headwords as possible. Unlike the Dart
+// source (which also threads a "context"/register through the prompt),
+// this omits register — no "ngữ cảnh" setting exists in Cài đặt yet, the
+// same documented gap as Tra từ's buildWordPhrasePrompt. maxCefr is a
+// real signal though (the setup screen's own CEFR filter), so it's passed
+// through as an explicit instruction rather than relying only on the
+// implicit difficulty of the given word list.
+export function buildReadingPassagePrompt(
+  headwords: string[],
+  targetLanguage: TargetLanguage,
+  maxCefr: CefrLevel | null
+): string {
   const languageLabel = LANGUAGE_LABELS[targetLanguage];
   const sentenceCount = Math.min(12, Math.max(6, Math.ceil(headwords.length * 0.75)));
+  const levelClause = maxCefr
+    ? `Keep the difficulty at or below CEFR level ${maxCefr.toUpperCase()}. `
+    : "";
   return (
     `You are a language learning assistant helping a Vietnamese speaker learn ${languageLabel}. ` +
     `Write one coherent short story in ${languageLabel} of about ${sentenceCount} sentences, ` +
     `using as many of these words as possible, naturally: ${headwords.join(", ")}. ` +
-    `Add a few other level-appropriate words if needed to make it flow. ` +
+    `${levelClause}` +
+    `Add a few other natural words if needed to make it flow. ` +
     `Respond with JSON only (no markdown, no code fences): ` +
     `{"sentences":[{"target":"sentence in ${languageLabel}",` +
     `"vietnamese":"Vietnamese translation of that sentence",` +
