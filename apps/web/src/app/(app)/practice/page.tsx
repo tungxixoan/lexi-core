@@ -6,6 +6,7 @@ import { SignInButton } from "@/components/SignInButton";
 import { getVocabRecords, updateVocabRecordSm2, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics, type Topic } from "@/lib/topics";
 import { TopicFilterPopover } from "@/components/vocab-bank/TopicFilterPopover";
+import { SimpleDropdown, type SimpleDropdownOption } from "@/components/shared/SimpleDropdown";
 import { selectSessionWords, type SessionWordFilters } from "@/lib/practiceSession";
 import { FlashcardCard } from "@/components/practice/FlashcardCard";
 import { computeSm2, type Sm2Fields } from "@/lib/sm2";
@@ -14,6 +15,16 @@ type CefrLevel = VocabRecord["cefrLevel"];
 const CEFR_LEVELS: CefrLevel[] = ["a1", "a2", "b1", "b2", "c1", "c2"];
 const WORD_COUNT_OPTIONS = [5, 10, 20, null] as const;
 const DEFAULT_WORD_COUNT = 10;
+
+const CEFR_DROPDOWN_OPTIONS: SimpleDropdownOption<string>[] = [
+  { value: "", label: "Mọi trình độ" },
+  ...CEFR_LEVELS.map((level) => ({ value: level as string, label: `Tối đa ${level.toUpperCase()}` })),
+];
+
+const WORD_COUNT_DROPDOWN_OPTIONS: SimpleDropdownOption<string>[] = WORD_COUNT_OPTIONS.map((count) => ({
+  value: count === null ? "all" : String(count),
+  label: count === null ? "Tất cả" : `${count} từ`,
+}));
 
 type Phase = "setup" | "session" | "result";
 
@@ -135,29 +146,22 @@ export default function PracticePage() {
             selectedTopicIds={selectedTopicIds}
             onApply={setSelectedTopicIds}
           />
-          <select
-            className={`practice-select${maxCefr ? " active" : ""}`}
+          <SimpleDropdown
+            triggerLabel={maxCefr ? `Tối đa ${maxCefr.toUpperCase()}` : "Mọi trình độ"}
+            ariaLabel="Chọn trình độ tối đa"
+            options={CEFR_DROPDOWN_OPTIONS}
             value={maxCefr ?? ""}
-            onChange={(e) => setMaxCefr((e.target.value || null) as CefrLevel | null)}
-          >
-            <option value="">Mọi trình độ</option>
-            {CEFR_LEVELS.map((level) => (
-              <option key={level} value={level}>
-                Tối đa {level.toUpperCase()}
-              </option>
-            ))}
-          </select>
-          <select
-            className={`practice-select${wordCount !== DEFAULT_WORD_COUNT ? " active" : ""}`}
-            value={wordCount ?? "all"}
-            onChange={(e) => setWordCount(e.target.value === "all" ? null : Number(e.target.value))}
-          >
-            {WORD_COUNT_OPTIONS.map((count) => (
-              <option key={count ?? "all"} value={count ?? "all"}>
-                {count === null ? "Tất cả" : `${count} từ`}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setMaxCefr((v || null) as CefrLevel | null)}
+            active={maxCefr !== null}
+          />
+          <SimpleDropdown
+            triggerLabel={wordCount === null ? "Tất cả" : `${wordCount} từ`}
+            ariaLabel="Chọn số từ"
+            options={WORD_COUNT_DROPDOWN_OPTIONS}
+            value={wordCount === null ? "all" : String(wordCount)}
+            onChange={(v) => setWordCount(v === "all" ? null : Number(v))}
+            active={wordCount !== DEFAULT_WORD_COUNT}
+          />
         </div>
         <p className="practice-preview-count">{previewWords.length} từ khớp bộ lọc hiện tại.</p>
         <button className="btn-primary" onClick={handleStart} disabled={previewWords.length === 0}>

@@ -96,27 +96,30 @@ describe("PracticePage (setup phase)", () => {
     render(<PracticePage />);
     await screen.findByText("2 từ khớp bộ lọc hiện tại.");
 
-    fireEvent.change(screen.getByDisplayValue("Mọi trình độ"), { target: { value: "a1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Mọi trình độ ▾" }));
+    fireEvent.click(screen.getByRole("option", { name: "Tối đa A1" }));
 
     expect(await screen.findByText("1 từ khớp bộ lọc hiện tại.")).toBeInTheDocument();
   });
 
-  it("highlights the CEFR and word-count selects when set away from their defaults", async () => {
+  it("highlights the CEFR and word-count dropdown triggers when set away from their defaults", async () => {
     vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
     vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1" })]);
     vi.mocked(getTopics).mockResolvedValue([]);
 
     render(<PracticePage />);
-    const cefrSelect = await screen.findByDisplayValue("Mọi trình độ");
-    const countSelect = screen.getByDisplayValue("10 từ");
-    expect(cefrSelect).not.toHaveClass("active");
-    expect(countSelect).not.toHaveClass("active");
+    const cefrTrigger = await screen.findByRole("button", { name: "Mọi trình độ ▾" });
+    const countTrigger = screen.getByRole("button", { name: "10 từ ▾" });
+    expect(cefrTrigger).not.toHaveClass("active");
+    expect(countTrigger).not.toHaveClass("active");
 
-    fireEvent.change(cefrSelect, { target: { value: "a1" } });
-    fireEvent.change(countSelect, { target: { value: "5" } });
+    fireEvent.click(cefrTrigger);
+    fireEvent.click(screen.getByRole("option", { name: "Tối đa A1" }));
+    expect(screen.getByRole("button", { name: "Tối đa A1 ▾" })).toHaveClass("active");
 
-    expect(cefrSelect).toHaveClass("active");
-    expect(countSelect).toHaveClass("active");
+    fireEvent.click(countTrigger);
+    fireEvent.click(screen.getByRole("option", { name: "5 từ" }));
+    expect(screen.getByRole("button", { name: "5 từ ▾" })).toHaveClass("active");
   });
 
   it("leaves the setup screen when Bắt đầu is clicked with matching words", async () => {
