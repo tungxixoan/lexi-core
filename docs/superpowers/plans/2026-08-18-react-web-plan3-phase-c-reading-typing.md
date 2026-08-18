@@ -1861,7 +1861,7 @@ git commit -m "feat(web): add Đọc hub page with the Đọc & gõ card"
 
 **Interfaces:**
 - Produces: the `/reading/bilingual` route, with a `Phase = "setup" | "session" | "result"` state machine — this task only renders the `"setup"` phase (matching the pattern already established by `practice/page.tsx`'s own setup-phase task). `handleGenerate` already computes the real word list and calls the real AI, storing the result into `passage` state and moving `phase` to `"session"` — later tasks render that phase from real state, not re-deriving it.
-- Consumes: `getVocabRecords` (`@/lib/vocabRecords`), `getTopics` (`@/lib/topics`), `TopicFilterPopover` (`@/components/vocab-bank/TopicFilterPopover`), `SimpleDropdown`/`SimpleDropdownOption` (`@/components/shared/SimpleDropdown`), `selectSessionWords`/`SessionWordFilters` (`@/lib/practiceSession`, Task 8's due-then-fallback selection, reused unchanged), `buildReadingPassagePrompt`/`parseReadingPassage`/`ReadingPassage` (`@/lib/readingPassage`, Task 1), `generateContent` (`@/lib/generateContent`), `parseAiJsonObject` (`@/lib/parseAiJson`) — all already exist.
+- Consumes: `getVocabRecords` (`@/lib/vocabRecords`), `getTopics` (`@/lib/topics`), `TopicFilterPopover` (`@/components/vocab-bank/TopicFilterPopover`), `SimpleDropdown`/`SimpleDropdownOption` (`@/components/shared/SimpleDropdown`), `selectSessionWords`/`SessionWordFilters` (`@/lib/practiceSession`, Task 8's due-then-fallback selection, reused unchanged), `parseReadingPassage`/`ReadingPassage` (`@/lib/readingPassage`, Task 1), `generateContent` (`@/lib/generateContent`), `parseAiJsonObject` (`@/lib/parseAiJson`) — all already exist. **`buildReadingPassagePrompt`'s real shipped signature is `(headwords: string[], targetLanguage: TargetLanguage, maxCefr: CefrLevel | null): string`** — a 3rd `maxCefr` parameter was added during Task 1's review (it's threaded through as an explicit "keep difficulty at or below CEFR X" instruction, not just implied by the word list) after the rest of this plan's earlier text was written; every code block in this task already reflects that 3-arg signature — call it with `maxCefr` (this task's own state), not a 2-arg call.
 - Produces (for Task 9): `interface SentenceProgress { deletedChars: number; startedAt: number }` is NOT yet introduced here — that state is added in Task 9 alongside the session phase's own rendering.
 
 - [ ] **Step 1: Write the failing test**
@@ -2128,7 +2128,8 @@ export default function BilingualReadingPage() {
     try {
       const prompt = buildReadingPassagePrompt(
         words.map((w) => w.headword),
-        settings.targetLanguage
+        settings.targetLanguage,
+        maxCefr
       );
       const response = await generateContent({
         provider: settings.activeProvider,
