@@ -32,22 +32,24 @@ export function SimpleDropdown<T extends string>({
         {triggerLabel} ▾
       </button>
       {open && (
-        <div className="simple-dropdown-panel" role="listbox" aria-label={ariaLabel}>
-          {options.map((opt) => (
-            <button
-              type="button"
-              key={opt.value}
-              role="option"
-              aria-selected={opt.value === value}
-              className={`simple-dropdown-opt${opt.value === value ? " active" : ""}`}
-              onClick={() => {
-                onChange(opt.value);
-                setOpen(false);
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
+        <div className="vb-topic-popover" role="listbox" aria-label={ariaLabel}>
+          <div className="vb-topic-popover-opts">
+            {options.map((opt) => (
+              <button
+                type="button"
+                key={opt.value}
+                role="option"
+                aria-selected={opt.value === value}
+                className={`vb-chip${opt.value === value ? " active" : ""}`}
+                onClick={() => {
+                  onChange(opt.value);
+                  setOpen(false);
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
