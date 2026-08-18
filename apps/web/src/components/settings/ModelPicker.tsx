@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { MODEL_PRESETS, type AiProvider } from "@/lib/modelPresets";
+import { SimpleDropdown, type SimpleDropdownOption } from "@/components/shared/SimpleDropdown";
 
 const CUSTOM_VALUE = "__custom__";
 
@@ -25,30 +26,32 @@ export function ModelPicker({ provider, model, onChange }: ModelPickerProps) {
 
   const showCustomInput = customMode || !modelIsPreset;
 
+  const options: SimpleDropdownOption<string>[] = [
+    ...presets.map((m) => ({ value: m, label: m })),
+    { value: CUSTOM_VALUE, label: "Khác..." },
+  ];
+
   return (
     <div>
-      <label>
-        Model
-        <select
+      <div className="settings-field">
+        <span>Model</span>
+        <SimpleDropdown
+          ariaLabel="Chọn model"
+          triggerLabel={showCustomInput ? "Khác..." : model}
+          options={options}
           value={showCustomInput ? CUSTOM_VALUE : model}
-          onChange={(e) => {
-            if (e.target.value === CUSTOM_VALUE) {
+          onChange={(value) => {
+            if (value === CUSTOM_VALUE) {
               setCustomMode(true);
               setCustomDraft(modelIsPreset ? "" : model);
             } else {
               setCustomMode(false);
-              onChange(e.target.value);
+              onChange(value);
             }
           }}
-        >
-          {presets.map((m) => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-          <option value={CUSTOM_VALUE}>Khác...</option>
-        </select>
-      </label>
+          active={false}
+        />
+      </div>
       {showCustomInput && (
         <input
           aria-label="Tên model tuỳ chỉnh"

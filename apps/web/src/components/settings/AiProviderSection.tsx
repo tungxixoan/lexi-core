@@ -5,6 +5,7 @@ import { ModelPicker } from "./ModelPicker";
 import { encryptApiKey } from "@/lib/encryptApiKey";
 import { PROVIDER_LABELS, type AiProvider } from "@/lib/modelPresets";
 import type { UserSettings } from "@/lib/settings";
+import { SimpleDropdown, type SimpleDropdownOption } from "@/components/shared/SimpleDropdown";
 
 interface AiProviderSectionProps {
   settings: UserSettings;
@@ -12,6 +13,10 @@ interface AiProviderSectionProps {
 }
 
 const PROVIDERS: AiProvider[] = ["gemini", "groq", "openrouter"];
+const PROVIDER_OPTIONS: SimpleDropdownOption<AiProvider>[] = PROVIDERS.map((p) => ({
+  value: p,
+  label: PROVIDER_LABELS[p],
+}));
 
 export function AiProviderSection({ settings, onSave }: AiProviderSectionProps) {
   const [keyDraft, setKeyDraft] = useState("");
@@ -77,19 +82,17 @@ export function AiProviderSection({ settings, onSave }: AiProviderSectionProps) 
   return (
     <section className="settings-card">
       <h3 className="scr-title">Nhà cung cấp AI &amp; Khoá API</h3>
-      <label>
-        Nhà cung cấp
-        <select
+      <div className="settings-field">
+        <span>Nhà cung cấp</span>
+        <SimpleDropdown
+          ariaLabel="Chọn nhà cung cấp AI"
+          triggerLabel={PROVIDER_LABELS[active]}
+          options={PROVIDER_OPTIONS}
           value={active}
-          onChange={(e) => handleProviderChange(e.target.value as AiProvider)}
-        >
-          {PROVIDERS.map((p) => (
-            <option key={p} value={p}>
-              {PROVIDER_LABELS[p]}
-            </option>
-          ))}
-        </select>
-      </label>
+          onChange={handleProviderChange}
+          active={false}
+        />
+      </div>
       <ModelPicker
         key={active}
         provider={active}

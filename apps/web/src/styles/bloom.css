@@ -763,7 +763,8 @@ button.btn-danger {
   font-weight: 700;
 }
 
-.settings-card label {
+.settings-card label,
+.settings-card .settings-field {
   display: flex;
   flex-direction: column;
   align-items: flex-start;

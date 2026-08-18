@@ -11,11 +11,12 @@ describe("AiProviderSection", () => {
     const onSave = vi.fn();
     render(<AiProviderSection settings={DEFAULT_SETTINGS} onSave={onSave} />);
 
+    fireEvent.click(screen.getByRole("button", { name: "Gemini ▾" }));
     expect(screen.getByRole("option", { name: "Gemini" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Groq" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "OpenRouter" })).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Nhà cung cấp"), { target: { value: "groq" } });
+    fireEvent.click(screen.getByRole("option", { name: "Groq" }));
 
     expect(onSave).toHaveBeenCalledWith({ ...DEFAULT_SETTINGS, activeProvider: "groq" });
   });
@@ -24,7 +25,8 @@ describe("AiProviderSection", () => {
     const onSave = vi.fn();
     render(<AiProviderSection settings={DEFAULT_SETTINGS} onSave={onSave} />);
 
-    fireEvent.change(screen.getByLabelText("Model"), { target: { value: "gemini-2.5-pro" } });
+    fireEvent.click(screen.getByRole("button", { name: "gemini-2.5-flash ▾" }));
+    fireEvent.click(screen.getByRole("option", { name: "gemini-2.5-pro" }));
 
     expect(onSave).toHaveBeenCalledWith({
       ...DEFAULT_SETTINGS,
@@ -92,7 +94,8 @@ describe("AiProviderSection", () => {
     fireEvent.change(screen.getByLabelText("Khoá API"), { target: { value: "sk-partial-typed" } });
     expect(screen.getByLabelText("Khoá API")).toHaveValue("sk-partial-typed");
 
-    fireEvent.change(screen.getByLabelText("Nhà cung cấp"), { target: { value: "groq" } });
+    fireEvent.click(screen.getByRole("button", { name: "Gemini ▾" }));
+    fireEvent.click(screen.getByRole("option", { name: "Groq" }));
 
     expect(screen.getByLabelText("Khoá API")).toHaveValue("");
   });
@@ -101,7 +104,8 @@ describe("AiProviderSection", () => {
     const onSave = vi.fn().mockRejectedValue(new Error("offline"));
     render(<AiProviderSection settings={DEFAULT_SETTINGS} onSave={onSave} />);
 
-    fireEvent.change(screen.getByLabelText("Nhà cung cấp"), { target: { value: "groq" } });
+    fireEvent.click(screen.getByRole("button", { name: "Gemini ▾" }));
+    fireEvent.click(screen.getByRole("option", { name: "Groq" }));
 
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("offline"));
   });
@@ -110,7 +114,8 @@ describe("AiProviderSection", () => {
     const onSave = vi.fn().mockRejectedValue(new Error("offline"));
     render(<AiProviderSection settings={DEFAULT_SETTINGS} onSave={onSave} />);
 
-    fireEvent.change(screen.getByLabelText("Model"), { target: { value: "gemini-2.5-pro" } });
+    fireEvent.click(screen.getByRole("button", { name: "gemini-2.5-flash ▾" }));
+    fireEvent.click(screen.getByRole("option", { name: "gemini-2.5-pro" }));
 
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("offline"));
   });

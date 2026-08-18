@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { LANGUAGE_LABELS, type TargetLanguage } from "@/lib/languages";
 import type { UserSettings } from "@/lib/settings";
+import { SimpleDropdown, type SimpleDropdownOption } from "@/components/shared/SimpleDropdown";
 
 interface LanguageSectionProps {
   settings: UserSettings;
@@ -10,6 +11,10 @@ interface LanguageSectionProps {
 }
 
 const LANGUAGES: TargetLanguage[] = ["vietnamese", "english", "chinese", "korean", "japanese"];
+const LANGUAGE_OPTIONS: SimpleDropdownOption<TargetLanguage>[] = LANGUAGES.map((lang) => ({
+  value: lang,
+  label: LANGUAGE_LABELS[lang],
+}));
 
 export function LanguageSection({ settings, onSave }: LanguageSectionProps) {
   const [error, setError] = useState<string | null>(null);
@@ -26,21 +31,17 @@ export function LanguageSection({ settings, onSave }: LanguageSectionProps) {
   return (
     <section className="settings-card">
       <h3 className="scr-title">Ngôn ngữ mục tiêu</h3>
-      <label>
-        Ngôn ngữ đang học
-        <select
+      <div className="settings-field">
+        <span>Ngôn ngữ đang học</span>
+        <SimpleDropdown
+          ariaLabel="Ngôn ngữ đang học"
+          triggerLabel={LANGUAGE_LABELS[settings.targetLanguage]}
+          options={LANGUAGE_OPTIONS}
           value={settings.targetLanguage}
-          onChange={(e) =>
-            void handleSave({ ...settings, targetLanguage: e.target.value as TargetLanguage })
-          }
-        >
-          {LANGUAGES.map((lang) => (
-            <option key={lang} value={lang}>
-              {LANGUAGE_LABELS[lang]}
-            </option>
-          ))}
-        </select>
-      </label>
+          onChange={(lang) => void handleSave({ ...settings, targetLanguage: lang })}
+          active={false}
+        />
+      </div>
       {error && <p role="alert">{error}</p>}
     </section>
   );

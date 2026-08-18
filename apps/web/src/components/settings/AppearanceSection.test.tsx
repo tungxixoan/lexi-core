@@ -6,35 +6,39 @@ import { DEFAULT_SETTINGS } from "@/lib/settings";
 describe("AppearanceSection", () => {
   it("renders the current theme and font size", () => {
     render(<AppearanceSection settings={DEFAULT_SETTINGS} onSave={vi.fn()} />);
-    expect(screen.getByLabelText("Chủ đề")).toHaveValue("system");
-    expect(screen.getByLabelText("Cỡ chữ")).toHaveValue("medium");
+    expect(screen.getByRole("button", { name: "Theo hệ thống ▾" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Vừa ▾" })).toBeInTheDocument();
   });
 
-  it("calls onSave with the new theme when changed", () => {
+  it("calls onSave with the new theme when a different one is picked", () => {
     const onSave = vi.fn();
     render(<AppearanceSection settings={DEFAULT_SETTINGS} onSave={onSave} />);
-    fireEvent.change(screen.getByLabelText("Chủ đề"), { target: { value: "dark" } });
+    fireEvent.click(screen.getByRole("button", { name: "Theo hệ thống ▾" }));
+    fireEvent.click(screen.getByRole("option", { name: "Tối" }));
     expect(onSave).toHaveBeenCalledWith({ ...DEFAULT_SETTINGS, theme: "dark" });
   });
 
-  it("calls onSave with the new font size when changed", () => {
+  it("calls onSave with the new font size when a different one is picked", () => {
     const onSave = vi.fn();
     render(<AppearanceSection settings={DEFAULT_SETTINGS} onSave={onSave} />);
-    fireEvent.change(screen.getByLabelText("Cỡ chữ"), { target: { value: "large" } });
+    fireEvent.click(screen.getByRole("button", { name: "Vừa ▾" }));
+    fireEvent.click(screen.getByRole("option", { name: "Lớn" }));
     expect(onSave).toHaveBeenCalledWith({ ...DEFAULT_SETTINGS, fontSize: "large" });
   });
 
   it("shows an alert when saving the theme fails", async () => {
     const onSave = vi.fn().mockRejectedValue(new Error("offline"));
     render(<AppearanceSection settings={DEFAULT_SETTINGS} onSave={onSave} />);
-    fireEvent.change(screen.getByLabelText("Chủ đề"), { target: { value: "dark" } });
+    fireEvent.click(screen.getByRole("button", { name: "Theo hệ thống ▾" }));
+    fireEvent.click(screen.getByRole("option", { name: "Tối" }));
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("offline"));
   });
 
   it("shows an alert when saving the font size fails", async () => {
     const onSave = vi.fn().mockRejectedValue(new Error("offline"));
     render(<AppearanceSection settings={DEFAULT_SETTINGS} onSave={onSave} />);
-    fireEvent.change(screen.getByLabelText("Cỡ chữ"), { target: { value: "large" } });
+    fireEvent.click(screen.getByRole("button", { name: "Vừa ▾" }));
+    fireEvent.click(screen.getByRole("option", { name: "Lớn" }));
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("offline"));
   });
 });
