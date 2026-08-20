@@ -16,6 +16,8 @@ import {
 } from "@/lib/readingPassage";
 import { generateContent } from "@/lib/generateContent";
 import { parseAiJsonObject } from "@/lib/parseAiJson";
+import { TypingSentence } from "@/components/reading/TypingSentence";
+import { computeSentenceStats, type SentenceStats } from "@/lib/readingScoring";
 
 type CefrLevel = VocabRecord["cefrLevel"];
 const CEFR_LEVELS: CefrLevel[] = ["a1", "a2", "b1", "b2", "c1", "c2"];
@@ -51,6 +53,11 @@ export default function BilingualReadingPage() {
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [passage, setPassage] = useState<ReadingPassage | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [typed, setTyped] = useState("");
+  const [deletedChars, setDeletedChars] = useState(0);
+  const [sentenceStartedAt, setSentenceStartedAt] = useState(0);
+  const [completedStats, setCompletedStats] = useState<SentenceStats[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -95,11 +102,40 @@ export default function BilingualReadingPage() {
         throw new Error("AI không trả về đoạn văn hợp lệ.");
       }
       setPassage(generated);
+      setCurrentIndex(0);
+      setTyped("");
+      setDeletedChars(0);
+      setSentenceStartedAt(Date.now());
+      setCompletedStats([]);
       setPhase("session");
     } catch (err) {
       setGenerateError(err instanceof Error ? err.message : String(err));
     } finally {
       setGenerating(false);
+    }
+  }
+
+  function handleTypedChange(value: string) {
+    const newDeletedChars =
+      value.length < typed.length ? deletedChars + (typed.length - value.length) : deletedChars;
+    setTyped(value);
+    setDeletedChars(newDeletedChars);
+
+    if (!passage) return;
+    const target = passage.sentences[currentIndex].target;
+    if (value !== target) return;
+
+    const durationMs = Date.now() - sentenceStartedAt;
+    const stats = computeSentenceStats(target, value, newDeletedChars, durationMs);
+    setCompletedStats((prev) => [...prev, stats]);
+
+    if (currentIndex + 1 < passage.sentences.length) {
+      setCurrentIndex(currentIndex + 1);
+      setTyped("");
+      setDeletedChars(0);
+      setSentenceStartedAt(Date.now());
+    } else {
+      setPhase("result");
     }
   }
 
@@ -171,6 +207,32 @@ export default function BilingualReadingPage() {
     );
   }
 
-  // "session"/"result" phases wired in Tasks 9-10.
+  if (phase === "session" && passage) {
+    const currentSentence = passage.sentences[currentIndex];
+    const completedSentences = passage.sentences.slice(0, currentIndex).map((s) => s.target);
+    const progressPct = Math.round(((currentIndex + 1) / passage.sentences.length) * 100);
+
+    return (
+      <div>
+        <div className="practice-progress-row">
+          <span>
+            Câu {currentIndex + 1} / {passage.sentences.length}
+          </span>
+          <span>Đọc &amp; gõ</span>
+        </div>
+        <div className="practice-progress-track">
+          <div className="practice-progress-fill" style={{ width: `${progressPct}%` }} />
+        </div>
+        <TypingSentence
+          completedSentences={completedSentences}
+          currentSentence={currentSentence}
+          typed={typed}
+          onTypedChange={handleTypedChange}
+        />
+      </div>
+    );
+  }
+
+  // "result" phase wired in Task 10.
   return null;
 }

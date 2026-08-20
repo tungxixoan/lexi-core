@@ -163,3 +163,77 @@ describe("BilingualReadingPage (setup phase)", () => {
     expect(await screen.findByRole("button", { name: "Tạo bài luyện" })).toBeInTheDocument();
   });
 });
+
+describe("BilingualReadingPage (typing session)", () => {
+  it("shows the current sentence's progress and Vietnamese translation, advancing on exact match", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        sentences: [
+          { target: "Hi.", vietnamese: "Chào.", vocabWords: [] },
+          { target: "Bye.", vietnamese: "Tạm biệt.", vocabWords: [] },
+        ],
+      }),
+    });
+
+    render(<BilingualReadingPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
+
+    expect(await screen.findByText("Câu 1 / 2")).toBeInTheDocument();
+    expect(screen.getByText("Chào.")).toBeInTheDocument();
+
+    const input = screen.getByTestId("reading-type-input");
+    fireEvent.change(input, { target: { value: "Hi." } });
+
+    expect(await screen.findByText("Câu 2 / 2")).toBeInTheDocument();
+    expect(screen.getByText("Tạm biệt.")).toBeInTheDocument();
+    expect(screen.getByTestId("reading-type-input")).toHaveValue("");
+  });
+
+  it("transitions past the session UI once the last sentence is typed correctly", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({ sentences: [{ target: "Hi.", vietnamese: "Chào.", vocabWords: [] }] }),
+    });
+
+    render(<BilingualReadingPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
+    await screen.findByText("Câu 1 / 1");
+
+    fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "Hi." } });
+
+    await waitFor(() => expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument());
+  });
+
+  it("does not advance while the typed value only partially matches the target", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        sentences: [
+          { target: "Hi there.", vietnamese: "Chào bạn.", vocabWords: [] },
+          { target: "Bye.", vietnamese: "Tạm biệt.", vocabWords: [] },
+        ],
+      }),
+    });
+
+    render(<BilingualReadingPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
+    await screen.findByText("Câu 1 / 2");
+
+    fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "Hi " } });
+
+    expect(screen.getByText("Câu 1 / 2")).toBeInTheDocument();
+  });
+});
