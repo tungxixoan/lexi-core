@@ -1239,3 +1239,73 @@ button.btn-secondary {
 .reading-type-input:focus {
   border-color: var(--accent);
 }
+
+.suggestions-section {
+  margin-top: 24px;
+}
+
+.suggestions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.suggestions-title {
+  font-weight: 700;
+  font-size: 13.5px;
+}
+
+.suggestions-bulk-message {
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  margin: 0 0 10px;
+}
+
+.suggestion-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.suggestion-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 14px;
+}
+
+.suggestion-card-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+}
+
+.suggestion-card-main:disabled {
+  cursor: default;
+}
+
+.suggestion-headword {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.suggestion-meaning {
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  flex: 1;
+}
+
+.suggestion-saved-mark {
+  color: var(--success);
+  font-weight: 700;
+}
