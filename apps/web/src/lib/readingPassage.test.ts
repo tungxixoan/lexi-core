@@ -29,7 +29,7 @@ function makeRecord(overrides: Partial<VocabRecord>): VocabRecord {
 
 describe("buildReadingPassagePrompt", () => {
   it("includes every headword, the target language label, and asks for JSON only", () => {
-    const prompt = buildReadingPassagePrompt(["meticulous", "ephemeral"], "english");
+    const prompt = buildReadingPassagePrompt(["meticulous", "ephemeral"], "english", null);
     expect(prompt).toContain("meticulous");
     expect(prompt).toContain("ephemeral");
     expect(prompt).toContain("English");
@@ -38,13 +38,23 @@ describe("buildReadingPassagePrompt", () => {
   });
 
   it("uses the target language's own label, not always English", () => {
-    const prompt = buildReadingPassagePrompt(["안녕"], "korean");
+    const prompt = buildReadingPassagePrompt(["안녕"], "korean", null);
     expect(prompt).toContain("한국어");
   });
 
   it("requires Vietnamese-script-only translations", () => {
-    const prompt = buildReadingPassagePrompt(["word"], "english");
+    const prompt = buildReadingPassagePrompt(["word"], "english", null);
     expect(prompt).toContain("Vietnamese script");
+  });
+
+  it("tells the AI to cap difficulty at the given max CEFR level when one is set", () => {
+    const prompt = buildReadingPassagePrompt(["word"], "english", "b1");
+    expect(prompt).toContain("Keep the difficulty at or below CEFR level B1.");
+  });
+
+  it("omits the CEFR clause entirely when maxCefr is null", () => {
+    const prompt = buildReadingPassagePrompt(["word"], "english", null);
+    expect(prompt).not.toContain("CEFR level");
   });
 });
 
