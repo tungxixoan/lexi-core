@@ -18,7 +18,12 @@ import {
 import { generateContent } from "@/lib/generateContent";
 import { parseAiJsonObject } from "@/lib/parseAiJson";
 import { TypingSentence } from "@/components/reading/TypingSentence";
-import { computeSentenceStats, aggregateSentenceStats, type SentenceStats } from "@/lib/readingScoring";
+import {
+  computeSentenceStats,
+  aggregateSentenceStats,
+  countMismatches,
+  type SentenceStats,
+} from "@/lib/readingScoring";
 import { VocabSuggestionsSection } from "@/components/shared/VocabSuggestionsSection";
 
 type CefrLevel = VocabRecord["cefrLevel"];
@@ -65,6 +70,7 @@ export default function BilingualReadingPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [typed, setTyped] = useState("");
   const [deletedChars, setDeletedChars] = useState(0);
+  const [peakMistakes, setPeakMistakes] = useState(0);
   const [sentenceStartedAt, setSentenceStartedAt] = useState(0);
   const [completedStats, setCompletedStats] = useState<SentenceStats[]>([]);
 
@@ -114,6 +120,7 @@ export default function BilingualReadingPage() {
       setCurrentIndex(0);
       setTyped("");
       setDeletedChars(0);
+      setPeakMistakes(0);
       setSentenceStartedAt(Date.now());
       setCompletedStats([]);
       setPhase("session");
@@ -132,16 +139,23 @@ export default function BilingualReadingPage() {
 
     if (!passage) return;
     const target = passage.sentences[currentIndex].target;
+    // Peak, not cumulative: a mismatch only counts once even if it sits
+    // uncorrected for several keystrokes — this is "how wrong did it get",
+    // not "how many wrong keystrokes total".
+    const newPeakMistakes = Math.max(peakMistakes, countMismatches(target, value));
+    setPeakMistakes(newPeakMistakes);
+
     if (value !== target) return;
 
     const durationMs = Date.now() - sentenceStartedAt;
-    const stats = computeSentenceStats(target, value, newDeletedChars, durationMs);
+    const stats = computeSentenceStats(target, value, newDeletedChars, newPeakMistakes, durationMs);
     setCompletedStats((prev) => [...prev, stats]);
 
     if (currentIndex + 1 < passage.sentences.length) {
       setCurrentIndex(currentIndex + 1);
       setTyped("");
       setDeletedChars(0);
+      setPeakMistakes(0);
       setSentenceStartedAt(Date.now());
     } else {
       setPhase("result");
@@ -160,6 +174,7 @@ export default function BilingualReadingPage() {
     setCurrentIndex(0);
     setTyped("");
     setDeletedChars(0);
+    setPeakMistakes(0);
     setCompletedStats([]);
     setGenerateError(null);
     setPhase("setup");
@@ -266,7 +281,7 @@ export default function BilingualReadingPage() {
   // Streak-hook shape (design spec §3.3) — Dashboard/streak is its own
   // deferred phase and nothing writes this anywhere yet, but every piece a
   // future feature would need is right here: passage?.vocabIds (already
-  // computed above as usedRecords' source), stats.overallAccuracy, and
+  // computed above as usedRecords' source), stats.typingAccuracy, and
   // `new Date().toISOString()` at this exact point in time. See
   // ReadingSessionResult below for the exact shape that data would take.
 
@@ -276,7 +291,7 @@ export default function BilingualReadingPage() {
       <div className="reading-result-stats">
         <div className="reading-stat-card">
           <span className="reading-stat-label">Độ chính xác</span>
-          <span className="reading-stat-value">{Math.round(stats.overallAccuracy * 100)}%</span>
+          <span className="reading-stat-value">{Math.round(stats.typingAccuracy * 100)}%</span>
         </div>
         <div className="reading-stat-card">
           <span className="reading-stat-label">Tốc độ</span>

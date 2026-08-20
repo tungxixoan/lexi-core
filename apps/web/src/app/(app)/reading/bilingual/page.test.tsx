@@ -286,6 +286,34 @@ describe("BilingualReadingPage (result phase)", () => {
     expect(suggestions).toHaveAttribute("data-text", "Hi there. Bye now.");
   });
 
+  it("reflects an in-progress typo (typed wrong, then corrected) in the accuracy card, not just the deletion penalty", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        sentences: [{ target: "Hi.", vietnamese: "Chào.", vocabWords: [] }],
+      }),
+    });
+
+    render(<BilingualReadingPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
+    await screen.findByText("Câu 1 / 1");
+
+    const input = screen.getByTestId("reading-type-input");
+    // Type "Hx." (mismatch at index 1), then correct it to "Hi." without ever
+    // deleting — mistakeChars should still capture the wrong keystroke that
+    // was overwritten in place (length stayed the same, so deletedChars is 0).
+    fireEvent.change(input, { target: { value: "Hx." } });
+    fireEvent.change(input, { target: { value: "Hi." } });
+    await waitFor(() => expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument());
+
+    // 1 mistakeChar out of 3 totalChars -> 1 - 1/3 = 67% (rounded), not 100%.
+    expect(screen.getByText("67%")).toBeInTheDocument();
+  });
+
   it('"Sinh bài mới" resets and returns to the setup phase with filters still selected', async () => {
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue(
