@@ -1309,3 +1309,32 @@ button.btn-secondary {
   color: var(--success);
   font-weight: 700;
 }
+
+.reading-hub-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  max-width: 720px;
+}
+
+.reading-hub-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px 20px;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.reading-hub-card-title {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.reading-hub-card-desc {
+  color: var(--ink-soft);
+  font-size: 12.5px;
+}
