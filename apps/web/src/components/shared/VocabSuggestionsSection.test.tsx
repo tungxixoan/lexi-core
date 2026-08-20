@@ -102,8 +102,10 @@ describe("VocabSuggestionsSection", () => {
     render(<VocabSuggestionsSection text="text" existingRecords={[]} topics={[]} />);
 
     expect(await screen.findByText(/network down/)).toBeInTheDocument();
+    const retryBtn = screen.getByRole("button", { name: "Thử lại" });
+    expect(retryBtn).toHaveClass("link-btn");
     vi.mocked(generateContent).mockResolvedValueOnce({ text: JSON.stringify({ suggestions: [] }) });
-    fireEvent.click(screen.getByRole("button", { name: "Thử lại" }));
+    fireEvent.click(retryBtn);
     expect(await screen.findByText("Không có gợi ý mới.")).toBeInTheDocument();
   });
 
@@ -179,6 +181,38 @@ describe("VocabSuggestionsSection", () => {
     expect(meticulousCard).toHaveTextContent("✔");
     const ephemeralCard = screen.getByText("ephemeral").closest(".suggestion-card");
     expect(ephemeralCard).not.toHaveTextContent("✔");
+  });
+
+  it('"Lưu tất cả" shows a busy state and ignores a second click while a bulk save is in flight', async () => {
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        suggestions: [
+          { headword: "meticulous", meaning: "tỉ mỉ" },
+          { headword: "ephemeral", meaning: "phù du" },
+        ],
+      }),
+    });
+    vi.mocked(getVocabRecordByHeadword).mockResolvedValue(null);
+    vi.mocked(saveVocabRecord).mockResolvedValue("new-id");
+
+    render(<VocabSuggestionsSection text="text" existingRecords={[]} topics={[]} />);
+    await screen.findByText("meticulous");
+
+    const saveAllBtn = screen.getByRole("button", { name: "Lưu tất cả" });
+    expect(saveAllBtn).toHaveClass("link-btn");
+    fireEvent.click(saveAllBtn);
+
+    // Button flips to a disabled busy state synchronously, before the async saves resolve.
+    const busyBtn = screen.getByRole("button", { name: "Đang lưu…" });
+    expect(busyBtn).toBeDisabled();
+
+    // A second click while busy must be a no-op — the handler's own guard plus the
+    // disabled attribute both prevent it from starting a second overlapping save.
+    fireEvent.click(busyBtn);
+
+    await waitFor(() => expect(screen.getByText("Đã lưu 2/2 từ.")).toBeInTheDocument());
+    // Exactly one save per unique suggestion — never doubled by the second click.
+    expect(saveVocabRecord).toHaveBeenCalledTimes(2);
   });
 
   it("dismisses a suggestion card without saving it, and hides it from Lưu tất cả", async () => {

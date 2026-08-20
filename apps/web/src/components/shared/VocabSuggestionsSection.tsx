@@ -38,6 +38,7 @@ export function VocabSuggestionsSection({ text, existingRecords, topics }: Vocab
   const [editingSuggestion, setEditingSuggestion] = useState<WordPhraseResult | null>(null);
   const [bulkSaveMessage, setBulkSaveMessage] = useState<string | null>(null);
   const [bulkSaveError, setBulkSaveError] = useState<string | null>(null);
+  const [bulkSaving, setBulkSaving] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
   const activeConfig = settings?.providers[settings.activeProvider];
@@ -90,12 +91,13 @@ export function VocabSuggestionsSection({ text, existingRecords, topics }: Vocab
   }
 
   async function handleSaveAll() {
-    if (!user || !settings || !suggestions) return;
+    if (bulkSaving || !user || !settings || !suggestions) return;
     const toSave = suggestions.filter(
       (s) => !savedHeadwords.has(s.headword) && !dismissedHeadwords.has(s.headword)
     );
     let savedCount = 0;
     setBulkSaveError(null);
+    setBulkSaving(true);
     try {
       for (const s of toSave) {
         const draft = buildVocabRecordDraft(s, topics, settings.targetLanguage);
@@ -111,6 +113,8 @@ export function VocabSuggestionsSection({ text, existingRecords, topics }: Vocab
     } catch (err) {
       setBulkSaveMessage(`Đã lưu ${savedCount}/${toSave.length} từ.`);
       setBulkSaveError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBulkSaving(false);
     }
   }
 
@@ -122,8 +126,13 @@ export function VocabSuggestionsSection({ text, existingRecords, topics }: Vocab
       <div className="suggestions-header">
         <span className="suggestions-title">Gợi ý từ mới</span>
         {hasUnsaved && suggestions && (
-          <button type="button" className="link-btn" onClick={() => void handleSaveAll()}>
-            Lưu tất cả
+          <button
+            type="button"
+            className="link-btn"
+            onClick={() => void handleSaveAll()}
+            disabled={bulkSaving}
+          >
+            {bulkSaving ? "Đang lưu…" : "Lưu tất cả"}
           </button>
         )}
       </div>

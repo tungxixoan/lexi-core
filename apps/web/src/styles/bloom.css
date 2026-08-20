@@ -591,8 +591,7 @@ p.scr-sub {
   flex: 1;
 }
 
-.modal-field button.link-btn {
-  align-self: flex-start;
+.link-btn {
   background: none;
   border: none;
   color: var(--accent);
@@ -600,6 +599,15 @@ p.scr-sub {
   font-weight: 700;
   cursor: pointer;
   padding: 4px 0;
+}
+
+.modal-field button.link-btn {
+  align-self: flex-start;
+}
+
+.link-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .vb-chip:disabled {
