@@ -698,7 +698,9 @@ git commit -m "feat(web): add vocab-suggestions prompt/parser (full entry per su
 
 ---
 
-## Task 4: Extract shared `buildVocabRecordDraft` helper (refactor, no behavior change)
+## Task 4: Extract shared `buildVocabRecordDraft` helper (refactor, no behavior change) — ✅ ALREADY IMPLEMENTED
+
+**STATUS: complete, commit `6387af4` (2026-08-20). Do not re-dispatch this task.** Review clean.
 
 **Files:**
 - Create: `apps/web/src/lib/vocabDraft.ts`
@@ -711,7 +713,7 @@ git commit -m "feat(web): add vocab-suggestions prompt/parser (full entry per su
 
 `apps/web/src/app/(app)/lookup/page.tsx` currently declares `normalizeTopicName`, `preselectTopicIds`, and `buildDraftRecord` as module-level/component-local functions with identical logic to what this task needs for the new `VocabSuggestionsSection` (Task 6). This task moves them to a shared file and makes `lookup/page.tsx` a thin caller — a pure refactor, no behavior change, existing tests must still pass unmodified.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `apps/web/src/lib/vocabDraft.test.ts`:
 
@@ -787,12 +789,12 @@ describe("buildVocabRecordDraft", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm --prefix apps/web test -- vocabDraft`
 Expected: FAIL — `apps/web/src/lib/vocabDraft.ts` does not exist yet.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `apps/web/src/lib/vocabDraft.ts`:
 
@@ -983,12 +985,12 @@ with:
   }
 ```
 
-- [ ] **Step 4: Run tests to verify everything passes**
+- [x] **Step 4: Run tests to verify everything passes**
 
 Run: `npm --prefix apps/web test -- vocabDraft` — expect PASS (new tests).
 Run: `npm --prefix apps/web test -- lookup` — expect PASS, unchanged (this is the refactor's regression check: same behavior, moved location).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/lib/vocabDraft.ts apps/web/src/lib/vocabDraft.test.ts "apps/web/src/app/(app)/lookup/page.tsx"
@@ -997,7 +999,9 @@ git commit -m "refactor(web): extract buildVocabRecordDraft into a shared lib, n
 
 ---
 
-## Task 5: `TypingSentence` component
+## Task 5: `TypingSentence` component — ✅ ALREADY IMPLEMENTED
+
+**STATUS: complete, commit `4f61c80` (2026-08-20). Do not re-dispatch this task.** Review clean.
 
 **Files:**
 - Create: `apps/web/src/components/reading/TypingSentence.tsx`
@@ -1010,7 +1014,7 @@ git commit -m "refactor(web): extract buildVocabRecordDraft into a shared lib, n
 
 Implements the typing-feedback design confirmed via 2 rounds of live visual-companion iteration with the user: a single plain `<input>` (browser manages its cursor natively — never restyled, never overlaid) plus a *separate* element (the passage's current-sentence span) that re-renders its color-coded characters on every keystroke. This deliberately avoids two fragility classes tried/rejected during design: Flutter's transparent-overlay-on-`RichText` approach (its own code comments flag the font-alignment risk), and a `contentEditable`-based single-element alternative (a real cursor/space-character bug was reproduced live in that variant while designing). Only completed sentences and the current sentence are shown — upcoming sentences are not revealed in advance.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `apps/web/src/components/reading/TypingSentence.test.tsx`:
 
@@ -1096,12 +1100,12 @@ describe("TypingSentence", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm --prefix apps/web test -- TypingSentence`
 Expected: FAIL — `apps/web/src/components/reading/TypingSentence.tsx` does not exist yet.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `apps/web/src/components/reading/TypingSentence.tsx`:
 
@@ -1159,7 +1163,7 @@ export function TypingSentence({
 }
 ```
 
-- [ ] **Step 4: Append CSS**
+- [x] **Step 4: Append CSS**
 
 Modify `apps/web/src/styles/bloom.css` — append at the end:
 
@@ -1226,12 +1230,12 @@ Modify `apps/web/src/styles/bloom.css` — append at the end:
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npm --prefix apps/web test -- TypingSentence`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/src/components/reading/TypingSentence.tsx apps/web/src/components/reading/TypingSentence.test.tsx apps/web/src/styles/bloom.css
@@ -1240,7 +1244,9 @@ git commit -m "feat(web): add TypingSentence component for Đọc & gõ (confirm
 
 ---
 
-## Task 6: `VocabSuggestionsSection` shared component
+## Task 6: `VocabSuggestionsSection` shared component — ✅ ALREADY IMPLEMENTED
+
+**STATUS: complete, commits `b22d813`..`1f0e3d0` (2026-08-20). Do not re-dispatch this task.** Review found 1 Important issue (handleSaveAll silently swallowed a mid-batch error) — fixed same-day.
 
 **Files:**
 - Create: `apps/web/src/components/shared/VocabSuggestionsSection.tsx`
@@ -1253,7 +1259,7 @@ git commit -m "feat(web): add TypingSentence component for Đọc & gõ (confirm
 
 Self-contained: reads the active AI provider/model/key and target language from `useSettingsContext()` itself, and the current user from `useAuthUser()` itself, rather than taking them as props — this is deliberate so a future caller only ever has to pass `text`/`existingRecords`/`topics`. Renders nothing at all if the active provider has no API key configured (no AI call attempted).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `apps/web/src/components/shared/VocabSuggestionsSection.test.tsx`:
 
@@ -1446,12 +1452,12 @@ describe("VocabSuggestionsSection", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm --prefix apps/web test -- VocabSuggestionsSection`
 Expected: FAIL — `apps/web/src/components/shared/VocabSuggestionsSection.tsx` does not exist yet.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `apps/web/src/components/shared/VocabSuggestionsSection.tsx`:
 
@@ -1640,7 +1646,7 @@ export function VocabSuggestionsSection({ text, existingRecords, topics }: Vocab
 }
 ```
 
-- [ ] **Step 4: Fix the retry handler (self-review catch before running tests)**
+- [x] **Step 4: Fix the retry handler (self-review catch before running tests)**
 
 The `Thử lại` button in Step 3's draft used an invalid expression (`setError(null) || setSuggestions(...)`, which doesn't compile — `setError` returns `void`). Replace that `onClick` with a proper retry that just clears the error and lets the existing `useEffect` re-run. Since the effect's dependency array is `[aiEnabled, text]` (neither changes on retry), add a `reloadKey` counter to force a re-run:
 
@@ -1668,7 +1674,7 @@ with:
           </button>
 ```
 
-- [ ] **Step 5: Append CSS**
+- [x] **Step 5: Append CSS**
 
 Modify `apps/web/src/styles/bloom.css` — append at the end:
 
@@ -1745,12 +1751,12 @@ Modify `apps/web/src/styles/bloom.css` — append at the end:
 }
 ```
 
-- [ ] **Step 6: Run test to verify it passes**
+- [x] **Step 6: Run test to verify it passes**
 
 Run: `npm --prefix apps/web test -- VocabSuggestionsSection`
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/web/src/components/shared/VocabSuggestionsSection.tsx apps/web/src/components/shared/VocabSuggestionsSection.test.tsx apps/web/src/styles/bloom.css
@@ -1759,7 +1765,9 @@ git commit -m "feat(web): add shared VocabSuggestionsSection (full entry per sug
 
 ---
 
-## Task 7: `/reading` hub page
+## Task 7: `/reading` hub page — ✅ ALREADY IMPLEMENTED
+
+**STATUS: complete, commit `fb2a3cf` (2026-08-20). Do not re-dispatch this task.** Review clean.
 
 **Files:**
 - Create: `apps/web/src/app/(app)/reading/page.tsx`
@@ -1770,7 +1778,7 @@ git commit -m "feat(web): add shared VocabSuggestionsSection (full entry per sug
 - Produces: the `/reading` route. One real card today (Đọc & gõ → `/reading/bilingual`, Task 8-10); Part 5/6/7 cards are added in later sub-specs, not this one.
 - Consumes: `useAuthUser` (`@/lib/useAuthUser`), `SignInButton` (`@/components/SignInButton`) — both already exist. The Sidebar's "📖 Đọc — tổng quan" link already points at `/reading` and needs no change (verified: `apps/web/src/components/shell/Sidebar.tsx` already has `{ href: "/reading", label: "📖 Đọc — tổng quan" }`).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `apps/web/src/app/(app)/reading/page.test.tsx`:
 
@@ -1801,12 +1809,12 @@ describe("ReadingHubPage", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm --prefix apps/web test -- "app/(app)/reading/page"`
 Expected: FAIL — `apps/web/src/app/(app)/reading/page.tsx` does not exist yet.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `apps/web/src/app/(app)/reading/page.tsx`:
 
@@ -1849,7 +1857,7 @@ export default function ReadingHubPage() {
 }
 ```
 
-- [ ] **Step 4: Append CSS**
+- [x] **Step 4: Append CSS**
 
 Modify `apps/web/src/styles/bloom.css` — append at the end:
 
@@ -1885,12 +1893,12 @@ Modify `apps/web/src/styles/bloom.css` — append at the end:
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npm --prefix apps/web test -- "app/(app)/reading/page"`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add "apps/web/src/app/(app)/reading" apps/web/src/styles/bloom.css
@@ -1899,7 +1907,9 @@ git commit -m "feat(web): add Đọc hub page with the Đọc & gõ card"
 
 ---
 
-## Task 8: `/reading/bilingual` page — setup phase
+## Task 8: `/reading/bilingual` page — setup phase — ✅ ALREADY IMPLEMENTED
+
+**STATUS: complete, commit `e5bfd6b` (2026-08-20). Do not re-dispatch this task.** Review clean.
 
 **Files:**
 - Create: `apps/web/src/app/(app)/reading/bilingual/page.tsx`
@@ -1911,7 +1921,7 @@ git commit -m "feat(web): add Đọc hub page with the Đọc & gõ card"
 - Consumes: `getVocabRecords` (`@/lib/vocabRecords`), `getTopics` (`@/lib/topics`), `TopicFilterPopover` (`@/components/vocab-bank/TopicFilterPopover`), `SimpleDropdown`/`SimpleDropdownOption` (`@/components/shared/SimpleDropdown`), `selectSessionWords`/`SessionWordFilters` (`@/lib/practiceSession`, Task 8's due-then-fallback selection, reused unchanged), `parseReadingPassage`/`ReadingPassage` (`@/lib/readingPassage`, Task 1), `generateContent` (`@/lib/generateContent`), `parseAiJsonObject` (`@/lib/parseAiJson`) — all already exist. **`buildReadingPassagePrompt`'s real shipped signature is `(headwords: string[], targetLanguage: TargetLanguage, maxCefr: CefrLevel | null): string`** — a 3rd `maxCefr` parameter was added during Task 1's review (it's threaded through as an explicit "keep difficulty at or below CEFR X" instruction, not just implied by the word list) after the rest of this plan's earlier text was written; every code block in this task already reflects that 3-arg signature — call it with `maxCefr` (this task's own state), not a 2-arg call.
 - Produces (for Task 9): `interface SentenceProgress { deletedChars: number; startedAt: number }` is NOT yet introduced here — that state is added in Task 9 alongside the session phase's own rendering.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `apps/web/src/app/(app)/reading/bilingual/page.test.tsx`:
 
@@ -2083,12 +2093,12 @@ describe("BilingualReadingPage (setup phase)", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm --prefix apps/web test -- "reading/bilingual/page"`
 Expected: FAIL — `apps/web/src/app/(app)/reading/bilingual/page.tsx` does not exist yet.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `apps/web/src/app/(app)/reading/bilingual/page.tsx`:
 
@@ -2271,7 +2281,7 @@ export default function BilingualReadingPage() {
 }
 ```
 
-- [ ] **Step 4: Append CSS**
+- [x] **Step 4: Append CSS**
 
 Modify `apps/web/src/styles/bloom.css` — append at the end:
 
@@ -2284,12 +2294,12 @@ Modify `apps/web/src/styles/bloom.css` — append at the end:
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npm --prefix apps/web test -- "reading/bilingual/page"`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add "apps/web/src/app/(app)/reading/bilingual" apps/web/src/styles/bloom.css
@@ -2298,7 +2308,9 @@ git commit -m "feat(web): add Đọc & gõ session setup screen (filters, min-wo
 
 ---
 
-## Task 9: `/reading/bilingual` page — typing session loop
+## Task 9: `/reading/bilingual` page — typing session loop — ✅ ALREADY IMPLEMENTED
+
+**STATUS: complete, commit `576c649` (2026-08-20). Do not re-dispatch this task.** Review clean.
 
 **Files:**
 - Modify: `apps/web/src/app/(app)/reading/bilingual/page.tsx`
@@ -2310,7 +2322,7 @@ git commit -m "feat(web): add Đọc & gõ session setup screen (filters, min-wo
 
 Deletion tracking: whenever the typed value's length shrinks compared to the previous value, the shrink amount is added to a running `deletedChars` count for the *current sentence only* (reset to 0 when advancing to the next sentence) — this covers a single backspace and a select-all-and-retype identically, matching `reading_practice_provider.dart`'s tracking. The new deleted-char total is computed as a local variable before any state update, so the very keystroke that completes a sentence still gets its own deletion correctly counted in that sentence's final stats (state updates are async/batched — reading `deletedChars` state itself inside the same handler call would see the stale pre-keystroke value).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add these imports to the top of `apps/web/src/app/(app)/reading/bilingual/page.test.tsx` (alongside the existing ones):
 
@@ -2398,12 +2410,12 @@ describe("BilingualReadingPage (typing session)", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm --prefix apps/web test -- "reading/bilingual/page"`
 Expected: FAIL — `phase === "session"` currently renders nothing (Task 8 left it as `return null`).
 
-- [ ] **Step 3: Implement the session phase**
+- [x] **Step 3: Implement the session phase**
 
 Modify `apps/web/src/app/(app)/reading/bilingual/page.tsx`. First, update the imports — replace:
 
@@ -2543,12 +2555,12 @@ Finally, replace the closing `// "session"/"result" phases wired in Tasks 9-10.\
 
 (This replaces everything from the `if (phase === "setup")` block's closing `}` through the end of the file — the `if (phase === "setup")` block itself is unchanged.)
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm --prefix apps/web test -- "reading/bilingual/page"`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add "apps/web/src/app/(app)/reading/bilingual"
@@ -2557,7 +2569,9 @@ git commit -m "feat(web): wire the Đọc & gõ typing session loop (TypingSente
 
 ---
 
-## Task 10: `/reading/bilingual` page — result phase
+## Task 10: `/reading/bilingual` page — result phase — ✅ ALREADY IMPLEMENTED
+
+**STATUS: complete, commit `5135833` (2026-08-20). Do not re-dispatch this task — this was the final task of the plan.** Review clean.
 
 **Files:**
 - Modify: `apps/web/src/app/(app)/reading/bilingual/page.tsx`
@@ -2568,7 +2582,7 @@ git commit -m "feat(web): wire the Đọc & gõ typing session loop (TypingSente
 - Consumes: `aggregateSentenceStats` (`@/lib/readingScoring`, Task 2), `VocabSuggestionsSection` (`@/components/shared/VocabSuggestionsSection`, Task 6), `useRouter` (`next/navigation` — new to this codebase; no prior page uses client-side navigation via router, App Router's `<Link>` is used everywhere else, but "Về trang chính" needs a plain `<button>` here since `.btn-secondary`'s CSS selector (`button.btn-secondary`) is scoped to the `<button>` tag, not `<a>`).
 - Produces: nothing further — this is the last task in the plan. **Correction from the design spec's own wording**: spec §3.3 analogized "Sinh bài mới" to Ôn tập's "Ôn tập lại ngay" (which regenerates immediately, skipping setup). Re-checking Flutter's actual `ReadingResultScreen` (research notes, §1/§4) shows "Sinh bài mới" literally "resets provider, back to home" — i.e. it returns to the **setup phase** (filters still selected, since filter state is untouched), not an instant regenerate. This task follows the verified Flutter behavior, not the spec's imprecise analogy.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 First, mock `next/navigation` and `VocabSuggestionsSection` at the top of `apps/web/src/app/(app)/reading/bilingual/page.test.tsx`, alongside the existing `vi.mock` calls:
 
@@ -2653,12 +2667,12 @@ describe("BilingualReadingPage (result phase)", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm --prefix apps/web test -- "reading/bilingual/page"`
 Expected: FAIL — `phase === "result"` currently renders nothing (Task 9 left it as `return null`).
 
-- [ ] **Step 3: Implement the result phase**
+- [x] **Step 3: Implement the result phase**
 
 Modify `apps/web/src/app/(app)/reading/bilingual/page.tsx`. First, update the imports — add these two lines to the existing import block:
 
@@ -2767,7 +2781,7 @@ Finally, replace the closing `// "result" phase wired in Task 10.\n  return null
 }
 ```
 
-- [ ] **Step 4: Append CSS**
+- [x] **Step 4: Append CSS**
 
 Modify `apps/web/src/styles/bloom.css` — append at the end:
 
@@ -2829,12 +2843,12 @@ Modify `apps/web/src/styles/bloom.css` — append at the end:
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npm --prefix apps/web test -- "reading/bilingual/page"`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add "apps/web/src/app/(app)/reading/bilingual" apps/web/src/styles/bloom.css
