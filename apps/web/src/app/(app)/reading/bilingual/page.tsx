@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuthUser } from "@/lib/useAuthUser";
 import { useSettingsContext } from "@/lib/SettingsContext";
 import { SignInButton } from "@/components/SignInButton";
@@ -17,7 +18,8 @@ import {
 import { generateContent } from "@/lib/generateContent";
 import { parseAiJsonObject } from "@/lib/parseAiJson";
 import { TypingSentence } from "@/components/reading/TypingSentence";
-import { computeSentenceStats, type SentenceStats } from "@/lib/readingScoring";
+import { computeSentenceStats, aggregateSentenceStats, type SentenceStats } from "@/lib/readingScoring";
+import { VocabSuggestionsSection } from "@/components/shared/VocabSuggestionsSection";
 
 type CefrLevel = VocabRecord["cefrLevel"];
 const CEFR_LEVELS: CefrLevel[] = ["a1", "a2", "b1", "b2", "c1", "c2"];
@@ -37,9 +39,16 @@ const WORD_COUNT_DROPDOWN_OPTIONS: SimpleDropdownOption<string>[] = WORD_COUNT_O
 
 type Phase = "setup" | "session" | "result";
 
+export interface ReadingSessionResult {
+  vocabIds: string[];
+  accuracy: number;
+  completedAt: string;
+}
+
 export default function BilingualReadingPage() {
   const { user, loading: authLoading } = useAuthUser();
   const { settings, loading: settingsLoading } = useSettingsContext();
+  const router = useRouter();
 
   const [records, setRecords] = useState<VocabRecord[] | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -139,6 +148,23 @@ export default function BilingualReadingPage() {
     }
   }
 
+  function formatDuration(ms: number): string {
+    const totalSeconds = Math.round(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${String(seconds).padStart(2, "0")}`;
+  }
+
+  function handleNewPassage() {
+    setPassage(null);
+    setCurrentIndex(0);
+    setTyped("");
+    setDeletedChars(0);
+    setCompletedStats([]);
+    setGenerateError(null);
+    setPhase("setup");
+  }
+
   if (authLoading) return <p>Đang tải…</p>;
 
   if (!user) {
@@ -233,6 +259,57 @@ export default function BilingualReadingPage() {
     );
   }
 
-  // "result" phase wired in Task 10.
-  return null;
+  const stats = aggregateSentenceStats(completedStats);
+  const totalDurationMs = completedStats.reduce((sum, s) => sum + s.durationMs, 0);
+  const usedRecords = (records ?? []).filter((r) => passage?.vocabIds.includes(r.id));
+  const fullText = (passage?.sentences ?? []).map((s) => s.target).join(" ");
+  // Streak-hook shape (design spec §3.3) — Dashboard/streak is its own
+  // deferred phase and nothing writes this anywhere yet, but every piece a
+  // future feature would need is right here: passage?.vocabIds (already
+  // computed above as usedRecords' source), stats.overallAccuracy, and
+  // `new Date().toISOString()` at this exact point in time. See
+  // ReadingSessionResult below for the exact shape that data would take.
+
+  return (
+    <div>
+      <h2 className="scr-title">Kết quả</h2>
+      <div className="reading-result-stats">
+        <div className="reading-stat-card">
+          <span className="reading-stat-label">Độ chính xác</span>
+          <span className="reading-stat-value">{Math.round(stats.overallAccuracy * 100)}%</span>
+        </div>
+        <div className="reading-stat-card">
+          <span className="reading-stat-label">Tốc độ</span>
+          <span className="reading-stat-value">{Math.round(stats.wpm)} wpm</span>
+        </div>
+        <div className="reading-stat-card">
+          <span className="reading-stat-label">Thời gian</span>
+          <span className="reading-stat-value">{formatDuration(totalDurationMs)}</span>
+        </div>
+        <div className="reading-stat-card">
+          <span className="reading-stat-label">Điểm</span>
+          <span className="reading-stat-value">{Math.round(stats.finalScore * 100)}%</span>
+        </div>
+      </div>
+      {usedRecords.length > 0 && (
+        <div className="reading-used-words">
+          <h3>Từ vựng dùng trong bài</h3>
+          {usedRecords.map((r) => (
+            <p className="reading-used-word-item" key={r.id}>
+              {r.headword} — {r.meaning}
+            </p>
+          ))}
+        </div>
+      )}
+      <VocabSuggestionsSection text={fullText} existingRecords={records ?? []} topics={topics} />
+      <div className="reading-result-actions">
+        <button type="button" className="btn-secondary" onClick={() => router.push("/reading")}>
+          Về trang chính
+        </button>
+        <button type="button" className="btn-primary" onClick={handleNewPassage}>
+          Sinh bài mới
+        </button>
+      </div>
+    </div>
+  );
 }

@@ -17,6 +17,14 @@ vi.mock("@/components/SignInButton", () => ({
   SignInButton: () => <button>Đăng nhập với Google</button>,
 }));
 
+const pushMock = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: pushMock }) }));
+vi.mock("@/components/shared/VocabSuggestionsSection", () => ({
+  VocabSuggestionsSection: ({ text }: { text: string }) => (
+    <div data-testid="vocab-suggestions" data-text={text} />
+  ),
+}));
+
 const SETTINGS_WITH_KEY: UserSettings = {
   ...DEFAULT_SETTINGS,
   activeProvider: "gemini",
@@ -235,5 +243,72 @@ describe("BilingualReadingPage (typing session)", () => {
     fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "Hi " } });
 
     expect(screen.getByText("Câu 1 / 2")).toBeInTheDocument();
+  });
+});
+
+describe("BilingualReadingPage (result phase)", () => {
+  async function completeASession() {
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        sentences: [
+          { target: "Hi there.", vietnamese: "Chào bạn.", vocabWords: ["word0"] },
+          { target: "Bye now.", vietnamese: "Tạm biệt.", vocabWords: [] },
+        ],
+      }),
+    });
+    render(<BilingualReadingPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
+    await screen.findByText("Câu 1 / 2");
+    fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "Hi there." } });
+    await screen.findByText("Câu 2 / 2");
+    fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "Bye now." } });
+    await waitFor(() => expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument());
+  }
+
+  it("shows 4 stat cards, the vocab words used, and the suggestions section", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    await completeASession();
+
+    expect(screen.getByText("Độ chính xác")).toBeInTheDocument();
+    expect(screen.getByText("Tốc độ")).toBeInTheDocument();
+    expect(screen.getByText("Thời gian")).toBeInTheDocument();
+    expect(screen.getByText("Điểm")).toBeInTheDocument();
+    expect(screen.getAllByText("100%")).toHaveLength(2); // accuracy AND score, both 100%
+
+    expect(screen.getByText(/word0/)).toBeInTheDocument();
+
+    const suggestions = screen.getByTestId("vocab-suggestions");
+    expect(suggestions).toHaveAttribute("data-text", "Hi there. Bye now.");
+  });
+
+  it('"Sinh bài mới" resets and returns to the setup phase with filters still selected', async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    await completeASession();
+    fireEvent.click(screen.getByRole("button", { name: "Sinh bài mới" }));
+
+    expect(await screen.findByRole("button", { name: "Tạo bài luyện" })).toBeInTheDocument();
+  });
+
+  it('"Về trang chính" navigates back to the reading hub', async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    await completeASession();
+    fireEvent.click(screen.getByRole("button", { name: "Về trang chính" }));
+
+    expect(pushMock).toHaveBeenCalledWith("/reading");
   });
 });
