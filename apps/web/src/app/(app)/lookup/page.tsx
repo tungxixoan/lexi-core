@@ -20,6 +20,7 @@ import { generateContent } from "@/lib/generateContent";
 import { getTopics, type Topic } from "@/lib/topics";
 import { ttsLanguageCode } from "@/lib/pronunciation";
 import { PronunciationButton } from "@/components/shared/PronunciationButton";
+import { buildVocabRecordDraft } from "@/lib/vocabDraft";
 import {
   getVocabRecordByHeadword,
   saveVocabRecord,
@@ -27,32 +28,6 @@ import {
   type VocabRecord,
   type VocabRecordUpdate,
 } from "@/lib/vocabRecords";
-
-const MAX_PRESELECTED_TOPICS = 2;
-
-// Loose match instead of a strict case-insensitive equality: the AI is
-// prompted with a fixed English topic list ("Food & Drink", "Social/Casual",
-// ...) but doesn't always echo it back byte-for-byte (different punctuation,
-// "and" instead of "&", extra whitespace) — collapse both sides down to
-// bare alphanumerics before comparing so those variations still match.
-function normalizeTopicName(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
-function preselectTopicIds(suggestedTopics: string[], topics: Topic[]): string[] {
-  const selected: string[] = [];
-  for (const suggestion of suggestedTopics) {
-    if (selected.length >= MAX_PRESELECTED_TOPICS) break;
-    const normalizedSuggestion = normalizeTopicName(suggestion);
-    const match = topics.find((t) => normalizeTopicName(t.name) === normalizedSuggestion);
-    if (match && !selected.includes(match.id)) selected.push(match.id);
-  }
-  return selected;
-}
 
 function cachedRecordToResult(cached: VocabRecord): WordPhraseResult {
   return {
@@ -181,30 +156,7 @@ export default function LookupPage() {
   }
 
   function buildDraftRecord(wordResult: WordPhraseResult): VocabRecord {
-    const now = new Date().toISOString();
-    return {
-      id: "",
-      headword: wordResult.headword,
-      inputType: wordResult.inputType,
-      ipa: wordResult.ipa,
-      meaning: wordResult.meaning,
-      examples: wordResult.examples,
-      personalNotes: "",
-      topicIds: preselectTopicIds(wordResult.suggestedTopics, topics),
-      // No "ngữ cảnh" (context) setting exists in Cài đặt yet — default to
-      // "general" for every web-saved record (see Task 5's plan note).
-      targetLanguage: settings?.targetLanguage ?? "english",
-      cefrLevel: wordResult.cefrLevel ?? "b1",
-      activeContext: "general",
-      createdAt: now,
-      updatedAt: now,
-      nextReviewAt: null,
-      sm2Repetitions: 0,
-      sm2EaseFactor: 2.5,
-      sm2Interval: 1,
-      definition: wordResult.definition,
-      synonyms: wordResult.synonyms,
-    };
+    return buildVocabRecordDraft(wordResult, topics, settings?.targetLanguage ?? "english");
   }
 
   async function handleSaveNewRecord(updates: VocabRecordUpdate) {
