@@ -1179,3 +1179,63 @@ button.btn-secondary {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.reading-passage-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.reading-passage {
+  font-size: 16px;
+  line-height: 1.8;
+  margin: 0;
+}
+
+.reading-completed {
+  color: var(--ink-faint);
+}
+
+.reading-current {
+  font-weight: 700;
+}
+
+.reading-char-ok {
+  color: var(--success);
+}
+
+.reading-char-bad {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-radius: 3px;
+}
+
+.reading-pending {
+  color: var(--ink);
+}
+
+.reading-vn-row {
+  background: var(--surface-3);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  font-style: italic;
+  margin: 14px 0 18px;
+}
+
+.reading-type-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 16px;
+  font-family: ui-monospace, monospace;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  outline: none;
+}
+
+.reading-type-input:focus {
+  border-color: var(--accent);
+}
