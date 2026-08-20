@@ -21,19 +21,23 @@
 
 ---
 
-## Task 1: Reading passage domain logic (prompt + parser)
+## Task 1: Reading passage domain logic (prompt + parser) — ✅ ALREADY IMPLEMENTED
+
+**STATUS: complete, commits `9fa3d95`/`38d5531` (2026-08-18). Do not re-dispatch this task.**
+
+The rest of this section is corrected to match what actually shipped — the original draft below (before this correction) specified a 2-arg `buildReadingPassagePrompt(headwords, targetLanguage)`; Task 1's own review found that CEFR difficulty needs to be an explicit instruction (not just implied by the word list), so the real shipped signature takes a 3rd `maxCefr` parameter. That fix was recorded in Task 8's "Consumes" note but this task's own section was never updated to match — which caused a real incident: a later resume of this plan (2026-08-20) re-dispatched this already-complete task from the stale 2-arg text below, regressing the shipped code back to 2-arg (commit `f83a7b1`, reverted in `5b87754`). Corrected now so it can't happen again.
 
 **Files:**
 - Create: `apps/web/src/lib/readingPassage.ts`
 - Create: `apps/web/src/lib/readingPassage.test.ts`
 
 **Interfaces:**
-- Produces: `interface BilingualSentence { target: string; vietnamese: string; vocabWords: string[] }`, `interface ReadingPassage { sentences: BilingualSentence[]; vocabIds: string[] }`, `buildReadingPassagePrompt(headwords: string[], targetLanguage: TargetLanguage): string`, `parseReadingPassage(json: Record<string, unknown>, vocabRecords: VocabRecord[]): ReadingPassage`. Used by Task 8 (setup phase).
+- Produces: `interface BilingualSentence { target: string; vietnamese: string; vocabWords: string[] }`, `interface ReadingPassage { sentences: BilingualSentence[]; vocabIds: string[] }`, `buildReadingPassagePrompt(headwords: string[], targetLanguage: TargetLanguage, maxCefr: VocabRecord["cefrLevel"] | null): string`, `parseReadingPassage(json: Record<string, unknown>, vocabRecords: VocabRecord[]): ReadingPassage`. Used by Task 8 (setup phase), which already calls the 3-arg form with its own `maxCefr` filter state.
 - Consumes: `TargetLanguage`, `LANGUAGE_LABELS` (`@/lib/languages`, already exists), `VocabRecord` (`@/lib/vocabRecords`, already exists — only `id`/`headword` fields are read).
 
 Pure functions — no Firestore, no network, no React.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `apps/web/src/lib/readingPassage.test.ts`:
 
@@ -69,7 +73,7 @@ function makeRecord(overrides: Partial<VocabRecord>): VocabRecord {
 
 describe("buildReadingPassagePrompt", () => {
   it("includes every headword, the target language label, and asks for JSON only", () => {
-    const prompt = buildReadingPassagePrompt(["meticulous", "ephemeral"], "english");
+    const prompt = buildReadingPassagePrompt(["meticulous", "ephemeral"], "english", null);
     expect(prompt).toContain("meticulous");
     expect(prompt).toContain("ephemeral");
     expect(prompt).toContain("English");
@@ -78,13 +82,23 @@ describe("buildReadingPassagePrompt", () => {
   });
 
   it("uses the target language's own label, not always English", () => {
-    const prompt = buildReadingPassagePrompt(["안녕"], "korean");
+    const prompt = buildReadingPassagePrompt(["안녕"], "korean", null);
     expect(prompt).toContain("한국어");
   });
 
   it("requires Vietnamese-script-only translations", () => {
-    const prompt = buildReadingPassagePrompt(["word"], "english");
+    const prompt = buildReadingPassagePrompt(["word"], "english", null);
     expect(prompt).toContain("Vietnamese script");
+  });
+
+  it("tells the AI to cap difficulty at the given max CEFR level when one is set", () => {
+    const prompt = buildReadingPassagePrompt(["word"], "english", "b1");
+    expect(prompt).toContain("Keep the difficulty at or below CEFR level B1.");
+  });
+
+  it("omits the CEFR clause entirely when maxCefr is null", () => {
+    const prompt = buildReadingPassagePrompt(["word"], "english", null);
+    expect(prompt).not.toContain("CEFR level");
   });
 });
 
@@ -165,12 +179,12 @@ describe("parseReadingPassage", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm --prefix apps/web test -- readingPassage`
 Expected: FAIL — `apps/web/src/lib/readingPassage.ts` does not exist yet.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `apps/web/src/lib/readingPassage.ts`:
 
@@ -189,17 +203,33 @@ export interface ReadingPassage {
   vocabIds: string[];
 }
 
+type CefrLevel = VocabRecord["cefrLevel"];
+
 // Ports lib/features/reading/data/sources/reading_passage_source.dart's
 // prompt: ~0.75 sentences per headword, clamped 6-12, one coherent
-// narrative using as many given headwords as possible.
-export function buildReadingPassagePrompt(headwords: string[], targetLanguage: TargetLanguage): string {
+// narrative using as many given headwords as possible. Unlike the Dart
+// source (which also threads a "context"/register through the prompt),
+// this omits register — no "ngữ cảnh" setting exists in Cài đặt yet, the
+// same documented gap as Tra từ's buildWordPhrasePrompt. maxCefr is a
+// real signal though (the setup screen's own CEFR filter), so it's passed
+// through as an explicit instruction rather than relying only on the
+// implicit difficulty of the given word list.
+export function buildReadingPassagePrompt(
+  headwords: string[],
+  targetLanguage: TargetLanguage,
+  maxCefr: CefrLevel | null
+): string {
   const languageLabel = LANGUAGE_LABELS[targetLanguage];
   const sentenceCount = Math.min(12, Math.max(6, Math.ceil(headwords.length * 0.75)));
+  const levelClause = maxCefr
+    ? `Keep the difficulty at or below CEFR level ${maxCefr.toUpperCase()}. `
+    : "";
   return (
     `You are a language learning assistant helping a Vietnamese speaker learn ${languageLabel}. ` +
     `Write one coherent short story in ${languageLabel} of about ${sentenceCount} sentences, ` +
     `using as many of these words as possible, naturally: ${headwords.join(", ")}. ` +
-    `Add a few other level-appropriate words if needed to make it flow. ` +
+    `${levelClause}` +
+    `Add a few other natural words if needed to make it flow. ` +
     `Respond with JSON only (no markdown, no code fences): ` +
     `{"sentences":[{"target":"sentence in ${languageLabel}",` +
     `"vietnamese":"Vietnamese translation of that sentence",` +
@@ -240,12 +270,12 @@ export function parseReadingPassage(
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm --prefix apps/web test -- readingPassage`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/lib/readingPassage.ts apps/web/src/lib/readingPassage.test.ts
@@ -254,7 +284,9 @@ git commit -m "feat(web): add reading passage prompt builder + parser for Đọc
 
 ---
 
-## Task 2: Reading scoring logic
+## Task 2: Reading scoring logic — ✅ ALREADY IMPLEMENTED
+
+**STATUS: complete, commits `3b81567`/`6d1ed24` (2026-08-18). Do not re-dispatch this task.** Task 2's own review found one gap — every original test kept `correctChars <= totalChars`, so `Math.min(1, ...)` in `aggregateSentenceStats` was never actually exercised — fixed by adding one more test (`"clamps finalScore to a maximum of 1 when overallAccuracy alone would exceed 1"`, asserting `overallAccuracy: 1.5` clamps to `finalScore: 1`) to the `aggregateSentenceStats` describe block below, right after the existing minimum-clamp test. No source-code change was needed, test-only.
 
 **Files:**
 - Create: `apps/web/src/lib/readingScoring.ts`
@@ -266,7 +298,7 @@ git commit -m "feat(web): add reading passage prompt builder + parser for Đọc
 
 Ports `reading_practice_provider.dart`'s scoring exactly: `deletedChars` is tracked by the caller (incremented whenever the typed value gets shorter than before — this file only consumes the final count per sentence, it doesn't track keystrokes itself), `finalScore = clamp(overallAccuracy − 0.5 × deletionRatio, 0, 1)`, `wpm = (totalChars / 5) / minutes` (standard "5 chars = 1 word" convention, counting the target length actually completed, not raw keystrokes).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `apps/web/src/lib/readingScoring.test.ts`:
 
@@ -337,6 +369,19 @@ describe("aggregateSentenceStats", () => {
     expect(result.finalScore).toBe(0);
   });
 
+  it("clamps finalScore to a maximum of 1 when overallAccuracy alone would exceed 1", () => {
+    // A malformed stat (correctChars > totalChars) shouldn't be possible from
+    // computeSentenceStats, but aggregateSentenceStats accepts any
+    // SentenceStats[] — the Math.min(1, ...) clamp must still engage. Found
+    // during Task 2's review: every other test kept correctChars <=
+    // totalChars, so this branch was never actually exercised.
+    const result = aggregateSentenceStats([
+      { correctChars: 15, totalChars: 10, deletedChars: 0, durationMs: 5000 },
+    ]);
+    expect(result.overallAccuracy).toBe(1.5);
+    expect(result.finalScore).toBe(1);
+  });
+
   it("returns all-zero stats for an empty sentence list, with no division by zero", () => {
     const result = aggregateSentenceStats([]);
     expect(result).toEqual({ overallAccuracy: 0, deletionRatio: 0, finalScore: 0, wpm: 0 });
@@ -351,12 +396,12 @@ describe("aggregateSentenceStats", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm --prefix apps/web test -- readingScoring`
 Expected: FAIL — `apps/web/src/lib/readingScoring.ts` does not exist yet.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `apps/web/src/lib/readingScoring.ts`:
 
@@ -410,12 +455,12 @@ export function aggregateSentenceStats(stats: SentenceStats[]): ReadingResultSta
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm --prefix apps/web test -- readingScoring`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/lib/readingScoring.ts apps/web/src/lib/readingScoring.test.ts
@@ -424,7 +469,9 @@ git commit -m "feat(web): add reading session scoring (accuracy, deletion penalt
 
 ---
 
-## Task 3: Vocab suggestions domain logic
+## Task 3: Vocab suggestions domain logic — ✅ ALREADY IMPLEMENTED
+
+**STATUS: complete, commit `365c9f0` (2026-08-18). Do not re-dispatch this task.** Approved clean on first review, no fixes needed.
 
 **Files:**
 - Create: `apps/web/src/lib/vocabSuggestions.ts`
@@ -436,7 +483,7 @@ git commit -m "feat(web): add reading session scoring (accuracy, deletion penalt
 
 Ports `find_known_headwords_use_case.dart` (a plain client-side substring scan — no Firestore call of its own, the caller already has `records` loaded) and `word_radar_source.dart`'s suggestion prompt (this file omits the `includeTranslation` branch — the Đọc & gõ result screen has no need for a full-text translation, since every sentence already carries one from `readingPassage.ts`).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `apps/web/src/lib/vocabSuggestions.test.ts`:
 
@@ -564,12 +611,12 @@ describe("parseVocabSuggestions", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm --prefix apps/web test -- vocabSuggestions`
 Expected: FAIL — `apps/web/src/lib/vocabSuggestions.ts` does not exist yet.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `apps/web/src/lib/vocabSuggestions.ts`:
 
@@ -637,12 +684,12 @@ export function parseVocabSuggestions(json: Record<string, unknown>): WordPhrase
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm --prefix apps/web test -- vocabSuggestions`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/lib/vocabSuggestions.ts apps/web/src/lib/vocabSuggestions.test.ts
