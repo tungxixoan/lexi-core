@@ -153,6 +153,34 @@ describe("VocabSuggestionsSection", () => {
     expect(await screen.findByText("Đã lưu 1/2 từ.")).toBeInTheDocument();
   });
 
+  it('"Lưu tất cả" surfaces an error and keeps prior progress when a save fails partway', async () => {
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        suggestions: [
+          { headword: "meticulous", meaning: "tỉ mỉ" },
+          { headword: "ephemeral", meaning: "phù du" },
+        ],
+      }),
+    });
+    vi.mocked(getVocabRecordByHeadword).mockResolvedValue(null);
+    vi.mocked(saveVocabRecord)
+      .mockResolvedValueOnce("new-id-1")
+      .mockRejectedValueOnce(new Error("Firestore unavailable"));
+
+    render(<VocabSuggestionsSection text="text" existingRecords={[]} topics={[]} />);
+    await screen.findByText("meticulous");
+
+    fireEvent.click(screen.getByRole("button", { name: "Lưu tất cả" }));
+
+    expect(await screen.findByText(/Firestore unavailable/)).toBeInTheDocument();
+    expect(screen.getByText("Đã lưu 1/2 từ.")).toBeInTheDocument();
+
+    const meticulousCard = screen.getByText("meticulous").closest(".suggestion-card");
+    expect(meticulousCard).toHaveTextContent("✔");
+    const ephemeralCard = screen.getByText("ephemeral").closest(".suggestion-card");
+    expect(ephemeralCard).not.toHaveTextContent("✔");
+  });
+
   it("dismisses a suggestion card without saving it, and hides it from Lưu tất cả", async () => {
     vi.mocked(generateContent).mockResolvedValue({
       text: JSON.stringify({ suggestions: [{ headword: "meticulous", meaning: "tỉ mỉ" }] }),

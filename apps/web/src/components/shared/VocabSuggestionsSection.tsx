@@ -37,6 +37,7 @@ export function VocabSuggestionsSection({ text, existingRecords, topics }: Vocab
   const [dismissedHeadwords, setDismissedHeadwords] = useState<Set<string>>(new Set());
   const [editingSuggestion, setEditingSuggestion] = useState<WordPhraseResult | null>(null);
   const [bulkSaveMessage, setBulkSaveMessage] = useState<string | null>(null);
+  const [bulkSaveError, setBulkSaveError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   const activeConfig = settings?.providers[settings.activeProvider];
@@ -94,17 +95,23 @@ export function VocabSuggestionsSection({ text, existingRecords, topics }: Vocab
       (s) => !savedHeadwords.has(s.headword) && !dismissedHeadwords.has(s.headword)
     );
     let savedCount = 0;
-    for (const s of toSave) {
-      const draft = buildVocabRecordDraft(s, topics, settings.targetLanguage);
-      const duplicate = await getVocabRecordByHeadword(user.uid, draft.headword, draft.targetLanguage);
-      if (!duplicate) {
-        const { id: _omit, ...newRecord } = draft;
-        await saveVocabRecord(user.uid, newRecord);
-        savedCount++;
-        setSavedHeadwords((prev) => new Set(prev).add(s.headword));
+    setBulkSaveError(null);
+    try {
+      for (const s of toSave) {
+        const draft = buildVocabRecordDraft(s, topics, settings.targetLanguage);
+        const duplicate = await getVocabRecordByHeadword(user.uid, draft.headword, draft.targetLanguage);
+        if (!duplicate) {
+          const { id: _omit, ...newRecord } = draft;
+          await saveVocabRecord(user.uid, newRecord);
+          savedCount++;
+          setSavedHeadwords((prev) => new Set(prev).add(s.headword));
+        }
       }
+      setBulkSaveMessage(`Đã lưu ${savedCount}/${toSave.length} từ.`);
+    } catch (err) {
+      setBulkSaveMessage(`Đã lưu ${savedCount}/${toSave.length} từ.`);
+      setBulkSaveError(err instanceof Error ? err.message : String(err));
     }
-    setBulkSaveMessage(`Đã lưu ${savedCount}/${toSave.length} từ.`);
   }
 
   const visible = (suggestions ?? []).filter((s) => !dismissedHeadwords.has(s.headword));
@@ -121,6 +128,7 @@ export function VocabSuggestionsSection({ text, existingRecords, topics }: Vocab
         )}
       </div>
       {bulkSaveMessage && <p className="suggestions-bulk-message">{bulkSaveMessage}</p>}
+      {bulkSaveError && <p role="alert">Không thể lưu tất cả: {bulkSaveError}</p>}
       {error && (
         <div>
           <p role="alert">Không tải được gợi ý từ mới: {error}</p>
