@@ -1059,6 +1059,6 @@ All 10 tasks implemented, individually reviewed (9 clean or fixed-then-clean at 
 
 Branch considered done. Direct-to-master workflow (no feature branch/PR in this repo), so `finishing-a-development-branch`'s merge/PR menu doesn't apply — reported status directly instead, matching the pattern from the end of the prior Ôn tập plan.
 
-## Saved Reading Exercises (Dc & gõ pilot) - execution log
+## Saved Reading Exercises (Đọc & gõ pilot) — execution log
 
 Task 1: complete (commits 1b04537..05a6b77, review clean - matching semantics topic-overlap/CEFR-at-or-below/word-count-exact-null-match/excludeId/random-among-multiple all independently re-verified as real assertions not mock theater, vocabIds confirmed never used as a matching criterion, CEFR_ORDER export confirmed to have exactly 1 new consumer with no other call site at risk). 2 Minor logged, not fixed: getRandomSavedExercise fetches the whole per-user collection and filters client-side (by design per spec, scales linearly - forward-looking note for a future composite-index pass), no try/catch in savedReadingExercises.ts (matches the existing vocabRecords.ts convention exactly, not a gap).
