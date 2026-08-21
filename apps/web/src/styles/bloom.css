@@ -72,7 +72,7 @@
 
 body {
   margin: 0;
-  padding: 24px;
+  padding: 26px;
   color: var(--ink);
   background:
     radial-gradient(1200px 700px at 10% -10%, var(--bg-a), transparent),
@@ -114,7 +114,7 @@ body {
 .sidebar {
   width: 226px;
   flex-shrink: 0;
-  padding: 24px 14px;
+  padding: 26px 16px;
   display: flex;
   flex-direction: column;
   background: var(--surface-2);
@@ -125,11 +125,11 @@ body {
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-size: 22px;
   font-weight: 700;
   margin-bottom: 22px;
-  padding: 0 8px;
+  padding: 0 10px;
 }
 
 .brand .leaf {
@@ -143,18 +143,18 @@ body {
 .sidenav {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 5px;
 }
 
 .sidenav a {
   font-size: 17.5px;
-  padding: 10px 13px;
+  padding: 12px 15px;
   border-radius: 999px;
   color: var(--ink-soft);
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 11px;
   text-decoration: none;
 }
 
@@ -176,7 +176,7 @@ body {
 .main {
   flex: 1;
   min-width: 0;
-  padding: 30px 36px;
+  padding: 32px 38px;
   z-index: 1;
   overflow-y: auto;
 }
@@ -194,7 +194,7 @@ p.scr-sub {
 
 .vb-toolbar {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 16px;
   flex-wrap: wrap;
 }
@@ -202,7 +202,7 @@ p.scr-sub {
 .vb-chip {
   font-size: 16.5px;
   font-weight: 700;
-  padding: 7px 14px;
+  padding: 9px 16px;
   border-radius: 999px;
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -227,7 +227,7 @@ p.scr-sub {
 .vb-list-wrap {
   flex: 1;
   min-width: 0;
-  padding: 6px;
+  padding: 8px;
   max-height: 560px;
   overflow-y: auto;
 }
@@ -235,8 +235,8 @@ p.scr-sub {
 .vrow {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 12px;
+  gap: 14px;
+  padding: 14px 14px;
   border-radius: 14px;
   cursor: pointer;
 }
@@ -295,12 +295,12 @@ p.scr-sub {
 }
 
 .dh {
-  padding: 18px 20px 12px;
+  padding: 20px 22px 14px;
   background: linear-gradient(160deg, var(--surface), var(--surface-2));
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 12px;
 }
 
 .dh .titles {
@@ -315,7 +315,7 @@ p.scr-sub {
 .dh .pr {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 9px;
   margin-top: 4px;
   color: var(--ink-soft);
   font-family: ui-monospace, monospace;
@@ -327,7 +327,7 @@ p.scr-sub {
   font-weight: 800;
   background: var(--sage);
   color: var(--accent-ink);
-  padding: 3px 8px;
+  padding: 5px 10px;
   border-radius: 999px;
 }
 
@@ -345,7 +345,7 @@ p.scr-sub {
 .db {
   flex: 1;
   overflow-y: auto;
-  padding: 14px 20px;
+  padding: 16px 22px;
 }
 
 .sect {
@@ -355,7 +355,7 @@ p.scr-sub {
 .sect summary {
   list-style: none;
   cursor: pointer;
-  padding: 11px 0;
+  padding: 13px 0;
   font-size: 15.5px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -385,10 +385,10 @@ p.scr-sub {
 .ex-item {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 9px;
   font-size: 17px;
   margin-bottom: 6px;
-  padding: 8px 10px;
+  padding: 10px 12px;
   background: var(--surface);
   border-radius: 9px;
 }
@@ -399,7 +399,7 @@ p.scr-sub {
 
 .chip-row {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -408,7 +408,7 @@ p.scr-sub {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 4px 10px;
+  padding: 6px 12px;
 }
 
 .chip.topic {
@@ -419,7 +419,7 @@ p.scr-sub {
 }
 
 .df {
-  padding: 12px 20px;
+  padding: 14px 22px;
   border-top: 1px solid var(--border);
 }
 
@@ -447,7 +447,7 @@ p.scr-sub {
 
 .fa {
   display: flex;
-  gap: 7px;
+  gap: 9px;
 }
 
 .fa button {
@@ -455,7 +455,7 @@ p.scr-sub {
   font-size: 16px;
   font-weight: 700;
   border-radius: 999px;
-  padding: 8px 0;
+  padding: 10px 0;
   cursor: pointer;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -479,10 +479,10 @@ p.scr-sub {
 
 .vb-pagination {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   justify-content: center;
   flex-wrap: wrap;
-  padding: 12px 0 0;
+  padding: 14px 0 0;
 }
 
 .vb-page-btn {
@@ -527,7 +527,7 @@ p.scr-sub {
 }
 
 .modal-header {
-  padding: 18px 20px;
+  padding: 20px 22px;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -542,22 +542,22 @@ p.scr-sub {
 .modal-header-title {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
 }
 
 .modal-body {
-  padding: 18px 20px;
+  padding: 20px 22px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .modal-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   font-size: 16.5px;
   color: var(--ink-soft);
   font-weight: 700;
@@ -571,7 +571,7 @@ p.scr-sub {
   color: var(--ink);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 9px 12px;
+  padding: 11px 14px;
   background: var(--surface-2);
 }
 
@@ -583,7 +583,7 @@ p.scr-sub {
 .modal-example-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 8px;
 }
 
@@ -598,7 +598,7 @@ p.scr-sub {
   font-size: 16.5px;
   font-weight: 700;
   cursor: pointer;
-  padding: 4px 0;
+  padding: 6px 0;
 }
 
 .modal-field button.link-btn {
@@ -616,18 +616,18 @@ p.scr-sub {
 }
 
 .modal-footer {
-  padding: 14px 20px;
+  padding: 16px 22px;
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
 }
 
 .modal-footer button {
   font-size: 17px;
   font-weight: 700;
   border-radius: 999px;
-  padding: 9px 18px;
+  padding: 11px 20px;
   cursor: pointer;
   border: 1px solid var(--border);
   background: var(--surface-2);
@@ -658,7 +658,7 @@ p.scr-sub {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 14px;
+  padding: 16px;
   box-shadow: 0 18px 40px -14px rgba(54, 42, 51, 0.35);
   z-index: 10;
 }
@@ -666,7 +666,7 @@ p.scr-sub {
 .vb-topic-popover-opts {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: 9px;
   margin-bottom: 12px;
   max-height: 220px;
   overflow-y: auto;
@@ -680,12 +680,12 @@ p.scr-sub {
   color: var(--accent-ink);
   border: none;
   border-radius: 999px;
-  padding: 9px 0;
+  padding: 11px 0;
   cursor: pointer;
 }
 
 .vb-page-ellipsis {
-  padding: 0 4px;
+  padding: 0 6px;
   color: var(--ink-faint);
   font-size: 16.5px;
   align-self: center;
@@ -704,7 +704,7 @@ button.btn-danger {
   color: var(--danger);
   border: 1px solid var(--danger);
   border-radius: 999px;
-  padding: 8px 16px;
+  padding: 10px 18px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -713,7 +713,7 @@ button.btn-danger {
   max-width: 980px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 18px;
   align-items: start;
 }
 
@@ -725,7 +725,7 @@ button.btn-danger {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 20px 24px;
+  padding: 22px 26px;
 }
 
 .settings-card h3 {
@@ -739,7 +739,7 @@ button.btn-danger {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: 8px;
   font-size: 16px;
   font-weight: 700;
   color: var(--ink-soft);
@@ -755,7 +755,7 @@ button.btn-danger {
   text-transform: none;
   letter-spacing: normal;
   color: var(--ink);
-  padding: 9px 12px;
+  padding: 11px 14px;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface-2);
@@ -785,7 +785,7 @@ button.btn-primary {
   color: var(--accent-ink);
   border: none;
   border-radius: 999px;
-  padding: 9px 18px;
+  padding: 11px 20px;
   font-weight: 700;
   font-size: 17px;
   cursor: pointer;
@@ -799,14 +799,14 @@ button.btn-primary:disabled {
 
 .lookup-search-row {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 20px;
   max-width: 560px;
 }
 
 .lookup-search-row input {
   flex: 1;
-  padding: 10px 14px;
+  padding: 12px 16px;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--surface-2);
@@ -815,7 +815,7 @@ button.btn-primary:disabled {
 }
 
 .lookup-discover-btn {
-  padding: 10px 18px;
+  padding: 12px 20px;
   border-radius: 999px;
   border: 1px solid var(--sage);
   background: var(--sage-bg);
@@ -836,7 +836,7 @@ button.btn-primary:disabled {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 22px 26px;
+  padding: 24px 28px;
 }
 
 .lookup-already-saved {
@@ -849,7 +849,7 @@ button.btn-primary:disabled {
 .lookup-headword-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .lookup-headword-row h3 {
@@ -894,7 +894,7 @@ button.btn-primary:disabled {
 .lookup-example-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin: 6px 0;
 }
 
@@ -940,7 +940,7 @@ button.btn-primary:disabled {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 28px;
+  padding: 30px;
   text-align: center;
 }
 
@@ -998,7 +998,7 @@ button.btn-primary:disabled {
 
 .fc-grade-row {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   margin-top: 26px;
   width: 100%;
 }
@@ -1006,7 +1006,7 @@ button.btn-primary:disabled {
 .fc-grade-no,
 .fc-grade-yes {
   flex: 1;
-  padding: 11px 0;
+  padding: 13px 0;
   border-radius: 999px;
   font-weight: 700;
   font-size: 17.5px;
@@ -1028,7 +1028,7 @@ button.btn-primary:disabled {
 
 .practice-filters {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
   margin-bottom: 16px;
 }
@@ -1111,14 +1111,14 @@ button.btn-primary:disabled {
   margin-right: auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .practice-result-list li {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  gap: 12px;
+  padding: 12px 16px;
   border-radius: 14px;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -1144,7 +1144,7 @@ button.btn-primary:disabled {
 
 .practice-result-actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   justify-content: center;
   max-width: 460px;
   margin: 0 auto;
@@ -1155,7 +1155,7 @@ button.btn-secondary {
   color: var(--ink);
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 9px 18px;
+  padding: 11px 20px;
   font-weight: 700;
   font-size: 17px;
   cursor: pointer;
@@ -1224,7 +1224,7 @@ button.btn-secondary {
 .reading-vn-row {
   background: var(--surface-3);
   border-radius: 12px;
-  padding: 10px 14px;
+  padding: 12px 16px;
   font-size: 17px;
   color: var(--ink-soft);
   font-style: italic;
@@ -1236,7 +1236,7 @@ button.btn-secondary {
   box-sizing: border-box;
   font-size: 20px;
   font-family: ui-monospace, monospace;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -1273,24 +1273,24 @@ button.btn-secondary {
 .suggestion-cards {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .suggestion-card {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 10px 14px;
+  padding: 12px 16px;
 }
 
 .suggestion-card-main {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   background: none;
   border: none;
   text-align: left;
@@ -1321,18 +1321,18 @@ button.btn-secondary {
 .reading-hub-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 14px;
+  gap: 16px;
   max-width: 720px;
 }
 
 .reading-hub-card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 18px;
-  padding: 18px 20px;
+  padding: 20px 22px;
   text-decoration: none;
   color: var(--ink);
 }
@@ -1353,9 +1353,17 @@ button.btn-secondary {
   max-width: 460px;
 }
 
-.reading-review {
-  max-width: 640px;
+.reading-result-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+  align-items: start;
+  max-width: 960px;
   margin: 0 0 24px;
+}
+
+.reading-review {
+  margin: 0;
 }
 
 .reading-review-passage {
@@ -1367,7 +1375,7 @@ button.btn-secondary {
   color: var(--accent);
   font-weight: 700;
   border-radius: 4px;
-  padding: 0 2px;
+  padding: 0 4px;
 }
 
 .reading-review-translation {
@@ -1380,7 +1388,7 @@ button.btn-secondary {
 .reading-result-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 10px;
+  gap: 12px;
   max-width: 640px;
   margin: 16px 0 24px;
 }
@@ -1389,10 +1397,10 @@ button.btn-secondary {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 14px 16px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .reading-stat-label {
@@ -1410,8 +1418,7 @@ button.btn-secondary {
 }
 
 .reading-used-words {
-  max-width: 640px;
-  margin-bottom: 8px;
+  margin: 0;
 }
 
 .reading-used-words h3 {
@@ -1427,7 +1434,7 @@ button.btn-secondary {
 
 .reading-result-actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   margin-top: 20px;
   max-width: 640px;
 }

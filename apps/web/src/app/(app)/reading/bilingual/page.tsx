@@ -307,17 +307,19 @@ export default function BilingualReadingPage() {
           <span className="reading-stat-value">{Math.round(stats.finalScore * 100)}%</span>
         </div>
       </div>
-      <PassageReview sentences={passage?.sentences ?? []} />
-      {usedRecords.length > 0 && (
-        <div className="reading-used-words">
-          <h3>Từ vựng dùng trong bài</h3>
-          {usedRecords.map((r) => (
-            <p className="reading-used-word-item" key={r.id}>
-              {r.headword} — {r.meaning}
-            </p>
-          ))}
-        </div>
-      )}
+      <div className="reading-result-row">
+        <PassageReview sentences={passage?.sentences ?? []} />
+        {usedRecords.length > 0 && (
+          <div className="reading-used-words">
+            <h3>Từ vựng dùng trong bài</h3>
+            {usedRecords.map((r) => (
+              <p className="reading-used-word-item" key={r.id}>
+                {r.headword} — {r.meaning}
+              </p>
+            ))}
+          </div>
+        )}
+      </div>
       <VocabSuggestionsSection text={fullText} existingRecords={records ?? []} topics={topics} />
       <div className="reading-result-actions">
         <button type="button" className="btn-secondary" onClick={() => router.push("/reading")}>
