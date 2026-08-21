@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { selectSessionWords } from "./practiceSession";
+import { CEFR_ORDER, selectSessionWords } from "./practiceSession";
 import type { VocabRecord } from "./vocabRecords";
 
 function makeRecord(overrides: Partial<VocabRecord>): VocabRecord {
@@ -125,5 +125,11 @@ describe("selectSessionWords", () => {
     } finally {
       randomSpy.mockRestore();
     }
+  });
+});
+
+describe("CEFR_ORDER", () => {
+  it("is exported in ascending difficulty order", () => {
+    expect(CEFR_ORDER).toEqual(["a1", "a2", "b1", "b2", "c1", "c2"]);
   });
 });

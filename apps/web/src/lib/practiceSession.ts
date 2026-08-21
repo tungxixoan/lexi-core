@@ -1,6 +1,6 @@
 import type { VocabRecord } from "./vocabRecords";
 
-const CEFR_ORDER: readonly VocabRecord["cefrLevel"][] = ["a1", "a2", "b1", "b2", "c1", "c2"];
+export const CEFR_ORDER: readonly VocabRecord["cefrLevel"][] = ["a1", "a2", "b1", "b2", "c1", "c2"];
 
 export interface SessionWordFilters {
   topicIds: Set<string>;
