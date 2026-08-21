@@ -559,6 +559,27 @@ describe("BilingualReadingPage (result phase)", () => {
     expect(screen.queryByRole("button", { name: "Tạo bài luyện" })).not.toBeInTheDocument();
   });
 
+  it('shows a generateError alert on the result phase when "Sinh bài mới" fails to regenerate a "generated" session', async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    await completeASession();
+    vi.mocked(generateContent).mockRejectedValue(new Error("AI unavailable"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Sinh bài mới" }));
+
+    expect(await screen.findByText("AI unavailable")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("AI unavailable");
+    // Stayed on the result phase — the stat cards are still visible and no
+    // typing session started, so the error must be visible right here, not
+    // silently swallowed by a screen that never renders generateError.
+    expect(screen.getByText("Độ chính xác")).toBeInTheDocument();
+    expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument();
+  });
+
   it('"Sinh bài mới" falls back to the setup phase for a "reused" session when nothing else matches and there are not enough live words for an AI attempt either', async () => {
     // Note: this exercises the "reused" branch, not "generated" — unlike
     // "Tạo bài luyện", "Lấy bài có sẵn" is never gated by the 5-word rule

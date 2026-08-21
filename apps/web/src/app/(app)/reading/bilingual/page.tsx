@@ -470,6 +470,7 @@ export default function BilingualReadingPage() {
       </div>
       {saveError && <p role="alert">{saveError}</p>}
       {savedNotice && <p className="reading-saved-notice">{savedNotice}</p>}
+      {generateError && <p role="alert">{generateError}</p>}
     </div>
   );
 }
