@@ -22,7 +22,9 @@
 
 ---
 
-## Task 1: `savedReadingExercises.ts` — data layer
+## Task 1: `savedReadingExercises.ts` — data layer — ✅ ALREADY IMPLEMENTED
+
+**STATUS: complete, commits `61b5d11`/`05a6b77`, review clean/Approved. Do not re-dispatch this task.**
 
 **Files:**
 - Modify: `apps/web/src/lib/practiceSession.ts` (export `CEFR_ORDER`)
@@ -530,7 +532,11 @@ git commit -m "feat(web): add savedReadingExercises data layer (save/random-pick
 
 ---
 
-## Task 2: Word-priority wiring into AI generation
+## Task 2: Word-priority wiring into AI generation — ✅ ALREADY IMPLEMENTED
+
+**STATUS: complete, commit `a2b770b`, review clean/Approved. Do not re-dispatch this task.**
+
+Note for whoever reads this task's text below: the implementer found the Step 1 mock code as originally drafted (a flat-object `vi.mock`) breaks `page.tsx` at runtime, since `page.tsx` also calls the real `prioritizeUnusedWords` from the same module — a full-replace mock without that key throws. The real, shipped mock uses `vi.importActual` + spread instead (shown correctly in Task 3's Step 1, which already reflects the real code). The flat-object block still shown further below in this task's own Step 1 is what was *originally drafted*, not what shipped — left as-is here since this task is already complete and merged; do not use it as a template if re-reading this task's text for any reason.
 
 **Files:**
 - Modify: `apps/web/src/app/(app)/reading/bilingual/page.tsx`
@@ -717,13 +723,33 @@ git commit -m "feat(web): prioritize AI-generated word selection toward vocab un
 
 - [ ] **Step 1: Extend the mock in `page.test.tsx`**
 
-Change the `vi.mock("@/lib/savedReadingExercises", ...)` block (added in Task 2) to:
+**Note: this differs from what an earlier draft of this task said.** Task 2's implementer found that a flat-object `vi.mock` (as an earlier draft here specified) leaves `prioritizeUnusedWords` undefined at runtime, since `page.tsx` calls the real (unmocked) `prioritizeUnusedWords` from this same module — a full-replace mock without it throws the moment `handleGenerate()` runs. Task 2 fixed this with `vi.importActual` + spread, keeping every real export except the ones explicitly overridden. The current, real mock block in `page.test.tsx` (verify this matches what's on disk before editing) is:
 
 ```ts
-vi.mock("@/lib/savedReadingExercises", () => ({
-  getAllUsedVocabIds: vi.fn(),
-  getRandomSavedExercise: vi.fn(),
-}));
+vi.mock("@/lib/savedReadingExercises", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/savedReadingExercises")>(
+    "@/lib/savedReadingExercises"
+  );
+  return {
+    ...actual,
+    getAllUsedVocabIds: vi.fn(),
+  };
+});
+```
+
+Change it to add `getRandomSavedExercise` to the overrides — keep the `vi.importActual` + spread structure, do not replace it with a flat object:
+
+```ts
+vi.mock("@/lib/savedReadingExercises", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/savedReadingExercises")>(
+    "@/lib/savedReadingExercises"
+  );
+  return {
+    ...actual,
+    getAllUsedVocabIds: vi.fn(),
+    getRandomSavedExercise: vi.fn(),
+  };
+});
 ```
 
 Update the import line to:
@@ -1088,14 +1114,20 @@ git commit -m "feat(web): add \"Lấy bài có sẵn\" button for reusing a save
 
 - [ ] **Step 1: Extend the mock in `page.test.tsx`**
 
-Change the `vi.mock("@/lib/savedReadingExercises", ...)` block to:
+Keep the `vi.importActual` + spread structure from Task 2/3 (do not replace it with a flat object — see Task 3's Step 1 note for why). Add `saveReadingExercise` to the overrides:
 
 ```ts
-vi.mock("@/lib/savedReadingExercises", () => ({
-  getAllUsedVocabIds: vi.fn(),
-  getRandomSavedExercise: vi.fn(),
-  saveReadingExercise: vi.fn(),
-}));
+vi.mock("@/lib/savedReadingExercises", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/savedReadingExercises")>(
+    "@/lib/savedReadingExercises"
+  );
+  return {
+    ...actual,
+    getAllUsedVocabIds: vi.fn(),
+    getRandomSavedExercise: vi.fn(),
+    saveReadingExercise: vi.fn(),
+  };
+});
 ```
 
 Update the import line to:
