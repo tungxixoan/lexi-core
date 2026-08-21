@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildReadingPassagePrompt, parseReadingPassage } from "./readingPassage";
+import { buildReadingPassagePrompt, parseReadingPassage, highlightVocabWords } from "./readingPassage";
 import type { VocabRecord } from "./vocabRecords";
 
 function makeRecord(overrides: Partial<VocabRecord>): VocabRecord {
@@ -131,5 +131,68 @@ describe("parseReadingPassage", () => {
       []
     );
     expect(result.sentences).toEqual([{ target: "Hello.", vietnamese: "", vocabWords: [] }]);
+  });
+});
+
+describe("highlightVocabWords", () => {
+  it("returns the whole text as one unhighlighted segment when there are no vocab words", () => {
+    expect(highlightVocabWords("She is meticulous.", [])).toEqual([
+      { text: "She is meticulous.", highlighted: false },
+    ]);
+  });
+
+  it("splits the text into plain/highlighted segments around a single vocab word", () => {
+    expect(highlightVocabWords("She is meticulous today.", ["meticulous"])).toEqual([
+      { text: "She is ", highlighted: false },
+      { text: "meticulous", highlighted: true },
+      { text: " today.", highlighted: false },
+    ]);
+  });
+
+  it("highlights multiple distinct vocab words in one sentence", () => {
+    expect(highlightVocabWords("The ephemeral beauty was meticulous.", ["meticulous", "ephemeral"])).toEqual([
+      { text: "The ", highlighted: false },
+      { text: "ephemeral", highlighted: true },
+      { text: " beauty was ", highlighted: false },
+      { text: "meticulous", highlighted: true },
+      { text: ".", highlighted: false },
+    ]);
+  });
+
+  it("matches whole words only, not a vocab word as a substring of a longer word", () => {
+    // "cat" must not highlight inside "category"
+    expect(highlightVocabWords("This category is cat-themed.", ["cat"])).toEqual([
+      { text: "This category is ", highlighted: false },
+      { text: "cat", highlighted: true },
+      { text: "-themed.", highlighted: false },
+    ]);
+  });
+
+  it("matches multi-word phrases and is case-insensitive", () => {
+    expect(highlightVocabWords("Let's touch base tomorrow.", ["Touch Base"])).toEqual([
+      { text: "Let's ", highlighted: false },
+      { text: "touch base", highlighted: true },
+      { text: " tomorrow.", highlighted: false },
+    ]);
+  });
+
+  it("prefers the longer vocab word when one is a substring of another", () => {
+    // "base" alone shouldn't split "touch base" if both are given as vocab words
+    expect(highlightVocabWords("Let's touch base soon.", ["base", "touch base"])).toEqual([
+      { text: "Let's ", highlighted: false },
+      { text: "touch base", highlighted: true },
+      { text: " soon.", highlighted: false },
+    ]);
+  });
+
+  it("escapes regex special characters in vocab words instead of treating them as regex syntax", () => {
+    // Unescaped, the two "." in "a.k.a" would behave as regex wildcards
+    // (harmless here, but proves the escape path runs without throwing
+    // and still produces exact, not merely wildcard-coincidental, segments).
+    expect(highlightVocabWords("It's known as a.k.a Bob.", ["a.k.a"])).toEqual([
+      { text: "It's known as ", highlighted: false },
+      { text: "a.k.a", highlighted: true },
+      { text: " Bob.", highlighted: false },
+    ]);
   });
 });

@@ -38,10 +38,12 @@ export function buildVocabSuggestionsPrompt(
     `"meaning":"Vietnamese definition","definition":"English definition",` +
     `"synonyms":["2-4 English synonyms, or empty array if none fit"],` +
     `"examples":["example 1","example 2"],` +
-    `"suggestedTopics":["one topic from: Daily Life, Travel, Food & Drink, Business, Technology, ` +
-    `Health, Education, Entertainment, Nature, Emotion, Academic, Idioms, Phrasal Verbs, Slang, ` +
-    `Social/Casual, Sports, Art & Culture, Science, Law & Politics, Other"],` +
+    `"suggestedTopics":["exactly one topic chosen from: Daily Life, Travel, Food & Drink, Business, ` +
+    `Technology, Health, Education, Entertainment, Nature, Emotion, Academic, Idioms, Phrasal Verbs, ` +
+    `Slang, Social/Casual, Sports, Art & Culture, Science, Law & Politics, Other"],` +
     `"cefrLevel":"a1, a2, b1, b2, c1, or c2"}]} ` +
+    `Every suggestion's "suggestedTopics" array is REQUIRED and must contain exactly one topic from ` +
+    `that list — never an empty array, even when generating many suggestions at once. ` +
     `Every "meaning" field must use only Vietnamese script — ` +
     `never Chinese, Japanese, or other non-Vietnamese characters.`
   );

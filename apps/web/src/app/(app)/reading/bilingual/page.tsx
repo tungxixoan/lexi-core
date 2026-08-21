@@ -18,6 +18,7 @@ import {
 import { generateContent } from "@/lib/generateContent";
 import { parseAiJsonObject } from "@/lib/parseAiJson";
 import { TypingSentence } from "@/components/reading/TypingSentence";
+import { PassageReview } from "@/components/reading/PassageReview";
 import {
   computeSentenceStats,
   aggregateSentenceStats,
@@ -306,6 +307,7 @@ export default function BilingualReadingPage() {
           <span className="reading-stat-value">{Math.round(stats.finalScore * 100)}%</span>
         </div>
       </div>
+      <PassageReview sentences={passage?.sentences ?? []} />
       {usedRecords.length > 0 && (
         <div className="reading-used-words">
           <h3>Từ vựng dùng trong bài</h3>

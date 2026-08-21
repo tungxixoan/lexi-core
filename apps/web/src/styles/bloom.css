@@ -1353,6 +1353,30 @@ button.btn-secondary {
   max-width: 460px;
 }
 
+.reading-review {
+  max-width: 640px;
+  margin: 0 0 24px;
+}
+
+.reading-review-passage {
+  margin-bottom: 10px;
+}
+
+.reading-vocab-highlight {
+  background: var(--surface-3);
+  color: var(--accent);
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
+.reading-review-translation {
+  color: var(--ink-soft);
+  font-size: 17px;
+  font-style: italic;
+  margin: 0;
+}
+
 .reading-result-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));

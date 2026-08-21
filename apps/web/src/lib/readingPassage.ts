@@ -48,6 +48,40 @@ export function buildReadingPassagePrompt(
   );
 }
 
+export interface HighlightSegment {
+  text: string;
+  highlighted: boolean;
+}
+
+// Splits a sentence's target text into plain/highlighted runs around every
+// occurrence of its own vocabWords, for the result screen's passage review.
+// Whole-word matching (\b) avoids highlighting "cat" inside "category";
+// longest-first ordering avoids a short vocab word matching inside a longer
+// one that also appears in vocabWords (e.g. "base" inside "touch base").
+export function highlightVocabWords(target: string, vocabWords: string[]): HighlightSegment[] {
+  if (vocabWords.length === 0) return [{ text: target, highlighted: false }];
+
+  const escaped = [...vocabWords]
+    .sort((a, b) => b.length - a.length)
+    .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const pattern = new RegExp(`\\b(${escaped.join("|")})\\b`, "gi");
+
+  const segments: HighlightSegment[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(target)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ text: target.slice(lastIndex, match.index), highlighted: false });
+    }
+    segments.push({ text: match[0], highlighted: true });
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < target.length) {
+    segments.push({ text: target.slice(lastIndex), highlighted: false });
+  }
+  return segments;
+}
+
 interface RawSentence {
   target?: unknown;
   vietnamese?: unknown;

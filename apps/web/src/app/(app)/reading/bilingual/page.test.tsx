@@ -286,6 +286,40 @@ describe("BilingualReadingPage (result phase)", () => {
     expect(suggestions).toHaveAttribute("data-text", "Hi there. Bye now.");
   });
 
+  it("shows the full passage and its Vietnamese translation, highlighting the vocab words used", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        sentences: [
+          { target: "I saw a cat today.", vietnamese: "Tôi thấy một con mèo hôm nay.", vocabWords: ["cat"] },
+          { target: "It was calm.", vietnamese: "Nó rất bình tĩnh.", vocabWords: [] },
+        ],
+      }),
+    });
+
+    render(<BilingualReadingPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
+    await screen.findByText("Câu 1 / 2");
+    fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "I saw a cat today." } });
+    await screen.findByText("Câu 2 / 2");
+    fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "It was calm." } });
+    await waitFor(() => expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument());
+
+    expect(screen.getByText(/I saw a/)).toBeInTheDocument();
+    expect(screen.getByText(/It was calm\./)).toBeInTheDocument();
+    expect(
+      screen.getByText("Tôi thấy một con mèo hôm nay. Nó rất bình tĩnh.")
+    ).toBeInTheDocument();
+
+    const highlighted = screen.getByText("cat");
+    expect(highlighted.tagName).toBe("MARK");
+    expect(highlighted).toHaveClass("reading-vocab-highlight");
+  });
+
   it("reflects an in-progress typo (typed wrong, then corrected) in the accuracy card, not just the deletion penalty", async () => {
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue(

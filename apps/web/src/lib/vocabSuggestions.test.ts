@@ -72,6 +72,13 @@ describe("buildVocabSuggestionsPrompt", () => {
     const prompt = buildVocabSuggestionsPrompt("text", "english", []);
     expect(prompt).not.toContain("Do NOT suggest");
   });
+
+  it("requires a non-empty suggestedTopics for every suggestion, even across a batch", () => {
+    const prompt = buildVocabSuggestionsPrompt("text", "english", []);
+    expect(prompt).toContain("exactly one topic chosen from");
+    expect(prompt).toContain("REQUIRED");
+    expect(prompt).toContain("never an empty array");
+  });
 });
 
 describe("parseVocabSuggestions", () => {
