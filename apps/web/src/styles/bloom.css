@@ -1369,6 +1369,12 @@ button.btn-secondary {
   margin: 10px 0 0;
 }
 
+.reading-saved-mark {
+  color: var(--success);
+  font-weight: 700;
+  align-self: center;
+}
+
 .reading-result-row {
   display: grid;
   grid-template-columns: minmax(320px, 380px) 1fr;

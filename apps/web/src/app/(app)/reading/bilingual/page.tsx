@@ -28,6 +28,7 @@ import {
 import {
   getAllUsedVocabIds,
   getRandomSavedExercise,
+  saveReadingExercise,
   prioritizeUnusedWords,
   type SavedExerciseFilters,
 } from "@/lib/savedReadingExercises";
@@ -84,6 +85,8 @@ export default function BilingualReadingPage() {
   const [justSavedId, setJustSavedId] = useState<string | null>(null);
   const [fetchingSaved, setFetchingSaved] = useState(false);
   const [savedNotice, setSavedNotice] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -197,6 +200,25 @@ export default function BilingualReadingPage() {
 
   async function handleGetSaved() {
     await fetchSavedExercise();
+  }
+
+  async function handleSaveExercise() {
+    if (saving || !user || !settings || !passage) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const generationFilters: SavedExerciseFilters = {
+        topicIds: [...selectedTopicIds],
+        maxCefr,
+        wordCount,
+      };
+      const newId = await saveReadingExercise(user.uid, passage, generationFilters, settings.targetLanguage);
+      setJustSavedId(newId);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleTypedChange(value: string) {
@@ -404,8 +426,23 @@ export default function BilingualReadingPage() {
         </div>
         <PassageReview sentences={passage?.sentences ?? []} />
       </div>
-      <VocabSuggestionsSection text={fullText} existingRecords={records ?? []} topics={topics} />
+      {sessionMode === "generated" && (
+        <VocabSuggestionsSection text={fullText} existingRecords={records ?? []} topics={topics} />
+      )}
       <div className="reading-result-actions">
+        {sessionMode === "generated" &&
+          (justSavedId ? (
+            <span className="reading-saved-mark">Đã lưu ✔</span>
+          ) : (
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => void handleSaveExercise()}
+              disabled={saving}
+            >
+              {saving ? "Đang lưu…" : "Lưu bài"}
+            </button>
+          ))}
         <button type="button" className="btn-secondary" onClick={() => router.push("/reading")}>
           Về trang chính
         </button>
@@ -413,6 +450,7 @@ export default function BilingualReadingPage() {
           Sinh bài mới
         </button>
       </div>
+      {saveError && <p role="alert">{saveError}</p>}
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { useSettingsContext } from "@/lib/SettingsContext";
 import { getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics } from "@/lib/topics";
 import { generateContent } from "@/lib/generateContent";
-import { getAllUsedVocabIds, getRandomSavedExercise } from "@/lib/savedReadingExercises";
+import { getAllUsedVocabIds, getRandomSavedExercise, saveReadingExercise } from "@/lib/savedReadingExercises";
 import type { SavedReadingExercise } from "@/lib/savedReadingExercises";
 import { DEFAULT_SETTINGS, type UserSettings } from "@/lib/settings";
 
@@ -23,6 +23,7 @@ vi.mock("@/lib/savedReadingExercises", async () => {
     ...actual,
     getAllUsedVocabIds: vi.fn(),
     getRandomSavedExercise: vi.fn(),
+    saveReadingExercise: vi.fn(),
   };
 });
 vi.mock("@/components/SignInButton", () => ({
@@ -413,6 +414,69 @@ describe("BilingualReadingPage (result phase)", () => {
 
     const suggestions = screen.getByTestId("vocab-suggestions");
     expect(suggestions).toHaveAttribute("data-text", "Hi there. Bye now.");
+  });
+
+  it('shows a "Lưu bài" button for a freshly AI-generated session, and hides it once saved', async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(saveReadingExercise).mockResolvedValue("new-saved-id");
+
+    await completeASession();
+
+    const saveButton = screen.getByRole("button", { name: "Lưu bài" });
+    fireEvent.click(saveButton);
+
+    expect(await screen.findByText("Đã lưu ✔")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Lưu bài" })).not.toBeInTheDocument();
+    expect(saveReadingExercise).toHaveBeenCalledWith(
+      "u1",
+      expect.objectContaining({ sentences: expect.any(Array) }),
+      expect.objectContaining({ topicIds: [], maxCefr: null, wordCount: 10 }),
+      "english"
+    );
+  });
+
+  it('surfaces a save error via role="alert" and keeps the "Lưu bài" button available to retry', async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(saveReadingExercise).mockRejectedValue(new Error("network down"));
+
+    await completeASession();
+    fireEvent.click(screen.getByRole("button", { name: "Lưu bài" }));
+
+    expect(await screen.findByText("network down")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Lưu bài" })).toBeInTheDocument();
+  });
+
+  it('hides both "Lưu bài" and the vocab-suggestions section for a reused session', async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(getRandomSavedExercise).mockResolvedValue({
+      id: "saved-1",
+      type: "bilingual",
+      passage: { sentences: [{ target: "Hi.", vietnamese: "Chào.", vocabWords: [] }], vocabIds: [] },
+      generationFilters: { topicIds: [], maxCefr: null, wordCount: null },
+      targetLanguage: "english",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    });
+
+    render(<BilingualReadingPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
+    await screen.findByText("Câu 1 / 1");
+    fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "Hi." } });
+    await waitFor(() => expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument());
+
+    expect(screen.queryByRole("button", { name: "Lưu bài" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("vocab-suggestions")).not.toBeInTheDocument();
   });
 
   it("shows the full passage and its Vietnamese translation, highlighting the vocab words used", async () => {
