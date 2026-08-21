@@ -87,6 +87,24 @@ describe("parseLookupResult", () => {
     expect(result.suggestedTopics).toEqual([]);
   });
 
+  it("accepts a bare string for suggestedTopics, not just an array", () => {
+    const result = parseLookupResult(
+      { headword: "x", meaning: "y", suggestedTopics: "Business" },
+      "word",
+      "x"
+    ) as WordPhraseResult;
+    expect(result.suggestedTopics).toEqual(["Business"]);
+  });
+
+  it("ignores an empty string for suggestedTopics", () => {
+    const result = parseLookupResult(
+      { headword: "x", meaning: "y", suggestedTopics: "" },
+      "word",
+      "x"
+    ) as WordPhraseResult;
+    expect(result.suggestedTopics).toEqual([]);
+  });
+
   it("falls back to the original query as headword when the AI omits it", () => {
     const result = parseLookupResult({ meaning: "y" }, "phrase", "break the ice") as WordPhraseResult;
     expect(result.headword).toBe("break the ice");

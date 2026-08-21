@@ -8,6 +8,11 @@ const TOPICS: Topic[] = [
   { id: "food-1", name: "Food & Drink", emoji: "🍜", isPredefined: true, createdAt: "2026-01-01" },
 ];
 
+const TOPICS_WITH_OTHER: Topic[] = [
+  ...TOPICS,
+  { id: "other-1", name: "Other", emoji: "🏷️", isPredefined: true, createdAt: "2026-01-01" },
+];
+
 describe("normalizeTopicName", () => {
   it("lowercases, collapses punctuation, and treats & as and", () => {
     expect(normalizeTopicName("Food & Drink")).toBe("food and drink");
@@ -23,8 +28,20 @@ describe("preselectTopicIds", () => {
     ]);
   });
 
-  it("returns an empty array when no suggestion matches an existing topic", () => {
+  it("returns an empty array when no suggestion matches an existing topic and there's no Other topic", () => {
     expect(preselectTopicIds(["Sports"], TOPICS)).toEqual([]);
+  });
+
+  it("falls back to Other when no suggestion matches and an Other topic exists", () => {
+    expect(preselectTopicIds(["Sports"], TOPICS_WITH_OTHER)).toEqual(["other-1"]);
+  });
+
+  it("falls back to Other when there are no suggested topics at all", () => {
+    expect(preselectTopicIds([], TOPICS_WITH_OTHER)).toEqual(["other-1"]);
+  });
+
+  it("does not fall back to Other when a real suggestion already matched", () => {
+    expect(preselectTopicIds(["Business"], TOPICS_WITH_OTHER)).toEqual(["biz-1"]);
   });
 });
 

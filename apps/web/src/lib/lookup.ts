@@ -118,7 +118,14 @@ export function parseLookupResult(
     examples: Array.isArray(json.examples) ? json.examples.map(String) : [],
     definition: typeof json.definition === "string" ? json.definition : "",
     synonyms: Array.isArray(json.synonyms) ? json.synonyms.map(String) : [],
-    suggestedTopics: Array.isArray(json.suggestedTopics) ? json.suggestedTopics.map(String) : [],
+    // Accept a bare string too: despite the prompt wrapping it in an
+    // array, models sometimes collapse a single-item "suggestedTopics"
+    // down to a plain string since the instruction says "exactly one".
+    suggestedTopics: Array.isArray(json.suggestedTopics)
+      ? json.suggestedTopics.map(String)
+      : typeof json.suggestedTopics === "string" && json.suggestedTopics.length > 0
+        ? [json.suggestedTopics]
+        : [],
     cefrLevel: rawCefr && CEFR_LEVELS.has(rawCefr) ? (rawCefr as WordPhraseResult["cefrLevel"]) : null,
   };
 }

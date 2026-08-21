@@ -1358,19 +1358,29 @@ button.btn-secondary {
 
 .reading-result-row {
   display: grid;
-  grid-template-columns: minmax(340px, 640px) 1fr;
-  gap: 24px;
+  grid-template-columns: minmax(320px, 380px) 1fr;
+  gap: 20px;
   align-items: start;
   margin: 0 0 24px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 860px) {
   .reading-result-row {
     grid-template-columns: 1fr;
   }
 }
 
+.reading-result-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .reading-review {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px 26px;
   margin: 0;
 }
 
@@ -1395,10 +1405,8 @@ button.btn-secondary {
 
 .reading-result-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  max-width: 640px;
-  margin: 16px 0 24px;
 }
 
 .reading-stat-card {
@@ -1426,6 +1434,10 @@ button.btn-secondary {
 }
 
 .reading-used-words {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 20px;
   margin: 0;
 }
 

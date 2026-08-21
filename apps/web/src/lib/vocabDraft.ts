@@ -26,6 +26,13 @@ export function preselectTopicIds(suggestedTopics: string[], topics: Topic[]): s
     const match = topics.find((t) => normalizeTopicName(t.name) === normalizedSuggestion);
     if (match && !selected.includes(match.id)) selected.push(match.id);
   }
+  // Nothing matched (missing suggestion, or one the AI gave doesn't exist
+  // in this user's topic list) — fall back to "Other" so a save never
+  // leaves the topic picker completely empty when a fallback exists.
+  if (selected.length === 0) {
+    const other = topics.find((t) => normalizeTopicName(t.name) === "other");
+    if (other) selected.push(other.id);
+  }
   return selected;
 }
 

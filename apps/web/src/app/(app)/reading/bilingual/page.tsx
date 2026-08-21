@@ -289,36 +289,38 @@ export default function BilingualReadingPage() {
   return (
     <div>
       <h2 className="scr-title">Kết quả</h2>
-      <div className="reading-result-stats">
-        <div className="reading-stat-card">
-          <span className="reading-stat-label">Độ chính xác</span>
-          <span className="reading-stat-value">{Math.round(stats.typingAccuracy * 100)}%</span>
-        </div>
-        <div className="reading-stat-card">
-          <span className="reading-stat-label">Tốc độ</span>
-          <span className="reading-stat-value">{Math.round(stats.wpm)} wpm</span>
-        </div>
-        <div className="reading-stat-card">
-          <span className="reading-stat-label">Thời gian</span>
-          <span className="reading-stat-value">{formatDuration(totalDurationMs)}</span>
-        </div>
-        <div className="reading-stat-card">
-          <span className="reading-stat-label">Điểm</span>
-          <span className="reading-stat-value">{Math.round(stats.finalScore * 100)}%</span>
-        </div>
-      </div>
       <div className="reading-result-row">
-        <PassageReview sentences={passage?.sentences ?? []} />
-        {usedRecords.length > 0 && (
-          <div className="reading-used-words">
-            <h3>Từ vựng dùng trong bài</h3>
-            {usedRecords.map((r) => (
-              <p className="reading-used-word-item" key={r.id}>
-                {r.headword} — {r.meaning}
-              </p>
-            ))}
+        <div className="reading-result-left">
+          <div className="reading-result-stats">
+            <div className="reading-stat-card">
+              <span className="reading-stat-label">Độ chính xác</span>
+              <span className="reading-stat-value">{Math.round(stats.typingAccuracy * 100)}%</span>
+            </div>
+            <div className="reading-stat-card">
+              <span className="reading-stat-label">Tốc độ</span>
+              <span className="reading-stat-value">{Math.round(stats.wpm)} wpm</span>
+            </div>
+            <div className="reading-stat-card">
+              <span className="reading-stat-label">Thời gian</span>
+              <span className="reading-stat-value">{formatDuration(totalDurationMs)}</span>
+            </div>
+            <div className="reading-stat-card">
+              <span className="reading-stat-label">Điểm</span>
+              <span className="reading-stat-value">{Math.round(stats.finalScore * 100)}%</span>
+            </div>
           </div>
-        )}
+          {usedRecords.length > 0 && (
+            <div className="reading-used-words">
+              <h3>Từ vựng dùng trong bài</h3>
+              {usedRecords.map((r) => (
+                <p className="reading-used-word-item" key={r.id}>
+                  {r.headword} — {r.meaning}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+        <PassageReview sentences={passage?.sentences ?? []} />
       </div>
       <VocabSuggestionsSection text={fullText} existingRecords={records ?? []} topics={topics} />
       <div className="reading-result-actions">
