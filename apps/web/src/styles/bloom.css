@@ -126,7 +126,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 700;
   margin-bottom: 22px;
   padding: 0 8px;
@@ -147,7 +147,7 @@ body {
 }
 
 .sidenav a {
-  font-size: 13.5px;
+  font-size: 17.5px;
   padding: 10px 13px;
   border-radius: 999px;
   color: var(--ink-soft);
@@ -165,7 +165,7 @@ body {
 }
 
 .sidenav .grp-label {
-  font-size: 10.5px;
+  font-size: 14.5px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--ink-faint);
@@ -182,13 +182,13 @@ body {
 }
 
 h2.scr-title {
-  font-size: 21px;
+  font-size: 25px;
   margin: 0 0 4px;
 }
 
 p.scr-sub {
   color: var(--ink-soft);
-  font-size: 13.5px;
+  font-size: 17.5px;
   margin: 0 0 22px;
 }
 
@@ -200,7 +200,7 @@ p.scr-sub {
 }
 
 .vb-chip {
-  font-size: 12.5px;
+  font-size: 16.5px;
   font-weight: 700;
   padding: 7px 14px;
   border-radius: 999px;
@@ -251,7 +251,7 @@ p.scr-sub {
   border-radius: 50%;
   background: var(--sage-bg);
   color: var(--sage);
-  font-size: 10.5px;
+  font-size: 14.5px;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -261,18 +261,18 @@ p.scr-sub {
 
 .vrow .word {
   font-weight: 700;
-  font-size: 14.5px;
+  font-size: 18.5px;
 }
 
 .vrow .meaning {
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: 17px;
   margin-left: 6px;
 }
 
 .vrow .due {
   margin-left: auto;
-  font-size: 11.5px;
+  font-size: 15.5px;
   color: var(--ink-faint);
 }
 
@@ -309,7 +309,7 @@ p.scr-sub {
 
 .dh h3 {
   margin: 0;
-  font-size: 21px;
+  font-size: 25px;
 }
 
 .dh .pr {
@@ -319,11 +319,11 @@ p.scr-sub {
   margin-top: 4px;
   color: var(--ink-soft);
   font-family: ui-monospace, monospace;
-  font-size: 12.5px;
+  font-size: 16.5px;
 }
 
 .cefr-pill {
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 800;
   background: var(--sage);
   color: var(--accent-ink);
@@ -339,7 +339,7 @@ p.scr-sub {
   border: 1px solid var(--border);
   cursor: pointer;
   color: var(--ink-soft);
-  font-size: 11px;
+  font-size: 15px;
 }
 
 .db {
@@ -356,7 +356,7 @@ p.scr-sub {
   list-style: none;
   cursor: pointer;
   padding: 11px 0;
-  font-size: 11.5px;
+  font-size: 15.5px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ink-faint);
@@ -379,14 +379,14 @@ p.scr-sub {
 
 .sect .ct {
   padding-bottom: 13px;
-  font-size: 13.5px;
+  font-size: 17.5px;
 }
 
 .ex-item {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 13px;
+  font-size: 17px;
   margin-bottom: 6px;
   padding: 8px 10px;
   background: var(--surface);
@@ -404,7 +404,7 @@ p.scr-sub {
 }
 
 .chip {
-  font-size: 11.5px;
+  font-size: 15.5px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -424,7 +424,7 @@ p.scr-sub {
 }
 
 .pm .l {
-  font-size: 11px;
+  font-size: 15px;
   color: var(--ink-soft);
   margin-bottom: 4px;
   display: flex;
@@ -452,7 +452,7 @@ p.scr-sub {
 
 .fa button {
   flex: 1;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   border-radius: 999px;
   padding: 8px 0;
@@ -492,7 +492,7 @@ p.scr-sub {
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--ink-soft);
-  font-size: 12.5px;
+  font-size: 16.5px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -536,7 +536,7 @@ p.scr-sub {
 
 .modal-header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 22px;
 }
 
 .modal-header-title {
@@ -558,7 +558,7 @@ p.scr-sub {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 12.5px;
+  font-size: 16.5px;
   color: var(--ink-soft);
   font-weight: 700;
 }
@@ -566,7 +566,7 @@ p.scr-sub {
 .modal-field input,
 .modal-field textarea {
   font-family: inherit;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 400;
   color: var(--ink);
   border: 1px solid var(--border);
@@ -595,7 +595,7 @@ p.scr-sub {
   background: none;
   border: none;
   color: var(--accent);
-  font-size: 12.5px;
+  font-size: 16.5px;
   font-weight: 700;
   cursor: pointer;
   padding: 4px 0;
@@ -624,7 +624,7 @@ p.scr-sub {
 }
 
 .modal-footer button {
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 700;
   border-radius: 999px;
   padding: 9px 18px;
@@ -674,7 +674,7 @@ p.scr-sub {
 
 .vb-topic-popover-apply {
   width: 100%;
-  font-size: 12.5px;
+  font-size: 16.5px;
   font-weight: 700;
   background: var(--accent);
   color: var(--accent-ink);
@@ -687,7 +687,7 @@ p.scr-sub {
 .vb-page-ellipsis {
   padding: 0 4px;
   color: var(--ink-faint);
-  font-size: 12.5px;
+  font-size: 16.5px;
   align-self: center;
 }
 
@@ -730,7 +730,7 @@ button.btn-danger {
 
 .settings-card h3 {
   margin: 0 0 16px;
-  font-size: 15px;
+  font-size: 19px;
   font-weight: 700;
 }
 
@@ -740,7 +740,7 @@ button.btn-danger {
   flex-direction: column;
   align-items: flex-start;
   gap: 6px;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--ink-soft);
   text-transform: uppercase;
@@ -750,7 +750,7 @@ button.btn-danger {
 
 .settings-card select,
 .settings-card input {
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 400;
   text-transform: none;
   letter-spacing: normal;
@@ -769,13 +769,13 @@ button.btn-danger {
 }
 
 .settings-account-name {
-  font-size: 15px;
+  font-size: 19px;
   font-weight: 700;
   margin: 0 0 4px;
 }
 
 .settings-account-email {
-  font-size: 13px;
+  font-size: 17px;
   color: var(--ink-soft);
   margin: 0;
 }
@@ -787,7 +787,7 @@ button.btn-primary {
   border-radius: 999px;
   padding: 9px 18px;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 17px;
   cursor: pointer;
   margin-top: 4px;
 }
@@ -811,7 +811,7 @@ button.btn-primary:disabled {
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--ink);
-  font-size: 14px;
+  font-size: 18px;
 }
 
 .lookup-discover-btn {
@@ -821,7 +821,7 @@ button.btn-primary:disabled {
   background: var(--sage-bg);
   color: var(--sage);
   font-weight: 700;
-  font-size: 13.5px;
+  font-size: 17.5px;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -841,7 +841,7 @@ button.btn-primary:disabled {
 
 .lookup-already-saved {
   color: var(--sage);
-  font-size: 12.5px;
+  font-size: 16.5px;
   font-weight: 700;
   margin: 0 0 12px;
 }
@@ -854,18 +854,18 @@ button.btn-primary:disabled {
 
 .lookup-headword-row h3 {
   margin: 0;
-  font-size: 22px;
+  font-size: 26px;
 }
 
 .lookup-ipa {
   color: var(--ink-soft);
   font-family: ui-monospace, monospace;
-  font-size: 13px;
+  font-size: 17px;
   margin: 4px 0 14px;
 }
 
 .lookup-meaning {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   margin: 0 0 8px;
 }
@@ -881,13 +881,13 @@ button.btn-primary:disabled {
 .lookup-definition {
   color: var(--ink-soft);
   font-style: italic;
-  font-size: 13.5px;
+  font-size: 17.5px;
   margin: 0 0 14px;
 }
 
 .lookup-example {
   color: var(--ink-soft);
-  font-size: 13.5px;
+  font-size: 17.5px;
   margin: 0;
 }
 
@@ -899,13 +899,13 @@ button.btn-primary:disabled {
 }
 
 .lookup-sentence-original {
-  font-size: 15px;
+  font-size: 19px;
   margin: 0 0 10px;
 }
 
 .lookup-sentence-translation {
   color: var(--ink-soft);
-  font-size: 15px;
+  font-size: 19px;
   margin: 0;
 }
 
@@ -950,7 +950,7 @@ button.btn-primary:disabled {
 }
 
 .fc-headword {
-  font-size: 30px;
+  font-size: 34px;
   font-weight: 700;
   margin: 0;
 }
@@ -960,17 +960,17 @@ button.btn-primary:disabled {
   color: var(--ink-soft);
   font-style: italic;
   font-family: ui-monospace, monospace;
-  font-size: 13px;
+  font-size: 17px;
 }
 
 .fc-hint {
   margin-top: 26px;
   color: var(--ink-faint);
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .fc-meaning {
-  font-size: 17px;
+  font-size: 21px;
   font-weight: 600;
   margin: 0;
 }
@@ -987,13 +987,13 @@ button.btn-primary:disabled {
   margin-top: 12px;
   color: var(--ink-soft);
   font-style: italic;
-  font-size: 13.5px;
+  font-size: 17.5px;
 }
 
 .fc-back-hint {
   margin-top: 16px;
   color: var(--ink-faint);
-  font-size: 11px;
+  font-size: 15px;
 }
 
 .fc-grade-row {
@@ -1009,7 +1009,7 @@ button.btn-primary:disabled {
   padding: 11px 0;
   border-radius: 999px;
   font-weight: 700;
-  font-size: 13.5px;
+  font-size: 17.5px;
   cursor: pointer;
   font-family: inherit;
 }
@@ -1035,7 +1035,7 @@ button.btn-primary:disabled {
 
 .practice-preview-count {
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: 17px;
   margin-bottom: 18px;
 }
 
@@ -1044,7 +1044,7 @@ button.btn-primary:disabled {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 14px;
-  font-size: 12.5px;
+  font-size: 16.5px;
   font-weight: 700;
   color: var(--ink-soft);
   max-width: 460px;
@@ -1080,7 +1080,7 @@ button.btn-primary:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 800;
   color: var(--ink);
   background: conic-gradient(var(--accent) var(--pct), var(--surface-3) var(--pct));
@@ -1139,7 +1139,7 @@ button.btn-primary:disabled {
 
 .practice-result-meaning {
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: 17px;
 }
 
 .practice-result-actions {
@@ -1157,7 +1157,7 @@ button.btn-secondary {
   border-radius: 999px;
   padding: 9px 18px;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 17px;
   cursor: pointer;
 }
 
@@ -1171,7 +1171,7 @@ button.btn-secondary {
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--ink-soft);
-  font-size: 12px;
+  font-size: 16px;
   line-height: 1;
   padding: 0;
   cursor: pointer;
@@ -1194,7 +1194,7 @@ button.btn-secondary {
 }
 
 .reading-passage {
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1.8;
   margin: 0;
 }
@@ -1225,7 +1225,7 @@ button.btn-secondary {
   background: var(--surface-3);
   border-radius: 12px;
   padding: 10px 14px;
-  font-size: 13px;
+  font-size: 17px;
   color: var(--ink-soft);
   font-style: italic;
   margin: 14px 0 18px;
@@ -1234,7 +1234,7 @@ button.btn-secondary {
 .reading-type-input {
   width: 100%;
   box-sizing: border-box;
-  font-size: 16px;
+  font-size: 20px;
   font-family: ui-monospace, monospace;
   padding: 12px 14px;
   border-radius: 12px;
@@ -1261,12 +1261,12 @@ button.btn-secondary {
 
 .suggestions-title {
   font-weight: 700;
-  font-size: 13.5px;
+  font-size: 17.5px;
 }
 
 .suggestions-bulk-message {
   color: var(--ink-soft);
-  font-size: 12.5px;
+  font-size: 16.5px;
   margin: 0 0 10px;
 }
 
@@ -1304,12 +1304,12 @@ button.btn-secondary {
 
 .suggestion-headword {
   font-weight: 700;
-  font-size: 14px;
+  font-size: 18px;
 }
 
 .suggestion-meaning {
   color: var(--ink-soft);
-  font-size: 12.5px;
+  font-size: 16.5px;
   flex: 1;
 }
 
@@ -1339,17 +1339,17 @@ button.btn-secondary {
 
 .reading-hub-card-title {
   font-weight: 700;
-  font-size: 15px;
+  font-size: 19px;
 }
 
 .reading-hub-card-desc {
   color: var(--ink-soft);
-  font-size: 12.5px;
+  font-size: 16.5px;
 }
 
 .reading-min-words-hint {
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: 17px;
   max-width: 460px;
 }
 
@@ -1372,7 +1372,7 @@ button.btn-secondary {
 }
 
 .reading-stat-label {
-  font-size: 11.5px;
+  font-size: 15.5px;
   color: var(--ink-faint);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -1380,7 +1380,7 @@ button.btn-secondary {
 }
 
 .reading-stat-value {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--ink);
 }
@@ -1391,12 +1391,12 @@ button.btn-secondary {
 }
 
 .reading-used-words h3 {
-  font-size: 13px;
+  font-size: 17px;
   margin: 0 0 8px;
 }
 
 .reading-used-word-item {
-  font-size: 13px;
+  font-size: 17px;
   color: var(--ink-soft);
   margin: 0 0 4px;
 }
