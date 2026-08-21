@@ -112,7 +112,7 @@ body {
 }
 
 .sidebar {
-  width: 226px;
+  width: 264px;
   flex-shrink: 0;
   padding: 26px 16px;
   display: flex;
@@ -149,13 +149,14 @@ body {
 .sidenav a {
   font-size: 17.5px;
   padding: 12px 15px;
-  border-radius: 999px;
+  border-radius: 16px;
   color: var(--ink-soft);
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 11px;
   text-decoration: none;
+  line-height: 1.25;
 }
 
 .sidenav a.active {
@@ -518,7 +519,7 @@ p.scr-sub {
   border-radius: 20px;
   border: 1px solid var(--border);
   box-shadow: 0 32px 76px -36px rgba(120, 70, 90, 0.5);
-  width: 480px;
+  width: 580px;
   max-width: calc(100vw - 48px);
   max-height: calc(100vh - 96px);
   display: flex;
