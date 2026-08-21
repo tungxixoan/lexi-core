@@ -6,6 +6,7 @@ import { useSettingsContext } from "@/lib/SettingsContext";
 import { getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics } from "@/lib/topics";
 import { generateContent } from "@/lib/generateContent";
+import { getAllUsedVocabIds } from "@/lib/savedReadingExercises";
 import { DEFAULT_SETTINGS, type UserSettings } from "@/lib/settings";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
@@ -13,6 +14,15 @@ vi.mock("@/lib/SettingsContext", () => ({ useSettingsContext: vi.fn() }));
 vi.mock("@/lib/vocabRecords", () => ({ getVocabRecords: vi.fn() }));
 vi.mock("@/lib/topics", () => ({ getTopics: vi.fn() }));
 vi.mock("@/lib/generateContent", () => ({ generateContent: vi.fn() }));
+vi.mock("@/lib/savedReadingExercises", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/savedReadingExercises")>(
+    "@/lib/savedReadingExercises"
+  );
+  return {
+    ...actual,
+    getAllUsedVocabIds: vi.fn(),
+  };
+});
 vi.mock("@/components/SignInButton", () => ({
   SignInButton: () => <button>Đăng nhập với Google</button>,
 }));
@@ -71,6 +81,7 @@ function mockSignedIn(settings: UserSettings = SETTINGS_WITH_KEY) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(getAllUsedVocabIds).mockResolvedValue(new Set());
 });
 
 describe("BilingualReadingPage (setup phase)", () => {
@@ -134,6 +145,32 @@ describe("BilingualReadingPage (setup phase)", () => {
     );
     const promptArg = vi.mocked(generateContent).mock.calls[0][0].prompt;
     expect(promptArg).toContain("word0");
+  });
+
+  it("excludes words already used in saved exercises when the word list must be truncated", async () => {
+    mockSignedIn();
+    const freshRecords = Array.from({ length: 10 }, (_, i) =>
+      makeRecord({ id: `fresh-${i}`, headword: `freshword${i}` })
+    );
+    const usedRecord = makeRecord({ id: "used-1", headword: "usedword" });
+    vi.mocked(getVocabRecords).mockResolvedValue([...freshRecords, usedRecord]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(getAllUsedVocabIds).mockResolvedValue(new Set(["used-1"]));
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({ sentences: [{ target: "A.", vietnamese: "B.", vocabWords: [] }] }),
+    });
+
+    render(<BilingualReadingPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
+
+    await waitFor(() => expect(generateContent).toHaveBeenCalled());
+    expect(getAllUsedVocabIds).toHaveBeenCalledWith("u1");
+    const promptArg = vi.mocked(generateContent).mock.calls[0][0].prompt;
+    // Default word count (10) truncates 11 matching words down to 10 — the
+    // 1 used word must be the one dropped, since all 10 fresh ones are
+    // prioritized ahead of it.
+    expect(promptArg).not.toContain("usedword");
+    expect(promptArg).toContain("freshword0");
   });
 
   it("shows an error and stays on setup when the active provider has no API key", async () => {

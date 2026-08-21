@@ -25,6 +25,7 @@ import {
   countMismatches,
   type SentenceStats,
 } from "@/lib/readingScoring";
+import { getAllUsedVocabIds, prioritizeUnusedWords } from "@/lib/savedReadingExercises";
 import { VocabSuggestionsSection } from "@/components/shared/VocabSuggestionsSection";
 
 type CefrLevel = VocabRecord["cefrLevel"];
@@ -88,9 +89,9 @@ export default function BilingualReadingPage() {
 
   async function handleGenerate() {
     if (!records || !user || !settings) return;
-    const filters: SessionWordFilters = { topicIds: selectedTopicIds, maxCefr, count: wordCount };
-    const words = selectSessionWords(records, filters);
-    if (words.length === 0) return;
+    const filters: SessionWordFilters = { topicIds: selectedTopicIds, maxCefr, count: null };
+    const pool = selectSessionWords(records, filters);
+    if (pool.length === 0) return;
 
     const activeConfig = settings.providers[settings.activeProvider];
     if (!activeConfig.apiKeyCiphertext) {
@@ -101,6 +102,9 @@ export default function BilingualReadingPage() {
     setGenerating(true);
     setGenerateError(null);
     try {
+      const usedVocabIds = await getAllUsedVocabIds(user.uid);
+      const prioritized = prioritizeUnusedWords(pool, usedVocabIds);
+      const words = wordCount === null ? prioritized : prioritized.slice(0, wordCount);
       const prompt = buildReadingPassagePrompt(
         words.map((w) => w.headword),
         settings.targetLanguage,
