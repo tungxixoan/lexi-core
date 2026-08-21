@@ -1358,11 +1358,16 @@ button.btn-secondary {
 
 .reading-result-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: minmax(340px, 640px) 1fr;
   gap: 24px;
   align-items: start;
-  max-width: 960px;
   margin: 0 0 24px;
+}
+
+@media (max-width: 900px) {
+  .reading-result-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .reading-review {
