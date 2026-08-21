@@ -1356,6 +1356,19 @@ button.btn-secondary {
   max-width: 460px;
 }
 
+.reading-setup-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.reading-saved-notice {
+  color: var(--ink-soft);
+  font-size: 17px;
+  margin: 10px 0 0;
+}
+
 .reading-result-row {
   display: grid;
   grid-template-columns: minmax(320px, 380px) 1fr;

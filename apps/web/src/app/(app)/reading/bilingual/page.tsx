@@ -25,7 +25,12 @@ import {
   countMismatches,
   type SentenceStats,
 } from "@/lib/readingScoring";
-import { getAllUsedVocabIds, prioritizeUnusedWords } from "@/lib/savedReadingExercises";
+import {
+  getAllUsedVocabIds,
+  getRandomSavedExercise,
+  prioritizeUnusedWords,
+  type SavedExerciseFilters,
+} from "@/lib/savedReadingExercises";
 import { VocabSuggestionsSection } from "@/components/shared/VocabSuggestionsSection";
 
 type CefrLevel = VocabRecord["cefrLevel"];
@@ -75,6 +80,10 @@ export default function BilingualReadingPage() {
   const [peakMistakes, setPeakMistakes] = useState(0);
   const [sentenceStartedAt, setSentenceStartedAt] = useState(0);
   const [completedStats, setCompletedStats] = useState<SentenceStats[]>([]);
+  const [sessionMode, setSessionMode] = useState<"generated" | "reused">("generated");
+  const [justSavedId, setJustSavedId] = useState<string | null>(null);
+  const [fetchingSaved, setFetchingSaved] = useState(false);
+  const [savedNotice, setSavedNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -121,6 +130,8 @@ export default function BilingualReadingPage() {
       if (generated.sentences.length === 0) {
         throw new Error("AI không trả về đoạn văn hợp lệ.");
       }
+      setSessionMode("generated");
+      setJustSavedId(null);
       setPassage(generated);
       setCurrentIndex(0);
       setTyped("");
@@ -134,6 +145,58 @@ export default function BilingualReadingPage() {
     } finally {
       setGenerating(false);
     }
+  }
+
+  // Returns true if a session was started (saved match, or a successful AI
+  // fallback) or an error was surfaced to the user; false only when nothing
+  // matched AND there weren't even enough live words to attempt the AI
+  // fallback — the caller decides what "false" means for it (Task 5 resets
+  // to setup in that case; Task 3's own handleGetSaved has nothing further
+  // to do, the existing min-words hint is already visible on this screen).
+  async function fetchSavedExercise(excludeId?: string): Promise<boolean> {
+    if (!records || !user || !settings) return false;
+    const matchingCount = selectSessionWords(records, {
+      topicIds: selectedTopicIds,
+      maxCefr,
+      count: null,
+    }).length;
+    setGenerateError(null);
+    setSavedNotice(null);
+    setFetchingSaved(true);
+    let found = false;
+    try {
+      const filters: SavedExerciseFilters = { topicIds: [...selectedTopicIds], maxCefr, wordCount };
+      const saved = await getRandomSavedExercise(user.uid, settings.targetLanguage, filters, excludeId);
+      if (saved) {
+        found = true;
+        setSessionMode("reused");
+        setJustSavedId(null);
+        setPassage(saved.passage);
+        setCurrentIndex(0);
+        setTyped("");
+        setDeletedChars(0);
+        setPeakMistakes(0);
+        setSentenceStartedAt(Date.now());
+        setCompletedStats([]);
+        setPhase("session");
+      } else if (matchingCount >= MIN_VOCAB_WORDS) {
+        setSavedNotice("Chưa có bài đã lưu khớp bộ lọc này — đang tạo bài mới bằng AI…");
+      }
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : String(err));
+      return true;
+    } finally {
+      setFetchingSaved(false);
+    }
+    if (!found && matchingCount >= MIN_VOCAB_WORDS) {
+      await handleGenerate();
+      return true;
+    }
+    return found;
+  }
+
+  async function handleGetSaved() {
+    await fetchSavedExercise();
   }
 
   function handleTypedChange(value: string) {
@@ -238,16 +301,31 @@ export default function BilingualReadingPage() {
             active={wordCount !== DEFAULT_WORD_COUNT}
           />
         </div>
-        {canGenerate ? (
-          <button className="btn-primary" onClick={() => void handleGenerate()} disabled={generating}>
-            {generating ? "Đang tạo bài…" : "Tạo bài luyện"}
+        <div className="reading-setup-actions">
+          {canGenerate ? (
+            <button
+              className="btn-primary"
+              onClick={() => void handleGenerate()}
+              disabled={generating || fetchingSaved}
+            >
+              {generating ? "Đang tạo bài…" : "Tạo bài luyện"}
+            </button>
+          ) : (
+            <p className="reading-min-words-hint">
+              Hãy lưu ít nhất {MIN_VOCAB_WORDS} từ khớp với bộ lọc trên vào Ngân hàng từ vựng. Hiện có{" "}
+              {matchingCount} từ.
+            </p>
+          )}
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => void handleGetSaved()}
+            disabled={generating || fetchingSaved}
+          >
+            {fetchingSaved ? "Đang tìm bài…" : "🔀 Lấy bài có sẵn"}
           </button>
-        ) : (
-          <p className="reading-min-words-hint">
-            Hãy lưu ít nhất {MIN_VOCAB_WORDS} từ khớp với bộ lọc trên vào Ngân hàng từ vựng. Hiện có{" "}
-            {matchingCount} từ.
-          </p>
-        )}
+        </div>
+        {savedNotice && <p className="reading-saved-notice">{savedNotice}</p>}
         {generateError && <p role="alert">{generateError}</p>}
       </div>
     );

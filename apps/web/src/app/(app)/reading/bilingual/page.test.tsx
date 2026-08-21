@@ -6,7 +6,8 @@ import { useSettingsContext } from "@/lib/SettingsContext";
 import { getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics } from "@/lib/topics";
 import { generateContent } from "@/lib/generateContent";
-import { getAllUsedVocabIds } from "@/lib/savedReadingExercises";
+import { getAllUsedVocabIds, getRandomSavedExercise } from "@/lib/savedReadingExercises";
+import type { SavedReadingExercise } from "@/lib/savedReadingExercises";
 import { DEFAULT_SETTINGS, type UserSettings } from "@/lib/settings";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
@@ -21,6 +22,7 @@ vi.mock("@/lib/savedReadingExercises", async () => {
   return {
     ...actual,
     getAllUsedVocabIds: vi.fn(),
+    getRandomSavedExercise: vi.fn(),
   };
 });
 vi.mock("@/components/SignInButton", () => ({
@@ -69,6 +71,18 @@ function makeRecord(overrides: Partial<VocabRecord>): VocabRecord {
   };
 }
 
+const SAVED_EXERCISE: SavedReadingExercise = {
+  id: "saved-1",
+  type: "bilingual",
+  passage: {
+    sentences: [{ target: "Saved sentence.", vietnamese: "Câu đã lưu.", vocabWords: [] }],
+    vocabIds: [],
+  },
+  generationFilters: { topicIds: [], maxCefr: null, wordCount: null },
+  targetLanguage: "english",
+  createdAt: "2026-01-01T00:00:00.000Z",
+};
+
 function mockSignedIn(settings: UserSettings = SETTINGS_WITH_KEY) {
   vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
   vi.mocked(useSettingsContext).mockReturnValue({
@@ -82,6 +96,7 @@ function mockSignedIn(settings: UserSettings = SETTINGS_WITH_KEY) {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(getAllUsedVocabIds).mockResolvedValue(new Set());
+  vi.mocked(getRandomSavedExercise).mockResolvedValue(null);
 });
 
 describe("BilingualReadingPage (setup phase)", () => {
@@ -206,6 +221,83 @@ describe("BilingualReadingPage (setup phase)", () => {
 
     expect(await screen.findByText("AI không trả về đoạn văn hợp lệ.")).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: "Tạo bài luyện" })).toBeInTheDocument();
+  });
+
+  it('"Lấy bài có sẵn" starts a session directly from a matching saved exercise, without calling the AI', async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(getRandomSavedExercise).mockResolvedValue(SAVED_EXERCISE);
+
+    render(<BilingualReadingPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
+
+    expect(await screen.findByText("Câu 1 / 1")).toBeInTheDocument();
+    expect(screen.getByText("Câu đã lưu.")).toBeInTheDocument();
+    expect(generateContent).not.toHaveBeenCalled();
+  });
+
+  it('"Lấy bài có sẵn" shows an inline notice and falls back to AI generation when nothing matches', async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(getRandomSavedExercise).mockResolvedValue(null);
+    // generateContent's mock resolution is held open deliberately (instead of
+    // mockResolvedValue, which settles within the same microtask burst as
+    // everything upstream of it) so the notice's render commit is
+    // observable before the AI fallback completes and the screen moves on
+    // to the session phase — otherwise this races and the notice's visible
+    // window can close before screen.findByText ever gets to see it.
+    let resolveGenerate!: (value: { text: string }) => void;
+    vi.mocked(generateContent).mockReturnValue(
+      new Promise((resolve) => {
+        resolveGenerate = resolve;
+      })
+    );
+
+    render(<BilingualReadingPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
+
+    expect(
+      await screen.findByText("Chưa có bài đã lưu khớp bộ lọc này — đang tạo bài mới bằng AI…")
+    ).toBeInTheDocument();
+    expect(generateContent).toHaveBeenCalled();
+
+    resolveGenerate({
+      text: JSON.stringify({ sentences: [{ target: "A.", vietnamese: "B.", vocabWords: [] }] }),
+    });
+    await waitFor(() => expect(screen.getByText("Câu 1 / 1")).toBeInTheDocument());
+  });
+
+  it('"Lấy bài có sẵn" does not attempt an AI fallback when there are not enough live words', async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1" }), makeRecord({ id: "2" })]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(getRandomSavedExercise).mockResolvedValue(null);
+
+    render(<BilingualReadingPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
+
+    await waitFor(() => expect(getRandomSavedExercise).toHaveBeenCalled());
+    expect(generateContent).not.toHaveBeenCalled();
+    expect(
+      screen.queryByText("Chưa có bài đã lưu khớp bộ lọc này — đang tạo bài mới bằng AI…")
+    ).not.toBeInTheDocument();
+  });
+
+  it('"Lấy bài có sẵn" is enabled even when fewer than 5 words match (unlike "Tạo bài luyện")', async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1" }), makeRecord({ id: "2" })]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<BilingualReadingPage />);
+
+    expect(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" })).not.toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Tạo bài luyện" })).not.toBeInTheDocument();
   });
 });
 
