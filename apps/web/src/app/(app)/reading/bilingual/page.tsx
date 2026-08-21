@@ -259,7 +259,7 @@ export default function BilingualReadingPage() {
     return `${minutes}:${String(seconds).padStart(2, "0")}`;
   }
 
-  function handleNewPassage() {
+  function resetToSetup() {
     setPassage(null);
     setCurrentIndex(0);
     setTyped("");
@@ -267,7 +267,25 @@ export default function BilingualReadingPage() {
     setPeakMistakes(0);
     setCompletedStats([]);
     setGenerateError(null);
+    setSavedNotice(null);
+    setJustSavedId(null);
     setPhase("setup");
+  }
+
+  async function handleNewSession() {
+    if (sessionMode === "reused") {
+      const handled = await fetchSavedExercise(justSavedId ?? undefined);
+      if (!handled) resetToSetup();
+      return;
+    }
+    const matchingCount = records
+      ? selectSessionWords(records, { topicIds: selectedTopicIds, maxCefr, count: null }).length
+      : 0;
+    if (matchingCount >= MIN_VOCAB_WORDS) {
+      await handleGenerate();
+    } else {
+      resetToSetup();
+    }
   }
 
   if (authLoading) return <p>Đang tải…</p>;
@@ -446,11 +464,12 @@ export default function BilingualReadingPage() {
         <button type="button" className="btn-secondary" onClick={() => router.push("/reading")}>
           Về trang chính
         </button>
-        <button type="button" className="btn-primary" onClick={handleNewPassage}>
+        <button type="button" className="btn-primary" onClick={() => void handleNewSession()}>
           Sinh bài mới
         </button>
       </div>
       {saveError && <p role="alert">{saveError}</p>}
+      {savedNotice && <p className="reading-saved-notice">{savedNotice}</p>}
     </div>
   );
 }

@@ -541,7 +541,7 @@ describe("BilingualReadingPage (result phase)", () => {
     expect(screen.getByText("67%")).toBeInTheDocument();
   });
 
-  it('"Sinh bài mới" resets and returns to the setup phase with filters still selected', async () => {
+  it('"Sinh bài mới" replays AI-generation directly (no return to setup) for a "generated" session', async () => {
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue(
       Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
@@ -549,9 +549,150 @@ describe("BilingualReadingPage (result phase)", () => {
     vi.mocked(getTopics).mockResolvedValue([]);
 
     await completeASession();
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({ sentences: [{ target: "New one.", vietnamese: "Bài mới.", vocabWords: [] }] }),
+    });
+
     fireEvent.click(screen.getByRole("button", { name: "Sinh bài mới" }));
 
-    expect(await screen.findByRole("button", { name: "Tạo bài luyện" })).toBeInTheDocument();
+    expect(await screen.findByText("Câu 1 / 1")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Tạo bài luyện" })).not.toBeInTheDocument();
+  });
+
+  it('"Sinh bài mới" falls back to the setup phase for a "reused" session when nothing else matches and there are not enough live words for an AI attempt either', async () => {
+    // Note: this exercises the "reused" branch, not "generated" — unlike
+    // "Tạo bài luyện", "Lấy bài có sẵn" is never gated by the 5-word rule
+    // (Task 3), so a session can legitimately start in "reused" mode with
+    // fewer than 5 live matching words. There's no equivalent test for a
+    // "generated" session running low on words mid-visit: `records` is
+    // fetched once on mount and never refetched by this page, so a
+    // "generated" session's own word count can't actually change between
+    // finishing the session and clicking "Sinh bài mới" within one visit —
+    // handleNewSession's `else { resetToSetup(); }` branch for the
+    // "generated" case is intentionally defensive/currently-unreachable
+    // code, not something to force a test around.
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1" }), makeRecord({ id: "2" })]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(getRandomSavedExercise).mockResolvedValue({
+      id: "saved-1",
+      type: "bilingual",
+      passage: { sentences: [{ target: "Hi.", vietnamese: "Chào.", vocabWords: [] }], vocabIds: [] },
+      generationFilters: { topicIds: [], maxCefr: null, wordCount: null },
+      targetLanguage: "english",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    });
+
+    render(<BilingualReadingPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
+    await screen.findByText("Câu 1 / 1");
+    fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "Hi." } });
+    await waitFor(() => expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument());
+
+    vi.mocked(getRandomSavedExercise).mockResolvedValue(null);
+
+    fireEvent.click(screen.getByRole("button", { name: "Sinh bài mới" }));
+
+    expect(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Tạo bài luyện" })).not.toBeInTheDocument();
+    expect(generateContent).not.toHaveBeenCalled();
+  });
+
+  it('"Sinh bài mới" fetches another saved exercise directly for a "reused" session (no exclusion, since reused sessions have no "Lưu bài" button to set justSavedId)', async () => {
+    // The spec's "exclude the just-saved exercise from the next random pick"
+    // requirement is implemented in fetchSavedExercise's excludeId param
+    // (unit-tested directly in Task 1's getRandomSavedExercise tests) and
+    // wired here as `justSavedId ?? undefined`. In practice `justSavedId` can
+    // only become non-null via "Lưu bài" (Task 4), which only renders for
+    // `sessionMode === "generated"` — and a "generated" session's own "Sinh
+    // bài mới" always re-runs handleGenerate() directly, never a random pick
+    // (see the note on the "generated"-insufficient-words test above). So
+    // this exact exclusion never actually fires within a single page visit
+    // under the current design; this test documents that reality rather than
+    // asserting a false claim about it triggering.
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+    const FIRST_SAVED = {
+      id: "saved-1",
+      type: "bilingual" as const,
+      passage: { sentences: [{ target: "First.", vietnamese: "Đầu.", vocabWords: [] }], vocabIds: [] },
+      generationFilters: { topicIds: [], maxCefr: null, wordCount: null },
+      targetLanguage: "english" as const,
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    vi.mocked(getRandomSavedExercise).mockResolvedValue(FIRST_SAVED);
+
+    render(<BilingualReadingPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
+    await screen.findByText("Câu 1 / 1");
+    fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "First." } });
+    await waitFor(() => expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument());
+
+    expect(screen.queryByRole("button", { name: "Lưu bài" })).not.toBeInTheDocument();
+
+    const SECOND_SAVED = {
+      ...FIRST_SAVED,
+      id: "saved-2",
+      passage: { sentences: [{ target: "Second.", vietnamese: "Hai.", vocabWords: [] }], vocabIds: [] },
+    };
+    vi.mocked(getRandomSavedExercise).mockResolvedValue(SECOND_SAVED);
+
+    fireEvent.click(screen.getByRole("button", { name: "Sinh bài mới" }));
+
+    expect(await screen.findByText("Câu 1 / 1")).toBeInTheDocument();
+    expect(screen.getByText("Second.")).toBeInTheDocument();
+    expect(vi.mocked(getRandomSavedExercise).mock.calls[1][3]).toBeUndefined();
+  });
+
+  it('"Sinh bài mới" falls back to AI with the inline notice when a "reused" session finds no other saved match', async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(getRandomSavedExercise).mockResolvedValue({
+      id: "saved-1",
+      type: "bilingual",
+      passage: { sentences: [{ target: "First.", vietnamese: "Đầu.", vocabWords: [] }], vocabIds: [] },
+      generationFilters: { topicIds: [], maxCefr: null, wordCount: null },
+      targetLanguage: "english",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    });
+
+    render(<BilingualReadingPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
+    await screen.findByText("Câu 1 / 1");
+    fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "First." } });
+    await waitFor(() => expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument());
+
+    vi.mocked(getRandomSavedExercise).mockResolvedValue(null);
+    // generateContent's mock resolution is held open deliberately (instead of
+    // mockResolvedValue, which settles within the same microtask burst as
+    // everything upstream of it) so the notice's render commit is
+    // observable before the AI fallback completes and the screen moves on
+    // to the session phase — otherwise this races and the notice's visible
+    // window can close before screen.findByText ever gets to see it (same
+    // pattern as the setup-phase "falls back to AI generation" test above).
+    let resolveGenerate!: (value: { text: string }) => void;
+    vi.mocked(generateContent).mockReturnValue(
+      new Promise((resolve) => {
+        resolveGenerate = resolve;
+      })
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Sinh bài mới" }));
+
+    expect(
+      await screen.findByText("Chưa có bài đã lưu khớp bộ lọc này — đang tạo bài mới bằng AI…")
+    ).toBeInTheDocument();
+
+    resolveGenerate({
+      text: JSON.stringify({ sentences: [{ target: "AI made.", vietnamese: "AI tạo.", vocabWords: [] }] }),
+    });
+    await waitFor(() => expect(screen.getByText("AI tạo.")).toBeInTheDocument());
   });
 
   it('"Về trang chính" navigates back to the reading hub', async () => {
