@@ -46,6 +46,10 @@ export async function saveReadingExercise(
 }
 
 function matchesFilters(exercise: SavedReadingExercise, filters: SavedExerciseFilters): boolean {
+  // Pilot for one type only — hard-coding "bilingual" here (rather than a
+  // generic parameter) is deliberate; a future Part5/6/7/Nghe type gets its
+  // own read path, not a parameterized version of this one.
+  if (exercise.type !== "bilingual") return false;
   if (filters.topicIds.length > 0) {
     const overlaps = exercise.generationFilters.topicIds.some((id) => filters.topicIds.includes(id));
     if (!overlaps) return false;
@@ -80,6 +84,10 @@ export async function getAllUsedVocabIds(uid: string): Promise<Set<string>> {
   const ids = new Set<string>();
   for (const d of snapshot.docs) {
     const data = d.data() as SavedReadingExercise;
+    // A future foreign-typed document (Part5/6/7/Nghe) sharing this same
+    // collection won't have passage.vocabIds in this shape — skip it rather
+    // than throw.
+    if (data.type !== "bilingual") continue;
     for (const id of data.passage.vocabIds) ids.add(id);
   }
   return ids;

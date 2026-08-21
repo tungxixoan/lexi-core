@@ -114,7 +114,7 @@ export default function BilingualReadingPage() {
     setGenerating(true);
     setGenerateError(null);
     try {
-      const usedVocabIds = await getAllUsedVocabIds(user.uid);
+      const usedVocabIds = await getAllUsedVocabIds(user.uid).catch(() => new Set<string>());
       const prioritized = prioritizeUnusedWords(pool, usedVocabIds);
       const words = wordCount === null ? prioritized : prioritized.slice(0, wordCount);
       const prompt = buildReadingPassagePrompt(
@@ -135,6 +135,7 @@ export default function BilingualReadingPage() {
       }
       setSessionMode("generated");
       setJustSavedId(null);
+      setSaveError(null);
       setPassage(generated);
       setCurrentIndex(0);
       setTyped("");
@@ -147,6 +148,7 @@ export default function BilingualReadingPage() {
       setGenerateError(err instanceof Error ? err.message : String(err));
     } finally {
       setGenerating(false);
+      setSavedNotice(null);
     }
   }
 
@@ -174,6 +176,7 @@ export default function BilingualReadingPage() {
         found = true;
         setSessionMode("reused");
         setJustSavedId(null);
+        setSaveError(null);
         setPassage(saved.passage);
         setCurrentIndex(0);
         setTyped("");
@@ -269,6 +272,7 @@ export default function BilingualReadingPage() {
     setGenerateError(null);
     setSavedNotice(null);
     setJustSavedId(null);
+    setSaveError(null);
     setPhase("setup");
   }
 

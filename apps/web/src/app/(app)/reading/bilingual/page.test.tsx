@@ -716,6 +716,31 @@ describe("BilingualReadingPage (result phase)", () => {
     await waitFor(() => expect(screen.getByText("AI tạo.")).toBeInTheDocument());
   });
 
+  it("clears the stale save error and saved-notice from a prior session once a fresh session's result screen renders", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(saveReadingExercise).mockRejectedValue(new Error("network down"));
+
+    await completeASession();
+    fireEvent.click(screen.getByRole("button", { name: "Lưu bài" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("network down");
+
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({ sentences: [{ target: "New one.", vietnamese: "Bài mới.", vocabWords: [] }] }),
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sinh bài mới" }));
+
+    await screen.findByText("Câu 1 / 1");
+    fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "New one." } });
+    await waitFor(() => expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument());
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByText(/đang tạo bài mới bằng AI/)).not.toBeInTheDocument();
+  });
+
   it('"Về trang chính" navigates back to the reading hub', async () => {
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue(
