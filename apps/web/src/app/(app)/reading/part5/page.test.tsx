@@ -242,4 +242,75 @@ describe("Part5Page (result phase)", () => {
 
     expect(pushMock).toHaveBeenCalledWith("/reading");
   });
+
+  it('surfaces a save error via role="alert" when saveReadingExercise rejects', async () => {
+    mockSignedIn();
+    vi.mocked(saveReadingExercise).mockRejectedValue(new Error("network down"));
+    await completeSession([1]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Lưu bài" }));
+
+    expect(await screen.findByText("network down")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("network down");
+  });
+
+  async function completeReusedSession() {
+    vi.mocked(getRandomSavedExercise).mockResolvedValue({
+      id: "saved-1",
+      type: "part5",
+      passage: ONE_QUESTION_SET,
+      generationFilters: { appContext: "general", volumes: [] },
+      targetLanguage: "english",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    } as never);
+    render(<Part5Page />);
+    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
+    await screen.findByText("1. She ___ to work.");
+    fireEvent.click(screen.getByRole("button", { name: "goes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Nộp bài" }));
+    await screen.findByText("1/1");
+  }
+
+  it("hides the vocab-suggestions section and the Lưu bài button for a reused session's result screen", async () => {
+    mockSignedIn();
+    await completeReusedSession();
+
+    expect(screen.queryByTestId("vocab-suggestions")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Lưu bài" })).not.toBeInTheDocument();
+  });
+
+  it('"Bài khác" fetches another saved exercise directly for a reused session, not the AI', async () => {
+    mockSignedIn();
+    vi.mocked(getRandomSavedExercise).mockResolvedValueOnce({
+      id: "saved-1",
+      type: "part5",
+      passage: ONE_QUESTION_SET,
+      generationFilters: { appContext: "general", volumes: [] },
+      targetLanguage: "english",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    } as never);
+    render(<Part5Page />);
+    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
+    await screen.findByText("1. She ___ to work.");
+    fireEvent.click(screen.getByRole("button", { name: "goes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Nộp bài" }));
+    await screen.findByText("1/1");
+
+    vi.mocked(getRandomSavedExercise).mockResolvedValueOnce({
+      id: "saved-2",
+      type: "part5",
+      passage: {
+        questions: [{ sentenceWithBlank: "New saved one.", options: ["a", "b", "c", "d"], correctIndex: 0, explanation: "E." }],
+      },
+      generationFilters: { appContext: "general", volumes: [] },
+      targetLanguage: "english",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    } as never);
+
+    fireEvent.click(screen.getByRole("button", { name: "Bài khác" }));
+
+    expect(await screen.findByText("1. New saved one.")).toBeInTheDocument();
+    expect(getRandomSavedExercise).toHaveBeenCalledTimes(2);
+    expect(generateContent).not.toHaveBeenCalled();
+  });
 });

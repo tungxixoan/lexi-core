@@ -121,8 +121,8 @@ export default function Part5Page() {
         setSessionMode("reused");
         setJustSavedId(null);
         setSaveError(null);
-        setSet(saved.passage as Part5Set);
-        setAnswers(new Array((saved.passage as Part5Set).questions.length).fill(null));
+        setSet(saved.passage);
+        setAnswers(new Array(saved.passage.questions.length).fill(null));
         setPhase("session");
       } else {
         setSavedNotice("Chưa có bài đã lưu khớp bộ lọc này — đang tạo bài mới bằng AI…");

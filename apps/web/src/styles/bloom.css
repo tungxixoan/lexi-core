@@ -1538,3 +1538,11 @@ button.btn-secondary {
   font-style: italic;
   margin: 10px 0 0;
 }
+
+.mc-score {
+  font-size: 30px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--ink);
+  margin: 0 0 20px;
+}

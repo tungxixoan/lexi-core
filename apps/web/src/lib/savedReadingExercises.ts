@@ -4,6 +4,7 @@ import { CEFR_ORDER } from "./practiceSession";
 import type { ReadingPassage } from "./readingPassage";
 import type { VocabRecord } from "./vocabRecords";
 import type { TargetLanguage } from "./languages";
+import type { Part5Set } from "./part5";
 
 export interface BilingualFilters {
   topicIds: string[];
@@ -21,8 +22,10 @@ export interface ToeicFilters {
 }
 
 // Each variant's own file (part5.ts, part6.ts, part7.ts, ...) owns its
-// `passage` shape; this module only needs to know the discriminant and the
-// two filter shapes that exist across all current and near-future types.
+// `passage` shape; this module imports each concrete type (no cycle — e.g.
+// part5.ts only imports from languages.ts and toeicFilters.ts, neither of
+// which imports this module) so callers get full type safety end-to-end
+// instead of a generic `unknown` escape hatch.
 export type SavedReadingExercise =
   | {
       id: string;
@@ -35,12 +38,7 @@ export type SavedReadingExercise =
   | {
       id: string;
       type: "part5";
-      // Deliberately untyped as a specific Part5Set here — this module must
-      // not depend on part5.ts (a sibling domain module), only on the shape
-      // discriminant. Callers get full type safety via the generic
-      // functions below, which infer the real passage/filter types from
-      // the `type` argument at the call site.
-      passage: unknown;
+      passage: Part5Set;
       generationFilters: ToeicFilters;
       targetLanguage: TargetLanguage;
       createdAt: string;
