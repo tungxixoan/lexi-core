@@ -433,6 +433,7 @@ describe("BilingualReadingPage (result phase)", () => {
     expect(screen.queryByRole("button", { name: "Lưu bài" })).not.toBeInTheDocument();
     expect(saveReadingExercise).toHaveBeenCalledWith(
       "u1",
+      "bilingual",
       expect.objectContaining({ sentences: expect.any(Array) }),
       expect.objectContaining({ topicIds: [], maxCefr: null, wordCount: 10 }),
       "english"
@@ -665,7 +666,7 @@ describe("BilingualReadingPage (result phase)", () => {
 
     expect(await screen.findByText("Câu 1 / 1")).toBeInTheDocument();
     expect(screen.getByText("Second.")).toBeInTheDocument();
-    expect(vi.mocked(getRandomSavedExercise).mock.calls[1][3]).toBeUndefined();
+    expect(vi.mocked(getRandomSavedExercise).mock.calls[1][4]).toBeUndefined();
   });
 
   it('"Sinh bài mới" falls back to AI with the inline notice when a "reused" session finds no other saved match', async () => {

@@ -30,7 +30,7 @@ import {
   getRandomSavedExercise,
   saveReadingExercise,
   prioritizeUnusedWords,
-  type SavedExerciseFilters,
+  type BilingualFilters,
 } from "@/lib/savedReadingExercises";
 import { VocabSuggestionsSection } from "@/components/shared/VocabSuggestionsSection";
 
@@ -170,8 +170,8 @@ export default function BilingualReadingPage() {
     setFetchingSaved(true);
     let found = false;
     try {
-      const filters: SavedExerciseFilters = { topicIds: [...selectedTopicIds], maxCefr, wordCount };
-      const saved = await getRandomSavedExercise(user.uid, settings.targetLanguage, filters, excludeId);
+      const filters: BilingualFilters = { topicIds: [...selectedTopicIds], maxCefr, wordCount };
+      const saved = await getRandomSavedExercise(user.uid, settings.targetLanguage, "bilingual", filters, excludeId);
       if (saved) {
         found = true;
         setSessionMode("reused");
@@ -210,12 +210,12 @@ export default function BilingualReadingPage() {
     setSaving(true);
     setSaveError(null);
     try {
-      const generationFilters: SavedExerciseFilters = {
+      const generationFilters: BilingualFilters = {
         topicIds: [...selectedTopicIds],
         maxCefr,
         wordCount,
       };
-      const newId = await saveReadingExercise(user.uid, passage, generationFilters, settings.targetLanguage);
+      const newId = await saveReadingExercise(user.uid, "bilingual", passage, generationFilters, settings.targetLanguage);
       setJustSavedId(newId);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : String(err));

@@ -5,7 +5,7 @@ import {
   getRandomSavedExercise,
   getAllUsedVocabIds,
   prioritizeUnusedWords,
-  type SavedExerciseFilters,
+  type BilingualFilters,
   type SavedReadingExercise,
 } from "./savedReadingExercises";
 import type { ReadingPassage } from "./readingPassage";
@@ -54,24 +54,50 @@ const PASSAGE: ReadingPassage = {
   vocabIds: ["v1", "v2"],
 };
 
-function makeSavedExercise(overrides: Partial<SavedReadingExercise> = {}): SavedReadingExercise {
+// Minimal fixture shaped like the real Part5Set (Task 3) — not imported from
+// part5.ts, which doesn't exist yet. This proves the generic type/filter
+// dispatch works for a second type before that module is written.
+interface FakePart5Set {
+  questions: { sentenceWithBlank: string; options: string[]; correctIndex: number; explanation: string }[];
+}
+interface FakeToeicFilters {
+  appContext: string;
+  volumes: string[];
+}
+const PART5_PASSAGE: FakePart5Set = {
+  questions: [{ sentenceWithBlank: "She ___ to work.", options: ["go", "goes", "going", "gone"], correctIndex: 1, explanation: "..." }],
+};
+
+function makeBilingualExercise(overrides: Partial<Extract<SavedReadingExercise, { type: "bilingual" }>> = {}) {
   return {
     id: "ex-1",
-    type: "bilingual",
+    type: "bilingual" as const,
     passage: PASSAGE,
-    generationFilters: { topicIds: ["biz"], maxCefr: "b1", wordCount: 10 },
-    targetLanguage: "english",
+    generationFilters: { topicIds: ["biz"], maxCefr: "b1" as const, wordCount: 10 },
+    targetLanguage: "english" as const,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function makePart5Exercise(overrides: Partial<{ id: string; generationFilters: FakeToeicFilters }> = {}) {
+  return {
+    id: "p5-1",
+    type: "part5" as const,
+    passage: PART5_PASSAGE,
+    generationFilters: { appContext: "business", volumes: ["vol3"] },
+    targetLanguage: "english" as const,
     createdAt: "2026-01-01T00:00:00.000Z",
     ...overrides,
   };
 }
 
 describe("saveReadingExercise", () => {
-  it("creates a new document carrying its own id field, and returns that id", async () => {
+  it("creates a bilingual document carrying its own id field, and returns that id", async () => {
     vi.mocked(doc).mockReturnValue({ id: "new-doc-id" } as never);
-    const filters: SavedExerciseFilters = { topicIds: ["biz"], maxCefr: "b1", wordCount: 10 };
+    const filters: BilingualFilters = { topicIds: ["biz"], maxCefr: "b1", wordCount: 10 };
 
-    const newId = await saveReadingExercise("user-123", PASSAGE, filters, "english");
+    const newId = await saveReadingExercise("user-123", "bilingual", PASSAGE, filters, "english");
 
     expect(collection).toHaveBeenCalledWith("mock-db", "users", "user-123", "reading_exercises");
     expect(doc).toHaveBeenCalledWith("mock-collection-ref");
@@ -88,13 +114,32 @@ describe("saveReadingExercise", () => {
     );
     expect(newId).toBe("new-doc-id");
   });
+
+  it("creates a part5 document the same way, with type: 'part5' in the stored record", async () => {
+    vi.mocked(doc).mockReturnValue({ id: "new-p5-id" } as never);
+    const filters = { appContext: "business", volumes: ["vol3"] };
+
+    const newId = await saveReadingExercise("user-123", "part5", PART5_PASSAGE, filters, "english");
+
+    expect(setDoc).toHaveBeenCalledWith(
+      { id: "new-p5-id" },
+      expect.objectContaining({
+        id: "new-p5-id",
+        type: "part5",
+        passage: PART5_PASSAGE,
+        generationFilters: filters,
+        targetLanguage: "english",
+      })
+    );
+    expect(newId).toBe("new-p5-id");
+  });
 });
 
 describe("getRandomSavedExercise", () => {
   it("queries only by targetLanguage, filters everything else client-side", async () => {
     vi.mocked(getDocs).mockResolvedValue({ docs: [] } as never);
 
-    await getRandomSavedExercise("user-123", "english", { topicIds: [], maxCefr: null, wordCount: null });
+    await getRandomSavedExercise("user-123", "english", "bilingual", { topicIds: [], maxCefr: null, wordCount: null });
 
     expect(where).toHaveBeenCalledWith("targetLanguage", "==", "english");
     expect(query).toHaveBeenCalledWith("mock-collection-ref", "mock-where");
@@ -104,7 +149,7 @@ describe("getRandomSavedExercise", () => {
   it("returns null when there are no candidates", async () => {
     vi.mocked(getDocs).mockResolvedValue({ docs: [] } as never);
 
-    const result = await getRandomSavedExercise("user-123", "english", {
+    const result = await getRandomSavedExercise("user-123", "english", "bilingual", {
       topicIds: [],
       maxCefr: null,
       wordCount: null,
@@ -114,10 +159,10 @@ describe("getRandomSavedExercise", () => {
   });
 
   it("matches on topic overlap (at least one shared id), not equality", async () => {
-    const ex = makeSavedExercise({ generationFilters: { topicIds: ["biz", "travel"], maxCefr: null, wordCount: null } });
+    const ex = makeBilingualExercise({ generationFilters: { topicIds: ["biz", "travel"], maxCefr: null, wordCount: null } });
     vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: ex.id, data: () => ex }] } as never);
 
-    const result = await getRandomSavedExercise("user-123", "english", {
+    const result = await getRandomSavedExercise("user-123", "english", "bilingual", {
       topicIds: ["travel", "food"],
       maxCefr: null,
       wordCount: null,
@@ -127,10 +172,10 @@ describe("getRandomSavedExercise", () => {
   });
 
   it("does not match when there is no topic overlap", async () => {
-    const ex = makeSavedExercise({ generationFilters: { topicIds: ["biz"], maxCefr: null, wordCount: null } });
+    const ex = makeBilingualExercise({ generationFilters: { topicIds: ["biz"], maxCefr: null, wordCount: null } });
     vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: ex.id, data: () => ex }] } as never);
 
-    const result = await getRandomSavedExercise("user-123", "english", {
+    const result = await getRandomSavedExercise("user-123", "english", "bilingual", {
       topicIds: ["travel"],
       maxCefr: null,
       wordCount: null,
@@ -140,10 +185,10 @@ describe("getRandomSavedExercise", () => {
   });
 
   it("matches anything when the requested topicIds filter is empty", async () => {
-    const ex = makeSavedExercise({ generationFilters: { topicIds: ["biz"], maxCefr: null, wordCount: null } });
+    const ex = makeBilingualExercise({ generationFilters: { topicIds: ["biz"], maxCefr: null, wordCount: null } });
     vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: ex.id, data: () => ex }] } as never);
 
-    const result = await getRandomSavedExercise("user-123", "english", {
+    const result = await getRandomSavedExercise("user-123", "english", "bilingual", {
       topicIds: [],
       maxCefr: null,
       wordCount: null,
@@ -153,10 +198,10 @@ describe("getRandomSavedExercise", () => {
   });
 
   it("matches when the saved exercise's level is at or below the requested max", async () => {
-    const ex = makeSavedExercise({ generationFilters: { topicIds: [], maxCefr: "a2", wordCount: null } });
+    const ex = makeBilingualExercise({ generationFilters: { topicIds: [], maxCefr: "a2", wordCount: null } });
     vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: ex.id, data: () => ex }] } as never);
 
-    const result = await getRandomSavedExercise("user-123", "english", {
+    const result = await getRandomSavedExercise("user-123", "english", "bilingual", {
       topicIds: [],
       maxCefr: "b1",
       wordCount: null,
@@ -166,10 +211,10 @@ describe("getRandomSavedExercise", () => {
   });
 
   it("does not match when the saved exercise's level is above the requested max", async () => {
-    const ex = makeSavedExercise({ generationFilters: { topicIds: [], maxCefr: "c1", wordCount: null } });
+    const ex = makeBilingualExercise({ generationFilters: { topicIds: [], maxCefr: "c1", wordCount: null } });
     vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: ex.id, data: () => ex }] } as never);
 
-    const result = await getRandomSavedExercise("user-123", "english", {
+    const result = await getRandomSavedExercise("user-123", "english", "bilingual", {
       topicIds: [],
       maxCefr: "b1",
       wordCount: null,
@@ -178,11 +223,11 @@ describe("getRandomSavedExercise", () => {
     expect(result).toBeNull();
   });
 
-  it("does not match a saved exercise with no level cap when the request has a level cap", async () => {
-    const ex = makeSavedExercise({ generationFilters: { topicIds: [], maxCefr: null, wordCount: null } });
+  it("does not match a bilingual exercise with no level cap when the request has a level cap", async () => {
+    const ex = makeBilingualExercise({ generationFilters: { topicIds: [], maxCefr: null, wordCount: null } });
     vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: ex.id, data: () => ex }] } as never);
 
-    const result = await getRandomSavedExercise("user-123", "english", {
+    const result = await getRandomSavedExercise("user-123", "english", "bilingual", {
       topicIds: [],
       maxCefr: "b1",
       wordCount: null,
@@ -192,10 +237,10 @@ describe("getRandomSavedExercise", () => {
   });
 
   it("matches anything when the requested maxCefr is null, regardless of the saved level", async () => {
-    const ex = makeSavedExercise({ generationFilters: { topicIds: [], maxCefr: "c2", wordCount: null } });
+    const ex = makeBilingualExercise({ generationFilters: { topicIds: [], maxCefr: "c2", wordCount: null } });
     vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: ex.id, data: () => ex }] } as never);
 
-    const result = await getRandomSavedExercise("user-123", "english", {
+    const result = await getRandomSavedExercise("user-123", "english", "bilingual", {
       topicIds: [],
       maxCefr: null,
       wordCount: null,
@@ -205,8 +250,8 @@ describe("getRandomSavedExercise", () => {
   });
 
   it("requires exact word count equality, including null-matches-null", async () => {
-    const ex10 = makeSavedExercise({ id: "ex-10", generationFilters: { topicIds: [], maxCefr: null, wordCount: 10 } });
-    const exAll = makeSavedExercise({ id: "ex-all", generationFilters: { topicIds: [], maxCefr: null, wordCount: null } });
+    const ex10 = makeBilingualExercise({ id: "ex-10", generationFilters: { topicIds: [], maxCefr: null, wordCount: 10 } });
+    const exAll = makeBilingualExercise({ id: "ex-all", generationFilters: { topicIds: [], maxCefr: null, wordCount: null } });
     vi.mocked(getDocs).mockResolvedValue({
       docs: [
         { id: ex10.id, data: () => ex10 },
@@ -214,18 +259,19 @@ describe("getRandomSavedExercise", () => {
       ],
     } as never);
 
-    const result = await getRandomSavedExercise("user-123", "english", { topicIds: [], maxCefr: null, wordCount: null });
+    const result = await getRandomSavedExercise("user-123", "english", "bilingual", { topicIds: [], maxCefr: null, wordCount: null });
 
     expect(result?.id).toBe("ex-all");
   });
 
   it("excludes the given excludeId even if it would otherwise match", async () => {
-    const ex = makeSavedExercise({ generationFilters: { topicIds: [], maxCefr: null, wordCount: null } });
+    const ex = makeBilingualExercise({ generationFilters: { topicIds: [], maxCefr: null, wordCount: null } });
     vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: ex.id, data: () => ex }] } as never);
 
     const result = await getRandomSavedExercise(
       "user-123",
       "english",
+      "bilingual",
       { topicIds: [], maxCefr: null, wordCount: null },
       ex.id
     );
@@ -234,8 +280,8 @@ describe("getRandomSavedExercise", () => {
   });
 
   it("picks randomly among multiple matching candidates", async () => {
-    const exA = makeSavedExercise({ id: "ex-a", generationFilters: { topicIds: [], maxCefr: null, wordCount: null } });
-    const exB = makeSavedExercise({ id: "ex-b", generationFilters: { topicIds: [], maxCefr: null, wordCount: null } });
+    const exA = makeBilingualExercise({ id: "ex-a", generationFilters: { topicIds: [], maxCefr: null, wordCount: null } });
+    const exB = makeBilingualExercise({ id: "ex-b", generationFilters: { topicIds: [], maxCefr: null, wordCount: null } });
     vi.mocked(getDocs).mockResolvedValue({
       docs: [
         { id: exA.id, data: () => exA },
@@ -245,7 +291,7 @@ describe("getRandomSavedExercise", () => {
     const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.99);
 
     try {
-      const result = await getRandomSavedExercise("user-123", "english", {
+      const result = await getRandomSavedExercise("user-123", "english", "bilingual", {
         topicIds: [],
         maxCefr: null,
         wordCount: null,
@@ -258,12 +304,12 @@ describe("getRandomSavedExercise", () => {
   });
 
   it("uses the real Firestore document id, not any id field inside the document data", async () => {
-    const ex = makeSavedExercise({ generationFilters: { topicIds: [], maxCefr: null, wordCount: null } });
+    const ex = makeBilingualExercise({ generationFilters: { topicIds: [], maxCefr: null, wordCount: null } });
     vi.mocked(getDocs).mockResolvedValue({
       docs: [{ id: "real-doc-id", data: () => ({ ...ex, id: "stale-field-id" }) }],
     } as never);
 
-    const result = await getRandomSavedExercise("user-123", "english", {
+    const result = await getRandomSavedExercise("user-123", "english", "bilingual", {
       topicIds: [],
       maxCefr: null,
       wordCount: null,
@@ -271,12 +317,61 @@ describe("getRandomSavedExercise", () => {
 
     expect(result?.id).toBe("real-doc-id");
   });
+
+  it("never returns a document of a different type, even if its stored filters would otherwise satisfy the shape", async () => {
+    const p5 = makePart5Exercise();
+    vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: p5.id, data: () => p5 }] } as never);
+
+    const result = await getRandomSavedExercise("user-123", "english", "bilingual", {
+      topicIds: [],
+      maxCefr: null,
+      wordCount: null,
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it("matches part5 exercises by exact appContext and volume overlap", async () => {
+    const p5 = makePart5Exercise({ generationFilters: { appContext: "business", volumes: ["vol2", "vol3"] } });
+    vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: p5.id, data: () => p5 }] } as never);
+
+    const result = await getRandomSavedExercise("user-123", "english", "part5", {
+      appContext: "business",
+      volumes: ["vol3", "vol4"],
+    } as never);
+
+    expect(result?.id).toBe(p5.id);
+  });
+
+  it("does not match a part5 exercise with a different appContext", async () => {
+    const p5 = makePart5Exercise({ generationFilters: { appContext: "travel", volumes: [] } });
+    vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: p5.id, data: () => p5 }] } as never);
+
+    const result = await getRandomSavedExercise("user-123", "english", "part5", {
+      appContext: "business",
+      volumes: [],
+    } as never);
+
+    expect(result).toBeNull();
+  });
+
+  it("matches a part5 exercise on appContext when either side's volumes list is empty", async () => {
+    const p5 = makePart5Exercise({ generationFilters: { appContext: "business", volumes: [] } });
+    vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: p5.id, data: () => p5 }] } as never);
+
+    const result = await getRandomSavedExercise("user-123", "english", "part5", {
+      appContext: "business",
+      volumes: ["vol4"],
+    } as never);
+
+    expect(result?.id).toBe(p5.id);
+  });
 });
 
 describe("getAllUsedVocabIds", () => {
-  it("unions vocabIds across every saved exercise", async () => {
-    const exA = makeSavedExercise({ id: "a", passage: { sentences: [], vocabIds: ["v1", "v2"] } });
-    const exB = makeSavedExercise({ id: "b", passage: { sentences: [], vocabIds: ["v2", "v3"] } });
+  it("unions vocabIds across every saved bilingual exercise", async () => {
+    const exA = makeBilingualExercise({ id: "a", passage: { sentences: [], vocabIds: ["v1", "v2"] } });
+    const exB = makeBilingualExercise({ id: "b", passage: { sentences: [], vocabIds: ["v2", "v3"] } });
     vi.mocked(getDocs).mockResolvedValue({
       docs: [
         { id: exA.id, data: () => exA },
@@ -293,6 +388,21 @@ describe("getAllUsedVocabIds", () => {
     vi.mocked(getDocs).mockResolvedValue({ docs: [] } as never);
     const result = await getAllUsedVocabIds("user-123");
     expect(result).toEqual(new Set());
+  });
+
+  it("skips a non-bilingual document instead of throwing on its missing passage.vocabIds shape", async () => {
+    const p5 = makePart5Exercise();
+    const bilingual = makeBilingualExercise({ id: "b", passage: { sentences: [], vocabIds: ["v1"] } });
+    vi.mocked(getDocs).mockResolvedValue({
+      docs: [
+        { id: p5.id, data: () => p5 },
+        { id: bilingual.id, data: () => bilingual },
+      ],
+    } as never);
+
+    const result = await getAllUsedVocabIds("user-123");
+
+    expect(result).toEqual(new Set(["v1"]));
   });
 });
 
