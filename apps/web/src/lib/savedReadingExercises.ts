@@ -93,7 +93,11 @@ function matchesBilingual(
 
 function matchesToeic(exercise: { generationFilters: ToeicFilters }, filters: ToeicFilters): boolean {
   if (filters.topicIds.length > 0) {
-    const overlaps = exercise.generationFilters.topicIds.some((id) => filters.topicIds.includes(id));
+    // Pre-feature saved Part 5 docs have the old `{ appContext, volumes }`
+    // shape with no `topicIds` field at all — default to empty so matching
+    // against those old docs doesn't throw, and correctly falls through to
+    // "doesn't overlap with the requested topics" rather than crashing.
+    const overlaps = (exercise.generationFilters.topicIds ?? []).some((id) => filters.topicIds.includes(id));
     if (!overlaps) return false;
   }
   if (filters.volumes.length > 0 && exercise.generationFilters.volumes.length > 0) {

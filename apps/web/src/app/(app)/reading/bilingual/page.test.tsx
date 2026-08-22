@@ -210,6 +210,28 @@ describe("BilingualReadingPage (loading phase)", () => {
     expect(generateContent).not.toHaveBeenCalled();
   });
 
+  it("shows an explanatory error (not a blank screen) when action=generate matches 0 words in the filtered pool", async () => {
+    // Before this feature, the setup screen's own button-gating made this
+    // path unreachable in practice. Now the hub does that gating one page
+    // load earlier, so a stale/hand-edited URL (e.g. a topicIds filter with
+    // no matching words) can land here directly with a 0-word pool.
+    setSearchParams({ topicIds: "nonexistent-topic", action: "generate" });
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<BilingualReadingPage />);
+
+    expect(
+      await screen.findByText("Không tìm thấy từ vựng nào khớp với bộ lọc đã chọn để tạo bài.")
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Thử lại" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Về trang chính" })).toBeInTheDocument();
+    expect(generateContent).not.toHaveBeenCalled();
+  });
+
   it("shows an error when the AI returns no usable sentences, and 'Thử lại' retries the same action", async () => {
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue(

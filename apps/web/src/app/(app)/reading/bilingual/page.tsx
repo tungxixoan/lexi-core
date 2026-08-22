@@ -89,7 +89,10 @@ function BilingualReadingPageContent() {
     if (!records || !user || !settings) return;
     const filters: SessionWordFilters = { topicIds, maxCefr, count: null };
     const pool = selectSessionWords(records, filters);
-    if (pool.length === 0) return;
+    if (pool.length === 0) {
+      setGenerateError("Không tìm thấy từ vựng nào khớp với bộ lọc đã chọn để tạo bài.");
+      return;
+    }
 
     const activeConfig = settings.providers[settings.activeProvider];
     if (!activeConfig.apiKeyCiphertext) {

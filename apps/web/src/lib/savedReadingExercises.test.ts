@@ -355,6 +355,23 @@ describe("getRandomSavedExercise", () => {
     expect(result).toBeNull();
   });
 
+  it("does not throw on a pre-migration part5 doc with no topicIds field, and treats it as not overlapping", async () => {
+    // Simulates a Part 5 exercise saved before the topic-based filter
+    // migration (cb82326): old docs have `{ appContext, volumes }` with no
+    // `topicIds` field at all, not even an empty array.
+    const preMigrationP5 = makePart5Exercise({
+      generationFilters: { volumes: [] } as unknown as FakeToeicFilters,
+    });
+    vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: preMigrationP5.id, data: () => preMigrationP5 }] } as never);
+
+    const result = await getRandomSavedExercise("user-123", "english", "part5", {
+      topicIds: ["travel-1"],
+      volumes: [],
+    } as never);
+
+    expect(result).toBeNull();
+  });
+
   it("matches a part5 exercise on any topic when the requested topicIds filter is empty", async () => {
     const p5 = makePart5Exercise({ generationFilters: { topicIds: ["biz-1"], volumes: [] } });
     vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: p5.id, data: () => p5 }] } as never);
