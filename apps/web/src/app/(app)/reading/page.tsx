@@ -30,6 +30,12 @@ export default function ReadingHubPage() {
             Gõ lại đoạn văn song ngữ được tạo từ từ vựng của bạn.
           </span>
         </Link>
+        <Link href="/reading/part5" className="reading-hub-card">
+          <span className="reading-hub-card-title">📝 Part 5 — Điền câu</span>
+          <span className="reading-hub-card-desc">
+            15 câu điền từ/ngữ pháp kiểu TOEIC, AI tạo theo chủ đề và độ khó bạn chọn.
+          </span>
+        </Link>
       </div>
     </div>
   );

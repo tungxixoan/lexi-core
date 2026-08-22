@@ -21,4 +21,11 @@ describe("ReadingHubPage", () => {
     const link = screen.getByRole("link", { name: /Đọc & gõ/ });
     expect(link).toHaveAttribute("href", "/reading/bilingual");
   });
+
+  it("shows the Part 5 card linking to /reading/part5 when signed in", () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
+    render(<ReadingHubPage />);
+    const link = screen.getByRole("link", { name: /Part 5/ });
+    expect(link).toHaveAttribute("href", "/reading/part5");
+  });
 });
