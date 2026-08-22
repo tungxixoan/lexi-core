@@ -31,12 +31,21 @@ vi.mock("@/components/SignInButton", () => ({
 }));
 
 const pushMock = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: pushMock }) }));
+const replaceMock = vi.fn();
+let mockSearchParams = new URLSearchParams();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: pushMock, replace: replaceMock }),
+  useSearchParams: () => mockSearchParams,
+}));
 vi.mock("@/components/shared/VocabSuggestionsSection", () => ({
   VocabSuggestionsSection: ({ text }: { text: string }) => (
     <div data-testid="vocab-suggestions" data-text={text} />
   ),
 }));
+
+function setSearchParams(params: Record<string, string>) {
+  mockSearchParams = new URLSearchParams(params);
+}
 
 const SETTINGS_WITH_KEY: UserSettings = {
   ...DEFAULT_SETTINGS,
@@ -96,11 +105,12 @@ function mockSignedIn(settings: UserSettings = SETTINGS_WITH_KEY) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  setSearchParams({ wordCount: "10", action: "generate" });
   vi.mocked(getAllUsedVocabIds).mockResolvedValue(new Set());
   vi.mocked(getRandomSavedExercise).mockResolvedValue(null);
 });
 
-describe("BilingualReadingPage (setup phase)", () => {
+describe("BilingualReadingPage (loading phase)", () => {
   it("prompts sign-in when logged out", () => {
     vi.mocked(useAuthUser).mockReturnValue({ user: null, loading: false } as never);
     vi.mocked(useSettingsContext).mockReturnValue({
@@ -113,35 +123,29 @@ describe("BilingualReadingPage (setup phase)", () => {
     expect(screen.getByText("Đăng nhập với Google")).toBeInTheDocument();
   });
 
-  it("shows the minimum-words hint instead of the generate button when fewer than 5 words match", async () => {
+  it("redirects to /reading when the action param is missing", async () => {
+    setSearchParams({});
     mockSignedIn();
-    vi.mocked(getVocabRecords).mockResolvedValue([
-      makeRecord({ id: "1" }),
-      makeRecord({ id: "2" }),
-    ]);
+    vi.mocked(getVocabRecords).mockResolvedValue([]);
     vi.mocked(getTopics).mockResolvedValue([]);
 
     render(<BilingualReadingPage />);
 
-    expect(
-      await screen.findByText("Hãy lưu ít nhất 5 từ khớp với bộ lọc trên vào Ngân hàng từ vựng. Hiện có 2 từ.")
-    ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Tạo bài luyện" })).not.toBeInTheDocument();
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/reading"));
   });
 
-  it("shows the generate button once at least 5 words match", async () => {
+  it("redirects to /reading when the action param is invalid", async () => {
+    setSearchParams({ action: "bogus" });
     mockSignedIn();
-    vi.mocked(getVocabRecords).mockResolvedValue(
-      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
-    );
+    vi.mocked(getVocabRecords).mockResolvedValue([]);
     vi.mocked(getTopics).mockResolvedValue([]);
 
     render(<BilingualReadingPage />);
 
-    expect(await screen.findByRole("button", { name: "Tạo bài luyện" })).not.toBeDisabled();
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/reading"));
   });
 
-  it("generates a passage from the due-prioritized word list and leaves the setup screen", async () => {
+  it("auto-generates a passage from the due-prioritized word list on mount", async () => {
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue(
       Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
@@ -154,11 +158,8 @@ describe("BilingualReadingPage (setup phase)", () => {
     });
 
     render(<BilingualReadingPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
 
-    await waitFor(() =>
-      expect(screen.queryByRole("button", { name: "Tạo bài luyện" })).not.toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText("Câu 1 / 1")).toBeInTheDocument());
     const promptArg = vi.mocked(generateContent).mock.calls[0][0].prompt;
     expect(promptArg).toContain("word0");
   });
@@ -177,7 +178,6 @@ describe("BilingualReadingPage (setup phase)", () => {
     });
 
     render(<BilingualReadingPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
 
     await waitFor(() => expect(generateContent).toHaveBeenCalled());
     expect(getAllUsedVocabIds).toHaveBeenCalledWith("u1");
@@ -189,7 +189,7 @@ describe("BilingualReadingPage (setup phase)", () => {
     expect(promptArg).toContain("freshword0");
   });
 
-  it("shows an error and stays on setup when the active provider has no API key", async () => {
+  it("shows an error with retry/back-to-hub actions when the active provider has no API key", async () => {
     mockSignedIn({
       ...DEFAULT_SETTINGS,
       activeProvider: "gemini",
@@ -201,30 +201,54 @@ describe("BilingualReadingPage (setup phase)", () => {
     vi.mocked(getTopics).mockResolvedValue([]);
 
     render(<BilingualReadingPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
 
     expect(
       await screen.findByText("Chưa có API key cho nhà cung cấp AI đang chọn — vào Cài đặt để thêm.")
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Thử lại" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Về trang chính" })).toBeInTheDocument();
     expect(generateContent).not.toHaveBeenCalled();
   });
 
-  it("shows an error and stays on setup when the AI returns no usable sentences", async () => {
+  it("shows an error when the AI returns no usable sentences, and 'Thử lại' retries the same action", async () => {
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue(
       Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
     );
     vi.mocked(getTopics).mockResolvedValue([]);
-    vi.mocked(generateContent).mockResolvedValue({ text: JSON.stringify({}) });
+    vi.mocked(generateContent).mockResolvedValueOnce({ text: JSON.stringify({}) });
 
     render(<BilingualReadingPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
+    await screen.findByText("AI không trả về đoạn văn hợp lệ.");
 
-    expect(await screen.findByText("AI không trả về đoạn văn hợp lệ.")).toBeInTheDocument();
-    expect(await screen.findByRole("button", { name: "Tạo bài luyện" })).toBeInTheDocument();
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({ sentences: [{ target: "Hi.", vietnamese: "Chào.", vocabWords: [] }] }),
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Thử lại" }));
+
+    await waitFor(() => expect(screen.getByText("Câu 1 / 1")).toBeInTheDocument());
   });
 
-  it('"Lấy bài có sẵn" starts a session directly from a matching saved exercise, without calling the AI', async () => {
+  it('"Về trang chính" on the loading-error state navigates back to the hub', async () => {
+    mockSignedIn({
+      ...DEFAULT_SETTINGS,
+      activeProvider: "gemini",
+      providers: { ...DEFAULT_SETTINGS.providers, gemini: { model: "gemini-2.5-flash", apiKeyCiphertext: null } },
+    });
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<BilingualReadingPage />);
+    await screen.findByRole("button", { name: "Về trang chính" });
+    fireEvent.click(screen.getByRole("button", { name: "Về trang chính" }));
+
+    expect(pushMock).toHaveBeenCalledWith("/reading");
+  });
+
+  it('action=existing starts a session directly from a matching saved exercise, without calling the AI', async () => {
+    setSearchParams({ wordCount: "10", action: "existing" });
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue(
       Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
@@ -233,14 +257,14 @@ describe("BilingualReadingPage (setup phase)", () => {
     vi.mocked(getRandomSavedExercise).mockResolvedValue(SAVED_EXERCISE);
 
     render(<BilingualReadingPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
 
-    expect(await screen.findByText("Câu 1 / 1")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Câu 1 / 1")).toBeInTheDocument());
     expect(screen.getByText("Câu đã lưu.")).toBeInTheDocument();
     expect(generateContent).not.toHaveBeenCalled();
   });
 
-  it('"Lấy bài có sẵn" shows an inline notice and falls back to AI generation when nothing matches', async () => {
+  it("action=existing falls back to AI generation with an inline notice when nothing matches", async () => {
+    setSearchParams({ wordCount: "10", action: "existing" });
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue(
       Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
@@ -261,7 +285,6 @@ describe("BilingualReadingPage (setup phase)", () => {
     );
 
     render(<BilingualReadingPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
 
     expect(
       await screen.findByText("Chưa có bài đã lưu khớp bộ lọc này — đang tạo bài mới bằng AI…")
@@ -274,31 +297,19 @@ describe("BilingualReadingPage (setup phase)", () => {
     await waitFor(() => expect(screen.getByText("Câu 1 / 1")).toBeInTheDocument());
   });
 
-  it('"Lấy bài có sẵn" does not attempt an AI fallback when there are not enough live words', async () => {
+  it("action=existing shows an explanatory error (not a blank screen) when nothing matches and there aren't enough live words for the AI fallback", async () => {
+    setSearchParams({ wordCount: "10", action: "existing" });
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1" }), makeRecord({ id: "2" })]);
     vi.mocked(getTopics).mockResolvedValue([]);
     vi.mocked(getRandomSavedExercise).mockResolvedValue(null);
 
     render(<BilingualReadingPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
 
-    await waitFor(() => expect(getRandomSavedExercise).toHaveBeenCalled());
-    expect(generateContent).not.toHaveBeenCalled();
     expect(
-      screen.queryByText("Chưa có bài đã lưu khớp bộ lọc này — đang tạo bài mới bằng AI…")
-    ).not.toBeInTheDocument();
-  });
-
-  it('"Lấy bài có sẵn" is enabled even when fewer than 5 words match (unlike "Tạo bài luyện")', async () => {
-    mockSignedIn();
-    vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1" }), makeRecord({ id: "2" })]);
-    vi.mocked(getTopics).mockResolvedValue([]);
-
-    render(<BilingualReadingPage />);
-
-    expect(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" })).not.toBeDisabled();
-    expect(screen.queryByRole("button", { name: "Tạo bài luyện" })).not.toBeInTheDocument();
+      await screen.findByText("Hãy lưu ít nhất 5 từ khớp với bộ lọc đã chọn vào Ngân hàng từ vựng. Hiện có 2 từ.")
+    ).toBeInTheDocument();
+    expect(generateContent).not.toHaveBeenCalled();
   });
 });
 
@@ -319,7 +330,6 @@ describe("BilingualReadingPage (typing session)", () => {
     });
 
     render(<BilingualReadingPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
 
     expect(await screen.findByText("Câu 1 / 2")).toBeInTheDocument();
     expect(screen.getByText("Chào.")).toBeInTheDocument();
@@ -343,7 +353,6 @@ describe("BilingualReadingPage (typing session)", () => {
     });
 
     render(<BilingualReadingPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
     await screen.findByText("Câu 1 / 1");
 
     fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "Hi." } });
@@ -367,7 +376,6 @@ describe("BilingualReadingPage (typing session)", () => {
     });
 
     render(<BilingualReadingPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
     await screen.findByText("Câu 1 / 2");
 
     fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "Hi " } });
@@ -387,7 +395,6 @@ describe("BilingualReadingPage (result phase)", () => {
       }),
     });
     render(<BilingualReadingPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
     await screen.findByText("Câu 1 / 2");
     fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "Hi there." } });
     await screen.findByText("Câu 2 / 2");
@@ -456,6 +463,7 @@ describe("BilingualReadingPage (result phase)", () => {
   });
 
   it('hides both "Lưu bài" and the vocab-suggestions section for a reused session', async () => {
+    setSearchParams({ wordCount: "10", action: "existing" });
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue(
       Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
@@ -471,7 +479,6 @@ describe("BilingualReadingPage (result phase)", () => {
     });
 
     render(<BilingualReadingPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
     await screen.findByText("Câu 1 / 1");
     fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "Hi." } });
     await waitFor(() => expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument());
@@ -496,7 +503,6 @@ describe("BilingualReadingPage (result phase)", () => {
     });
 
     render(<BilingualReadingPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
     await screen.findByText("Câu 1 / 2");
     fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "I saw a cat today." } });
     await screen.findByText("Câu 2 / 2");
@@ -527,7 +533,6 @@ describe("BilingualReadingPage (result phase)", () => {
     });
 
     render(<BilingualReadingPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
     await screen.findByText("Câu 1 / 1");
 
     const input = screen.getByTestId("reading-type-input");
@@ -557,7 +562,6 @@ describe("BilingualReadingPage (result phase)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Sinh bài mới" }));
 
     expect(await screen.findByText("Câu 1 / 1")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Tạo bài luyện" })).not.toBeInTheDocument();
   });
 
   it('shows a generateError alert on the result phase when "Sinh bài mới" fails to regenerate a "generated" session', async () => {
@@ -581,18 +585,14 @@ describe("BilingualReadingPage (result phase)", () => {
     expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument();
   });
 
-  it('"Sinh bài mới" falls back to the setup phase for a "reused" session when nothing else matches and there are not enough live words for an AI attempt either', async () => {
-    // Note: this exercises the "reused" branch, not "generated" — unlike
-    // "Tạo bài luyện", "Lấy bài có sẵn" is never gated by the 5-word rule
-    // (Task 3), so a session can legitimately start in "reused" mode with
-    // fewer than 5 live matching words. There's no equivalent test for a
-    // "generated" session running low on words mid-visit: `records` is
-    // fetched once on mount and never refetched by this page, so a
-    // "generated" session's own word count can't actually change between
-    // finishing the session and clicking "Sinh bài mới" within one visit —
-    // handleNewSession's `else { resetToSetup(); }` branch for the
-    // "generated" case is intentionally defensive/currently-unreachable
-    // code, not something to force a test around.
+  it('"Sinh bài mới" shows an explanatory error in place (does not navigate away) for a "reused" session when nothing else matches and there aren\'t enough live words for an AI attempt either', async () => {
+    // This exercises the "reused" branch, not "generated" — unlike "Tạo bài
+    // luyện", "Lấy bài có sẵn" is never gated by the 5-word rule, so a
+    // session can legitimately start in "reused" mode with fewer than 5 live
+    // matching words. With the setup phase gone, there is no screen left to
+    // "fall back to" — fetchSavedExercise's own generateError branch is the
+    // only feedback the user gets, rendered right here on the result phase.
+    setSearchParams({ wordCount: "10", action: "existing" });
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1" }), makeRecord({ id: "2" })]);
     vi.mocked(getTopics).mockResolvedValue([]);
@@ -606,7 +606,6 @@ describe("BilingualReadingPage (result phase)", () => {
     });
 
     render(<BilingualReadingPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
     await screen.findByText("Câu 1 / 1");
     fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "Hi." } });
     await waitFor(() => expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument());
@@ -615,9 +614,11 @@ describe("BilingualReadingPage (result phase)", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Sinh bài mới" }));
 
-    expect(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Tạo bài luyện" })).not.toBeInTheDocument();
+    expect(
+      await screen.findByText("Hãy lưu ít nhất 5 từ khớp với bộ lọc đã chọn vào Ngân hàng từ vựng. Hiện có 2 từ.")
+    ).toBeInTheDocument();
     expect(generateContent).not.toHaveBeenCalled();
+    expect(pushMock).not.toHaveBeenCalledWith("/reading");
   });
 
   it('"Sinh bài mới" fetches another saved exercise directly for a "reused" session (no exclusion, since reused sessions have no "Lưu bài" button to set justSavedId)', async () => {
@@ -625,13 +626,13 @@ describe("BilingualReadingPage (result phase)", () => {
     // requirement is implemented in fetchSavedExercise's excludeId param
     // (unit-tested directly in Task 1's getRandomSavedExercise tests) and
     // wired here as `justSavedId ?? undefined`. In practice `justSavedId` can
-    // only become non-null via "Lưu bài" (Task 4), which only renders for
+    // only become non-null via "Lưu bài", which only renders for
     // `sessionMode === "generated"` — and a "generated" session's own "Sinh
-    // bài mới" always re-runs handleGenerate() directly, never a random pick
-    // (see the note on the "generated"-insufficient-words test above). So
-    // this exact exclusion never actually fires within a single page visit
+    // bài mới" always re-runs handleGenerate() directly, never a random pick.
+    // So this exact exclusion never actually fires within a single page visit
     // under the current design; this test documents that reality rather than
     // asserting a false claim about it triggering.
+    setSearchParams({ wordCount: "10", action: "existing" });
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue(
       Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
@@ -648,7 +649,6 @@ describe("BilingualReadingPage (result phase)", () => {
     vi.mocked(getRandomSavedExercise).mockResolvedValue(FIRST_SAVED);
 
     render(<BilingualReadingPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
     await screen.findByText("Câu 1 / 1");
     fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "First." } });
     await waitFor(() => expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument());
@@ -670,6 +670,7 @@ describe("BilingualReadingPage (result phase)", () => {
   });
 
   it('"Sinh bài mới" falls back to AI with the inline notice when a "reused" session finds no other saved match', async () => {
+    setSearchParams({ wordCount: "10", action: "existing" });
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue(
       Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
@@ -685,7 +686,6 @@ describe("BilingualReadingPage (result phase)", () => {
     });
 
     render(<BilingualReadingPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
     await screen.findByText("Câu 1 / 1");
     fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "First." } });
     await waitFor(() => expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument());
@@ -697,7 +697,7 @@ describe("BilingualReadingPage (result phase)", () => {
     // observable before the AI fallback completes and the screen moves on
     // to the session phase — otherwise this races and the notice's visible
     // window can close before screen.findByText ever gets to see it (same
-    // pattern as the setup-phase "falls back to AI generation" test above).
+    // pattern as the loading-phase "falls back to AI generation" test above).
     let resolveGenerate!: (value: { text: string }) => void;
     vi.mocked(generateContent).mockReturnValue(
       new Promise((resolve) => {

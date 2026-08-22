@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthUser } from "@/lib/useAuthUser";
 import { useSettingsContext } from "@/lib/SettingsContext";
 import { SignInButton } from "@/components/SignInButton";
 import { getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics, type Topic } from "@/lib/topics";
-import { TopicFilterPopover } from "@/components/vocab-bank/TopicFilterPopover";
-import { SimpleDropdown, type SimpleDropdownOption } from "@/components/shared/SimpleDropdown";
 import { selectSessionWords, type SessionWordFilters } from "@/lib/practiceSession";
 import {
   buildReadingPassagePrompt,
@@ -35,22 +33,7 @@ import {
 import { VocabSuggestionsSection } from "@/components/shared/VocabSuggestionsSection";
 
 type CefrLevel = VocabRecord["cefrLevel"];
-const CEFR_LEVELS: CefrLevel[] = ["a1", "a2", "b1", "b2", "c1", "c2"];
-const WORD_COUNT_OPTIONS = [5, 10, 20, null] as const;
-const DEFAULT_WORD_COUNT = 10;
 const MIN_VOCAB_WORDS = 5;
-
-const CEFR_DROPDOWN_OPTIONS: SimpleDropdownOption<string>[] = [
-  { value: "", label: "Mọi trình độ" },
-  ...CEFR_LEVELS.map((level) => ({ value: level as string, label: `Tối đa ${level.toUpperCase()}` })),
-];
-
-const WORD_COUNT_DROPDOWN_OPTIONS: SimpleDropdownOption<string>[] = WORD_COUNT_OPTIONS.map((count) => ({
-  value: count === null ? "all" : String(count),
-  label: count === null ? "Tất cả" : `${count} từ`,
-}));
-
-type Phase = "setup" | "session" | "result";
 
 export interface ReadingSessionResult {
   vocabIds: string[];
@@ -58,20 +41,23 @@ export interface ReadingSessionResult {
   completedAt: string;
 }
 
-export default function BilingualReadingPage() {
+function BilingualReadingPageContent() {
   const { user, loading: authLoading } = useAuthUser();
   const { settings, loading: settingsLoading } = useSettingsContext();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const topicIds = new Set((searchParams.get("topicIds") ?? "").split(",").filter(Boolean));
+  const maxCefr = (searchParams.get("maxCefr") as CefrLevel | null) ?? null;
+  const wordCountRaw = searchParams.get("wordCount");
+  const wordCount = wordCountRaw === null || wordCountRaw === "all" ? null : Number(wordCountRaw);
+  const action = searchParams.get("action");
 
   const [records, setRecords] = useState<VocabRecord[] | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const [selectedTopicIds, setSelectedTopicIds] = useState<Set<string>>(new Set());
-  const [maxCefr, setMaxCefr] = useState<CefrLevel | null>(null);
-  const [wordCount, setWordCount] = useState<number | null>(DEFAULT_WORD_COUNT);
-
-  const [phase, setPhase] = useState<Phase>("setup");
+  const [phase, setPhase] = useState<"loading" | "session" | "result">("loading");
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [passage, setPassage] = useState<ReadingPassage | null>(null);
@@ -101,7 +87,7 @@ export default function BilingualReadingPage() {
 
   async function handleGenerate() {
     if (!records || !user || !settings) return;
-    const filters: SessionWordFilters = { topicIds: selectedTopicIds, maxCefr, count: null };
+    const filters: SessionWordFilters = { topicIds, maxCefr, count: null };
     const pool = selectSessionWords(records, filters);
     if (pool.length === 0) return;
 
@@ -152,25 +138,15 @@ export default function BilingualReadingPage() {
     }
   }
 
-  // Returns true if a session was started (saved match, or a successful AI
-  // fallback) or an error was surfaced to the user; false only when nothing
-  // matched AND there weren't even enough live words to attempt the AI
-  // fallback — the caller decides what "false" means for it (Task 5 resets
-  // to setup in that case; Task 3's own handleGetSaved has nothing further
-  // to do, the existing min-words hint is already visible on this screen).
   async function fetchSavedExercise(excludeId?: string): Promise<boolean> {
     if (!records || !user || !settings) return false;
-    const matchingCount = selectSessionWords(records, {
-      topicIds: selectedTopicIds,
-      maxCefr,
-      count: null,
-    }).length;
+    const matchingCount = selectSessionWords(records, { topicIds, maxCefr, count: null }).length;
     setGenerateError(null);
     setSavedNotice(null);
     setFetchingSaved(true);
     let found = false;
     try {
-      const filters: BilingualFilters = { topicIds: [...selectedTopicIds], maxCefr, wordCount };
+      const filters: BilingualFilters = { topicIds: [...topicIds], maxCefr, wordCount };
       const saved = await getRandomSavedExercise(user.uid, settings.targetLanguage, "bilingual", filters, excludeId);
       if (saved) {
         found = true;
@@ -187,6 +163,10 @@ export default function BilingualReadingPage() {
         setPhase("session");
       } else if (matchingCount >= MIN_VOCAB_WORDS) {
         setSavedNotice("Chưa có bài đã lưu khớp bộ lọc này — đang tạo bài mới bằng AI…");
+      } else {
+        setGenerateError(
+          `Hãy lưu ít nhất ${MIN_VOCAB_WORDS} từ khớp với bộ lọc đã chọn vào Ngân hàng từ vựng. Hiện có ${matchingCount} từ.`
+        );
       }
     } catch (err) {
       setGenerateError(err instanceof Error ? err.message : String(err));
@@ -201,20 +181,33 @@ export default function BilingualReadingPage() {
     return found;
   }
 
-  async function handleGetSaved() {
-    await fetchSavedExercise();
+  async function runAction() {
+    if (action === "generate") {
+      await handleGenerate();
+    } else if (action === "existing") {
+      await fetchSavedExercise();
+    }
   }
+
+  const triggeredRef = useRef(false);
+  useEffect(() => {
+    if (!user || !settings || records === null) return;
+    if (action !== "generate" && action !== "existing") {
+      router.replace("/reading");
+      return;
+    }
+    if (triggeredRef.current) return;
+    triggeredRef.current = true;
+    void runAction();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, settings, records, action]);
 
   async function handleSaveExercise() {
     if (saving || !user || !settings || !passage) return;
     setSaving(true);
     setSaveError(null);
     try {
-      const generationFilters: BilingualFilters = {
-        topicIds: [...selectedTopicIds],
-        maxCefr,
-        wordCount,
-      };
+      const generationFilters: BilingualFilters = { topicIds: [...topicIds], maxCefr, wordCount };
       const newId = await saveReadingExercise(user.uid, "bilingual", passage, generationFilters, settings.targetLanguage);
       setJustSavedId(newId);
     } catch (err) {
@@ -232,9 +225,6 @@ export default function BilingualReadingPage() {
 
     if (!passage) return;
     const target = passage.sentences[currentIndex].target;
-    // Peak, not cumulative: a mismatch only counts once even if it sits
-    // uncorrected for several keystrokes — this is "how wrong did it get",
-    // not "how many wrong keystrokes total".
     const newPeakMistakes = Math.max(peakMistakes, countMismatches(target, value));
     setPeakMistakes(newPeakMistakes);
 
@@ -262,34 +252,17 @@ export default function BilingualReadingPage() {
     return `${minutes}:${String(seconds).padStart(2, "0")}`;
   }
 
-  function resetToSetup() {
-    setPassage(null);
-    setCurrentIndex(0);
-    setTyped("");
-    setDeletedChars(0);
-    setPeakMistakes(0);
-    setCompletedStats([]);
-    setGenerateError(null);
-    setSavedNotice(null);
-    setJustSavedId(null);
-    setSaveError(null);
-    setPhase("setup");
-  }
-
   async function handleNewSession() {
     if (sessionMode === "reused") {
-      const handled = await fetchSavedExercise(justSavedId ?? undefined);
-      if (!handled) resetToSetup();
+      // fetchSavedExercise always leaves user-visible feedback on this same
+      // "result" phase now — either a new session, an AI-fallback notice, or
+      // generateError — so there is no "silently did nothing" case left to
+      // redirect away from, unlike the removed setup-phase fallback this
+      // replaces.
+      await fetchSavedExercise(justSavedId ?? undefined);
       return;
     }
-    const matchingCount = records
-      ? selectSessionWords(records, { topicIds: selectedTopicIds, maxCefr, count: null }).length
-      : 0;
-    if (matchingCount >= MIN_VOCAB_WORDS) {
-      await handleGenerate();
-    } else {
-      resetToSetup();
-    }
+    await handleGenerate();
   }
 
   if (authLoading) return <p>Đang tải…</p>;
@@ -308,69 +281,25 @@ export default function BilingualReadingPage() {
   if (loadError) return <p role="alert">Lỗi: {loadError}</p>;
   if (records === null) return <p>Đang tải từ vựng…</p>;
 
-  if (phase === "setup") {
-    // count: null bypasses truncation so this reflects every matching word,
-    // not just the ones a fixed session size would keep.
-    const matchingCount = selectSessionWords(records, {
-      topicIds: selectedTopicIds,
-      maxCefr,
-      count: null,
-    }).length;
-    const canGenerate = matchingCount >= MIN_VOCAB_WORDS;
-
+  if (phase === "loading") {
     return (
       <div>
         <h2 className="scr-title">Đọc &amp; gõ</h2>
-        <p className="scr-sub">Chọn bộ lọc rồi tạo bài luyện từ từ vựng của bạn.</p>
-        <div className="practice-filters">
-          <TopicFilterPopover
-            topics={topics}
-            selectedTopicIds={selectedTopicIds}
-            onApply={setSelectedTopicIds}
-          />
-          <SimpleDropdown
-            triggerLabel={maxCefr ? `Tối đa ${maxCefr.toUpperCase()}` : "Mọi trình độ"}
-            ariaLabel="Chọn trình độ tối đa"
-            options={CEFR_DROPDOWN_OPTIONS}
-            value={maxCefr ?? ""}
-            onChange={(v) => setMaxCefr((v || null) as CefrLevel | null)}
-            active={maxCefr !== null}
-          />
-          <SimpleDropdown
-            triggerLabel={wordCount === null ? "Tất cả" : `${wordCount} từ`}
-            ariaLabel="Chọn số từ"
-            options={WORD_COUNT_DROPDOWN_OPTIONS}
-            value={wordCount === null ? "all" : String(wordCount)}
-            onChange={(v) => setWordCount(v === "all" ? null : Number(v))}
-            active={wordCount !== DEFAULT_WORD_COUNT}
-          />
-        </div>
-        <div className="reading-setup-actions">
-          {canGenerate ? (
-            <button
-              className="btn-primary"
-              onClick={() => void handleGenerate()}
-              disabled={generating || fetchingSaved}
-            >
-              {generating ? "Đang tạo bài…" : "Tạo bài luyện"}
-            </button>
-          ) : (
-            <p className="reading-min-words-hint">
-              Hãy lưu ít nhất {MIN_VOCAB_WORDS} từ khớp với bộ lọc trên vào Ngân hàng từ vựng. Hiện có{" "}
-              {matchingCount} từ.
-            </p>
-          )}
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => void handleGetSaved()}
-            disabled={generating || fetchingSaved}
-          >
-            {fetchingSaved ? "Đang tìm bài…" : "🔀 Lấy bài có sẵn"}
-          </button>
-        </div>
+        {(generating || fetchingSaved) && <p>{generating ? "Đang tạo bài…" : "Đang tìm bài…"}</p>}
         {savedNotice && <p className="reading-saved-notice">{savedNotice}</p>}
-        {generateError && <p role="alert">{generateError}</p>}
+        {generateError && (
+          <>
+            <p role="alert">{generateError}</p>
+            <div className="reading-result-actions">
+              <button type="button" className="btn-secondary" onClick={() => router.push("/reading")}>
+                Về trang chính
+              </button>
+              <button type="button" className="btn-primary" onClick={() => void runAction()}>
+                Thử lại
+              </button>
+            </div>
+          </>
+        )}
       </div>
     );
   }
@@ -405,12 +334,6 @@ export default function BilingualReadingPage() {
   const totalDurationMs = completedStats.reduce((sum, s) => sum + s.durationMs, 0);
   const usedRecords = (records ?? []).filter((r) => passage?.vocabIds.includes(r.id));
   const fullText = (passage?.sentences ?? []).map((s) => s.target).join(" ");
-  // Streak-hook shape (design spec §3.3) — Dashboard/streak is its own
-  // deferred phase and nothing writes this anywhere yet, but every piece a
-  // future feature would need is right here: passage?.vocabIds (already
-  // computed above as usedRecords' source), stats.typingAccuracy, and
-  // `new Date().toISOString()` at this exact point in time. See
-  // ReadingSessionResult below for the exact shape that data would take.
 
   return (
     <div>
@@ -476,5 +399,13 @@ export default function BilingualReadingPage() {
       {savedNotice && <p className="reading-saved-notice">{savedNotice}</p>}
       {generateError && <p role="alert">{generateError}</p>}
     </div>
+  );
+}
+
+export default function BilingualReadingPage() {
+  return (
+    <Suspense fallback={<p>Đang tải…</p>}>
+      <BilingualReadingPageContent />
+    </Suspense>
   );
 }
