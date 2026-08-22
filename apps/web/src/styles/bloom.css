@@ -1340,6 +1340,18 @@ button.btn-secondary {
   color: var(--ink);
 }
 
+.reading-hub-card-toggle {
+  border: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.reading-hub-card-toggle.active {
+  border-color: var(--accent);
+  background: var(--surface-3);
+}
+
 .reading-hub-card-title {
   font-weight: 700;
   font-size: 19px;
