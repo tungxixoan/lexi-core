@@ -1477,3 +1477,64 @@ button.btn-secondary {
   margin-top: 20px;
   max-width: 640px;
 }
+
+.mc-question-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+
+.mc-question-label {
+  font-weight: 700;
+  font-size: 17px;
+  margin: 0 0 12px;
+}
+
+.mc-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mc-option {
+  text-align: left;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 16px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.mc-option-selected {
+  border-color: var(--accent);
+  background: var(--surface-3);
+}
+
+.mc-option:disabled {
+  cursor: default;
+}
+
+.mc-option-correct {
+  border-color: var(--success);
+  background: var(--success-bg);
+  color: var(--success);
+  font-weight: 700;
+}
+
+.mc-option-wrong {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.mc-explanation {
+  color: var(--ink-soft);
+  font-size: 15px;
+  font-style: italic;
+  margin: 10px 0 0;
+}
