@@ -108,7 +108,7 @@ describe("Part5Page (setup phase)", () => {
       id: "saved-1",
       type: "part5",
       passage: ONE_QUESTION_SET,
-      generationFilters: { appContext: "general", volumes: [] },
+      generationFilters: { topicIds: [], volumes: [] },
       targetLanguage: "english",
       createdAt: "2026-01-01T00:00:00.000Z",
     } as never);
@@ -217,7 +217,7 @@ describe("Part5Page (result phase)", () => {
       "u1",
       "part5",
       expect.objectContaining({ questions: expect.any(Array) }),
-      expect.objectContaining({ appContext: "general", volumes: [] }),
+      expect.objectContaining({ topicIds: [], volumes: [] }),
       "english"
     );
   });
@@ -259,7 +259,7 @@ describe("Part5Page (result phase)", () => {
       id: "saved-1",
       type: "part5",
       passage: ONE_QUESTION_SET,
-      generationFilters: { appContext: "general", volumes: [] },
+      generationFilters: { topicIds: [], volumes: [] },
       targetLanguage: "english",
       createdAt: "2026-01-01T00:00:00.000Z",
     } as never);
@@ -285,7 +285,7 @@ describe("Part5Page (result phase)", () => {
       id: "saved-1",
       type: "part5",
       passage: ONE_QUESTION_SET,
-      generationFilters: { appContext: "general", volumes: [] },
+      generationFilters: { topicIds: [], volumes: [] },
       targetLanguage: "english",
       createdAt: "2026-01-01T00:00:00.000Z",
     } as never);
@@ -302,7 +302,7 @@ describe("Part5Page (result phase)", () => {
       passage: {
         questions: [{ sentenceWithBlank: "New saved one.", options: ["a", "b", "c", "d"], correctIndex: 0, explanation: "E." }],
       },
-      generationFilters: { appContext: "general", volumes: [] },
+      generationFilters: { topicIds: [], volumes: [] },
       targetLanguage: "english",
       createdAt: "2026-01-01T00:00:00.000Z",
     } as never);

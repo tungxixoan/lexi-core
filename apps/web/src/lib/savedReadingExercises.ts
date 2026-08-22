@@ -17,7 +17,7 @@ export interface BilingualFilters {
 // user's own Vocab Bank. Defined here (not in a per-type file) since it's
 // genuinely one shared shape, not three coincidentally-similar ones.
 export interface ToeicFilters {
-  appContext: string;
+  topicIds: string[]; // empty = matches anything, same convention as BilingualFilters
   volumes: string[]; // empty = "all volumes" — mirrors Flutter's own default
 }
 
@@ -92,7 +92,10 @@ function matchesBilingual(
 }
 
 function matchesToeic(exercise: { generationFilters: ToeicFilters }, filters: ToeicFilters): boolean {
-  if (exercise.generationFilters.appContext !== filters.appContext) return false;
+  if (filters.topicIds.length > 0) {
+    const overlaps = exercise.generationFilters.topicIds.some((id) => filters.topicIds.includes(id));
+    if (!overlaps) return false;
+  }
   if (filters.volumes.length > 0 && exercise.generationFilters.volumes.length > 0) {
     const overlaps = exercise.generationFilters.volumes.some((v) => filters.volumes.includes(v));
     if (!overlaps) return false;

@@ -61,7 +61,7 @@ interface FakePart5Set {
   questions: { sentenceWithBlank: string; options: string[]; correctIndex: number; explanation: string }[];
 }
 interface FakeToeicFilters {
-  appContext: string;
+  topicIds: string[];
   volumes: string[];
 }
 const PART5_PASSAGE: FakePart5Set = {
@@ -85,7 +85,7 @@ function makePart5Exercise(overrides: Partial<{ id: string; generationFilters: F
     id: "p5-1",
     type: "part5" as const,
     passage: PART5_PASSAGE,
-    generationFilters: { appContext: "business", volumes: ["vol3"] },
+    generationFilters: { topicIds: ["biz-1"], volumes: ["vol3"] },
     targetLanguage: "english" as const,
     createdAt: "2026-01-01T00:00:00.000Z",
     ...overrides,
@@ -117,7 +117,7 @@ describe("saveReadingExercise", () => {
 
   it("creates a part5 document the same way, with type: 'part5' in the stored record", async () => {
     vi.mocked(doc).mockReturnValue({ id: "new-p5-id" } as never);
-    const filters = { appContext: "business", volumes: ["vol3"] };
+    const filters = { topicIds: ["biz-1"], volumes: ["vol3"] };
 
     const newId = await saveReadingExercise("user-123", "part5", PART5_PASSAGE, filters, "english");
 
@@ -331,36 +331,36 @@ describe("getRandomSavedExercise", () => {
     expect(result).toBeNull();
   });
 
-  it("matches part5 exercises by exact appContext and volume overlap", async () => {
-    const p5 = makePart5Exercise({ generationFilters: { appContext: "business", volumes: ["vol2", "vol3"] } });
+  it("matches part5 exercises by topic overlap and volume overlap", async () => {
+    const p5 = makePart5Exercise({ generationFilters: { topicIds: ["biz-1", "travel-1"], volumes: ["vol2", "vol3"] } });
     vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: p5.id, data: () => p5 }] } as never);
 
     const result = await getRandomSavedExercise("user-123", "english", "part5", {
-      appContext: "business",
+      topicIds: ["travel-1", "food-1"],
       volumes: ["vol3", "vol4"],
     } as never);
 
     expect(result?.id).toBe(p5.id);
   });
 
-  it("does not match a part5 exercise with a different appContext", async () => {
-    const p5 = makePart5Exercise({ generationFilters: { appContext: "travel", volumes: [] } });
+  it("does not match a part5 exercise when there is no topic overlap", async () => {
+    const p5 = makePart5Exercise({ generationFilters: { topicIds: ["biz-1"], volumes: [] } });
     vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: p5.id, data: () => p5 }] } as never);
 
     const result = await getRandomSavedExercise("user-123", "english", "part5", {
-      appContext: "business",
+      topicIds: ["travel-1"],
       volumes: [],
     } as never);
 
     expect(result).toBeNull();
   });
 
-  it("matches a part5 exercise on appContext when either side's volumes list is empty", async () => {
-    const p5 = makePart5Exercise({ generationFilters: { appContext: "business", volumes: [] } });
+  it("matches a part5 exercise on any topic when the requested topicIds filter is empty", async () => {
+    const p5 = makePart5Exercise({ generationFilters: { topicIds: ["biz-1"], volumes: [] } });
     vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: p5.id, data: () => p5 }] } as never);
 
     const result = await getRandomSavedExercise("user-123", "english", "part5", {
-      appContext: "business",
+      topicIds: [],
       volumes: ["vol4"],
     } as never);
 

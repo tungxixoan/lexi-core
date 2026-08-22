@@ -1,5 +1,5 @@
 import { LANGUAGE_LABELS, type TargetLanguage } from "./languages";
-import { CONTEXT_LABELS, ECONOMY_VOLUMES, VOLUME_PROMPT_HINTS, type ToeicContext, type EconomyVolume } from "./toeicFilters";
+import { ECONOMY_VOLUMES, VOLUME_PROMPT_HINTS, type EconomyVolume } from "./toeicFilters";
 
 export interface Part5Question {
   sentenceWithBlank: string;
@@ -14,15 +14,20 @@ export interface Part5Set {
 
 const QUESTION_COUNT = 15;
 
-// Ports lib/features/reading/data/sources/part5_source.dart's prompt.
-export function buildPart5Prompt(appContext: ToeicContext, targetLanguage: TargetLanguage, volumes: EconomyVolume[]): string {
+// Ports lib/features/reading/data/sources/part5_source.dart's prompt. Takes
+// resolved topic *names* (e.g. "Business", "Travel" — resolved by the caller
+// from the user's selected Vocab Bank Topic documents), not a fixed enum —
+// this is the same shared "Chủ đề" filter Đọc & gõ already uses, per the
+// hub/setup-merge spec. An empty topic list omits the register clause
+// entirely rather than defaulting to a fake "general" register.
+export function buildPart5Prompt(topicNames: string[], targetLanguage: TargetLanguage, volumes: EconomyVolume[]): string {
   const languageLabel = LANGUAGE_LABELS[targetLanguage];
-  const contextLabel = CONTEXT_LABELS[appContext];
+  const contextClause = topicNames.length > 0 ? `, in a ${topicNames.join("/")} register/setting` : "";
   const effectiveVolumes = volumes.length === 0 ? ECONOMY_VOLUMES : volumes;
   const volumeHints = effectiveVolumes.map((v) => `${v}: ${VOLUME_PROMPT_HINTS[v]}`).join("; ");
   return (
     `You are creating a TOEIC Part 5 (Incomplete Sentences) practice set for a Vietnamese speaker ` +
-    `learning ${languageLabel}, in a ${contextLabel} register/setting, calibrated to the TOEIC ` +
+    `learning ${languageLabel}${contextClause}, calibrated to the TOEIC ` +
     `difficulty levels below (mix questions across them roughly evenly and randomly): ${volumeHints}. ` +
     `Write exactly ${QUESTION_COUNT} independent sentences, each with exactly one blank marked "___", ` +
     `testing grammar (word form, verb tense/agreement, prepositions, conjunctions) or ` +

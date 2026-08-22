@@ -1,35 +1,3 @@
-export type ToeicContext =
-  | "general"
-  | "business"
-  | "technology"
-  | "travel"
-  | "foodAndDrink"
-  | "health"
-  | "academic"
-  | "socialCasual";
-
-export const TOEIC_CONTEXTS: ToeicContext[] = [
-  "general",
-  "business",
-  "technology",
-  "travel",
-  "foodAndDrink",
-  "health",
-  "academic",
-  "socialCasual",
-];
-
-export const CONTEXT_LABELS: Record<ToeicContext, string> = {
-  general: "Chung",
-  business: "Kinh doanh",
-  technology: "Công nghệ",
-  travel: "Du lịch",
-  foodAndDrink: "Ẩm thực",
-  health: "Sức khỏe",
-  academic: "Học thuật",
-  socialCasual: "Xã hội / Đời thường",
-};
-
 export type EconomyVolume = "vol2" | "vol3" | "vol4" | "vol5";
 
 export const ECONOMY_VOLUMES: EconomyVolume[] = ["vol2", "vol3", "vol4", "vol5"];

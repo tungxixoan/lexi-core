@@ -7,19 +7,14 @@ import { useSettingsContext } from "@/lib/SettingsContext";
 import { SignInButton } from "@/components/SignInButton";
 import { getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics, type Topic } from "@/lib/topics";
-import { SimpleDropdown, type SimpleDropdownOption } from "@/components/shared/SimpleDropdown";
-import { TOEIC_CONTEXTS, CONTEXT_LABELS, ECONOMY_VOLUMES, VOLUME_LABELS, type ToeicContext, type EconomyVolume } from "@/lib/toeicFilters";
+import { TopicFilterPopover } from "@/components/vocab-bank/TopicFilterPopover";
+import { ECONOMY_VOLUMES, VOLUME_LABELS, type EconomyVolume } from "@/lib/toeicFilters";
 import { buildPart5Prompt, parsePart5Set, type Part5Set } from "@/lib/part5";
 import { generateContent } from "@/lib/generateContent";
 import { parseAiJsonObject } from "@/lib/parseAiJson";
 import { getRandomSavedExercise, saveReadingExercise, type ToeicFilters } from "@/lib/savedReadingExercises";
 import { McQuestionCard } from "@/components/reading/McQuestionCard";
 import { VocabSuggestionsSection } from "@/components/shared/VocabSuggestionsSection";
-
-const CONTEXT_DROPDOWN_OPTIONS: SimpleDropdownOption<ToeicContext>[] = TOEIC_CONTEXTS.map((c) => ({
-  value: c,
-  label: CONTEXT_LABELS[c],
-}));
 
 type Phase = "setup" | "session" | "result";
 
@@ -31,7 +26,7 @@ export default function Part5Page() {
   const [records, setRecords] = useState<VocabRecord[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
 
-  const [appContext, setAppContext] = useState<ToeicContext>("general");
+  const [selectedTopicIds, setSelectedTopicIds] = useState<Set<string>>(new Set());
   const [selectedVolumes, setSelectedVolumes] = useState<Set<EconomyVolume>>(new Set());
 
   const [phase, setPhase] = useState<Phase>("setup");
@@ -68,8 +63,12 @@ export default function Part5Page() {
     });
   }
 
+  function resolvedTopicNames(): string[] {
+    return topics.filter((t) => selectedTopicIds.has(t.id)).map((t) => t.name);
+  }
+
   function currentFilters(): ToeicFilters {
-    return { appContext, volumes: [...selectedVolumes] };
+    return { topicIds: [...selectedTopicIds], volumes: [...selectedVolumes] };
   }
 
   async function handleGenerate() {
@@ -82,7 +81,7 @@ export default function Part5Page() {
     setGenerating(true);
     setGenerateError(null);
     try {
-      const prompt = buildPart5Prompt(appContext, settings.targetLanguage, [...selectedVolumes]);
+      const prompt = buildPart5Prompt(resolvedTopicNames(), settings.targetLanguage, [...selectedVolumes]);
       const response = await generateContent({
         provider: settings.activeProvider,
         model: activeConfig.model,
@@ -205,14 +204,7 @@ export default function Part5Page() {
         <h2 className="scr-title">Part 5 — Điền câu</h2>
         <p className="scr-sub">AI tạo 15 câu điền từ/ngữ pháp kiểu TOEIC Part 5.</p>
         <div className="practice-filters">
-          <SimpleDropdown
-            triggerLabel={CONTEXT_LABELS[appContext]}
-            ariaLabel="Chọn chủ đề"
-            options={CONTEXT_DROPDOWN_OPTIONS}
-            value={appContext}
-            onChange={setAppContext}
-            active={appContext !== "general"}
-          />
+          <TopicFilterPopover topics={topics} selectedTopicIds={selectedTopicIds} onApply={setSelectedTopicIds} />
           {ECONOMY_VOLUMES.map((v) => (
             <button
               key={v}
