@@ -4,7 +4,7 @@ import Part5Page from "./page";
 import { useAuthUser } from "@/lib/useAuthUser";
 import { useSettingsContext } from "@/lib/SettingsContext";
 import { getVocabRecords } from "@/lib/vocabRecords";
-import { getTopics } from "@/lib/topics";
+import { getTopics, type Topic } from "@/lib/topics";
 import { generateContent } from "@/lib/generateContent";
 import { getRandomSavedExercise, saveReadingExercise } from "@/lib/savedReadingExercises";
 import { DEFAULT_SETTINGS, type UserSettings } from "@/lib/settings";
@@ -31,7 +31,16 @@ vi.mock("@/components/shared/VocabSuggestionsSection", () => ({
 }));
 
 const pushMock = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: pushMock }) }));
+const replaceMock = vi.fn();
+let mockSearchParams = new URLSearchParams();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: pushMock, replace: replaceMock }),
+  useSearchParams: () => mockSearchParams,
+}));
+
+function setSearchParams(params: Record<string, string>) {
+  mockSearchParams = new URLSearchParams(params);
+}
 
 const SETTINGS_WITH_KEY: UserSettings = {
   ...DEFAULT_SETTINGS,
@@ -50,12 +59,13 @@ const ONE_QUESTION_SET: Part5Set = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  setSearchParams({ action: "generate" });
   vi.mocked(getVocabRecords).mockResolvedValue([]);
   vi.mocked(getTopics).mockResolvedValue([]);
   vi.mocked(getRandomSavedExercise).mockResolvedValue(null);
 });
 
-describe("Part5Page (setup phase)", () => {
+describe("Part5Page (loading phase)", () => {
   it("prompts sign-in when logged out", () => {
     vi.mocked(useAuthUser).mockReturnValue({ user: null, loading: false } as never);
     vi.mocked(useSettingsContext).mockReturnValue({ settings: null, loading: false, error: null, save: vi.fn() });
@@ -63,46 +73,77 @@ describe("Part5Page (setup phase)", () => {
     expect(screen.getByText("Đăng nhập với Google")).toBeInTheDocument();
   });
 
-  it("shows both action buttons enabled with no words/context precondition", async () => {
+  it("redirects to /reading when the action param is missing", async () => {
+    setSearchParams({});
     mockSignedIn();
+
     render(<Part5Page />);
-    expect(await screen.findByRole("button", { name: "Tạo bài luyện" })).not.toBeDisabled();
-    expect(screen.getByRole("button", { name: "🔀 Lấy bài có sẵn" })).not.toBeDisabled();
+
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/reading"));
   });
 
-  it("generates a set and enters the session phase", async () => {
+  it("redirects to /reading when the action param is invalid", async () => {
+    setSearchParams({ action: "bogus" });
     mockSignedIn();
+
+    render(<Part5Page />);
+
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/reading"));
+  });
+
+  it("auto-generates a set on mount, resolving topicIds to topic names in the prompt", async () => {
+    setSearchParams({ topicIds: "biz-1", action: "generate" });
+    mockSignedIn();
+    const topics: Topic[] = [{ id: "biz-1", name: "Business", emoji: "💼", isPredefined: true, createdAt: "2026-01-01" }];
+    vi.mocked(getTopics).mockResolvedValue(topics);
     vi.mocked(generateContent).mockResolvedValue({ text: JSON.stringify(ONE_QUESTION_SET) });
 
     render(<Part5Page />);
-    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
 
     expect(await screen.findByText("1. She ___ to work.")).toBeInTheDocument();
     const promptArg = vi.mocked(generateContent).mock.calls[0][0].prompt;
     expect(promptArg).toContain("exactly 15");
+    expect(promptArg).toContain("Business");
   });
 
-  it("shows an error and stays on setup when the active provider has no API key", async () => {
+  it("shows an error with retry/back-to-hub actions when the active provider has no API key", async () => {
+    setSearchParams({ action: "generate" });
     mockSignedIn({ ...DEFAULT_SETTINGS, activeProvider: "gemini", providers: { ...DEFAULT_SETTINGS.providers, gemini: { model: "gemini-2.5-flash", apiKeyCiphertext: null } } });
 
     render(<Part5Page />);
-    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
 
     expect(await screen.findByText("Chưa có API key cho nhà cung cấp AI đang chọn — vào Cài đặt để thêm.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Thử lại" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Về trang chính" })).toBeInTheDocument();
     expect(generateContent).not.toHaveBeenCalled();
   });
 
-  it("shows an error and stays on setup when the AI returns no usable questions", async () => {
+  it("shows an error when the AI returns no usable questions, and 'Thử lại' retries the same action", async () => {
+    setSearchParams({ action: "generate" });
     mockSignedIn();
-    vi.mocked(generateContent).mockResolvedValue({ text: JSON.stringify({}) });
+    vi.mocked(generateContent).mockResolvedValueOnce({ text: JSON.stringify({}) });
 
     render(<Part5Page />);
-    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
+    await screen.findByText("AI không trả về bài luyện hợp lệ.");
 
-    expect(await screen.findByText("AI không trả về bài luyện hợp lệ.")).toBeInTheDocument();
+    vi.mocked(generateContent).mockResolvedValue({ text: JSON.stringify(ONE_QUESTION_SET) });
+    fireEvent.click(screen.getByRole("button", { name: "Thử lại" }));
+
+    await waitFor(() => expect(screen.getByText("1. She ___ to work.")).toBeInTheDocument());
   });
 
-  it('"Lấy bài có sẵn" starts a session directly from a matching saved exercise, without calling the AI', async () => {
+  it('"Về trang chính" on the loading-error state navigates back to the hub', async () => {
+    setSearchParams({ action: "generate" });
+    mockSignedIn({ ...DEFAULT_SETTINGS, activeProvider: "gemini", providers: { ...DEFAULT_SETTINGS.providers, gemini: { model: "gemini-2.5-flash", apiKeyCiphertext: null } } });
+
+    render(<Part5Page />);
+    fireEvent.click(await screen.findByRole("button", { name: "Về trang chính" }));
+
+    expect(pushMock).toHaveBeenCalledWith("/reading");
+  });
+
+  it('action=existing starts a session directly from a matching saved exercise, without calling the AI', async () => {
+    setSearchParams({ action: "existing" });
     mockSignedIn();
     vi.mocked(getRandomSavedExercise).mockResolvedValue({
       id: "saved-1",
@@ -114,13 +155,13 @@ describe("Part5Page (setup phase)", () => {
     } as never);
 
     render(<Part5Page />);
-    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
 
     expect(await screen.findByText("1. She ___ to work.")).toBeInTheDocument();
     expect(generateContent).not.toHaveBeenCalled();
   });
 
-  it('"Lấy bài có sẵn" shows an inline notice and falls back to AI generation when nothing matches', async () => {
+  it("action=existing shows an inline notice and falls back to AI generation when nothing matches", async () => {
+    setSearchParams({ action: "existing" });
     mockSignedIn();
     // generateContent's mock resolution is held open deliberately (instead of
     // mockResolvedValue, which settles within the same microtask burst as
@@ -137,7 +178,6 @@ describe("Part5Page (setup phase)", () => {
     );
 
     render(<Part5Page />);
-    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
 
     expect(await screen.findByText("Chưa có bài đã lưu khớp bộ lọc này — đang tạo bài mới bằng AI…")).toBeInTheDocument();
     expect(generateContent).toHaveBeenCalled();
@@ -149,6 +189,7 @@ describe("Part5Page (setup phase)", () => {
 
 describe("Part5Page (session phase)", () => {
   async function generateSession() {
+    setSearchParams({ action: "generate" });
     vi.mocked(generateContent).mockResolvedValue({
       text: JSON.stringify({
         questions: [
@@ -158,7 +199,6 @@ describe("Part5Page (session phase)", () => {
       }),
     });
     render(<Part5Page />);
-    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
     await screen.findByText("1. She ___ to work.");
   }
 
@@ -180,6 +220,7 @@ describe("Part5Page (session phase)", () => {
 
 describe("Part5Page (result phase)", () => {
   async function completeSession(answers: number[]) {
+    setSearchParams({ action: "generate" });
     vi.mocked(generateContent).mockResolvedValue({
       text: JSON.stringify({
         questions: [
@@ -188,7 +229,6 @@ describe("Part5Page (result phase)", () => {
       }),
     });
     render(<Part5Page />);
-    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
     await screen.findByText("1. She ___ to work.");
     fireEvent.click(screen.getByRole("button", { name: ["go", "goes", "going", "gone"][answers[0]] }));
     fireEvent.click(screen.getByRole("button", { name: "Nộp bài" }));
@@ -255,6 +295,7 @@ describe("Part5Page (result phase)", () => {
   });
 
   async function completeReusedSession() {
+    setSearchParams({ action: "existing" });
     vi.mocked(getRandomSavedExercise).mockResolvedValue({
       id: "saved-1",
       type: "part5",
@@ -264,7 +305,6 @@ describe("Part5Page (result phase)", () => {
       createdAt: "2026-01-01T00:00:00.000Z",
     } as never);
     render(<Part5Page />);
-    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
     await screen.findByText("1. She ___ to work.");
     fireEvent.click(screen.getByRole("button", { name: "goes" }));
     fireEvent.click(screen.getByRole("button", { name: "Nộp bài" }));
@@ -281,6 +321,7 @@ describe("Part5Page (result phase)", () => {
 
   it('"Bài khác" fetches another saved exercise directly for a reused session, not the AI', async () => {
     mockSignedIn();
+    setSearchParams({ action: "existing" });
     vi.mocked(getRandomSavedExercise).mockResolvedValueOnce({
       id: "saved-1",
       type: "part5",
@@ -290,7 +331,6 @@ describe("Part5Page (result phase)", () => {
       createdAt: "2026-01-01T00:00:00.000Z",
     } as never);
     render(<Part5Page />);
-    fireEvent.click(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" }));
     await screen.findByText("1. She ___ to work.");
     fireEvent.click(screen.getByRole("button", { name: "goes" }));
     fireEvent.click(screen.getByRole("button", { name: "Nộp bài" }));

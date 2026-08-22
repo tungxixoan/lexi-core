@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthUser } from "@/lib/useAuthUser";
 import { useSettingsContext } from "@/lib/SettingsContext";
 import { SignInButton } from "@/components/SignInButton";
 import { getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics, type Topic } from "@/lib/topics";
-import { TopicFilterPopover } from "@/components/vocab-bank/TopicFilterPopover";
-import { ECONOMY_VOLUMES, VOLUME_LABELS, type EconomyVolume } from "@/lib/toeicFilters";
+import { type EconomyVolume } from "@/lib/toeicFilters";
 import { buildPart5Prompt, parsePart5Set, type Part5Set } from "@/lib/part5";
 import { generateContent } from "@/lib/generateContent";
 import { parseAiJsonObject } from "@/lib/parseAiJson";
@@ -16,20 +15,22 @@ import { getRandomSavedExercise, saveReadingExercise, type ToeicFilters } from "
 import { McQuestionCard } from "@/components/reading/McQuestionCard";
 import { VocabSuggestionsSection } from "@/components/shared/VocabSuggestionsSection";
 
-type Phase = "setup" | "session" | "result";
+type Phase = "loading" | "session" | "result";
 
-export default function Part5Page() {
+function Part5PageContent() {
   const { user, loading: authLoading } = useAuthUser();
   const { settings, loading: settingsLoading } = useSettingsContext();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const topicIds = (searchParams.get("topicIds") ?? "").split(",").filter(Boolean);
+  const volumes = (searchParams.get("volumes") ?? "").split(",").filter(Boolean) as EconomyVolume[];
+  const action = searchParams.get("action");
 
   const [records, setRecords] = useState<VocabRecord[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
 
-  const [selectedTopicIds, setSelectedTopicIds] = useState<Set<string>>(new Set());
-  const [selectedVolumes, setSelectedVolumes] = useState<Set<EconomyVolume>>(new Set());
-
-  const [phase, setPhase] = useState<Phase>("setup");
+  const [phase, setPhase] = useState<Phase>("loading");
   const [generating, setGenerating] = useState(false);
   const [fetchingSaved, setFetchingSaved] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
@@ -40,35 +41,31 @@ export default function Part5Page() {
   const [justSavedId, setJustSavedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [contextLoaded, setContextLoaded] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     // Best-effort: these only feed VocabSuggestionsSection on the result
     // screen, unlike Đọc & gõ they are never a hard requirement for this
-    // page to function, so a failure here doesn't block anything.
+    // page to function, so a failure here doesn't block anything — but the
+    // auto-trigger effect below still waits for this to settle (success or
+    // failure) via contextLoaded, since resolvedTopicNames() needs `topics`
+    // populated before building the generation prompt.
     Promise.all([getVocabRecords(user.uid), getTopics(user.uid)])
       .then(([r, t]) => {
         setRecords(r);
         setTopics(t);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setContextLoaded(true));
   }, [user]);
 
-  function toggleVolume(v: EconomyVolume) {
-    setSelectedVolumes((prev) => {
-      const next = new Set(prev);
-      if (next.has(v)) next.delete(v);
-      else next.add(v);
-      return next;
-    });
-  }
-
   function resolvedTopicNames(): string[] {
-    return topics.filter((t) => selectedTopicIds.has(t.id)).map((t) => t.name);
+    return topics.filter((t) => topicIds.includes(t.id)).map((t) => t.name);
   }
 
   function currentFilters(): ToeicFilters {
-    return { topicIds: [...selectedTopicIds], volumes: [...selectedVolumes] };
+    return { topicIds, volumes };
   }
 
   async function handleGenerate() {
@@ -81,7 +78,7 @@ export default function Part5Page() {
     setGenerating(true);
     setGenerateError(null);
     try {
-      const prompt = buildPart5Prompt(resolvedTopicNames(), settings.targetLanguage, [...selectedVolumes]);
+      const prompt = buildPart5Prompt(resolvedTopicNames(), settings.targetLanguage, volumes);
       const response = await generateContent({
         provider: settings.activeProvider,
         model: activeConfig.model,
@@ -139,9 +136,26 @@ export default function Part5Page() {
     return found;
   }
 
-  async function handleGetSaved() {
-    await fetchSavedExercise();
+  async function runAction() {
+    if (action === "generate") {
+      await handleGenerate();
+    } else if (action === "existing") {
+      await fetchSavedExercise();
+    }
   }
+
+  const triggeredRef = useRef(false);
+  useEffect(() => {
+    if (!user || !settings || !contextLoaded) return;
+    if (action !== "generate" && action !== "existing") {
+      router.replace("/reading");
+      return;
+    }
+    if (triggeredRef.current) return;
+    triggeredRef.current = true;
+    void runAction();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, settings, contextLoaded, action]);
 
   async function handleSaveExercise() {
     if (saving || !user || !settings || !set) return;
@@ -165,20 +179,13 @@ export default function Part5Page() {
     });
   }
 
-  function resetToSetup() {
-    setSet(null);
-    setAnswers([]);
-    setGenerateError(null);
-    setSavedNotice(null);
-    setJustSavedId(null);
-    setSaveError(null);
-    setPhase("setup");
-  }
-
   async function handleNewSession() {
     if (sessionMode === "reused") {
-      const handled = await fetchSavedExercise(justSavedId ?? undefined);
-      if (!handled) resetToSetup();
+      // fetchSavedExercise's "not found" path always falls through to
+      // handleGenerate() here (Part 5 has no minimum-words precondition
+      // gating it), so it always leaves the "result" phase with either a new
+      // session or a generateError visible — no redirect needed.
+      await fetchSavedExercise(justSavedId ?? undefined);
       return;
     }
     await handleGenerate();
@@ -198,39 +205,25 @@ export default function Part5Page() {
 
   if (settingsLoading || !settings) return <p>Đang tải…</p>;
 
-  if (phase === "setup") {
+  if (phase === "loading") {
     return (
       <div>
         <h2 className="scr-title">Part 5 — Điền câu</h2>
-        <p className="scr-sub">AI tạo 15 câu điền từ/ngữ pháp kiểu TOEIC Part 5.</p>
-        <div className="practice-filters">
-          <TopicFilterPopover topics={topics} selectedTopicIds={selectedTopicIds} onApply={setSelectedTopicIds} />
-          {ECONOMY_VOLUMES.map((v) => (
-            <button
-              key={v}
-              type="button"
-              className={`vb-chip${selectedVolumes.has(v) ? " active" : ""}`}
-              onClick={() => toggleVolume(v)}
-            >
-              {VOLUME_LABELS[v]}
-            </button>
-          ))}
-        </div>
-        <div className="reading-setup-actions">
-          <button className="btn-primary" onClick={() => void handleGenerate()} disabled={generating || fetchingSaved}>
-            {generating ? "Đang tạo bài…" : "Tạo bài luyện"}
-          </button>
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => void handleGetSaved()}
-            disabled={generating || fetchingSaved}
-          >
-            {fetchingSaved ? "Đang tìm bài…" : "🔀 Lấy bài có sẵn"}
-          </button>
-        </div>
+        {(generating || fetchingSaved) && <p>{generating ? "Đang tạo bài…" : "Đang tìm bài…"}</p>}
         {savedNotice && <p className="reading-saved-notice">{savedNotice}</p>}
-        {generateError && <p role="alert">{generateError}</p>}
+        {generateError && (
+          <>
+            <p role="alert">{generateError}</p>
+            <div className="reading-result-actions">
+              <button type="button" className="btn-secondary" onClick={() => router.push("/reading")}>
+                Về trang chính
+              </button>
+              <button type="button" className="btn-primary" onClick={() => void runAction()}>
+                Thử lại
+              </button>
+            </div>
+          </>
+        )}
       </div>
     );
   }
@@ -297,5 +290,13 @@ export default function Part5Page() {
       {savedNotice && <p className="reading-saved-notice">{savedNotice}</p>}
       {generateError && <p role="alert">{generateError}</p>}
     </div>
+  );
+}
+
+export default function Part5Page() {
+  return (
+    <Suspense fallback={<p>Đang tải…</p>}>
+      <Part5PageContent />
+    </Suspense>
   );
 }
