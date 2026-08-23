@@ -13,12 +13,8 @@ describe("MODEL_PRESETS", () => {
   });
 
   it("defines the exact Groq presets and default", () => {
-    expect(MODEL_PRESETS.groq.defaultModel).toBe("llama-3.3-70b-versatile");
-    expect(MODEL_PRESETS.groq.presets).toEqual([
-      "llama-3.3-70b-versatile",
-      "llama-3.1-8b-instant",
-      "gemma2-9b-it",
-    ]);
+    expect(MODEL_PRESETS.groq.defaultModel).toBe("openai/gpt-oss-120b");
+    expect(MODEL_PRESETS.groq.presets).toEqual(["openai/gpt-oss-120b", "openai/gpt-oss-20b"]);
   });
 
   it("defines the exact OpenRouter presets and default", () => {

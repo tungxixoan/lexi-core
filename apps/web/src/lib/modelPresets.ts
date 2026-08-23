@@ -14,12 +14,8 @@ export const MODEL_PRESETS: Record<AiProvider, ProviderModelInfo> = {
     presets: ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-1.5-flash"],
   },
   groq: {
-    defaultModel: "llama-3.3-70b-versatile",
-    presets: [
-      "llama-3.3-70b-versatile",
-      "llama-3.1-8b-instant",
-      "gemma2-9b-it",
-    ],
+    defaultModel: "openai/gpt-oss-120b",
+    presets: ["openai/gpt-oss-120b", "openai/gpt-oss-20b"],
   },
   openrouter: {
     defaultModel: "meta-llama/llama-3.3-70b-instruct",

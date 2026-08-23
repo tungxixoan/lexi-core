@@ -15,7 +15,7 @@ extension AiProviderX on AiProvider {
 
   String get defaultModel => switch (this) {
         AiProvider.gemini => 'gemini-2.5-flash',
-        AiProvider.groq => 'llama-3.3-70b-versatile',
+        AiProvider.groq => 'openai/gpt-oss-120b',
         AiProvider.openRouter => 'meta-llama/llama-3.3-70b-instruct',
       };
 
@@ -27,9 +27,8 @@ extension AiProviderX on AiProvider {
             'gemini-1.5-flash',
           ],
         AiProvider.groq => [
-            'llama-3.3-70b-versatile',
-            'llama-3.1-8b-instant',
-            'gemma2-9b-it',
+            'openai/gpt-oss-120b',
+            'openai/gpt-oss-20b',
           ],
         AiProvider.openRouter => [
             'meta-llama/llama-3.3-70b-instruct',

@@ -16,7 +16,7 @@ void main() {
 
   group('AiProvider defaultModel', () {
     test('gemini default model', () => expect(AiProvider.gemini.defaultModel, 'gemini-2.5-flash'));
-    test('groq default model', () => expect(AiProvider.groq.defaultModel, 'llama-3.3-70b-versatile'));
+    test('groq default model', () => expect(AiProvider.groq.defaultModel, 'openai/gpt-oss-120b'));
     test('openRouter default model', () =>
         expect(AiProvider.openRouter.defaultModel, 'meta-llama/llama-3.3-70b-instruct'));
   });
@@ -26,9 +26,9 @@ void main() {
       expect(AiProvider.gemini.modelPresets.first, 'gemini-2.5-flash');
       expect(AiProvider.gemini.modelPresets, hasLength(4));
     });
-    test('groq has 4 presets starting with llama-3.3-70b-versatile', () {
-      expect(AiProvider.groq.modelPresets.first, 'llama-3.3-70b-versatile');
-      expect(AiProvider.groq.modelPresets, hasLength(4));
+    test('groq has 2 presets starting with openai/gpt-oss-120b', () {
+      expect(AiProvider.groq.modelPresets.first, 'openai/gpt-oss-120b');
+      expect(AiProvider.groq.modelPresets, hasLength(2));
     });
     test('openRouter has 4 presets', () => expect(AiProvider.openRouter.modelPresets, hasLength(4)));
     test('every defaultModel is first in its modelPresets', () {

@@ -507,7 +507,7 @@ class _CustomModelDialogState extends State<_CustomModelDialog> {
       content: TextField(
         controller: _ctrl,
         decoration: const InputDecoration(
-          hintText: 'vd: gemini-2.5-pro, llama-3.1-8b-instant...',
+          hintText: 'vd: gemini-2.5-pro, openai/gpt-oss-20b...',
           border: OutlineInputBorder(),
         ),
       ),

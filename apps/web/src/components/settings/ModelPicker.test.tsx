@@ -27,9 +27,9 @@ describe("ModelPicker", () => {
 
   it("reveals the custom input after selecting 'Khác...', and calls onChange on blur with the typed value", () => {
     const onChange = vi.fn();
-    render(<ModelPicker provider="groq" model="llama-3.3-70b-versatile" onChange={onChange} />);
+    render(<ModelPicker provider="groq" model="openai/gpt-oss-120b" onChange={onChange} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "llama-3.3-70b-versatile ▾" }));
+    fireEvent.click(screen.getByRole("button", { name: "openai/gpt-oss-120b ▾" }));
     fireEvent.click(screen.getByRole("option", { name: "Khác..." }));
 
     const input = screen.getByLabelText("Tên model tuỳ chỉnh");

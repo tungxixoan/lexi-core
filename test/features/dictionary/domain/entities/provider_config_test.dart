@@ -38,9 +38,9 @@ void main() {
       expect(c.apiKey, '');
       expect(c.model, 'gemini-2.5-flash');
     });
-    test('empty Groq uses llama-3.3-70b-versatile default model', () {
+    test('empty Groq uses openai/gpt-oss-120b default model', () {
       final c = ProviderConfig.empty(AiProvider.groq);
-      expect(c.model, 'llama-3.3-70b-versatile');
+      expect(c.model, 'openai/gpt-oss-120b');
     });
     test('empty OpenRouter uses meta-llama/llama-3.3-70b-instruct default model', () {
       final c = ProviderConfig.empty(AiProvider.openRouter);
