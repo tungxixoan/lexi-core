@@ -1427,6 +1427,58 @@ button.btn-secondary {
   padding-right: 6px;
 }
 
+.cloze-text {
+  font-size: 18px;
+  line-height: 2.1;
+  color: var(--ink);
+}
+
+.cloze-blank-input {
+  display: inline-block;
+  min-width: 70px;
+  width: auto;
+  padding: 2px 8px;
+  border: none;
+  border-bottom: 2px solid var(--accent);
+  background: transparent;
+  font: inherit;
+  color: var(--ink);
+  text-align: center;
+}
+
+.cloze-answer-correct {
+  color: var(--success);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.cloze-answer-wrong {
+  color: var(--danger);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.cloze-answer-hint {
+  color: var(--danger);
+  font-style: italic;
+  font-size: 16px;
+}
+
+.diff-text {
+  font-size: 18px;
+  line-height: 1.8;
+  font-family: ui-monospace, monospace;
+}
+
+.diff-char-correct {
+  color: var(--success);
+}
+
+.diff-char-wrong {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
 .reading-setup-actions {
   display: flex;
   align-items: center;
