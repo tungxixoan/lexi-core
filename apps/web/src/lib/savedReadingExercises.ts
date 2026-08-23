@@ -5,6 +5,7 @@ import type { ReadingPassage } from "./readingPassage";
 import type { VocabRecord } from "./vocabRecords";
 import type { TargetLanguage } from "./languages";
 import type { Part5Set } from "./part5";
+import type { Part6Set } from "./part6";
 
 export interface BilingualFilters {
   topicIds: string[];
@@ -39,6 +40,14 @@ export type SavedReadingExercise =
       id: string;
       type: "part5";
       passage: Part5Set;
+      generationFilters: ToeicFilters;
+      targetLanguage: TargetLanguage;
+      createdAt: string;
+    }
+  | {
+      id: string;
+      type: "part6";
+      passage: Part6Set;
       generationFilters: ToeicFilters;
       targetLanguage: TargetLanguage;
       createdAt: string;

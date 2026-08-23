@@ -10,6 +10,7 @@ import {
 } from "./savedReadingExercises";
 import type { ReadingPassage } from "./readingPassage";
 import type { VocabRecord } from "./vocabRecords";
+import type { Part6Set } from "./part6";
 
 vi.mock("firebase/firestore", () => ({
   collection: vi.fn(() => "mock-collection-ref"),
@@ -68,6 +69,20 @@ const PART5_PASSAGE: FakePart5Set = {
   questions: [{ sentenceWithBlank: "She ___ to work.", options: ["go", "goes", "going", "gone"], correctIndex: 1, explanation: "..." }],
 };
 
+const PART6_PASSAGE: Part6Set = {
+  passages: [
+    {
+      passageText: "... (1)___ ... (2)___ ... (3)___ ... (4)___ ...",
+      questions: [
+        { options: ["a", "b", "c", "d"], correctIndex: 0, explanation: "A." },
+        { options: ["a", "b", "c", "d"], correctIndex: 1, explanation: "B." },
+        { options: ["a", "b", "c", "d"], correctIndex: 2, explanation: "C." },
+        { options: ["a", "b", "c", "d"], correctIndex: 3, explanation: "D." },
+      ],
+    },
+  ],
+};
+
 function makeBilingualExercise(overrides: Partial<Extract<SavedReadingExercise, { type: "bilingual" }>> = {}) {
   return {
     id: "ex-1",
@@ -85,6 +100,18 @@ function makePart5Exercise(overrides: Partial<{ id: string; generationFilters: F
     id: "p5-1",
     type: "part5" as const,
     passage: PART5_PASSAGE,
+    generationFilters: { topicIds: ["biz-1"], volumes: ["vol3"] },
+    targetLanguage: "english" as const,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function makePart6Exercise(overrides: Partial<{ id: string; generationFilters: FakeToeicFilters }> = {}) {
+  return {
+    id: "p6-1",
+    type: "part6" as const,
+    passage: PART6_PASSAGE,
     generationFilters: { topicIds: ["biz-1"], volumes: ["vol3"] },
     targetLanguage: "english" as const,
     createdAt: "2026-01-01T00:00:00.000Z",
@@ -132,6 +159,25 @@ describe("saveReadingExercise", () => {
       })
     );
     expect(newId).toBe("new-p5-id");
+  });
+
+  it("creates a part6 document carrying its own id field, and returns that id", async () => {
+    vi.mocked(doc).mockReturnValue({ id: "new-p6-id" } as never);
+    const filters = { topicIds: ["biz-1"], volumes: ["vol3"] };
+
+    const newId = await saveReadingExercise("user-123", "part6", PART6_PASSAGE, filters, "english");
+
+    expect(setDoc).toHaveBeenCalledWith(
+      { id: "new-p6-id" },
+      expect.objectContaining({
+        id: "new-p6-id",
+        type: "part6",
+        passage: PART6_PASSAGE,
+        generationFilters: filters,
+        targetLanguage: "english",
+      })
+    );
+    expect(newId).toBe("new-p6-id");
   });
 });
 
@@ -382,6 +428,49 @@ describe("getRandomSavedExercise", () => {
     } as never);
 
     expect(result?.id).toBe(p5.id);
+  });
+
+  it("matches part6 exercises by topic overlap and volume overlap, mirroring part5's matching", async () => {
+    const p6 = makePart6Exercise({ generationFilters: { topicIds: ["biz-1", "travel-1"], volumes: ["vol2", "vol3"] } });
+    vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: p6.id, data: () => p6 }] } as never);
+
+    const result = await getRandomSavedExercise("user-123", "english", "part6", {
+      topicIds: ["travel-1", "food-1"],
+      volumes: ["vol3", "vol4"],
+    } as never);
+
+    expect(result?.id).toBe(p6.id);
+  });
+
+  it("does not match a part6 exercise when there is no topic overlap", async () => {
+    const p6 = makePart6Exercise({ generationFilters: { topicIds: ["biz-1"], volumes: [] } });
+    vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: p6.id, data: () => p6 }] } as never);
+
+    const result = await getRandomSavedExercise("user-123", "english", "part6", {
+      topicIds: ["travel-1"],
+      volumes: [],
+    } as never);
+
+    expect(result).toBeNull();
+  });
+
+  it("does not return a part5 exercise when requesting type part6, even though both share the same ToeicFilters shape", async () => {
+    const p5 = makePart5Exercise({ generationFilters: { topicIds: ["biz-1"], volumes: ["vol3"] } });
+    const p6 = makePart6Exercise({ generationFilters: { topicIds: ["biz-1"], volumes: ["vol3"] } });
+    vi.mocked(getDocs).mockResolvedValue({
+      docs: [
+        { id: p5.id, data: () => p5 },
+        { id: p6.id, data: () => p6 },
+      ],
+    } as never);
+
+    const result = await getRandomSavedExercise("user-123", "english", "part6", {
+      topicIds: ["biz-1"],
+      volumes: ["vol3"],
+    } as never);
+
+    expect(result?.type).toBe("part6");
+    expect(result?.id).toBe(p6.id);
   });
 });
 
