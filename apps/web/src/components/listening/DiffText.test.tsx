@@ -28,4 +28,13 @@ describe("DiffText", () => {
     const spans = screen.getByTestId("diff-text").querySelectorAll("span");
     expect(spans).toHaveLength(2);
   });
+
+  it("marks a case difference as correct", () => {
+    render(<DiffText typed="HELLO" target="hello" />);
+
+    const spans = screen.getByTestId("diff-text").querySelectorAll("span");
+    for (const span of spans) {
+      expect(span).toHaveClass("diff-char-correct");
+    }
+  });
 });

@@ -159,15 +159,18 @@ export function isBlankCorrect(sentence: string, blank: BlankSpan, answer: strin
   return normalizeForComparison(answer) === normalizeForComparison(targetTextForBlank(sentence, blank));
 }
 
-// Ports DictationSessionResult.charAccuracy exactly: only characters at the
-// same index count, over the target's full length (not the typed length) —
-// so a too-short answer is scored down by the missing trailing characters.
+// Ports DictationSessionResult.charAccuracy, with one deliberate deviation:
+// the comparison is case-insensitive (Flutter's original is case-sensitive)
+// so Caps Lock or stray shift-key casing doesn't penalize an otherwise-
+// correct answer. Still only characters at the same index count, over the
+// target's full length (not the typed length) — a too-short answer is still
+// scored down by the missing trailing characters.
 export function charAccuracy(target: string, typed: string): number {
   if (target.length === 0) return 1;
   const limit = Math.min(typed.length, target.length);
   let correct = 0;
   for (let i = 0; i < limit; i++) {
-    if (typed[i] === target[i]) correct++;
+    if (typed[i].toLowerCase() === target[i].toLowerCase()) correct++;
   }
   return correct / target.length;
 }

@@ -172,6 +172,11 @@ describe("charAccuracy", () => {
   it("is 1.0 for an empty target (avoids division by zero)", () => {
     expect(charAccuracy("", "")).toBe(1);
   });
+
+  it("ignores case differences", () => {
+    expect(charAccuracy("Hello.", "hello.")).toBe(1);
+    expect(charAccuracy("hello.", "HELLO.")).toBe(1);
+  });
 });
 
 describe("blockAccuracy", () => {
