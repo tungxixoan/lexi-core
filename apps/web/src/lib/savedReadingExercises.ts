@@ -6,6 +6,7 @@ import type { VocabRecord } from "./vocabRecords";
 import type { TargetLanguage } from "./languages";
 import type { Part5Set } from "./part5";
 import type { Part6Set } from "./part6";
+import type { Part7Set } from "./part7";
 
 export interface BilingualFilters {
   topicIds: string[];
@@ -48,6 +49,14 @@ export type SavedReadingExercise =
       id: string;
       type: "part6";
       passage: Part6Set;
+      generationFilters: ToeicFilters;
+      targetLanguage: TargetLanguage;
+      createdAt: string;
+    }
+  | {
+      id: string;
+      type: "part7";
+      passage: Part7Set;
       generationFilters: ToeicFilters;
       targetLanguage: TargetLanguage;
       createdAt: string;

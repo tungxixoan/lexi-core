@@ -11,6 +11,7 @@ import {
 import type { ReadingPassage } from "./readingPassage";
 import type { VocabRecord } from "./vocabRecords";
 import type { Part6Set } from "./part6";
+import type { Part7Set } from "./part7";
 
 vi.mock("firebase/firestore", () => ({
   collection: vi.fn(() => "mock-collection-ref"),
@@ -83,6 +84,15 @@ const PART6_PASSAGE: Part6Set = {
   ],
 };
 
+const PART7_PASSAGE: Part7Set = {
+  passageGroups: [
+    {
+      documents: ["Doc A"],
+      questions: [{ question: "Q1?", options: ["a", "b", "c", "d"], correctIndex: 0, explanation: "A." }],
+    },
+  ],
+};
+
 function makeBilingualExercise(overrides: Partial<Extract<SavedReadingExercise, { type: "bilingual" }>> = {}) {
   return {
     id: "ex-1",
@@ -112,6 +122,18 @@ function makePart6Exercise(overrides: Partial<{ id: string; generationFilters: F
     id: "p6-1",
     type: "part6" as const,
     passage: PART6_PASSAGE,
+    generationFilters: { topicIds: ["biz-1"], volumes: ["vol3"] },
+    targetLanguage: "english" as const,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function makePart7Exercise(overrides: Partial<{ id: string; generationFilters: FakeToeicFilters }> = {}) {
+  return {
+    id: "p7-1",
+    type: "part7" as const,
+    passage: PART7_PASSAGE,
     generationFilters: { topicIds: ["biz-1"], volumes: ["vol3"] },
     targetLanguage: "english" as const,
     createdAt: "2026-01-01T00:00:00.000Z",
@@ -178,6 +200,25 @@ describe("saveReadingExercise", () => {
       })
     );
     expect(newId).toBe("new-p6-id");
+  });
+
+  it("creates a part7 document carrying its own id field, and returns that id", async () => {
+    vi.mocked(doc).mockReturnValue({ id: "new-p7-id" } as never);
+    const filters = { topicIds: ["biz-1"], volumes: ["vol3"] };
+
+    const newId = await saveReadingExercise("user-123", "part7", PART7_PASSAGE, filters, "english");
+
+    expect(setDoc).toHaveBeenCalledWith(
+      { id: "new-p7-id" },
+      expect.objectContaining({
+        id: "new-p7-id",
+        type: "part7",
+        passage: PART7_PASSAGE,
+        generationFilters: filters,
+        targetLanguage: "english",
+      })
+    );
+    expect(newId).toBe("new-p7-id");
   });
 });
 
@@ -471,6 +512,49 @@ describe("getRandomSavedExercise", () => {
 
     expect(result?.type).toBe("part6");
     expect(result?.id).toBe(p6.id);
+  });
+
+  it("matches part7 exercises by topic overlap and volume overlap, mirroring part5/part6's matching", async () => {
+    const p7 = makePart7Exercise({ generationFilters: { topicIds: ["biz-1", "travel-1"], volumes: ["vol2", "vol3"] } });
+    vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: p7.id, data: () => p7 }] } as never);
+
+    const result = await getRandomSavedExercise("user-123", "english", "part7", {
+      topicIds: ["travel-1", "food-1"],
+      volumes: ["vol3", "vol4"],
+    } as never);
+
+    expect(result?.id).toBe(p7.id);
+  });
+
+  it("does not match a part7 exercise when there is no topic overlap", async () => {
+    const p7 = makePart7Exercise({ generationFilters: { topicIds: ["biz-1"], volumes: [] } });
+    vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: p7.id, data: () => p7 }] } as never);
+
+    const result = await getRandomSavedExercise("user-123", "english", "part7", {
+      topicIds: ["travel-1"],
+      volumes: [],
+    } as never);
+
+    expect(result).toBeNull();
+  });
+
+  it("does not return a part6 exercise when requesting type part7, even though both share the same ToeicFilters shape", async () => {
+    const p6 = makePart6Exercise({ generationFilters: { topicIds: ["biz-1"], volumes: ["vol3"] } });
+    const p7 = makePart7Exercise({ generationFilters: { topicIds: ["biz-1"], volumes: ["vol3"] } });
+    vi.mocked(getDocs).mockResolvedValue({
+      docs: [
+        { id: p6.id, data: () => p6 },
+        { id: p7.id, data: () => p7 },
+      ],
+    } as never);
+
+    const result = await getRandomSavedExercise("user-123", "english", "part7", {
+      topicIds: ["biz-1"],
+      volumes: ["vol3"],
+    } as never);
+
+    expect(result?.type).toBe("part7");
+    expect(result?.id).toBe(p7.id);
   });
 });
 
