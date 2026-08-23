@@ -27,7 +27,7 @@ const WORD_COUNT_DROPDOWN_OPTIONS: SimpleDropdownOption<string>[] = WORD_COUNT_O
   label: count === null ? "Tất cả" : `${count} từ`,
 }));
 
-type Mode = "bilingual" | "part5" | "part6";
+type Mode = "bilingual" | "part5" | "part6" | "part7";
 
 export default function ReadingHubPage() {
   const { user, loading: authLoading } = useAuthUser();
@@ -66,7 +66,7 @@ export default function ReadingHubPage() {
     if (mode === "bilingual") {
       if (maxCefr) params.set("maxCefr", maxCefr);
       params.set("wordCount", wordCount === null ? "all" : String(wordCount));
-    } else if (mode === "part5" || mode === "part6") {
+    } else if (mode === "part5" || mode === "part6" || mode === "part7") {
       if (selectedVolumes.size > 0) params.set("volumes", [...selectedVolumes].join(","));
     }
     params.set("action", action);
@@ -75,7 +75,14 @@ export default function ReadingHubPage() {
 
   function navigate(action: "generate" | "existing") {
     if (!mode) return;
-    const path = mode === "bilingual" ? "/reading/bilingual" : mode === "part5" ? "/reading/part5" : "/reading/part6";
+    const path =
+      mode === "bilingual"
+        ? "/reading/bilingual"
+        : mode === "part5"
+          ? "/reading/part5"
+          : mode === "part6"
+            ? "/reading/part6"
+            : "/reading/part7";
     router.push(`${path}?${buildQuery(action)}`);
   }
 
@@ -136,6 +143,16 @@ export default function ReadingHubPage() {
             3 đoạn văn ngắn, mỗi đoạn 4 chỗ trống kiểu TOEIC.
           </span>
         </button>
+        <button
+          type="button"
+          className={`reading-hub-card reading-hub-card-toggle${mode === "part7" ? " active" : ""}`}
+          onClick={() => setMode("part7")}
+        >
+          <span className="reading-hub-card-title">📖 Part 7 — Đọc hiểu</span>
+          <span className="reading-hub-card-desc">
+            3 nhóm văn bản, 9-13 câu hỏi đọc hiểu kiểu TOEIC.
+          </span>
+        </button>
       </div>
 
       {mode === "bilingual" && (
@@ -159,7 +176,7 @@ export default function ReadingHubPage() {
         </div>
       )}
 
-      {(mode === "part5" || mode === "part6") && (
+      {mode !== "bilingual" && mode !== null && (
         <div className="practice-filters">
           {ECONOMY_VOLUMES.map((v) => (
             <button
