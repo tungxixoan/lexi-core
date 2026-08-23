@@ -1479,6 +1479,36 @@ button.btn-secondary {
   background: var(--danger-bg);
 }
 
+.dictation-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.dictation-speed-selector {
+  display: flex;
+  gap: 8px;
+}
+
+.dictation-seek-slider {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.dictation-free-input {
+  width: 100%;
+  min-height: 120px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 18px;
+  font-family: inherit;
+  resize: vertical;
+}
+
 .reading-setup-actions {
   display: flex;
   align-items: center;
