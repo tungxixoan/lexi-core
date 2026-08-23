@@ -139,6 +139,41 @@ describe("useDictationAudio", () => {
     expect(result.current.hasPlayedOnce).toBe(true);
   });
 
+  it("resets playback state and drops the cached clip when the sentence argument changes on the same hook instance", async () => {
+    const NEW_SENTENCE = "Pack my box with five dozen liquor jugs"; // different sentence, same instance
+
+    const { result, rerender } = renderHook(({ sentence }) => useDictationAudio(sentence), {
+      initialProps: { sentence: SENTENCE },
+    });
+
+    await act(async () => {
+      await result.current.play();
+    });
+    expect(result.current.hasPlayedOnce).toBe(true);
+
+    await act(async () => {
+      await result.current.seekTo(0); // bump replayCount-adjacent counters too
+    });
+    expect(result.current.seekCount).toBe(1);
+    expect(result.current.seekPenaltyTotal).toBeGreaterThan(0);
+
+    rerender({ sentence: NEW_SENTENCE });
+
+    expect(result.current.hasPlayedOnce).toBe(false);
+    expect(result.current.replayCount).toBe(0);
+    expect(result.current.seekCount).toBe(0);
+    expect(result.current.seekPenaltyTotal).toBe(0);
+
+    vi.mocked(synthesizeSpeech).mockClear();
+    await act(async () => {
+      await result.current.play();
+    });
+
+    expect(synthesizeSpeech).toHaveBeenCalledWith({ text: NEW_SENTENCE, language: "en" });
+    expect(result.current.hasPlayedOnce).toBe(true);
+    expect(result.current.replayCount).toBe(0);
+  });
+
   it("isLoading is true while a synthesizeSpeech call is in flight", async () => {
     let resolveCall!: (value: { audioBase64: string }) => void;
     vi.mocked(synthesizeSpeech).mockReturnValue(

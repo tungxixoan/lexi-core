@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { synthesizeSpeech, toAudioDataUrl } from "./synthesizeSpeechClient";
 import { seekPenaltyFraction, targetWords } from "./dictation";
 
@@ -30,6 +30,28 @@ export function useDictationAudio(sentence: string): UseDictationAudioResult {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fullClipUrlRef = useRef<string | null>(null);
+  const previousSentenceRef = useRef(sentence);
+
+  // A persistent hook instance (e.g. the dictation page reusing one hook
+  // across "Câu khác"/retry sessions) must not leak playback state from a
+  // prior sentence into a new one: hasPlayedOnce gating Nộp bài, replayCount/
+  // seekPenaltyTotal feeding computeDictationScore, and the cached clip URL
+  // would otherwise all belong to the wrong sentence. Reset only on a
+  // genuine change, never on initial mount.
+  useEffect(() => {
+    if (previousSentenceRef.current === sentence) return;
+    previousSentenceRef.current = sentence;
+
+    setHasPlayedOnce(false);
+    setReplayCount(0);
+    setSeekCount(0);
+    setSeekPenaltyTotal(0);
+    setError(null);
+    fullClipUrlRef.current = null;
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+  }, [sentence]);
 
   function playUrl(url: string) {
     if (!audioRef.current) {
