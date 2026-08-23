@@ -19,7 +19,16 @@ export interface UseDictationAudioResult {
 // not a literal port (Flutter speaks live on-device every call; this caches
 // one fetched clip and only re-fetches for seeks). The state-transition
 // rules that feed computeDictationScore are preserved exactly.
-export function useDictationAudio(sentence: string): UseDictationAudioResult {
+//
+// `sessionKey` identifies the current session independently of the sentence
+// text: a caller reusing the same saved exercise (only one saved item, so
+// "Câu khác" re-picks the identical document) has `sentence` stay
+// byte-identical across sessions, and keying the reset purely on `sentence`
+// would then leak hasPlayedOnce/replayCount/seekCount/seekPenaltyTotal/the
+// cached clip from the previous session into the new one. Callers must pass
+// a value that changes on every session start (e.g. an incrementing counter)
+// even when the sentence text happens to repeat.
+export function useDictationAudio(sentence: string, sessionKey: string | number): UseDictationAudioResult {
   const [isLoading, setIsLoading] = useState(false);
   const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
   const [replayCount, setReplayCount] = useState(0);
@@ -31,16 +40,20 @@ export function useDictationAudio(sentence: string): UseDictationAudioResult {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fullClipUrlRef = useRef<string | null>(null);
   const previousSentenceRef = useRef(sentence);
+  const previousSessionKeyRef = useRef(sessionKey);
 
   // A persistent hook instance (e.g. the dictation page reusing one hook
   // across "Câu khác"/retry sessions) must not leak playback state from a
   // prior sentence into a new one: hasPlayedOnce gating Nộp bài, replayCount/
   // seekPenaltyTotal feeding computeDictationScore, and the cached clip URL
-  // would otherwise all belong to the wrong sentence. Reset only on a
-  // genuine change, never on initial mount.
+  // would otherwise all belong to the wrong sentence. Reset whenever either
+  // the sentence text or the session identity changes, never on initial mount.
   useEffect(() => {
-    if (previousSentenceRef.current === sentence) return;
+    const sentenceChanged = previousSentenceRef.current !== sentence;
+    const sessionKeyChanged = previousSessionKeyRef.current !== sessionKey;
+    if (!sentenceChanged && !sessionKeyChanged) return;
     previousSentenceRef.current = sentence;
+    previousSessionKeyRef.current = sessionKey;
 
     setHasPlayedOnce(false);
     setReplayCount(0);
@@ -51,7 +64,7 @@ export function useDictationAudio(sentence: string): UseDictationAudioResult {
     if (audioRef.current) {
       audioRef.current.pause();
     }
-  }, [sentence]);
+  }, [sentence, sessionKey]);
 
   function playUrl(url: string) {
     if (!audioRef.current) {

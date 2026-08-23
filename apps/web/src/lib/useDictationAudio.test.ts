@@ -17,7 +17,7 @@ beforeEach(() => {
 
 describe("useDictationAudio", () => {
   it("starts with hasPlayedOnce false and every counter at 0", () => {
-    const { result } = renderHook(() => useDictationAudio(SENTENCE));
+    const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
     expect(result.current.hasPlayedOnce).toBe(false);
     expect(result.current.replayCount).toBe(0);
     expect(result.current.seekCount).toBe(0);
@@ -26,7 +26,7 @@ describe("useDictationAudio", () => {
   });
 
   it("the first play() fetches audio for the full sentence and sets hasPlayedOnce, without incrementing replayCount", async () => {
-    const { result } = renderHook(() => useDictationAudio(SENTENCE));
+    const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
 
     await act(async () => {
       await result.current.play();
@@ -38,7 +38,7 @@ describe("useDictationAudio", () => {
   });
 
   it("every play() after the first increments replayCount and does not re-fetch audio", async () => {
-    const { result } = renderHook(() => useDictationAudio(SENTENCE));
+    const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
     await act(async () => {
       await result.current.play();
     });
@@ -55,7 +55,7 @@ describe("useDictationAudio", () => {
   });
 
   it("setSpeed updates the reported speed without calling synthesizeSpeech or touching hasPlayedOnce/replayCount", () => {
-    const { result } = renderHook(() => useDictationAudio(SENTENCE));
+    const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
 
     act(() => {
       result.current.setSpeed(1.25);
@@ -67,7 +67,7 @@ describe("useDictationAudio", () => {
   });
 
   it("seekTo before any play sets hasPlayedOnce and increments seekCount, but adds no penalty", async () => {
-    const { result } = renderHook(() => useDictationAudio(SENTENCE));
+    const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
 
     await act(async () => {
       await result.current.seekTo(3);
@@ -80,7 +80,7 @@ describe("useDictationAudio", () => {
   });
 
   it("seekTo after already having played adds the seekPenaltyFraction for that word index", async () => {
-    const { result } = renderHook(() => useDictationAudio(SENTENCE));
+    const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
     await act(async () => {
       await result.current.play();
     });
@@ -94,7 +94,7 @@ describe("useDictationAudio", () => {
   });
 
   it("accumulates seekPenaltyTotal across multiple seeks", async () => {
-    const { result } = renderHook(() => useDictationAudio(SENTENCE));
+    const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
     await act(async () => {
       await result.current.play();
     });
@@ -111,7 +111,7 @@ describe("useDictationAudio", () => {
 
   it("surfaces a Vietnamese error and stops loading when synthesizeSpeech rejects", async () => {
     vi.mocked(synthesizeSpeech).mockRejectedValue(new Error("network down"));
-    const { result } = renderHook(() => useDictationAudio(SENTENCE));
+    const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
 
     await act(async () => {
       await result.current.play();
@@ -124,7 +124,7 @@ describe("useDictationAudio", () => {
 
   it("clears a prior error on the next successful play", async () => {
     vi.mocked(synthesizeSpeech).mockRejectedValueOnce(new Error("network down"));
-    const { result } = renderHook(() => useDictationAudio(SENTENCE));
+    const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
     await act(async () => {
       await result.current.play();
     });
@@ -142,8 +142,8 @@ describe("useDictationAudio", () => {
   it("resets playback state and drops the cached clip when the sentence argument changes on the same hook instance", async () => {
     const NEW_SENTENCE = "Pack my box with five dozen liquor jugs"; // different sentence, same instance
 
-    const { result, rerender } = renderHook(({ sentence }) => useDictationAudio(sentence), {
-      initialProps: { sentence: SENTENCE },
+    const { result, rerender } = renderHook(({ sentence, sessionKey }) => useDictationAudio(sentence, sessionKey), {
+      initialProps: { sentence: SENTENCE, sessionKey: 1 },
     });
 
     await act(async () => {
@@ -157,7 +157,7 @@ describe("useDictationAudio", () => {
     expect(result.current.seekCount).toBe(1);
     expect(result.current.seekPenaltyTotal).toBeGreaterThan(0);
 
-    rerender({ sentence: NEW_SENTENCE });
+    rerender({ sentence: NEW_SENTENCE, sessionKey: 2 });
 
     expect(result.current.hasPlayedOnce).toBe(false);
     expect(result.current.replayCount).toBe(0);
@@ -174,6 +174,44 @@ describe("useDictationAudio", () => {
     expect(result.current.replayCount).toBe(0);
   });
 
+  it("resets playback state and drops the cached clip when sessionKey changes even though the sentence text is identical (same reused saved exercise)", async () => {
+    const { result, rerender } = renderHook(({ sentence, sessionKey }) => useDictationAudio(sentence, sessionKey), {
+      initialProps: { sentence: SENTENCE, sessionKey: 1 },
+    });
+
+    await act(async () => {
+      await result.current.play();
+    });
+    expect(result.current.hasPlayedOnce).toBe(true);
+
+    await act(async () => {
+      await result.current.seekTo(0); // bump replayCount-adjacent counters too
+    });
+    expect(result.current.seekCount).toBe(1);
+    expect(result.current.seekPenaltyTotal).toBeGreaterThan(0);
+
+    // Same sentence text (e.g. only one saved exercise exists, so "Câu khác"
+    // re-picks the identical document), but a new session was started —
+    // sessionKey changes. All playback state must still reset.
+    rerender({ sentence: SENTENCE, sessionKey: 2 });
+
+    expect(result.current.hasPlayedOnce).toBe(false);
+    expect(result.current.replayCount).toBe(0);
+    expect(result.current.seekCount).toBe(0);
+    expect(result.current.seekPenaltyTotal).toBe(0);
+
+    vi.mocked(synthesizeSpeech).mockClear();
+    await act(async () => {
+      await result.current.play();
+    });
+
+    // The cached clip from the previous session must not have leaked either —
+    // play() should have re-fetched rather than reusing fullClipUrlRef.
+    expect(synthesizeSpeech).toHaveBeenCalledWith({ text: SENTENCE, language: "en" });
+    expect(result.current.hasPlayedOnce).toBe(true);
+    expect(result.current.replayCount).toBe(0);
+  });
+
   it("isLoading is true while a synthesizeSpeech call is in flight", async () => {
     let resolveCall!: (value: { audioBase64: string }) => void;
     vi.mocked(synthesizeSpeech).mockReturnValue(
@@ -181,7 +219,7 @@ describe("useDictationAudio", () => {
         resolveCall = resolve;
       })
     );
-    const { result } = renderHook(() => useDictationAudio(SENTENCE));
+    const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
 
     let playPromise!: Promise<void>;
     act(() => {

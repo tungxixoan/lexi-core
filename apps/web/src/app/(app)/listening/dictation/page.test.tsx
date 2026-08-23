@@ -86,6 +86,28 @@ beforeEach(() => {
   vi.mocked(getRandomSavedListeningExercise).mockResolvedValue(null);
 });
 
+describe("DictationPage (language gate)", () => {
+  it("renders the same gate message as the hub and never runs session logic when targetLanguage is not english", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
+    vi.mocked(useSettingsContext).mockReturnValue({
+      settings: { ...SETTINGS_WITH_KEY, targetLanguage: "japanese" },
+      loading: false,
+      error: null,
+      save: vi.fn(),
+    });
+
+    render(<DictationPage />);
+
+    expect(
+      await screen.findByText(
+        "Nghe chép hiện chỉ hỗ trợ khi Ngôn ngữ mục tiêu là Tiếng Anh — đổi trong Cài đặt để dùng."
+      )
+    ).toBeInTheDocument();
+    expect(generateContent).not.toHaveBeenCalled();
+    expect(synthesizeSpeech).not.toHaveBeenCalled();
+  });
+});
+
 describe("DictationPage (loading phase)", () => {
   it("prompts sign-in when logged out", () => {
     vi.mocked(useAuthUser).mockReturnValue({ user: null, loading: false } as never);
@@ -239,6 +261,61 @@ describe("DictationPage (session phase — Khó / free text)", () => {
 
     expect(screen.getByRole("button", { name: "Nộp bài" })).not.toBeDisabled();
   });
+
+  it("does not call seekTo/synthesizeSpeech while dragging the seek slider — only on release, with the last-dragged value", async () => {
+    mockSignedIn();
+    await generateSession();
+
+    const slider = screen.getByLabelText("Tua theo từ");
+    // Simulate a drag across several intermediate positions.
+    fireEvent.change(slider, { target: { value: "1" } });
+    fireEvent.change(slider, { target: { value: "2" } });
+    fireEvent.change(slider, { target: { value: "4" } });
+    expect(synthesizeSpeech).not.toHaveBeenCalled();
+
+    fireEvent.mouseUp(slider);
+
+    // words = ["I", "ate", "an", "apple", "today."] — index 4 -> remainder "today."
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(1));
+    expect(synthesizeSpeech).toHaveBeenCalledWith({ text: "today.", language: "en" });
+  });
+
+  it("seeks on touch-drag release and on keyboard-arrow release, not on every intermediate onChange", async () => {
+    mockSignedIn();
+    await generateSession();
+
+    const slider = screen.getByLabelText("Tua theo từ");
+    fireEvent.change(slider, { target: { value: "3" } });
+    expect(synthesizeSpeech).not.toHaveBeenCalled();
+    fireEvent.touchEnd(slider);
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(1));
+    expect(synthesizeSpeech).toHaveBeenCalledWith({ text: "apple today.", language: "en" });
+
+    vi.mocked(synthesizeSpeech).mockClear();
+    fireEvent.change(slider, { target: { value: "0" } });
+    expect(synthesizeSpeech).not.toHaveBeenCalled();
+    fireEvent.keyUp(slider);
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(1));
+    expect(synthesizeSpeech).toHaveBeenCalledWith({ text: "I ate an apple today.", language: "en" });
+  });
+
+  it("disables the seek slider while audio is loading", async () => {
+    mockSignedIn();
+    await generateSession();
+
+    let resolveSpeech!: (value: { audioBase64: string }) => void;
+    vi.mocked(synthesizeSpeech).mockReturnValue(
+      new Promise((resolve) => {
+        resolveSpeech = resolve;
+      })
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "▶ Phát" }));
+    await waitFor(() => expect(screen.getByLabelText("Tua theo từ")).toBeDisabled());
+
+    resolveSpeech({ audioBase64: "AAAA" });
+    await waitFor(() => expect(screen.getByLabelText("Tua theo từ")).not.toBeDisabled());
+  });
 });
 
 describe("DictationPage (session phase — Dễ/Trung bình / cloze)", () => {
@@ -342,5 +419,78 @@ describe("DictationPage (result phase)", () => {
     await screen.findByText("100%");
 
     expect(screen.queryByRole("button", { name: "Lưu bài" })).not.toBeInTheDocument();
+  });
+});
+
+describe("DictationPage (local records refreshed after SM-2 write)", () => {
+  async function completeHardSession() {
+    setSearchParams({ difficulty: "hard", action: "generate" });
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        target: "I ate an apple today.",
+        vietnamese: "Tôi đã ăn một quả táo hôm nay.",
+        vocabWords: ["apple", "run"],
+      }),
+    });
+    render(<DictationPage />);
+    await screen.findByRole("button", { name: "▶ Phát" });
+    fireEvent.click(screen.getByRole("button", { name: "▶ Phát" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "▶ Nghe lại (0)" })).toBeInTheDocument());
+    fireEvent.change(screen.getByPlaceholderText("Gõ lại những gì bạn nghe được..."), {
+      target: { value: "I ate an apple today." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Nộp bài" }));
+    await screen.findByText("100%");
+  }
+
+  it("a second same-visit session computes SM-2 from the just-updated snapshot, not the stale pre-session records", async () => {
+    mockSignedIn();
+    await completeHardSession();
+
+    // v1 (apple) and v2 (run) both start at repetitions:0 -> a 100% (quality
+    // 5) session bumps them to repetitions:1, interval:1.
+    await waitFor(() => expect(updateVocabRecordSm2).toHaveBeenCalledTimes(2));
+    expect(updateVocabRecordSm2).toHaveBeenNthCalledWith(
+      1,
+      "u1",
+      "v1",
+      expect.objectContaining({ sm2Repetitions: 1, sm2Interval: 1 })
+    );
+    expect(updateVocabRecordSm2).toHaveBeenNthCalledWith(
+      2,
+      "u1",
+      "v2",
+      expect.objectContaining({ sm2Repetitions: 1, sm2Interval: 1 })
+    );
+
+    // "Câu khác" starts a second session (same generated mode) within the
+    // same page visit — this must reuse the updated in-memory records, not
+    // the pre-session fetch from mount.
+    fireEvent.click(screen.getByRole("button", { name: "Câu khác" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "▶ Phát" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "▶ Phát" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "▶ Nghe lại (0)" })).toBeInTheDocument());
+    fireEvent.change(screen.getByPlaceholderText("Gõ lại những gì bạn nghe được..."), {
+      target: { value: "I ate an apple today." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Nộp bài" }));
+    await screen.findByText("100%");
+
+    // Without the fix, computeSm2 would run again from repetitions:0 and
+    // produce repetitions:1/interval:1 a second time. With the fix, it
+    // runs from the merged repetitions:1 snapshot -> repetitions:2/interval:6.
+    await waitFor(() => expect(updateVocabRecordSm2).toHaveBeenCalledTimes(4));
+    expect(updateVocabRecordSm2).toHaveBeenNthCalledWith(
+      3,
+      "u1",
+      "v1",
+      expect.objectContaining({ sm2Repetitions: 2, sm2Interval: 6 })
+    );
+    expect(updateVocabRecordSm2).toHaveBeenNthCalledWith(
+      4,
+      "u1",
+      "v2",
+      expect.objectContaining({ sm2Repetitions: 2, sm2Interval: 6 })
+    );
   });
 });

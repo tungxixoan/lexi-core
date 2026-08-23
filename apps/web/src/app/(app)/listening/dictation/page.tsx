@@ -6,7 +6,7 @@ import { useAuthUser } from "@/lib/useAuthUser";
 import { useSettingsContext } from "@/lib/SettingsContext";
 import { SignInButton } from "@/components/SignInButton";
 import { getVocabRecords, updateVocabRecordSm2, type VocabRecord } from "@/lib/vocabRecords";
-import { computeSm2 } from "@/lib/sm2";
+import { computeSm2, type Sm2Fields } from "@/lib/sm2";
 import { generateContent } from "@/lib/generateContent";
 import { parseAiJsonObject } from "@/lib/parseAiJson";
 import {
@@ -70,8 +70,15 @@ function DictationPageContent() {
   const [sessionStartedAt, setSessionStartedAt] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
   const [finalScore, setFinalScore] = useState(0);
+  const [seekPreviewIndex, setSeekPreviewIndex] = useState(0);
 
-  const audio = useDictationAudio(item?.target ?? "");
+  // Identifies the current session independently of the sentence text — a
+  // reused saved exercise (only one saved item, so "Câu khác" re-picks the
+  // identical document) keeps item.target byte-identical across sessions,
+  // so useDictationAudio's reset must not rely on the sentence alone.
+  const sessionKeyRef = useRef(0);
+
+  const audio = useDictationAudio(item?.target ?? "", sessionKeyRef.current);
 
   useEffect(() => {
     if (!user) return;
@@ -82,6 +89,7 @@ function DictationPageContent() {
 
   function startSession(newItem: DictationItem, mode: "generated" | "reused") {
     const computedBlanks = selectDictationBlanks(newItem.target, difficulty);
+    sessionKeyRef.current += 1;
     setSessionMode(mode);
     setJustSavedId(null);
     setSaveError(null);
@@ -90,6 +98,7 @@ function DictationPageContent() {
     setTyped("");
     setBlankAnswers(new Array(computedBlanks.length).fill(""));
     setSessionStartedAt(Date.now());
+    setSeekPreviewIndex(0);
     setPhase("session");
   }
 
@@ -170,6 +179,7 @@ function DictationPageContent() {
   const triggeredRef = useRef(false);
   useEffect(() => {
     if (!user || !settings || records === null) return;
+    if (settings.targetLanguage !== "english") return;
     if (action !== "generate" && action !== "existing") {
       router.replace("/listening");
       return;
@@ -198,15 +208,31 @@ function DictationPageContent() {
 
     if (!user) return;
     const quality = sm2QualityFromScore(score);
+    const updatedFieldsById = new Map<string, Sm2Fields>();
     for (const vocabId of item.vocabIds) {
       try {
         const record = (records ?? []).find((r) => r.id === vocabId);
         if (!record) continue;
-        await updateVocabRecordSm2(user.uid, vocabId, computeSm2(record, quality));
+        const fields = computeSm2(record, quality);
+        await updateVocabRecordSm2(user.uid, vocabId, fields);
+        updatedFieldsById.set(vocabId, fields);
       } catch {
         // best-effort — one record's failure shouldn't block the others
       }
     }
+    // Merge the just-written SM-2 fields into local state so a "Câu khác"
+    // session started later in this same page visit prioritizes from
+    // up-to-date nextReviewAt/repetitions instead of the pre-session
+    // snapshot fetched on mount — mirrors practice/page.tsx's handling of
+    // the same problem for its own SM-2 writes.
+    setRecords((prev) =>
+      prev
+        ? prev.map((r) => {
+            const updated = updatedFieldsById.get(r.id);
+            return updated ? { ...r, ...updated } : r;
+          })
+        : prev
+    );
   }
 
   async function handleSaveExercise() {
@@ -252,6 +278,17 @@ function DictationPageContent() {
   }
 
   if (settingsLoading || !settings) return <p>Đang tải…</p>;
+
+  if (settings.targetLanguage !== "english") {
+    return (
+      <div>
+        <h2 className="scr-title">Nghe chép</h2>
+        <p className="reading-min-words-hint">
+          Nghe chép hiện chỉ hỗ trợ khi Ngôn ngữ mục tiêu là Tiếng Anh — đổi trong Cài đặt để dùng.
+        </p>
+      </div>
+    );
+  }
 
   if (phase === "loading") {
     return (
@@ -317,9 +354,14 @@ function DictationPageContent() {
             min={0}
             max={words.length - 1}
             step={1}
+            value={seekPreviewIndex}
             className="dictation-seek-slider"
             aria-label="Tua theo từ"
-            onChange={(e) => void audio.seekTo(Number(e.target.value))}
+            disabled={audio.isLoading}
+            onChange={(e) => setSeekPreviewIndex(Number(e.target.value))}
+            onMouseUp={(e) => void audio.seekTo(Number(e.currentTarget.value))}
+            onTouchEnd={(e) => void audio.seekTo(Number(e.currentTarget.value))}
+            onKeyUp={(e) => void audio.seekTo(Number(e.currentTarget.value))}
           />
         )}
         <div className="reading-session-body">
