@@ -14,6 +14,7 @@ import { parseAiJsonObject } from "@/lib/parseAiJson";
 import { getRandomSavedExercise, saveReadingExercise, type ToeicFilters } from "@/lib/savedReadingExercises";
 import { McQuestionCard } from "@/components/reading/McQuestionCard";
 import { VocabSuggestionsSection } from "@/components/shared/VocabSuggestionsSection";
+import { formatPassageLines } from "@/lib/formatPassageText";
 
 type Phase = "loading" | "session" | "result";
 const QUESTIONS_PER_PASSAGE = 4;
@@ -47,6 +48,16 @@ function Part6PageContent() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [contextLoaded, setContextLoaded] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<number>>(new Set());
+
+  function toggleCollapsed(index: number) {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  }
 
   useEffect(() => {
     if (!user) return;
@@ -231,28 +242,52 @@ function Part6PageContent() {
   }
 
   if (phase === "session" && set) {
-    const canSubmit = answers.every((a) => a !== null);
+    const answeredCount = answers.filter((a) => a !== null).length;
+    const canSubmit = answeredCount === answers.length;
     return (
       <div>
         <h2 className="scr-title">Part 6 — Điền đoạn văn</h2>
-        {set.passages.map((passage, p) => (
-          <div key={p} className="reading-passage-group">
-            <h3 className="reading-passage-group-title">Đoạn {p + 1}</h3>
-            <p className="reading-passage-text">{passage.passageText}</p>
-            {passage.questions.map((q, qi) => (
-              <McQuestionCard
-                key={qi}
-                label={`Chỗ trống (${qi + 1})`}
-                options={q.options}
-                selected={answers[flatIndex(p, qi)]}
-                onSelect={(optionIndex) => handleSelectAnswer(p, qi, optionIndex)}
-              />
-            ))}
-          </div>
-        ))}
-        <button className="btn-primary" onClick={() => setPhase("result")} disabled={!canSubmit}>
-          Nộp bài
-        </button>
+        <div className="reading-submit-bar">
+          <span className="reading-progress-label">
+            Đã trả lời {answeredCount}/{answers.length} câu
+          </span>
+          <button className="btn-primary" onClick={() => setPhase("result")} disabled={!canSubmit}>
+            Nộp bài
+          </button>
+        </div>
+        {set.passages.map((passage, p) => {
+          const collapsed = collapsedGroups.has(p);
+          return (
+            <div key={p} className="reading-passage-group">
+              <div className="reading-passage-group-header">
+                <h3 className="reading-passage-group-title">Đoạn {p + 1}</h3>
+                <button type="button" className="reading-collapse-btn" onClick={() => toggleCollapsed(p)}>
+                  {collapsed ? "Mở rộng ▾" : "Thu gọn ▴"}
+                </button>
+              </div>
+              {!collapsed && (
+                <>
+                  {formatPassageLines(passage.passageText).map((line, li) => (
+                    <p key={li} className="reading-passage-text">
+                      {line}
+                    </p>
+                  ))}
+                  <div className="mc-question-grid">
+                    {passage.questions.map((q, qi) => (
+                      <McQuestionCard
+                        key={qi}
+                        label={`Chỗ trống (${qi + 1})`}
+                        options={q.options}
+                        selected={answers[flatIndex(p, qi)]}
+                        onSelect={(optionIndex) => handleSelectAnswer(p, qi, optionIndex)}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -270,22 +305,40 @@ function Part6PageContent() {
       <p className="mc-score">
         {correctCount}/{total}
       </p>
-      {(set?.passages ?? []).map((passage, p) => (
-        <div key={p} className="reading-passage-group">
-          <h3 className="reading-passage-group-title">Đoạn {p + 1}</h3>
-          <p className="reading-passage-text">{passage.passageText}</p>
-          {passage.questions.map((q, qi) => (
-            <McQuestionCard
-              key={qi}
-              label={`Chỗ trống (${qi + 1})`}
-              options={q.options}
-              selected={answers[flatIndex(p, qi)]}
-              correctIndex={q.correctIndex}
-              explanation={q.explanation}
-            />
-          ))}
-        </div>
-      ))}
+      {(set?.passages ?? []).map((passage, p) => {
+        const collapsed = collapsedGroups.has(p);
+        return (
+          <div key={p} className="reading-passage-group">
+            <div className="reading-passage-group-header">
+              <h3 className="reading-passage-group-title">Đoạn {p + 1}</h3>
+              <button type="button" className="reading-collapse-btn" onClick={() => toggleCollapsed(p)}>
+                {collapsed ? "Mở rộng ▾" : "Thu gọn ▴"}
+              </button>
+            </div>
+            {!collapsed && (
+              <>
+                {formatPassageLines(passage.passageText).map((line, li) => (
+                  <p key={li} className="reading-passage-text">
+                    {line}
+                  </p>
+                ))}
+                <div className="mc-question-grid">
+                  {passage.questions.map((q, qi) => (
+                    <McQuestionCard
+                      key={qi}
+                      label={`Chỗ trống (${qi + 1})`}
+                      options={q.options}
+                      selected={answers[flatIndex(p, qi)]}
+                      correctIndex={q.correctIndex}
+                      explanation={q.explanation}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })}
       {sessionMode === "generated" && <VocabSuggestionsSection text={passagesText} existingRecords={records} topics={topics} />}
       <div className="reading-result-actions">
         {sessionMode === "generated" &&

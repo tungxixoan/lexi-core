@@ -14,6 +14,7 @@ import { parseAiJsonObject } from "@/lib/parseAiJson";
 import { getRandomSavedExercise, saveReadingExercise, type ToeicFilters } from "@/lib/savedReadingExercises";
 import { McQuestionCard } from "@/components/reading/McQuestionCard";
 import { VocabSuggestionsSection } from "@/components/shared/VocabSuggestionsSection";
+import { formatPassageLines } from "@/lib/formatPassageText";
 
 type Phase = "loading" | "session" | "result";
 
@@ -55,6 +56,16 @@ function Part7PageContent() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [contextLoaded, setContextLoaded] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<number>>(new Set());
+
+  function toggleCollapsed(index: number) {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  }
 
   useEffect(() => {
     if (!user) return;
@@ -233,34 +244,56 @@ function Part7PageContent() {
 
   if (phase === "session" && set) {
     const groups = set.passageGroups;
-    const canSubmit = answers.every((a) => a !== null);
+    const answeredCount = answers.filter((a) => a !== null).length;
+    const canSubmit = answeredCount === answers.length;
     return (
       <div>
         <h2 className="scr-title">Part 7 — Đọc hiểu</h2>
-        {groups.map((group, g) => (
-          <div key={g} className="reading-passage-group">
-            <h3 className="reading-passage-group-title">
-              {group.documents.length === 2 ? `Đoạn ${g + 1} (2 văn bản liên quan)` : `Đoạn ${g + 1}`}
-            </h3>
-            {group.documents.map((doc, d) => (
-              <p key={d} className="reading-passage-text">
-                {doc}
-              </p>
-            ))}
-            {group.questions.map((q, qi) => (
-              <McQuestionCard
-                key={qi}
-                label={`${qi + 1}. ${q.question}`}
-                options={q.options}
-                selected={answers[flatIndex(groups, g, qi)]}
-                onSelect={(optionIndex) => handleSelectAnswer(groups, g, qi, optionIndex)}
-              />
-            ))}
-          </div>
-        ))}
-        <button className="btn-primary" onClick={() => setPhase("result")} disabled={!canSubmit}>
-          Nộp bài
-        </button>
+        <div className="reading-submit-bar">
+          <span className="reading-progress-label">
+            Đã trả lời {answeredCount}/{answers.length} câu
+          </span>
+          <button className="btn-primary" onClick={() => setPhase("result")} disabled={!canSubmit}>
+            Nộp bài
+          </button>
+        </div>
+        {groups.map((group, g) => {
+          const collapsed = collapsedGroups.has(g);
+          return (
+            <div key={g} className="reading-passage-group">
+              <div className="reading-passage-group-header">
+                <h3 className="reading-passage-group-title">
+                  {group.documents.length === 2 ? `Đoạn ${g + 1} (2 văn bản liên quan)` : `Đoạn ${g + 1}`}
+                </h3>
+                <button type="button" className="reading-collapse-btn" onClick={() => toggleCollapsed(g)}>
+                  {collapsed ? "Mở rộng ▾" : "Thu gọn ▴"}
+                </button>
+              </div>
+              {!collapsed && (
+                <>
+                  {group.documents.flatMap((doc, d) =>
+                    formatPassageLines(doc).map((line, li) => (
+                      <p key={`${d}-${li}`} className="reading-passage-text">
+                        {line}
+                      </p>
+                    ))
+                  )}
+                  <div className="mc-question-grid">
+                    {group.questions.map((q, qi) => (
+                      <McQuestionCard
+                        key={qi}
+                        label={`${qi + 1}. ${q.question}`}
+                        options={q.options}
+                        selected={answers[flatIndex(groups, g, qi)]}
+                        onSelect={(optionIndex) => handleSelectAnswer(groups, g, qi, optionIndex)}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -280,28 +313,44 @@ function Part7PageContent() {
       <p className="mc-score">
         {correctCount}/{total}
       </p>
-      {groups.map((group, g) => (
-        <div key={g} className="reading-passage-group">
-          <h3 className="reading-passage-group-title">
-            {group.documents.length === 2 ? `Đoạn ${g + 1} (2 văn bản liên quan)` : `Đoạn ${g + 1}`}
-          </h3>
-          {group.documents.map((doc, d) => (
-            <p key={d} className="reading-passage-text">
-              {doc}
-            </p>
-          ))}
-          {group.questions.map((q, qi) => (
-            <McQuestionCard
-              key={qi}
-              label={`${qi + 1}. ${q.question}`}
-              options={q.options}
-              selected={answers[flatIndex(groups, g, qi)]}
-              correctIndex={q.correctIndex}
-              explanation={q.explanation}
-            />
-          ))}
-        </div>
-      ))}
+      {groups.map((group, g) => {
+        const collapsed = collapsedGroups.has(g);
+        return (
+          <div key={g} className="reading-passage-group">
+            <div className="reading-passage-group-header">
+              <h3 className="reading-passage-group-title">
+                {group.documents.length === 2 ? `Đoạn ${g + 1} (2 văn bản liên quan)` : `Đoạn ${g + 1}`}
+              </h3>
+              <button type="button" className="reading-collapse-btn" onClick={() => toggleCollapsed(g)}>
+                {collapsed ? "Mở rộng ▾" : "Thu gọn ▴"}
+              </button>
+            </div>
+            {!collapsed && (
+              <>
+                {group.documents.flatMap((doc, d) =>
+                  formatPassageLines(doc).map((line, li) => (
+                    <p key={`${d}-${li}`} className="reading-passage-text">
+                      {line}
+                    </p>
+                  ))
+                )}
+                <div className="mc-question-grid">
+                  {group.questions.map((q, qi) => (
+                    <McQuestionCard
+                      key={qi}
+                      label={`${qi + 1}. ${q.question}`}
+                      options={q.options}
+                      selected={answers[flatIndex(groups, g, qi)]}
+                      correctIndex={q.correctIndex}
+                      explanation={q.explanation}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })}
       {sessionMode === "generated" && <VocabSuggestionsSection text={documentsText} existingRecords={records} topics={topics} />}
       <div className="reading-result-actions">
         {sessionMode === "generated" &&
