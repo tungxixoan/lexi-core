@@ -1326,16 +1326,17 @@ button.btn-secondary {
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 16px;
   max-width: 720px;
+  margin-bottom: 24px;
 }
 
 .reading-hub-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 18px;
-  padding: 20px 22px;
+  padding: 26px 28px;
   text-decoration: none;
   color: var(--ink);
 }
@@ -1373,6 +1374,7 @@ button.btn-secondary {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  margin-top: 20px;
 }
 
 .reading-saved-notice {
