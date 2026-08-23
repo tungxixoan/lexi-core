@@ -27,7 +27,7 @@ const WORD_COUNT_DROPDOWN_OPTIONS: SimpleDropdownOption<string>[] = WORD_COUNT_O
   label: count === null ? "Tất cả" : `${count} từ`,
 }));
 
-type Mode = "bilingual" | "part5";
+type Mode = "bilingual" | "part5" | "part6";
 
 export default function ReadingHubPage() {
   const { user, loading: authLoading } = useAuthUser();
@@ -66,7 +66,7 @@ export default function ReadingHubPage() {
     if (mode === "bilingual") {
       if (maxCefr) params.set("maxCefr", maxCefr);
       params.set("wordCount", wordCount === null ? "all" : String(wordCount));
-    } else if (mode === "part5") {
+    } else if (mode === "part5" || mode === "part6") {
       if (selectedVolumes.size > 0) params.set("volumes", [...selectedVolumes].join(","));
     }
     params.set("action", action);
@@ -75,7 +75,7 @@ export default function ReadingHubPage() {
 
   function navigate(action: "generate" | "existing") {
     if (!mode) return;
-    const path = mode === "bilingual" ? "/reading/bilingual" : "/reading/part5";
+    const path = mode === "bilingual" ? "/reading/bilingual" : mode === "part5" ? "/reading/part5" : "/reading/part6";
     router.push(`${path}?${buildQuery(action)}`);
   }
 
@@ -126,6 +126,16 @@ export default function ReadingHubPage() {
             15 câu điền từ/ngữ pháp kiểu TOEIC, AI tạo theo chủ đề và độ khó bạn chọn.
           </span>
         </button>
+        <button
+          type="button"
+          className={`reading-hub-card reading-hub-card-toggle${mode === "part6" ? " active" : ""}`}
+          onClick={() => setMode("part6")}
+        >
+          <span className="reading-hub-card-title">📄 Part 6 — Điền đoạn văn</span>
+          <span className="reading-hub-card-desc">
+            3 đoạn văn ngắn, mỗi đoạn 4 chỗ trống kiểu TOEIC.
+          </span>
+        </button>
       </div>
 
       {mode === "bilingual" && (
@@ -149,7 +159,7 @@ export default function ReadingHubPage() {
         </div>
       )}
 
-      {mode === "part5" && (
+      {(mode === "part5" || mode === "part6") && (
         <div className="practice-filters">
           {ECONOMY_VOLUMES.map((v) => (
             <button
@@ -166,7 +176,7 @@ export default function ReadingHubPage() {
 
       {mode && (
         <div className="reading-setup-actions">
-          {mode === "part5" || canGenerateBilingual ? (
+          {mode !== "bilingual" || canGenerateBilingual ? (
             <button type="button" className="btn-primary" onClick={() => navigate("generate")}>
               Tạo bài luyện
             </button>

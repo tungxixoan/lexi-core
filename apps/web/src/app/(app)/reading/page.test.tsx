@@ -121,6 +121,28 @@ describe("ReadingHubPage (mode picker)", () => {
 
     expect(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" })).not.toBeDisabled();
   });
+
+  it("shows Part 6's own secondary filter (Độ khó chips) once that mode is picked", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue([]);
+
+    render(<ReadingHubPage />);
+    fireEvent.click(await screen.findByRole("button", { name: /Part 6/ }));
+
+    expect(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Tạo bài luyện" })).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: VOLUME_LABEL_VOL2 })).toBeInTheDocument();
+  });
+
+  it("Part 6's 'Lấy bài có sẵn' is never gated by word count, even with 0 matching words", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue([]);
+
+    render(<ReadingHubPage />);
+    fireEvent.click(await screen.findByRole("button", { name: /Part 6/ }));
+
+    expect(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" })).not.toBeDisabled();
+  });
 });
 
 describe("ReadingHubPage (navigation)", () => {
@@ -180,5 +202,17 @@ describe("ReadingHubPage (navigation)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tạo bài luyện" }));
 
     expect(pushMock).toHaveBeenCalledWith("/reading/part5?volumes=vol2&action=generate");
+  });
+
+  it("navigates to /reading/part6 with selected volumes and action=generate", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue([]);
+
+    render(<ReadingHubPage />);
+    fireEvent.click(await screen.findByRole("button", { name: /Part 6/ }));
+    fireEvent.click(screen.getByRole("button", { name: VOLUME_LABEL_VOL2 }));
+    fireEvent.click(screen.getByRole("button", { name: "Tạo bài luyện" }));
+
+    expect(pushMock).toHaveBeenCalledWith("/reading/part6?volumes=vol2&action=generate");
   });
 });
