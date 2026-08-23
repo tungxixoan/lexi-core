@@ -257,43 +257,47 @@ function Part7PageContent() {
             Nộp bài
           </button>
         </div>
-        {groups.map((group, g) => {
-          const collapsed = collapsedGroups.has(g);
-          return (
-            <div key={g} className="reading-passage-group">
-              <div className="reading-passage-group-header">
-                <h3 className="reading-passage-group-title">
-                  {group.documents.length === 2 ? `Đoạn ${g + 1} (2 văn bản liên quan)` : `Đoạn ${g + 1}`}
-                </h3>
-                <button type="button" className="reading-collapse-btn" onClick={() => toggleCollapsed(g)}>
-                  {collapsed ? "Mở rộng ▾" : "Thu gọn ▴"}
-                </button>
-              </div>
-              {!collapsed && (
-                <>
-                  {group.documents.flatMap((doc, d) =>
-                    formatPassageLines(doc).map((line, li) => (
-                      <p key={`${d}-${li}`} className="reading-passage-text">
-                        {line}
-                      </p>
-                    ))
-                  )}
-                  <div className="mc-question-grid">
-                    {group.questions.map((q, qi) => (
-                      <McQuestionCard
-                        key={qi}
-                        label={`${qi + 1}. ${q.question}`}
-                        options={q.options}
-                        selected={answers[flatIndex(groups, g, qi)]}
-                        onSelect={(optionIndex) => handleSelectAnswer(groups, g, qi, optionIndex)}
-                      />
+        <div className="reading-session-body">
+          {groups.map((group, g) => {
+            const collapsed = collapsedGroups.has(g);
+            return (
+              <div key={g} className="reading-passage-group">
+                <div className="reading-passage-group-header">
+                  <h3 className="reading-passage-group-title">
+                    {group.documents.length === 2 ? `Đoạn ${g + 1} (2 văn bản liên quan)` : `Đoạn ${g + 1}`}
+                  </h3>
+                  <button type="button" className="reading-collapse-btn" onClick={() => toggleCollapsed(g)}>
+                    {collapsed ? "Mở rộng ▾" : "Thu gọn ▴"}
+                  </button>
+                </div>
+                {!collapsed && (
+                  <>
+                    {group.documents.map((doc, d) => (
+                      <div key={d} className="reading-passage-block">
+                        {formatPassageLines(doc).map((line, li) => (
+                          <p key={li} className="reading-passage-text">
+                            {line}
+                          </p>
+                        ))}
+                      </div>
                     ))}
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })}
+                    <div className="mc-question-grid">
+                      {group.questions.map((q, qi) => (
+                        <McQuestionCard
+                          key={qi}
+                          label={`${qi + 1}. ${q.question}`}
+                          options={q.options}
+                          selected={answers[flatIndex(groups, g, qi)]}
+                          onSelect={(optionIndex) => handleSelectAnswer(groups, g, qi, optionIndex)}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -327,13 +331,15 @@ function Part7PageContent() {
             </div>
             {!collapsed && (
               <>
-                {group.documents.flatMap((doc, d) =>
-                  formatPassageLines(doc).map((line, li) => (
-                    <p key={`${d}-${li}`} className="reading-passage-text">
-                      {line}
-                    </p>
-                  ))
-                )}
+                {group.documents.map((doc, d) => (
+                  <div key={d} className="reading-passage-block">
+                    {formatPassageLines(doc).map((line, li) => (
+                      <p key={li} className="reading-passage-text">
+                        {line}
+                      </p>
+                    ))}
+                  </div>
+                ))}
                 <div className="mc-question-grid">
                   {group.questions.map((q, qi) => (
                     <McQuestionCard

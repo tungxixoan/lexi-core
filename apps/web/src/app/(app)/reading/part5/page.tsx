@@ -229,22 +229,32 @@ function Part5PageContent() {
   }
 
   if (phase === "session" && set) {
-    const canSubmit = answers.every((a) => a !== null);
+    const answeredCount = answers.filter((a) => a !== null).length;
+    const canSubmit = answeredCount === answers.length;
     return (
       <div>
         <h2 className="scr-title">Part 5 — Điền câu</h2>
-        {set.questions.map((q, i) => (
-          <McQuestionCard
-            key={i}
-            label={`${i + 1}. ${q.sentenceWithBlank}`}
-            options={q.options}
-            selected={answers[i]}
-            onSelect={(optionIndex) => handleSelectAnswer(i, optionIndex)}
-          />
-        ))}
-        <button className="btn-primary" onClick={() => setPhase("result")} disabled={!canSubmit}>
-          Nộp bài
-        </button>
+        <div className="reading-submit-bar">
+          <span className="reading-progress-label">
+            Đã trả lời {answeredCount}/{answers.length} câu
+          </span>
+          <button className="btn-primary" onClick={() => setPhase("result")} disabled={!canSubmit}>
+            Nộp bài
+          </button>
+        </div>
+        <div className="reading-session-body">
+          <div className="mc-question-grid">
+            {set.questions.map((q, i) => (
+              <McQuestionCard
+                key={i}
+                label={`${i + 1}. ${q.sentenceWithBlank}`}
+                options={q.options}
+                selected={answers[i]}
+                onSelect={(optionIndex) => handleSelectAnswer(i, optionIndex)}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -259,16 +269,18 @@ function Part5PageContent() {
       <p className="mc-score">
         {correctCount}/{total}
       </p>
-      {(set?.questions ?? []).map((q, i) => (
-        <McQuestionCard
-          key={i}
-          label={`${i + 1}. ${q.sentenceWithBlank}`}
-          options={q.options}
-          selected={answers[i]}
-          correctIndex={q.correctIndex}
-          explanation={q.explanation}
-        />
-      ))}
+      <div className="mc-question-grid">
+        {(set?.questions ?? []).map((q, i) => (
+          <McQuestionCard
+            key={i}
+            label={`${i + 1}. ${q.sentenceWithBlank}`}
+            options={q.options}
+            selected={answers[i]}
+            correctIndex={q.correctIndex}
+            explanation={q.explanation}
+          />
+        ))}
+      </div>
       {sessionMode === "generated" && <VocabSuggestionsSection text={questionsText} existingRecords={records} topics={topics} />}
       <div className="reading-result-actions">
         {sessionMode === "generated" &&

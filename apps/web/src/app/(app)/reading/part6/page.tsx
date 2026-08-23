@@ -255,39 +255,43 @@ function Part6PageContent() {
             Nộp bài
           </button>
         </div>
-        {set.passages.map((passage, p) => {
-          const collapsed = collapsedGroups.has(p);
-          return (
-            <div key={p} className="reading-passage-group">
-              <div className="reading-passage-group-header">
-                <h3 className="reading-passage-group-title">Đoạn {p + 1}</h3>
-                <button type="button" className="reading-collapse-btn" onClick={() => toggleCollapsed(p)}>
-                  {collapsed ? "Mở rộng ▾" : "Thu gọn ▴"}
-                </button>
+        <div className="reading-session-body">
+          {set.passages.map((passage, p) => {
+            const collapsed = collapsedGroups.has(p);
+            return (
+              <div key={p} className="reading-passage-group">
+                <div className="reading-passage-group-header">
+                  <h3 className="reading-passage-group-title">Đoạn {p + 1}</h3>
+                  <button type="button" className="reading-collapse-btn" onClick={() => toggleCollapsed(p)}>
+                    {collapsed ? "Mở rộng ▾" : "Thu gọn ▴"}
+                  </button>
+                </div>
+                {!collapsed && (
+                  <>
+                    <div className="reading-passage-block">
+                      {formatPassageLines(passage.passageText).map((line, li) => (
+                        <p key={li} className="reading-passage-text">
+                          {line}
+                        </p>
+                      ))}
+                    </div>
+                    <div className="mc-question-grid">
+                      {passage.questions.map((q, qi) => (
+                        <McQuestionCard
+                          key={qi}
+                          label={`Chỗ trống (${qi + 1})`}
+                          options={q.options}
+                          selected={answers[flatIndex(p, qi)]}
+                          onSelect={(optionIndex) => handleSelectAnswer(p, qi, optionIndex)}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
-              {!collapsed && (
-                <>
-                  {formatPassageLines(passage.passageText).map((line, li) => (
-                    <p key={li} className="reading-passage-text">
-                      {line}
-                    </p>
-                  ))}
-                  <div className="mc-question-grid">
-                    {passage.questions.map((q, qi) => (
-                      <McQuestionCard
-                        key={qi}
-                        label={`Chỗ trống (${qi + 1})`}
-                        options={q.options}
-                        selected={answers[flatIndex(p, qi)]}
-                        onSelect={(optionIndex) => handleSelectAnswer(p, qi, optionIndex)}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -317,11 +321,13 @@ function Part6PageContent() {
             </div>
             {!collapsed && (
               <>
-                {formatPassageLines(passage.passageText).map((line, li) => (
-                  <p key={li} className="reading-passage-text">
-                    {line}
-                  </p>
-                ))}
+                <div className="reading-passage-block">
+                  {formatPassageLines(passage.passageText).map((line, li) => (
+                    <p key={li} className="reading-passage-text">
+                      {line}
+                    </p>
+                  ))}
+                </div>
                 <div className="mc-question-grid">
                   {passage.questions.map((q, qi) => (
                     <McQuestionCard

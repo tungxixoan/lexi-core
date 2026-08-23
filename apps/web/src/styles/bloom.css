@@ -1403,14 +1403,28 @@ button.btn-secondary {
   flex-shrink: 0;
 }
 
-.reading-passage-text {
+.reading-passage-block {
   background: var(--surface-2);
   border-left: 3px solid var(--accent);
-  border-radius: 0 8px 8px 0;
-  padding: 10px 14px;
+  border-radius: 0 10px 10px 0;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+
+.reading-passage-text {
   color: var(--ink-soft);
-  line-height: 1.6;
-  margin-bottom: 12px;
+  line-height: 1.65;
+  margin: 0 0 10px;
+}
+
+.reading-passage-text:last-child {
+  margin-bottom: 0;
+}
+
+.reading-session-body {
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+  padding-right: 6px;
 }
 
 .reading-setup-actions {
