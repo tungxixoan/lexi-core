@@ -1369,6 +1369,26 @@ button.btn-secondary {
   max-width: 460px;
 }
 
+.reading-passage-group {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+
+.reading-passage-group-title {
+  font-weight: 700;
+  font-size: 17px;
+  margin-bottom: 8px;
+}
+
+.reading-passage-text {
+  color: var(--ink-soft);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
 .reading-setup-actions {
   display: flex;
   align-items: center;
