@@ -1203,3 +1203,7 @@ No Critical or Important findings. Independently re-verified: typecheck clean, f
 ## TOEIC Reading Part 7 (web) — COMPLETE
 
 All 4 tasks implemented and individually reviewed clean on first pass, no fix cycles needed at task scope. Final whole-branch review found zero Critical/Important findings -- clean "Ready to merge: Yes" with only 4 Minor observations, 3 of which are pre-existing patterns shared with Part 5/6 rather than anything Part 7 introduced. 9 commits total (plan+4 tasks+their ledger entries) on top of d78c3e4. Independently re-verified at every stage: typecheck clean, full suite green apart from the 1 known pre-existing unrelated CSS-lock failure, production build clean with all 4 reading pages (/reading/bilingual, /reading/part5, /reading/part6, /reading/part7) statically prerendered. This closes out the full TOEIC Reading Parts 5/6/7 initiative on web (Nghe/Listening remains for its own future spec/plan cycle, adopting this same hub-integrated pattern from the start).
+
+## Nghe chép (Dictation, web) — execution log
+
+Task 1: complete (commits 015421e..99de18e, review clean/Approved — synthesizeSpeech confirmed byte-for-byte match to brief with exact signature (request {text, language:"vi"|"en"} -> Promise<{audioBase64}>), confirmed calls Cloud Function by the exact string "synthesizeSpeech" (no typo that would silently fail at runtime); toAudioDataUrl confirmed builds exactly data:audio/wav;base64,... matching the confirmed Piper Content-Type; scope confirmed exactly 2 new files). No findings.
