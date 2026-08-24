@@ -99,6 +99,7 @@ function DictationPageContent() {
   function startSession(newItem: DictationItem, mode: "generated" | "reused") {
     const computedBlanks = selectDictationBlanks(newItem.target, difficulty);
     sessionKeyRef.current += 1;
+    isDraggingSeekRef.current = false;
     setSessionMode(mode);
     setJustSavedId(null);
     setSaveError(null);
@@ -373,6 +374,9 @@ function DictationPageContent() {
               isDraggingSeekRef.current = true;
             }}
             onTouchStart={() => {
+              isDraggingSeekRef.current = true;
+            }}
+            onKeyDown={() => {
               isDraggingSeekRef.current = true;
             }}
             onMouseUp={(e) => {

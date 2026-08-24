@@ -82,6 +82,50 @@ describe("useDictationAudio", () => {
     expect(result.current.hasPlayedOnce).toBe(false);
   });
 
+  it("applies a speed set before the very first play() to the underlying audio element (not stale 1x)", async () => {
+    const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
+
+    act(() => {
+      result.current.setSpeed(1.5);
+    });
+    expect(result.current.speed).toBe(1.5);
+
+    await act(async () => {
+      await result.current.play();
+    });
+
+    const audioEl = audioInstances[audioInstances.length - 1];
+    expect(audioEl.playbackRate).toBe(1.5);
+  });
+
+  it("applies a speed set after a change to a replay and to a seek, not the value captured when play/seekTo were last recreated", async () => {
+    const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
+
+    await act(async () => {
+      await result.current.play();
+    });
+
+    act(() => {
+      result.current.setSpeed(1.75);
+    });
+
+    await act(async () => {
+      await result.current.play(); // replay
+    });
+    let audioEl = audioInstances[audioInstances.length - 1];
+    expect(audioEl.playbackRate).toBe(1.75);
+
+    act(() => {
+      result.current.setSpeed(0.75);
+    });
+
+    await act(async () => {
+      await result.current.seekTo(2);
+    });
+    audioEl = audioInstances[audioInstances.length - 1];
+    expect(audioEl.playbackRate).toBe(0.75);
+  });
+
   it("seekTo before any play sets hasPlayedOnce and increments seekCount, but adds no penalty", async () => {
     const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
 
@@ -231,6 +275,108 @@ describe("useDictationAudio", () => {
     expect(synthesizeSpeech).toHaveBeenCalledWith({ text: SENTENCE, language: "en" });
     expect(result.current.hasPlayedOnce).toBe(true);
     expect(result.current.replayCount).toBe(0);
+  });
+
+  it("a late-resolving prefetch from a discarded session does not clobber the current session's cached clip", async () => {
+    const NEW_SENTENCE = "Pack my box with five dozen liquor jugs";
+
+    let resolveStalePrefetch!: (value: { audioBase64: string }) => void;
+    vi.mocked(synthesizeSpeech).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveStalePrefetch = resolve;
+        })
+    );
+
+    const { result, rerender } = renderHook(({ sentence, sessionKey }) => useDictationAudio(sentence, sessionKey), {
+      initialProps: { sentence: SENTENCE, sessionKey: 1 },
+    });
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(1)); // sentence A's prefetch is now in flight, unresolved
+
+    // Subsequent calls (sentence B's prefetch) resolve promptly, with a
+    // distinguishable payload so we can prove which clip actually ends up
+    // cached — starting a new session before A's prefetch settles is the
+    // exact scenario (a seek doesn't force a prefetch to settle the way
+    // play() does, then "Câu khác" starts a new session).
+    vi.mocked(synthesizeSpeech).mockResolvedValue({ audioBase64: "BBBB" });
+    await act(async () => {
+      rerender({ sentence: NEW_SENTENCE, sessionKey: 2 });
+    });
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(2)); // sentence B's prefetch fired and (per mockResolvedValue) resolved
+
+    // Sentence A's stale prefetch finally resolves AFTER B's session has
+    // already started — its .then() must be a no-op (guarded by the
+    // `cancelled` flag) rather than overwriting B's cached clip.
+    await act(async () => {
+      resolveStalePrefetch({ audioBase64: "AAAA" });
+    });
+
+    await act(async () => {
+      await result.current.play();
+    });
+
+    // No extra/duplicate fetch was triggered by play() — it used B's
+    // already-resolved prefetched clip.
+    expect(synthesizeSpeech).toHaveBeenCalledTimes(2);
+    expect(result.current.hasPlayedOnce).toBe(true);
+
+    const audioEl = audioInstances[audioInstances.length - 1];
+    expect(audioEl.src).toContain("BBBB");
+    expect(audioEl.src).not.toContain("AAAA");
+  });
+
+  it("a stale prefetch rejection from a discarded session does not null the new session's in-flight prefetchPromiseRef", async () => {
+    const NEW_SENTENCE = "Pack my box with five dozen liquor jugs";
+
+    let rejectStalePrefetch!: (err: Error) => void;
+    vi.mocked(synthesizeSpeech).mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectStalePrefetch = reject;
+        })
+    );
+
+    const { result, rerender } = renderHook(({ sentence, sessionKey }) => useDictationAudio(sentence, sessionKey), {
+      initialProps: { sentence: SENTENCE, sessionKey: 1 },
+    });
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(1));
+
+    // B's own prefetch stays pending too, so play() below is forced onto
+    // the "await prefetchPromiseRef.current" branch — proving that ref
+    // wasn't nulled out from under it by A's later rejection.
+    let resolveB!: (value: { audioBase64: string }) => void;
+    vi.mocked(synthesizeSpeech).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveB = resolve;
+        })
+    );
+    await act(async () => {
+      rerender({ sentence: NEW_SENTENCE, sessionKey: 2 });
+    });
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(2));
+
+    // A's stale prefetch rejects AFTER B's session has started — must not
+    // null prefetchPromiseRef (which now belongs to B).
+    await act(async () => {
+      rejectStalePrefetch(new Error("stale network error"));
+    });
+
+    let playPromise!: Promise<void>;
+    act(() => {
+      playPromise = result.current.play();
+    });
+    // Still only 2 calls: play() awaited B's existing in-flight prefetch
+    // instead of firing a third, duplicate on-demand request.
+    expect(synthesizeSpeech).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      resolveB({ audioBase64: "BBBB" });
+      await playPromise;
+    });
+
+    expect(synthesizeSpeech).toHaveBeenCalledTimes(2);
+    expect(result.current.hasPlayedOnce).toBe(true);
   });
 
   it("isLoading is true while a synthesizeSpeech call is in flight", async () => {

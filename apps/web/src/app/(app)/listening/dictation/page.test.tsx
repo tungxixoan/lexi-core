@@ -393,6 +393,80 @@ describe("DictationPage (session phase — Khó / free text)", () => {
     await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledWith({ text: "ate an apple today.", language: "en" }));
   });
 
+  it("does not let a timeupdate-driven playhead update stomp a keyboard scrub in progress, and seeks to the user's chosen value on keyUp", async () => {
+    mockSignedIn();
+    await generateSession();
+
+    fireEvent.click(screen.getByRole("button", { name: "▶ Phát" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "▶ Nghe lại (0)" })).toBeInTheDocument());
+
+    const audioEl = audioInstances[audioInstances.length - 1];
+    const slider = screen.getByLabelText("Tua theo từ") as HTMLInputElement;
+    const baseline = vi.mocked(synthesizeSpeech).mock.calls.length;
+
+    // Arrow-key scrubbing fires onChange on keydown (and every OS
+    // auto-repeat), with keyup only at the very end of the gesture — the
+    // guard must be armed by keydown, not just mouse/touch start.
+    fireEvent.keyDown(slider, { key: "ArrowRight" });
+    fireEvent.change(slider, { target: { value: "1" } });
+    expect(slider.value).toBe("1");
+
+    // A timeupdate-driven playhead update arrives WHILE the user is still
+    // holding the key — without the onKeyDown guard this would overwrite
+    // the slider's displayed value with the actual playback position.
+    Object.defineProperty(audioEl, "duration", { value: 5, configurable: true });
+    Object.defineProperty(audioEl, "currentTime", { value: 4, configurable: true });
+    fireEvent(audioEl, new Event("timeupdate"));
+
+    expect(slider.value).toBe("1");
+    expect(synthesizeSpeech).toHaveBeenCalledTimes(baseline);
+
+    fireEvent.keyUp(slider);
+
+    // words = ["I", "ate", "an", "apple", "today."] — index 1 -> remainder "ate an apple today."
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(baseline + 1));
+    expect(synthesizeSpeech).toHaveBeenCalledWith({ text: "ate an apple today.", language: "en" });
+  });
+
+  it("resets an abandoned drag guard when a new session starts, so live playhead tracking doesn't stay frozen across Câu khác", async () => {
+    mockSignedIn();
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({ target: "I ate an apple today.", vietnamese: "V.", vocabWords: ["apple"] }),
+    });
+    render(<DictationPage />);
+    await screen.findByRole("button", { name: "▶ Phát" });
+
+    fireEvent.click(screen.getByRole("button", { name: "▶ Phát" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "▶ Nghe lại (0)" })).toBeInTheDocument());
+
+    // Arm the drag guard but never release it (e.g. a right-click context
+    // menu interrupts the gesture) — before the fix this would leave
+    // isDraggingSeekRef stuck true for the rest of the page visit.
+    fireEvent.mouseDown(screen.getByLabelText("Tua theo từ"));
+
+    fireEvent.change(screen.getByPlaceholderText("Gõ lại những gì bạn nghe được..."), {
+      target: { value: "I ate an apple today." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Nộp bài" }));
+    await screen.findByText("100%");
+
+    fireEvent.click(screen.getByRole("button", { name: "Câu khác" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "▶ Phát" })).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "▶ Phát" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "▶ Nghe lại (0)" })).toBeInTheDocument());
+
+    const audioEl = audioInstances[audioInstances.length - 1];
+    const slider = screen.getByLabelText("Tua theo từ") as HTMLInputElement;
+    Object.defineProperty(audioEl, "duration", { value: 5, configurable: true });
+    Object.defineProperty(audioEl, "currentTime", { value: 2, configurable: true });
+    fireEvent(audioEl, new Event("timeupdate"));
+
+    // If the guard had stayed stuck true from the abandoned drag, this
+    // sync would never happen and the slider would stay at its initial 0.
+    await waitFor(() => expect(slider.value).toBe("2"));
+  });
+
   it("the speed slider applies every onChange tick immediately, not gated to release", async () => {
     mockSignedIn();
     await generateSession();

@@ -46,6 +46,7 @@ export function useDictationAudio(sentence: string, sessionKey: string | number)
   const previousSessionKeyRef = useRef(sessionKey);
   const sentenceRef = useRef(sentence);
   const baseWordIndexRef = useRef(0);
+  const speedRef = useRef(speed);
 
   // The timeupdate listener (attached once, when the <audio> element is
   // first created — see playUrl) must always read the *current* sentence,
@@ -54,6 +55,18 @@ export function useDictationAudio(sentence: string, sessionKey: string | number)
   useEffect(() => {
     sentenceRef.current = sentence;
   }, [sentence]);
+
+  // play/seekTo are useCallback'd on [sentence, hasPlayedOnce] — speed is
+  // deliberately not in that dep array (recreating them on every speed
+  // tick would be wasteful) — so playUrl must read the *current* speed via
+  // a ref rather than close over whatever `speed` was current when
+  // play/seekTo were last recreated, or the very first play (and every
+  // replay/seek before the next dep-array-triggered recreation) would
+  // silently ignore the user's chosen speed and play at whatever stale
+  // value was captured.
+  useEffect(() => {
+    speedRef.current = speed;
+  }, [speed]);
 
   // A persistent hook instance (e.g. the dictation page reusing one hook
   // across "Câu khác"/retry sessions) must not leak playback state from a
@@ -90,17 +103,36 @@ export function useDictationAudio(sentence: string, sessionKey: string | number)
   // that flag must only flip on genuine user action.
   useEffect(() => {
     if (!sentence) return;
+    // A prefetch started for this session can still be in flight when a
+    // NEWER session starts (e.g. the user seeks — which doesn't force the
+    // prefetch to settle the way play() does — then starts a new session
+    // before the old prefetch resolves). The sessionKey-guarded reset
+    // effect nulls the refs on session change, which stops the NEW
+    // session's play() from *awaiting* the stale promise, but does
+    // nothing to stop this OLDER promise's own .then()/.catch() from
+    // firing afterward and clobbering the new session's refs with the
+    // wrong (old sentence's) audio, or nulling its in-flight
+    // prefetchPromiseRef and forcing a wasted duplicate fetch. Guard both
+    // branches with a `cancelled` flag flipped by the cleanup function,
+    // which React runs before the next effect run whenever [sentence,
+    // sessionKey] changes.
+    let cancelled = false;
     const promise = synthesizeSpeech({ text: sentence, language: "en" })
       .then(({ audioBase64 }) => {
+        if (cancelled) return;
         fullClipUrlRef.current = toAudioDataUrl(audioBase64);
       })
       .catch(() => {
+        if (cancelled) return;
         // Swallowed: the user hasn't asked for anything yet. play() will
         // retry with a fresh on-demand request since fullClipUrlRef and
         // prefetchPromiseRef both stay/become null on failure.
         prefetchPromiseRef.current = null;
       });
     prefetchPromiseRef.current = promise;
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sentence, sessionKey]);
 
@@ -120,7 +152,7 @@ export function useDictationAudio(sentence: string, sessionKey: string | number)
     }
     const audioEl = audioRef.current;
     audioEl.src = url;
-    audioEl.playbackRate = speed;
+    audioEl.playbackRate = speedRef.current;
     audioEl.currentTime = 0;
     // Playback can fail silently (autoplay policy, no audio device, a jsdom
     // stub in tests) — this must never block hasPlayedOnce/replayCount/seek
