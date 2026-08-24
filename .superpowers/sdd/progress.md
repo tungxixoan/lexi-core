@@ -1242,3 +1242,15 @@ Independently re-verified: full suite 590/1 pre-existing unrelated bloom.test.ts
 ## Nghe chép (Dictation, web) — COMPLETE
 
 All 7 tasks implemented and reviewed clean (1 task-level fix cycle: Task 7's audio-state-leak). Final whole-branch review found 1 Critical + 3 Important cross-task findings invisible to any single task's own review — all 4 fixed in one consolidated commit (ca70e98) and independently re-verified via revert-and-observe experiments, each confirmed to close its exact failure scenario. 19 commits total (spec+plan+7 tasks+their ledger entries+final review fix+this closeout) on top of 872c021. This closes out the Nghe chép (Dictation) initiative on web — English-only scope (forced by `synthesizeSpeech`'s `"vi"|"en"` backend constraint), save/reuse supported despite Flutter's version having none (audio is cheap to regenerate from saved text, never persisted). Nghe hiểu (Listening Comprehension) remains deferred to its own future spec/plan cycle.
+
+---
+
+# LexiCore — Nghe chép Audio Playback Improvements
+
+**BASE commit (plan start):** 872c021
+**Spec:** docs/superpowers/specs/2026-08-24-nghe-chep-audio-playback-improvements-design.md (commit 0f9f5d3)
+**Plan file:** docs/superpowers/plans/2026-08-24-nghe-chep-audio-playback-improvements.md (commit 1f75f4c)
+
+## Status
+
+Task 1: complete (commit c6a2944, review clean/Approved — play()'s 3-branch restructuring traced by hand for all paths (cached-clip, in-flight-prefetch-await, fresh-fetch), confirmed prefetch never sets hasPlayedOnce in either .then()/.catch(), confirmed reset effect clears prefetchPromiseRef (not just fullClipUrlRef) preventing a stale cross-session promise leak, confirmed effect declaration order (reset-effect-then-prefetch-effect) prevents a new prefetch being clobbered by a stale reset. Implementer found and fixed 5 additional pre-existing tests beyond the brief's named 2 — a genuine unavoidable consequence of prefetch now calling synthesizeSpeech earlier, not scope creep; reviewer independently read each of the 5 fixes and confirmed none weakened its original assertion's intent. "Reuses in-flight prefetch" test confirmed non-vacuous via a manually-controlled never-resolving mock proving no duplicate call fires before the await settles). No findings.
