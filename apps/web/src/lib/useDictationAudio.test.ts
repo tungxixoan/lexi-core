@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useDictationAudio } from "./useDictationAudio";
 import { synthesizeSpeech } from "./synthesizeSpeechClient";
@@ -8,11 +8,24 @@ vi.mock("./synthesizeSpeechClient", async () => {
   return { ...actual, synthesizeSpeech: vi.fn() };
 });
 
+const RealAudio = window.Audio;
+let audioInstances: HTMLAudioElement[];
+
 const SENTENCE = "The quick brown fox jumps over the lazy dog"; // 9 words
 
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(synthesizeSpeech).mockResolvedValue({ audioBase64: "AAAA" });
+  audioInstances = [];
+  vi.spyOn(window, "Audio").mockImplementation(function () {
+    const el = new RealAudio();
+    audioInstances.push(el);
+    return el as unknown as HTMLAudioElement;
+  } as unknown as typeof Audio);
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe("useDictationAudio", () => {
@@ -287,5 +300,63 @@ describe("useDictationAudio", () => {
     expect(synthesizeSpeech).toHaveBeenCalledTimes(2);
     expect(result.current.hasPlayedOnce).toBe(true);
     expect(result.current.error).toBeNull();
+  });
+
+  it("estimatedWordIndex starts at 0 and tracks currentTime/duration proportionally while playing", async () => {
+    const { result } = renderHook(() => useDictationAudio(SENTENCE, 1)); // 9 words
+    expect(result.current.estimatedWordIndex).toBe(0);
+
+    await act(async () => {
+      await result.current.play();
+    });
+    expect(result.current.estimatedWordIndex).toBe(0);
+
+    const audioEl = audioInstances[0];
+    Object.defineProperty(audioEl, "duration", { value: 9, configurable: true });
+    act(() => {
+      Object.defineProperty(audioEl, "currentTime", { value: 4, configurable: true });
+      audioEl.dispatchEvent(new Event("timeupdate"));
+    });
+
+    // base=0, totalWords=9, ratio=4/9 -> 0 + (4/9)*9 = 4
+    expect(result.current.estimatedWordIndex).toBe(4);
+  });
+
+  it("estimatedWordIndex falls back to the current base when duration is not finite", async () => {
+    const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
+    await act(async () => {
+      await result.current.play();
+    });
+
+    const audioEl = audioInstances[0];
+    Object.defineProperty(audioEl, "duration", { value: NaN, configurable: true });
+    act(() => {
+      Object.defineProperty(audioEl, "currentTime", { value: 3, configurable: true });
+      audioEl.dispatchEvent(new Event("timeupdate"));
+    });
+
+    expect(result.current.estimatedWordIndex).toBe(0);
+  });
+
+  it("estimatedWordIndex resets to the seek target immediately, then continues from there as the new clip plays", async () => {
+    const { result } = renderHook(() => useDictationAudio(SENTENCE, 1)); // 9 words
+    await act(async () => {
+      await result.current.play();
+    });
+
+    await act(async () => {
+      await result.current.seekTo(3); // remainder is 6 words: "fox jumps over the lazy dog"
+    });
+    expect(result.current.estimatedWordIndex).toBe(3);
+
+    const audioEl = audioInstances[audioInstances.length - 1];
+    Object.defineProperty(audioEl, "duration", { value: 6, configurable: true });
+    act(() => {
+      Object.defineProperty(audioEl, "currentTime", { value: 3, configurable: true });
+      audioEl.dispatchEvent(new Event("timeupdate"));
+    });
+
+    // base=3, remaining words=9-3=6, ratio=3/6=0.5 -> 3 + 0.5*6 = 6
+    expect(result.current.estimatedWordIndex).toBe(6);
   });
 });

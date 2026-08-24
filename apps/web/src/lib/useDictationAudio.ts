@@ -9,6 +9,7 @@ export interface UseDictationAudioResult {
   seekCount: number;
   seekPenaltyTotal: number;
   speed: number;
+  estimatedWordIndex: number;
   error: string | null;
   play: () => Promise<void>;
   setSpeed: (speed: number) => void;
@@ -36,12 +37,23 @@ export function useDictationAudio(sentence: string, sessionKey: string | number)
   const [seekPenaltyTotal, setSeekPenaltyTotal] = useState(0);
   const [speed, setSpeedState] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [estimatedWordIndex, setEstimatedWordIndex] = useState(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fullClipUrlRef = useRef<string | null>(null);
   const prefetchPromiseRef = useRef<Promise<void> | null>(null);
   const previousSentenceRef = useRef(sentence);
   const previousSessionKeyRef = useRef(sessionKey);
+  const sentenceRef = useRef(sentence);
+  const baseWordIndexRef = useRef(0);
+
+  // The timeupdate listener (attached once, when the <audio> element is
+  // first created — see playUrl) must always read the *current* sentence,
+  // not whichever one was active when it was attached, since the element
+  // is reused across sessions with different sentences/word counts.
+  useEffect(() => {
+    sentenceRef.current = sentence;
+  }, [sentence]);
 
   // A persistent hook instance (e.g. the dictation page reusing one hook
   // across "Câu khác"/retry sessions) must not leak playback state from a
@@ -61,8 +73,10 @@ export function useDictationAudio(sentence: string, sessionKey: string | number)
     setSeekCount(0);
     setSeekPenaltyTotal(0);
     setError(null);
+    setEstimatedWordIndex(0);
     fullClipUrlRef.current = null;
     prefetchPromiseRef.current = null;
+    baseWordIndexRef.current = 0;
     if (audioRef.current) {
       audioRef.current.pause();
     }
@@ -93,6 +107,16 @@ export function useDictationAudio(sentence: string, sessionKey: string | number)
   function playUrl(url: string) {
     if (!audioRef.current) {
       audioRef.current = new Audio();
+      audioRef.current.addEventListener("timeupdate", () => {
+        const el = audioRef.current;
+        if (!el || !Number.isFinite(el.duration) || el.duration <= 0) return;
+        const totalWords = targetWords(sentenceRef.current).length;
+        if (totalWords === 0) return;
+        const base = baseWordIndexRef.current;
+        const raw = base + (el.currentTime / el.duration) * (totalWords - base);
+        const clamped = Math.min(Math.max(Math.round(raw), 0), totalWords - 1);
+        setEstimatedWordIndex(clamped);
+      });
     }
     const audioEl = audioRef.current;
     audioEl.src = url;
@@ -122,6 +146,8 @@ export function useDictationAudio(sentence: string, sessionKey: string | number)
       } else {
         setHasPlayedOnce(true);
       }
+      baseWordIndexRef.current = 0;
+      setEstimatedWordIndex(0);
       playUrl(fullClipUrlRef.current);
       return;
     }
@@ -133,6 +159,8 @@ export function useDictationAudio(sentence: string, sessionKey: string | number)
       if (fullClipUrlRef.current) {
         // The prefetch we just awaited succeeded.
         setHasPlayedOnce(true);
+        baseWordIndexRef.current = 0;
+        setEstimatedWordIndex(0);
         playUrl(fullClipUrlRef.current);
         return;
       }
@@ -141,6 +169,8 @@ export function useDictationAudio(sentence: string, sessionKey: string | number)
       const url = toAudioDataUrl(audioBase64);
       fullClipUrlRef.current = url;
       setHasPlayedOnce(true);
+      baseWordIndexRef.current = 0;
+      setEstimatedWordIndex(0);
       playUrl(url);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -174,6 +204,8 @@ export function useDictationAudio(sentence: string, sessionKey: string | number)
           setHasPlayedOnce(true);
         }
         setSeekCount((c) => c + 1);
+        baseWordIndexRef.current = wordIndex;
+        setEstimatedWordIndex(wordIndex);
         playUrl(url);
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
@@ -192,6 +224,7 @@ export function useDictationAudio(sentence: string, sessionKey: string | number)
     seekCount,
     seekPenaltyTotal,
     speed,
+    estimatedWordIndex,
     error,
     play,
     setSpeed,
