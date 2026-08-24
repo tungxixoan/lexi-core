@@ -56,13 +56,16 @@ describe("useDictationAudio", () => {
 
   it("setSpeed updates the reported speed without calling synthesizeSpeech or touching hasPlayedOnce/replayCount", () => {
     const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
+    // Mount already triggered the background prefetch's own synthesizeSpeech
+    // call; what this test checks is that setSpeed() doesn't add another one.
+    const callsBeforeSetSpeed = vi.mocked(synthesizeSpeech).mock.calls.length;
 
     act(() => {
       result.current.setSpeed(1.25);
     });
 
     expect(result.current.speed).toBe(1.25);
-    expect(synthesizeSpeech).not.toHaveBeenCalled();
+    expect(synthesizeSpeech).toHaveBeenCalledTimes(callsBeforeSetSpeed);
     expect(result.current.hasPlayedOnce).toBe(false);
   });
 
@@ -123,8 +126,14 @@ describe("useDictationAudio", () => {
   });
 
   it("clears a prior error on the next successful play", async () => {
-    vi.mocked(synthesizeSpeech).mockRejectedValueOnce(new Error("network down"));
+    // Rejects persistently (not just once): the background prefetch fires
+    // first and consumes one rejection silently (swallowed, never surfaced
+    // as `error`), so play()'s own on-demand fetch needs a second rejection
+    // to actually populate `error`.
+    vi.mocked(synthesizeSpeech).mockRejectedValue(new Error("network down"));
     const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(1)); // let the prefetch fail first
+
     await act(async () => {
       await result.current.play();
     });
@@ -164,7 +173,6 @@ describe("useDictationAudio", () => {
     expect(result.current.seekCount).toBe(0);
     expect(result.current.seekPenaltyTotal).toBe(0);
 
-    vi.mocked(synthesizeSpeech).mockClear();
     await act(async () => {
       await result.current.play();
     });
@@ -200,13 +208,13 @@ describe("useDictationAudio", () => {
     expect(result.current.seekCount).toBe(0);
     expect(result.current.seekPenaltyTotal).toBe(0);
 
-    vi.mocked(synthesizeSpeech).mockClear();
     await act(async () => {
       await result.current.play();
     });
 
     // The cached clip from the previous session must not have leaked either —
-    // play() should have re-fetched rather than reusing fullClipUrlRef.
+    // play() should have re-fetched (via a fresh prefetch, or on-demand)
+    // rather than reusing fullClipUrlRef from the old session.
     expect(synthesizeSpeech).toHaveBeenCalledWith({ text: SENTENCE, language: "en" });
     expect(result.current.hasPlayedOnce).toBe(true);
     expect(result.current.replayCount).toBe(0);
@@ -232,5 +240,52 @@ describe("useDictationAudio", () => {
       await playPromise;
     });
     expect(result.current.isLoading).toBe(false);
+  });
+
+  it("prefetches audio automatically once sentence is set, without any play() call", async () => {
+    renderHook(() => useDictationAudio(SENTENCE, 1));
+
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledWith({ text: SENTENCE, language: "en" }));
+  });
+
+  it("play() reuses the in-flight prefetch instead of firing a duplicate request", async () => {
+    let resolvePrefetch!: (value: { audioBase64: string }) => void;
+    vi.mocked(synthesizeSpeech).mockReturnValue(
+      new Promise((resolve) => {
+        resolvePrefetch = resolve;
+      })
+    );
+    const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
+
+    let playPromise!: Promise<void>;
+    act(() => {
+      playPromise = result.current.play();
+    });
+    expect(synthesizeSpeech).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolvePrefetch({ audioBase64: "AAAA" });
+      await playPromise;
+    });
+
+    expect(synthesizeSpeech).toHaveBeenCalledTimes(1);
+    expect(result.current.hasPlayedOnce).toBe(true);
+  });
+
+  it("a rejected prefetch does not surface an error, and play() retries with a fresh request", async () => {
+    vi.mocked(synthesizeSpeech).mockRejectedValueOnce(new Error("prefetch network error"));
+    const { result } = renderHook(() => useDictationAudio(SENTENCE, 1));
+
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(1));
+    expect(result.current.error).toBeNull();
+
+    vi.mocked(synthesizeSpeech).mockResolvedValue({ audioBase64: "AAAA" });
+    await act(async () => {
+      await result.current.play();
+    });
+
+    expect(synthesizeSpeech).toHaveBeenCalledTimes(2);
+    expect(result.current.hasPlayedOnce).toBe(true);
+    expect(result.current.error).toBeNull();
   });
 });

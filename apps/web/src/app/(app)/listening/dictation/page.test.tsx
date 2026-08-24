@@ -267,16 +267,19 @@ describe("DictationPage (session phase — Khó / free text)", () => {
     await generateSession();
 
     const slider = screen.getByLabelText("Tua theo từ");
+    // generateSession() already let the background prefetch fire once for
+    // the full sentence — baseline against that instead of assuming 0 calls.
+    const baseline = vi.mocked(synthesizeSpeech).mock.calls.length;
     // Simulate a drag across several intermediate positions.
     fireEvent.change(slider, { target: { value: "1" } });
     fireEvent.change(slider, { target: { value: "2" } });
     fireEvent.change(slider, { target: { value: "4" } });
-    expect(synthesizeSpeech).not.toHaveBeenCalled();
+    expect(synthesizeSpeech).toHaveBeenCalledTimes(baseline);
 
     fireEvent.mouseUp(slider);
 
     // words = ["I", "ate", "an", "apple", "today."] — index 4 -> remainder "today."
-    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(baseline + 1));
     expect(synthesizeSpeech).toHaveBeenCalledWith({ text: "today.", language: "en" });
   });
 
@@ -285,10 +288,13 @@ describe("DictationPage (session phase — Khó / free text)", () => {
     await generateSession();
 
     const slider = screen.getByLabelText("Tua theo từ");
+    // generateSession() already let the background prefetch fire once for
+    // the full sentence — baseline against that instead of assuming 0 calls.
+    const baseline = vi.mocked(synthesizeSpeech).mock.calls.length;
     fireEvent.change(slider, { target: { value: "3" } });
-    expect(synthesizeSpeech).not.toHaveBeenCalled();
+    expect(synthesizeSpeech).toHaveBeenCalledTimes(baseline);
     fireEvent.touchEnd(slider);
-    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(baseline + 1));
     expect(synthesizeSpeech).toHaveBeenCalledWith({ text: "apple today.", language: "en" });
 
     vi.mocked(synthesizeSpeech).mockClear();
@@ -301,14 +307,20 @@ describe("DictationPage (session phase — Khó / free text)", () => {
 
   it("disables the seek slider while audio is loading", async () => {
     mockSignedIn();
-    await generateSession();
 
+    // Set the pending mock up before the session renders, so the background
+    // prefetch (which fires on mount, as soon as the sentence is ready) is
+    // itself the in-flight request that play() then awaits and stays
+    // loading on — rather than a fresh request racing an already-finished
+    // prefetch.
     let resolveSpeech!: (value: { audioBase64: string }) => void;
     vi.mocked(synthesizeSpeech).mockReturnValue(
       new Promise((resolve) => {
         resolveSpeech = resolve;
       })
     );
+
+    await generateSession();
 
     fireEvent.click(screen.getByRole("button", { name: "▶ Phát" }));
     await waitFor(() => expect(screen.getByLabelText("Tua theo từ")).toBeDisabled());

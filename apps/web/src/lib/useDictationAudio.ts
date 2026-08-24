@@ -39,6 +39,7 @@ export function useDictationAudio(sentence: string, sessionKey: string | number)
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fullClipUrlRef = useRef<string | null>(null);
+  const prefetchPromiseRef = useRef<Promise<void> | null>(null);
   const previousSentenceRef = useRef(sentence);
   const previousSessionKeyRef = useRef(sessionKey);
 
@@ -61,9 +62,32 @@ export function useDictationAudio(sentence: string, sessionKey: string | number)
     setSeekPenaltyTotal(0);
     setError(null);
     fullClipUrlRef.current = null;
+    prefetchPromiseRef.current = null;
     if (audioRef.current) {
       audioRef.current.pause();
     }
+  }, [sentence, sessionKey]);
+
+  // Fetch audio in the background as soon as the sentence is ready, so Play
+  // is instant once the user clicks it instead of waiting for a fresh
+  // Cloud Function round-trip. Stores a promise (not just the eventual URL)
+  // so play() can await the exact in-flight request and never fire a
+  // duplicate — see play()'s branching below. Never touches hasPlayedOnce:
+  // that flag must only flip on genuine user action.
+  useEffect(() => {
+    if (!sentence) return;
+    const promise = synthesizeSpeech({ text: sentence, language: "en" })
+      .then(({ audioBase64 }) => {
+        fullClipUrlRef.current = toAudioDataUrl(audioBase64);
+      })
+      .catch(() => {
+        // Swallowed: the user hasn't asked for anything yet. play() will
+        // retry with a fresh on-demand request since fullClipUrlRef and
+        // prefetchPromiseRef both stay/become null on failure.
+        prefetchPromiseRef.current = null;
+      });
+    prefetchPromiseRef.current = promise;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sentence, sessionKey]);
 
   function playUrl(url: string) {
@@ -86,13 +110,33 @@ export function useDictationAudio(sentence: string, sessionKey: string | number)
 
   const play = useCallback(async () => {
     setError(null);
-    if (hasPlayedOnce && fullClipUrlRef.current) {
-      setReplayCount((c) => c + 1);
+    if (fullClipUrlRef.current) {
+      // Already have a clip — either prefetch finished, or this is a
+      // replay. Whether this is "the first real listen" or "a replay"
+      // still depends on hasPlayedOnce's current value; only the "do we
+      // already have something to play" check changed (used to also
+      // require hasPlayedOnce, which is wrong for a prefetched clip on the
+      // user's very first click).
+      if (hasPlayedOnce) {
+        setReplayCount((c) => c + 1);
+      } else {
+        setHasPlayedOnce(true);
+      }
       playUrl(fullClipUrlRef.current);
       return;
     }
     setIsLoading(true);
     try {
+      if (prefetchPromiseRef.current) {
+        await prefetchPromiseRef.current;
+      }
+      if (fullClipUrlRef.current) {
+        // The prefetch we just awaited succeeded.
+        setHasPlayedOnce(true);
+        playUrl(fullClipUrlRef.current);
+        return;
+      }
+      // No prefetch was ever started, or it failed — fetch fresh.
       const { audioBase64 } = await synthesizeSpeech({ text: sentence, language: "en" });
       const url = toAudioDataUrl(audioBase64);
       fullClipUrlRef.current = url;
