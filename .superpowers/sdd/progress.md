@@ -1282,3 +1282,17 @@ Independently re-verified: full suite 607/1 pre-existing unrelated bloom.test.ts
 ## Nghe chép Audio Playback Improvements — COMPLETE
 
 All 4 tasks implemented and reviewed clean (no task-level fix cycles needed — Tasks 1-4 all passed on first review, including two tasks where the reviewer empirically mutation-tested the implementation and a race-condition claim before approving). Final whole-branch review found 3 Important cross-task findings invisible to any single task's own review — all fixed in one consolidated commit (6d0f0f3) and independently re-verified via revert-and-observe experiments, each confirmed to close its exact failure scenario. 12 commits total (spec+plan+4 tasks+their ledger entries+final review fix+this closeout) on top of c22dc4b. This closes out the audio playback improvements initiative for Nghe chép on web: prefetch now genuinely speeds up the first Play click (not just replays), the seek slider shows a live time-proportional estimated playhead that correctly tracks mouse/touch/keyboard interaction without fighting the user, and speed control is a continuous 0.5x-2x slider with correctly-applied real-time playback.
+
+---
+
+# LexiCore — Nghe hiểu (Listening Comprehension) on Web
+
+**BASE commit (plan start):** c22dc4b
+**Spec:** docs/superpowers/specs/2026-08-24-nghe-hieu-listening-comprehension-design.md (commit 5cf5dad, corrected ad1b7bc)
+**Plan file:** docs/superpowers/plans/2026-08-24-nghe-hieu-listening-comprehension.md (commit ad1b7bc, Task 1 corrected 473ddc7)
+
+**Pre-flight correction (before Task 1 dispatch):** discovered while about to dispatch that services/tts-stt/voices/ does not exist in the repo — Piper model files are downloaded fresh at Docker build time via curl, never git-committed. The original Task 1 draft would have had the implementer download 3 .onnx files locally and git-add them, and would have required real voice files for its own new tests to pass (no test in this service has ever exercised real Piper synthesis before). Fixed before dispatch: Task 1 now extends the Dockerfile's existing curl block instead, and its tests mock PiperVoice entirely, matching this codebase's established boundary-mocking convention.
+
+## Status
+
+Task 1: complete (commit ae097c1, review clean/Approved — 4-voice registry confirmed byte-for-byte match to brief; _load_voice fallback logic confirmed exact (unsupported voice on single-voice language falls back silently, on multi-voice language raises); Dockerfile's 3 new curl pairs confirmed correctly placed and URL-exact; confirmed zero binary files/voices directory committed anywhere. Implementer found a genuinely pre-existing test file (tests/test_synthesize.py) the brief's own research had missed, with one stale assertion broken by the new 3-arg synthesize() signature — reviewer independently confirmed via git log this file predates the task, confirmed it covers different boundary/cases than the new tests (no coverage lost), and empirically reverted the fix to confirm it fails with exactly the predicted stale-arity symptom before restoring. Mock genuineness confirmed for the 4-distinct-voice-paths test — real production path-resolution code runs under the mock, a real aliasing bug would genuinely fail it). No findings.
