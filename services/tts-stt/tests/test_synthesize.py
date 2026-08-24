@@ -15,7 +15,7 @@ def test_synthesize_returns_wav_audio():
     assert response.status_code == 200
     assert response.headers["content-type"] == "audio/wav"
     assert response.content == fake_audio
-    mock_synthesize.assert_called_once_with("xin chao", "vi")
+    mock_synthesize.assert_called_once_with("xin chao", "vi", "default")
 
 
 def test_synthesize_rejects_empty_text():

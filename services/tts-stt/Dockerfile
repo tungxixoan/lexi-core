@@ -15,6 +15,18 @@ RUN mkdir -p voices && \
       https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx && \
     curl -fsSL -o voices/en_US-lessac-medium.onnx.json \
       https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json && \
+    curl -fsSL -o voices/en_US-hfc_female-medium.onnx \
+      https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/hfc_female/medium/en_US-hfc_female-medium.onnx && \
+    curl -fsSL -o voices/en_US-hfc_female-medium.onnx.json \
+      https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/hfc_female/medium/en_US-hfc_female-medium.onnx.json && \
+    curl -fsSL -o voices/en_US-hfc_male-medium.onnx \
+      https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/hfc_male/medium/en_US-hfc_male-medium.onnx && \
+    curl -fsSL -o voices/en_US-hfc_male-medium.onnx.json \
+      https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/hfc_male/medium/en_US-hfc_male-medium.onnx.json && \
+    curl -fsSL -o voices/en_US-norman-medium.onnx \
+      https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/norman/medium/en_US-norman-medium.onnx && \
+    curl -fsSL -o voices/en_US-norman-medium.onnx.json \
+      https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/norman/medium/en_US-norman-medium.onnx.json && \
     apt-get purge -y curl && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 COPY app ./app

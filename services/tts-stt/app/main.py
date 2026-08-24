@@ -15,6 +15,7 @@ def health() -> dict[str, str]:
 class SynthesizeRequest(BaseModel):
     text: str
     language: str
+    voice: str | None = None
 
 
 @app.post("/synthesize")
@@ -25,7 +26,13 @@ def synthesize_endpoint(request: SynthesizeRequest) -> Response:
         raise HTTPException(status_code=400, detail="text must be 500 characters or fewer.")
     if request.language not in ("vi", "en"):
         raise HTTPException(status_code=400, detail="language must be 'vi' or 'en'.")
-    audio = tts.synthesize(request.text, request.language)
+    voice = request.voice or "default"
+    if voice not in ("default", "male1", "male2", "female1", "female2"):
+        raise HTTPException(status_code=400, detail="voice must be one of: male1, male2, female1, female2.")
+    try:
+        audio = tts.synthesize(request.text, request.language, voice)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
     return Response(content=audio, media_type="audio/wav")
 
 
