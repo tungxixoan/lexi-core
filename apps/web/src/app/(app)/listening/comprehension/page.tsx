@@ -51,7 +51,13 @@ function ComprehensionPageContent() {
   const contextParamRaw = searchParams.get("context");
   const contextParam: AppContext = isAppContext(contextParamRaw) ? contextParamRaw : "general";
   const levelParam = searchParams.get("level");
+  // `level` (defaulted to "b1") feeds GENERATION only — an LLM prompt needs
+  // *some* level. The saved-exercise LOOKUP path must NOT coerce an absent
+  // level to "b1" (that would make saved exercises at any other level
+  // unreachable via "Lấy bài có sẵn") — it uses `savedLevelFilter` instead,
+  // which stays null when the URL has no level param.
   const level: CefrLevel = isCefrLevel(levelParam) ? levelParam : "b1";
+  const savedLevelFilter: CefrLevel | null = isCefrLevel(levelParam) ? levelParam : null;
   const action = searchParams.get("action");
 
   const [records, setRecords] = useState<VocabRecord[]>([]);
@@ -70,9 +76,17 @@ function ComprehensionPageContent() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [finalScore, setFinalScore] = useState(0);
+  const [seekPreviewIndex, setSeekPreviewIndex] = useState(0);
 
   const sessionKeyRef = useRef(0);
+  const isDraggingSeekRef = useRef(false);
   const audio = useComprehensionAudio(passage, voices, sessionKeyRef.current);
+
+  useEffect(() => {
+    if (!isDraggingSeekRef.current) {
+      setSeekPreviewIndex(audio.estimatedGlobalWordIndex);
+    }
+  }, [audio.estimatedGlobalWordIndex]);
 
   useEffect(() => {
     if (!user) return;
@@ -86,12 +100,14 @@ function ComprehensionPageContent() {
 
   function startSession(newPassage: ListeningPassage, mode: "generated" | "reused") {
     sessionKeyRef.current += 1;
+    isDraggingSeekRef.current = false;
     setSessionMode(mode);
     setJustSavedId(null);
     setSaveError(null);
     setPassage(newPassage);
     setVoices(assignVoices(newPassage));
     setSelectedAnswers(new Array(newPassage.questions.length).fill(null));
+    setSeekPreviewIndex(0);
     setPhase("session");
   }
 
@@ -137,7 +153,7 @@ function ComprehensionPageContent() {
         user.uid,
         "english",
         "comprehension",
-        { context: contextParam, level },
+        { context: contextParam, level: savedLevelFilter },
         excludeId
       );
       if (saved) {
@@ -154,7 +170,12 @@ function ComprehensionPageContent() {
           turns: saved.item.turns,
           questions: saved.item.questions,
           speakerGenders: saved.item.speakerGenders,
-          level: saved.generationFilters.level,
+          // A saved doc's own generationFilters.level is always concrete —
+          // handleSaveExercise never persists a null level (only the LOOKUP
+          // filter can be null, for "match any level"). The `?? "b1"` here
+          // is just to satisfy ComprehensionFilters' now-widened (nullable)
+          // type; it should never actually trigger at runtime.
+          level: saved.generationFilters.level ?? "b1",
           context: saved.generationFilters.context,
           targetLanguage: "english",
         };
@@ -233,6 +254,7 @@ function ComprehensionPageContent() {
 
   function handleSubmit() {
     if (!passage) return;
+    audio.stop();
     const score = scoreComprehension(passage, selectedAnswers);
     setFinalScore(score);
     setPhase("result");
@@ -265,7 +287,7 @@ function ComprehensionPageContent() {
       <div>
         <h2 className="scr-title">Nghe hiểu</h2>
         <p className="reading-min-words-hint">
-          Nghe chép hiện chỉ hỗ trợ khi Ngôn ngữ mục tiêu là Tiếng Anh — đổi trong Cài đặt để dùng.
+          Nghe hiểu hiện chỉ hỗ trợ khi Ngôn ngữ mục tiêu là Tiếng Anh — đổi trong Cài đặt để dùng.
         </p>
       </div>
     );
@@ -353,10 +375,32 @@ function ComprehensionPageContent() {
             min={0}
             max={totalWords - 1}
             step={1}
-            value={audio.estimatedGlobalWordIndex}
+            value={seekPreviewIndex}
             className="dictation-seek-slider"
             aria-label="Tua theo từ"
-            onChange={(e) => void audio.seekToGlobalWord(Number(e.target.value))}
+            disabled={audio.isSeeking}
+            onChange={(e) => setSeekPreviewIndex(Number(e.target.value))}
+            onMouseDown={() => {
+              isDraggingSeekRef.current = true;
+            }}
+            onTouchStart={() => {
+              isDraggingSeekRef.current = true;
+            }}
+            onKeyDown={() => {
+              isDraggingSeekRef.current = true;
+            }}
+            onMouseUp={(e) => {
+              isDraggingSeekRef.current = false;
+              void audio.seekToGlobalWord(Number(e.currentTarget.value));
+            }}
+            onTouchEnd={(e) => {
+              isDraggingSeekRef.current = false;
+              void audio.seekToGlobalWord(Number(e.currentTarget.value));
+            }}
+            onKeyUp={(e) => {
+              isDraggingSeekRef.current = false;
+              void audio.seekToGlobalWord(Number(e.currentTarget.value));
+            }}
           />
         )}
         <div className="reading-session-body">

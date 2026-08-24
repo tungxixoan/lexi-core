@@ -65,7 +65,7 @@ export default function ListeningHubPage() {
       <div>
         <h2 className="scr-title">Nghe</h2>
         <p className="reading-min-words-hint">
-          Nghe chép hiện chỉ hỗ trợ khi Ngôn ngữ mục tiêu là Tiếng Anh — đổi trong Cài đặt để dùng.
+          Nghe hiện chỉ hỗ trợ khi Ngôn ngữ mục tiêu là Tiếng Anh — đổi trong Cài đặt để dùng.
         </p>
       </div>
     );
@@ -80,7 +80,7 @@ export default function ListeningHubPage() {
       params.set("difficulty", difficulty);
     } else if (mode === "comprehension") {
       params.set("context", context);
-      params.set("level", level ?? "b1");
+      if (level) params.set("level", level);
     }
     params.set("action", action);
     return params.toString();

@@ -12,7 +12,11 @@ export interface DictationFilters {
 
 export interface ComprehensionFilters {
   context: AppContext;
-  level: VocabRecord["cefrLevel"];
+  // `null` means "match any level" — used for the saved-exercise LOOKUP
+  // path when the hub's level dropdown is set to "Tất cả" (no level chosen
+  // yet), as opposed to a concrete level which is always required for
+  // GENERATION (an LLM prompt needs *some* level). See matchesComprehension.
+  level: VocabRecord["cefrLevel"] | null;
 }
 
 export interface ComprehensionItem {
@@ -92,7 +96,11 @@ function matchesComprehension(
   exercise: Extract<SavedListeningExercise, { type: "comprehension" }>,
   filters: ComprehensionFilters
 ): boolean {
-  return exercise.generationFilters.context === filters.context && exercise.generationFilters.level === filters.level;
+  if (exercise.generationFilters.context !== filters.context) return false;
+  // A null level filter means "match any level" — mirrors how reading's own
+  // topic-overlap matching treats an empty filter as "match anything".
+  if (filters.level !== null && exercise.generationFilters.level !== filters.level) return false;
+  return true;
 }
 
 export async function getRandomSavedListeningExercise<T extends SavedListeningExercise["type"]>(

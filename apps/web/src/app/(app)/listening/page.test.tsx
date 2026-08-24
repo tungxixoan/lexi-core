@@ -67,7 +67,7 @@ describe("ListeningHubPage (language gate)", () => {
     render(<ListeningHubPage />);
 
     expect(
-      await screen.findByText("Nghe chép hiện chỉ hỗ trợ khi Ngôn ngữ mục tiêu là Tiếng Anh — đổi trong Cài đặt để dùng.")
+      await screen.findByText("Nghe hiện chỉ hỗ trợ khi Ngôn ngữ mục tiêu là Tiếng Anh — đổi trong Cài đặt để dùng.")
     ).toBeInTheDocument();
     expect(screen.queryByText("🎤 Nghe chép")).not.toBeInTheDocument();
     expect(screen.queryByText("🎧 Nghe hiểu")).not.toBeInTheDocument();
@@ -199,10 +199,10 @@ describe("ListeningHubPage (navigation)", () => {
     fireEvent.click(await screen.findByText("🎧 Nghe hiểu"));
     fireEvent.click(screen.getByRole("button", { name: "Tạo bài luyện" }));
 
-    expect(pushMock).toHaveBeenCalledWith("/listening/comprehension?context=general&level=b1&action=generate");
+    expect(pushMock).toHaveBeenCalledWith("/listening/comprehension?context=general&action=generate");
   });
 
-  it("comprehension navigates with the selected context/level and action=existing", async () => {
+  it("comprehension navigates with the selected context and action=existing, omitting level ('Tất cả') entirely rather than coercing to b1", async () => {
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue([]);
 
@@ -211,6 +211,19 @@ describe("ListeningHubPage (navigation)", () => {
     fireEvent.click(screen.getByText(/Business/));
     fireEvent.click(screen.getByRole("button", { name: "🔀 Lấy bài có sẵn" }));
 
-    expect(pushMock).toHaveBeenCalledWith("/listening/comprehension?context=business&level=b1&action=existing");
+    expect(pushMock).toHaveBeenCalledWith("/listening/comprehension?context=business&action=existing");
+  });
+
+  it("comprehension includes level in the query string once a specific level is picked from the dropdown", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue([]);
+
+    render(<ListeningHubPage />);
+    fireEvent.click(await screen.findByText("🎧 Nghe hiểu"));
+    fireEvent.click(screen.getByRole("button", { name: "Tất cả ▾" }));
+    fireEvent.click(screen.getByRole("option", { name: "C1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Tạo bài luyện" }));
+
+    expect(pushMock).toHaveBeenCalledWith("/listening/comprehension?context=general&level=c1&action=generate");
   });
 });

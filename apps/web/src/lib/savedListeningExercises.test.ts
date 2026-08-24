@@ -145,6 +145,48 @@ describe("saveListeningExercise (comprehension)", () => {
   });
 });
 
+describe("getRandomSavedListeningExercise (comprehension) — level filter", () => {
+  function makeComprehensionDoc(overrides: Partial<{ id: string; context: "general" | "business"; level: "b1" | "c1" }> = {}) {
+    return {
+      id: overrides.id ?? "comp-1",
+      type: "comprehension" as const,
+      item: {
+        kind: COMPREHENSION_ITEM.kind,
+        turns: COMPREHENSION_ITEM.turns,
+        questions: COMPREHENSION_ITEM.questions,
+        speakerGenders: COMPREHENSION_ITEM.speakerGenders,
+      },
+      generationFilters: { context: overrides.context ?? "general", level: overrides.level ?? "c1" },
+      targetLanguage: "english" as const,
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+  }
+
+  it("matches a saved exercise at ANY level when the filter's level is null ('Tất cả')", async () => {
+    const doc = makeComprehensionDoc({ level: "c1" });
+    vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: doc.id, data: () => doc }] } as never);
+
+    const result = await getRandomSavedListeningExercise("user-123", "english", "comprehension", {
+      context: "general",
+      level: null,
+    });
+
+    expect(result?.id).toBe(doc.id);
+  });
+
+  it("does not match a saved exercise at a different level when the filter's level is a concrete level", async () => {
+    const doc = makeComprehensionDoc({ level: "c1" });
+    vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: doc.id, data: () => doc }] } as never);
+
+    const result = await getRandomSavedListeningExercise("user-123", "english", "comprehension", {
+      context: "general",
+      level: "b1",
+    });
+
+    expect(result).toBeNull();
+  });
+});
+
 describe("getRandomSavedListeningExercise (comprehension) — does not cross-match dictation docs", () => {
   it("never returns a dictation-typed doc when asking for comprehension, even with an identical-looking filter shape", async () => {
     // Regression guard mirroring savedReadingExercises.test.ts's own

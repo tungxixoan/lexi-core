@@ -196,38 +196,96 @@ describe("useComprehensionAudio", () => {
   });
 
   it("a stale prefetch from a discarded session does not clobber a new session's clip", async () => {
-    let resolveA!: (v: { audioBase64: string }) => void;
+    // Both sessions' turn 0 land in the SAME clipUrlsRef map slot (index 0)
+    // — that's exactly what makes the `cancelled` guard load-bearing rather
+    // than incidental. Resolve session 1's turn-0 request AFTER session 2's
+    // own turn-0 request has already resolved, then prove play() in session
+    // 2 uses session 2's audio, not session 1's stale one.
+    const resolvers: Record<string, (v: { audioBase64: string }) => void> = {};
     vi.mocked(synthesizeSpeech).mockImplementation(
-      () =>
+      ({ text }: { text: string }) =>
         new Promise((resolve) => {
-          resolveA = resolve;
+          resolvers[text] = resolve;
         })
     );
 
-    const { rerender } = renderHook(
+    const { result, rerender } = renderHook(
       ({ passage, sessionKey }) => useComprehensionAudio(passage, VOICES, sessionKey),
       { initialProps: { passage: TWO_SPEAKER_PASSAGE, sessionKey: 1 } }
     );
+    await waitFor(() => expect(resolvers["Hello there friend"]).toBeDefined());
 
     const NEW_PASSAGE: ListeningPassage = {
       ...TWO_SPEAKER_PASSAGE,
       turns: [{ speaker: null, text: "A totally different talk" }],
       kind: "talk",
     };
-    vi.mocked(synthesizeSpeech).mockResolvedValue({ audioBase64: "BBBB" });
     rerender({ passage: NEW_PASSAGE, sessionKey: 2 });
+    await waitFor(() => expect(resolvers["A totally different talk"]).toBeDefined());
 
-    // Session 1's stale prefetch resolves late, after session 2 has already started.
-    resolveA({ audioBase64: "AAAA" });
-    await Promise.resolve();
+    // Session 2's own prefetch resolves first ("NEW").
+    resolvers["A totally different talk"]({ audioBase64: "NEW" });
     await Promise.resolve();
 
-    // No assertion needed beyond "this doesn't throw and doesn't leave the
-    // hook in a broken state" — the real proof is in the code review's
-    // empirical revert-and-observe check, mirroring how the equivalent
-    // Nghe chép fix was verified. This test exists so a future regression
-    // has *a* test to fail against, even though jsdom can't easily assert
-    // on internal ref state directly.
-    expect(true).toBe(true);
+    // Session 1's stale prefetch resolves late, after session 2 has already
+    // started — must not clobber session 2's clip at the same map slot.
+    resolvers["Hello there friend"]({ audioBase64: "OLD" });
+    await Promise.resolve();
+
+    await act(async () => {
+      result.current.play();
+      await Promise.resolve();
+    });
+
+    const lastAudio = audioInstances[audioInstances.length - 1];
+    expect(lastAudio.src).toBe("data:audio/wav;base64,NEW");
+  });
+
+  it("estimatedGlobalWordIndex tracks a real timeupdate event within a fully-loaded turn", async () => {
+    const { result } = renderHook(() => useComprehensionAudio(THREE_TURN_PASSAGE, VOICES, 1));
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(3));
+
+    // Move to turn 1 (global offset 3, 4 words: "Hi how are you").
+    act(() => result.current.nextTurn());
+    await act(async () => {
+      result.current.play();
+      await Promise.resolve();
+    });
+
+    const audioEl = audioInstances[audioInstances.length - 1];
+    act(() => {
+      Object.defineProperty(audioEl, "duration", { value: 10, configurable: true });
+      Object.defineProperty(audioEl, "currentTime", { value: 5, configurable: true });
+      audioEl.dispatchEvent(new Event("timeupdate"));
+    });
+
+    // Full turn loaded => local base 0. raw = 0 + (5/10)*4 = 2 => global = offset(3) + 2 = 5.
+    expect(result.current.estimatedGlobalWordIndex).toBe(5);
+  });
+
+  it("estimatedGlobalWordIndex under timeupdate accounts for the seek's local offset within the turn, not the full turn from word 0 (Finding 1 regression guard)", async () => {
+    const { result } = renderHook(() => useComprehensionAudio(THREE_TURN_PASSAGE, VOICES, 1));
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(3));
+    vi.mocked(synthesizeSpeech).mockClear();
+
+    // global word 9 -> turn 2 (offset 7, "I am doing fine"), local word index 2 ("doing").
+    await act(async () => {
+      await result.current.seekToGlobalWord(9);
+    });
+    expect(result.current.currentTurnIndex).toBe(2);
+    expect(result.current.estimatedGlobalWordIndex).toBe(9);
+
+    const audioEl = audioInstances[audioInstances.length - 1];
+    act(() => {
+      Object.defineProperty(audioEl, "duration", { value: 10, configurable: true });
+      Object.defineProperty(audioEl, "currentTime", { value: 0, configurable: true });
+      audioEl.dispatchEvent(new Event("timeupdate"));
+    });
+
+    // The loaded clip is only the 2-word remainder starting at local index 2
+    // ("doing fine"). At currentTime=0 the estimate must stay AT the seek
+    // target (global 9) — the pre-fix bug computed ratio against the full
+    // 4-word turn from local index 0, snapping back to global 7.
+    expect(result.current.estimatedGlobalWordIndex).toBe(9);
   });
 });

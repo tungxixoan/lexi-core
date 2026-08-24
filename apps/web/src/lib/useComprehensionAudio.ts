@@ -5,6 +5,7 @@ import type { ListeningPassage, Speaker, VoiceId } from "./listeningPassage";
 
 export interface UseComprehensionAudioResult {
   isSpeaking: boolean;
+  isSeeking: boolean;
   currentTurnIndex: number;
   estimatedGlobalWordIndex: number;
   speed: number;
@@ -54,6 +55,7 @@ export function useComprehensionAudio(
   sessionKey: string | number
 ): UseComprehensionAudioResult {
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isSeeking, setIsSeeking] = useState(false);
   const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
   const [estimatedGlobalWordIndex, setEstimatedGlobalWordIndex] = useState(0);
   const [speed, setSpeedState] = useState(1);
@@ -62,7 +64,14 @@ export function useComprehensionAudio(
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const clipUrlsRef = useRef<Map<number, string>>(new Map());
   const prefetchPromisesRef = useRef<Map<number, Promise<void>>>(new Map());
-  const baseGlobalWordIndexRef = useRef(0);
+  // Tracks the LOCAL word offset (within the currently-loaded turn/clip) that
+  // the loaded audio clip starts at: 0 whenever a full turn is loaded
+  // (playTurn/previousTurn/nextTurn/replayFromStart), or `wordIndex` whenever
+  // seekToGlobalWord loads a REMAINDER clip starting partway through a turn.
+  // The timeupdate handler needs this to correctly interpret currentTime/
+  // duration against whatever's actually loaded — mirrors
+  // useDictationAudio's own baseWordIndexRef exactly.
+  const localBaseWordIndexRef = useRef(0);
   const speedRef = useRef(speed);
   const passageRef = useRef(passage);
   const voiceAssignmentRef = useRef(voiceAssignment);
@@ -98,7 +107,7 @@ export function useComprehensionAudio(
     setError(null);
     clipUrlsRef.current = new Map();
     prefetchPromisesRef.current = new Map();
-    baseGlobalWordIndexRef.current = 0;
+    localBaseWordIndexRef.current = 0;
     playTokenRef.current += 1;
     if (audioRef.current) audioRef.current.pause();
   }, [passage, sessionKey]);
@@ -144,8 +153,13 @@ export function useComprehensionAudio(
         const counts = turnWordCounts(currentPassage);
         const totalWordsInTurn = counts[turnIndex] ?? 0;
         if (totalWordsInTurn === 0) return;
-        const localRatio = el.currentTime / el.duration;
-        const localEstimate = Math.min(Math.max(Math.round(localRatio * totalWordsInTurn), 0), totalWordsInTurn - 1);
+        // The loaded clip may be the full turn (base 0) or just the
+        // remainder from a seek (base = wordIndex seeked to) — see
+        // localBaseWordIndexRef's doc comment above. Mirrors
+        // useDictationAudio.ts's own base + ratio*(total-base) formula.
+        const base = localBaseWordIndexRef.current;
+        const raw = base + (el.currentTime / el.duration) * (totalWordsInTurn - base);
+        const localEstimate = Math.min(Math.max(Math.round(raw), 0), totalWordsInTurn - 1);
         const offsets = turnWordOffsets(currentPassage);
         setEstimatedGlobalWordIndex((offsets[turnIndex] ?? 0) + localEstimate);
       });
@@ -173,8 +187,8 @@ export function useComprehensionAudio(
         return;
       }
       const offsets = turnWordOffsets(currentPassage);
-      baseGlobalWordIndexRef.current = offsets[turnIndex] ?? 0;
-      setEstimatedGlobalWordIndex(baseGlobalWordIndexRef.current);
+      localBaseWordIndexRef.current = 0;
+      setEstimatedGlobalWordIndex(offsets[turnIndex] ?? 0);
       setCurrentTurnIndex(turnIndex);
       currentTurnIndexRef.current = turnIndex;
       setIsSpeaking(true);
@@ -240,8 +254,8 @@ export function useComprehensionAudio(
     if (audioRef.current) audioRef.current.pause();
     const newIndex = currentTurnIndexRef.current - 1;
     const offsets = turnWordOffsets(currentPassage);
-    baseGlobalWordIndexRef.current = offsets[newIndex] ?? 0;
-    setEstimatedGlobalWordIndex(baseGlobalWordIndexRef.current);
+    localBaseWordIndexRef.current = 0;
+    setEstimatedGlobalWordIndex(offsets[newIndex] ?? 0);
     setCurrentTurnIndex(newIndex);
     currentTurnIndexRef.current = newIndex;
     setIsSpeaking(false);
@@ -254,8 +268,8 @@ export function useComprehensionAudio(
     if (audioRef.current) audioRef.current.pause();
     const newIndex = currentTurnIndexRef.current + 1;
     const offsets = turnWordOffsets(currentPassage);
-    baseGlobalWordIndexRef.current = offsets[newIndex] ?? 0;
-    setEstimatedGlobalWordIndex(baseGlobalWordIndexRef.current);
+    localBaseWordIndexRef.current = 0;
+    setEstimatedGlobalWordIndex(offsets[newIndex] ?? 0);
     setCurrentTurnIndex(newIndex);
     currentTurnIndexRef.current = newIndex;
     setIsSpeaking(false);
@@ -264,7 +278,7 @@ export function useComprehensionAudio(
   const replayFromStart = useCallback(() => {
     playTokenRef.current += 1;
     if (audioRef.current) audioRef.current.pause();
-    baseGlobalWordIndexRef.current = 0;
+    localBaseWordIndexRef.current = 0;
     setEstimatedGlobalWordIndex(0);
     setCurrentTurnIndex(0);
     currentTurnIndexRef.current = 0;
@@ -279,8 +293,8 @@ export function useComprehensionAudio(
 
     const { turnIndex, wordIndex } = resolveGlobalWordIndex(currentPassage, globalWordIndex);
     const offsets = turnWordOffsets(currentPassage);
-    baseGlobalWordIndexRef.current = offsets[turnIndex] + wordIndex;
-    setEstimatedGlobalWordIndex(baseGlobalWordIndexRef.current);
+    localBaseWordIndexRef.current = wordIndex;
+    setEstimatedGlobalWordIndex(offsets[turnIndex] + wordIndex);
     setCurrentTurnIndex(turnIndex);
     currentTurnIndexRef.current = turnIndex;
     setError(null);
@@ -288,6 +302,7 @@ export function useComprehensionAudio(
     playTokenRef.current += 1;
     const token = playTokenRef.current;
     setIsSpeaking(true);
+    setIsSeeking(true);
     try {
       const turn = currentPassage.turns[turnIndex];
       const words = targetWords(turn.text);
@@ -310,6 +325,8 @@ export function useComprehensionAudio(
       if (playTokenRef.current !== token) return;
       setError(err instanceof Error ? err.message : String(err));
       setIsSpeaking(false);
+    } finally {
+      if (playTokenRef.current === token) setIsSeeking(false);
     }
   }, [playTurn]);
 
@@ -320,6 +337,7 @@ export function useComprehensionAudio(
 
   return {
     isSpeaking,
+    isSeeking,
     currentTurnIndex,
     estimatedGlobalWordIndex,
     speed,
