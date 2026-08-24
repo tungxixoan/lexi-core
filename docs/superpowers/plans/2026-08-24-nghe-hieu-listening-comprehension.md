@@ -26,9 +26,9 @@
 **Files:**
 - Modify: `services/tts-stt/app/tts.py`
 - Modify: `services/tts-stt/app/main.py`
+- Modify: `services/tts-stt/Dockerfile`
 - Create: `services/tts-stt/tests/test_tts.py`
 - Create: `services/tts-stt/tests/test_synthesize_endpoint.py`
-- Create (download, not code): `services/tts-stt/voices/en_US-hfc_female-medium.onnx` (+ its matching `.onnx.json`), `services/tts-stt/voices/en_US-hfc_male-medium.onnx` (+ `.onnx.json`), `services/tts-stt/voices/en_US-norman-medium.onnx` (+ `.onnx.json`)
 
 **Interfaces:**
 - Consumes: nothing from other tasks (this is the foundation).
@@ -36,48 +36,92 @@
 
 ### Context
 
-Read `services/tts-stt/app/tts.py` and `services/tts-stt/app/main.py` in full first — both are short (32 and 43 lines respectively as of this plan's writing).
+Read `services/tts-stt/app/tts.py`, `services/tts-stt/app/main.py`, and `services/tts-stt/Dockerfile` in full first.
 
 Today, `VOICE_MODELS: dict[str, str]` maps language → exactly one model filename, and there's no `voice`/pitch parameter anywhere in the synthesis path. This task adds 4 named English voices (2 male, 2 female) so a two-speaker conversation can use two audibly distinct voices instead of one voice for both speakers.
 
-**Download 3 new voice model files first** (before writing any code) into `services/tts-stt/voices/` — same directory the existing `vi_VN-vais1000-medium.onnx`/`en_US-lessac-medium.onnx` live in. Each Piper voice needs both its `.onnx` file and its matching `.onnx.json` config file, downloaded from `https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US`:
+**Important — voice model files are never committed to this repo.** There is no `services/tts-stt/voices/` directory in the checkout at all; `.onnx` model files are downloaded fresh at Docker **build** time via `curl` commands baked directly into the `Dockerfile` (confirm this by reading the Dockerfile — its existing `RUN mkdir -p voices && ... curl ... vais1000 ... curl ... lessac ...` block is exactly this mechanism for the 2 voices in production today). Do **not** download `.onnx` files into a local `voices/` directory and do **not** `git add` any binary model file — that would bloat the repo with large binaries the deployed image doesn't even read from git. The two things this task actually changes are: (1) the `Dockerfile`'s `RUN` block, adding 3 more `curl` download pairs, so the **built image** ends up with 5 voice files; (2) `tts.py`/`main.py`'s code, which this task's tests verify entirely by mocking `PiperVoice` — never by loading a real model file. No test in this codebase has ever exercised real Piper synthesis (the only pre-existing test, `test_health.py`, only hits `/health`), so there is no existing local-dev convention of having real voice files on disk to preserve or break.
 
-1. `en_US-hfc_female-medium.onnx` + `en_US-hfc_female-medium.onnx.json` (from the `en_US/hfc_female/medium/` folder) — explicitly named/confirmed female in Piper's own `VOICES.md`.
-2. `en_US-hfc_male-medium.onnx` + `en_US-hfc_male-medium.onnx.json` (from `en_US/hfc_male/medium/`) — explicitly named/confirmed male, described as "the cleanest male voice" in Piper's own voice catalog.
-3. `en_US-norman-medium.onnx` + `en_US-norman-medium.onnx.json` (from `en_US/norman/medium/`) — candidate for the second male voice. **Before downloading, listen to the sample audio on that Hugging Face page and confirm it sounds male.** If it doesn't, substitute another `en_US` voice from Piper's catalog instead (candidates in order of preference: `john`, `danny`, `sam`, `bryce`, `joe`, `ryan` — the same verify-by-listening step applies to whichever is picked).
+Add 3 new `curl` pairs to `services/tts-stt/Dockerfile`'s existing `RUN mkdir -p voices && ...` block (right after the existing `en_US-lessac-medium.onnx`/`.onnx.json` pair, before `apt-get purge`):
 
-No download step is needed for the two voices already present: `en_US-lessac-medium.onnx` (existing default, confirmed female by an independent Piper voice-ranking source) becomes `female1`; `en_US-hfc_male-medium.onnx` (just downloaded) becomes `male1`.
+```dockerfile
+    curl -fsSL -o voices/en_US-hfc_female-medium.onnx \
+      https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/hfc_female/medium/en_US-hfc_female-medium.onnx && \
+    curl -fsSL -o voices/en_US-hfc_female-medium.onnx.json \
+      https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/hfc_female/medium/en_US-hfc_female-medium.onnx.json && \
+    curl -fsSL -o voices/en_US-hfc_male-medium.onnx \
+      https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/hfc_male/medium/en_US-hfc_male-medium.onnx && \
+    curl -fsSL -o voices/en_US-hfc_male-medium.onnx.json \
+      https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/hfc_male/medium/en_US-hfc_male-medium.onnx.json && \
+    curl -fsSL -o voices/en_US-norman-medium.onnx \
+      https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/norman/medium/en_US-norman-medium.onnx && \
+    curl -fsSL -o voices/en_US-norman-medium.onnx.json \
+      https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/norman/medium/en_US-norman-medium.onnx.json && \
+```
 
-- [ ] **Step 1: Write the failing backend tests**
+`norman` is a candidate for the second male voice — its own model card states no gender, only Piper's `VOICES.md` naming convention suggests it. **Before this Dockerfile change is actually deployed** (not part of this task's own steps — deployment is a separate manual step per this plan's Global Constraints), a human should listen to the sample on `https://huggingface.co/rhasspy/piper-voices` (search "norman", en_US) and confirm it sounds male; if not, substitute another `en_US` voice name in the two `curl` lines above (candidates in order of preference: `john`, `danny`, `sam`, `bryce`, `joe`, `ryan`). This substitution is a one-line filename swap in the Dockerfile, not a code change — don't block this task's own tests/commit on it.
+
+- [ ] **Step 1: Write the failing backend tests (mocking `PiperVoice` — no real model files needed anywhere)**
 
 Create `services/tts-stt/tests/test_tts.py`:
 
 ```python
+from unittest.mock import MagicMock, patch
+
 from app import tts
 
 
-def test_synthesize_default_voice_still_uses_lessac():
+def _fake_synthesize_wav(text, wav_file):
+    # A real PiperVoice.synthesize_wav writes real WAV frames via the
+    # wave.Wave_write object it's handed; the wave module raises on close
+    # if nothing ever configured the header (channels/sample width/frame
+    # rate), so the mock must set those up too, not just no-op.
+    wav_file.setnchannels(1)
+    wav_file.setsampwidth(2)
+    wav_file.setframerate(22050)
+    wav_file.writeframes(b"\x00\x00")
+
+
+def _mock_piper_voice():
+    instance = MagicMock()
+    instance.synthesize_wav.side_effect = _fake_synthesize_wav
+    return instance
+
+
+def test_default_voice_resolves_to_the_lessac_model_path():
+    tts._voice_cache.clear()
+    with patch("app.tts.PiperVoice") as mock_cls:
+        mock_cls.load.return_value = _mock_piper_voice()
+        tts.synthesize("hello", "en")
+        loaded_path = mock_cls.load.call_args[0][0]
+        assert "lessac" in loaded_path
+
+
+def test_female1_voice_resolves_to_the_same_model_as_default():
     # Regression: every existing caller (Nghe chép, etc.) never sends
-    # `voice`, so the default path must produce byte-identical output to
-    # before this change — same model file, same synthesis call.
-    audio_default = tts.synthesize("hello", "en")
-    audio_female1 = tts.synthesize("hello", "en", voice="female1")
-    assert audio_default == audio_female1
+    # `voice`, so the default path must resolve to the exact same model
+    # file as before this change.
+    tts._voice_cache.clear()
+    with patch("app.tts.PiperVoice") as mock_cls:
+        mock_cls.load.return_value = _mock_piper_voice()
+        tts.synthesize("hello", "en", voice="female1")
+        loaded_path = mock_cls.load.call_args[0][0]
+        assert "lessac" in loaded_path
 
 
-def test_synthesize_accepts_all_four_named_voices():
+def test_all_four_named_voices_resolve_to_four_distinct_model_paths():
+    resolved = {}
     for voice in ("male1", "male2", "female1", "female2"):
-        audio = tts.synthesize("hello", "en", voice=voice)
-        assert len(audio) > 0
+        tts._voice_cache.clear()
+        with patch("app.tts.PiperVoice") as mock_cls:
+            mock_cls.load.return_value = _mock_piper_voice()
+            tts.synthesize("hello", "en", voice=voice)
+            resolved[voice] = mock_cls.load.call_args[0][0]
+    assert len(set(resolved.values())) == 4
 
 
-def test_synthesize_different_voices_produce_different_audio():
-    male_audio = tts.synthesize("hello there", "en", voice="male1")
-    female_audio = tts.synthesize("hello there", "en", voice="female1")
-    assert male_audio != female_audio
-
-
-def test_synthesize_unsupported_voice_raises():
+def test_unsupported_english_voice_raises():
+    tts._voice_cache.clear()
     try:
         tts.synthesize("hello", "en", voice="not-a-real-voice")
         assert False, "expected ValueError"
@@ -85,37 +129,74 @@ def test_synthesize_unsupported_voice_raises():
         pass
 
 
-def test_synthesize_vietnamese_ignores_voice_param():
+def test_vietnamese_ignores_voice_param_and_falls_back_to_the_vi_model():
     # Vietnamese only ever has one voice ("default") — a "voice" value is
-    # meaningless for "vi" and must not raise.
-    audio = tts.synthesize("xin chào", "vi", voice="male1")
-    assert len(audio) > 0
+    # meaningless for "vi" and must not raise, just fall back.
+    tts._voice_cache.clear()
+    with patch("app.tts.PiperVoice") as mock_cls:
+        mock_cls.load.return_value = _mock_piper_voice()
+        tts.synthesize("xin chào", "vi", voice="male1")
+        loaded_path = mock_cls.load.call_args[0][0]
+        assert "vais1000" in loaded_path
+
+
+def test_synthesize_returns_bytes():
+    tts._voice_cache.clear()
+    with patch("app.tts.PiperVoice") as mock_cls:
+        mock_cls.load.return_value = _mock_piper_voice()
+        result = tts.synthesize("hello", "en")
+        assert isinstance(result, bytes)
+        assert len(result) > 0
 ```
 
 Create `services/tts-stt/tests/test_synthesize_endpoint.py`:
 
 ```python
+from unittest.mock import MagicMock, patch
+
 from fastapi.testclient import TestClient
 
+from app import tts
 from app.main import app
 
 client = TestClient(app)
 
 
+def _fake_synthesize_wav(text, wav_file):
+    wav_file.setnchannels(1)
+    wav_file.setsampwidth(2)
+    wav_file.setframerate(22050)
+    wav_file.writeframes(b"\x00\x00")
+
+
+def _mock_piper_voice():
+    instance = MagicMock()
+    instance.synthesize_wav.side_effect = _fake_synthesize_wav
+    return instance
+
+
 def test_synthesize_without_voice_field_still_works():
-    response = client.post("/synthesize", json={"text": "hello", "language": "en"})
+    tts._voice_cache.clear()
+    with patch("app.tts.PiperVoice") as mock_cls:
+        mock_cls.load.return_value = _mock_piper_voice()
+        response = client.post("/synthesize", json={"text": "hello", "language": "en"})
     assert response.status_code == 200
     assert response.headers["content-type"] == "audio/wav"
 
 
 def test_synthesize_with_valid_voice_field():
-    response = client.post(
-        "/synthesize", json={"text": "hello", "language": "en", "voice": "male1"}
-    )
+    tts._voice_cache.clear()
+    with patch("app.tts.PiperVoice") as mock_cls:
+        mock_cls.load.return_value = _mock_piper_voice()
+        response = client.post(
+            "/synthesize", json={"text": "hello", "language": "en", "voice": "male1"}
+        )
     assert response.status_code == 200
 
 
 def test_synthesize_with_invalid_voice_field_rejected():
+    # No PiperVoice mocking needed — the endpoint must reject this before
+    # ever calling tts.synthesize.
     response = client.post(
         "/synthesize", json={"text": "hello", "language": "en", "voice": "bogus"}
     )
@@ -125,7 +206,7 @@ def test_synthesize_with_invalid_voice_field_rejected():
 - [ ] **Step 2: Run the tests to confirm they fail**
 
 Run: `cd services/tts-stt && python -m pytest tests/test_tts.py tests/test_synthesize_endpoint.py -v`
-Expected: FAIL — `synthesize()` doesn't accept a `voice` keyword argument yet, and `/synthesize` doesn't accept/validate a `voice` field yet.
+Expected: FAIL — `synthesize()` doesn't accept a `voice` keyword argument yet, and `/synthesize` doesn't accept/validate a `voice` field yet. (These tests never touch a real Piper model, so a fresh checkout with no `voices/` directory runs them exactly the same as CI would — no environment setup needed beyond `pip install -r requirements.txt`.)
 
 - [ ] **Step 3: Implement the nested voice registry in `tts.py`**
 
@@ -241,19 +322,23 @@ def synthesize_endpoint(request: SynthesizeRequest) -> Response:
     return Response(content=audio, media_type="audio/wav")
 ```
 
-- [ ] **Step 5: Run the tests to confirm they pass**
+- [ ] **Step 5: Update the Dockerfile**
+
+In `services/tts-stt/Dockerfile`, find the existing `RUN mkdir -p voices && ...` block and add the 3 new `curl` pairs shown in this task's Context section — right after the existing `en_US-lessac-medium.onnx`/`.onnx.json` pair, before the line `apt-get purge -y curl && ...`.
+
+- [ ] **Step 6: Run the tests to confirm they pass**
 
 Run: `cd services/tts-stt && python -m pytest tests/ -v`
 Expected: all tests PASS, including the pre-existing `tests/test_health.py::test_health_returns_ok`.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add services/tts-stt/app/tts.py services/tts-stt/app/main.py services/tts-stt/tests/test_tts.py services/tts-stt/tests/test_synthesize_endpoint.py services/tts-stt/voices/en_US-hfc_female-medium.onnx services/tts-stt/voices/en_US-hfc_female-medium.onnx.json services/tts-stt/voices/en_US-hfc_male-medium.onnx services/tts-stt/voices/en_US-hfc_male-medium.onnx.json services/tts-stt/voices/en_US-norman-medium.onnx services/tts-stt/voices/en_US-norman-medium.onnx.json
+git add services/tts-stt/app/tts.py services/tts-stt/app/main.py services/tts-stt/Dockerfile services/tts-stt/tests/test_tts.py services/tts-stt/tests/test_synthesize_endpoint.py
 git commit -m "feat(tts-stt): add a 4-voice English registry (2 male, 2 female)"
 ```
 
-**Deploy note (manual, not part of this task's automated steps):** this service must be redeployed to Cloud Run (`gcloud run deploy`, rebuilding the Docker image with the 3 new voice files bundled in) before Task 2's Cloud Function changes work against the live backend. Local development and this task's own tests don't require it.
+**Deploy note (manual, not part of this task's automated steps):** this service must be redeployed to Cloud Run (`gcloud run deploy`, rebuilding the Docker image — the updated `Dockerfile` downloads the 3 new voice files at build time, exactly like the 2 existing voices already do) before Task 2's Cloud Function changes work against the live backend. Local development and this task's own tests don't require it — the mocked tests never touch a real model file, on disk or in the image.
 
 ---
 
