@@ -55,7 +55,12 @@ describe("synthesizeSpeechHandler", () => {
 
     const result = await synthesizeSpeechHandler(makeRequest({ text: "hi", language: "vi" }));
 
-    expect(synthesizeViaCloudRun).toHaveBeenCalledWith("https://tts-stt.a.run.app", "hi", "vi");
+    expect(synthesizeViaCloudRun).toHaveBeenCalledWith(
+      "https://tts-stt.a.run.app",
+      "hi",
+      "vi",
+      undefined
+    );
     expect(result).toEqual({ audioBase64: Buffer.from("wav-bytes").toString("base64") });
   });
 
@@ -66,6 +71,40 @@ describe("synthesizeSpeechHandler", () => {
     await expect(
       synthesizeSpeechHandler(makeRequest({ text: "hi", language: "vi" }))
     ).rejects.toMatchObject({ code: "internal" });
+  });
+
+  it("accepts an optional voice field and threads it through to Cloud Run", async () => {
+    vi.stubEnv("TTS_STT_SERVICE_URL", "https://tts-stt.a.run.app");
+    vi.mocked(synthesizeViaCloudRun).mockResolvedValue(Buffer.from("wav-bytes"));
+
+    await synthesizeSpeechHandler(makeRequest({ text: "hi", language: "en", voice: "male1" }));
+
+    expect(synthesizeViaCloudRun).toHaveBeenCalledWith(
+      "https://tts-stt.a.run.app",
+      "hi",
+      "en",
+      "male1"
+    );
+  });
+
+  it("omits voice when the caller doesn't send one — existing callers unaffected", async () => {
+    vi.stubEnv("TTS_STT_SERVICE_URL", "https://tts-stt.a.run.app");
+    vi.mocked(synthesizeViaCloudRun).mockResolvedValue(Buffer.from("wav-bytes"));
+
+    await synthesizeSpeechHandler(makeRequest({ text: "hi", language: "vi" }));
+
+    expect(synthesizeViaCloudRun).toHaveBeenCalledWith(
+      "https://tts-stt.a.run.app",
+      "hi",
+      "vi",
+      undefined
+    );
+  });
+
+  it("throws invalid-argument for an unrecognized voice value", async () => {
+    await expect(
+      synthesizeSpeechHandler(makeRequest({ text: "hi", language: "en", voice: "not-a-voice" }))
+    ).rejects.toMatchObject({ code: "invalid-argument" });
   });
 });
 

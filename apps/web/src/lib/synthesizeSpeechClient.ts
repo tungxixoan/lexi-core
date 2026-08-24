@@ -7,6 +7,7 @@ import { getFirebaseFunctions } from "./firebase";
 export interface SynthesizeSpeechRequest {
   text: string;
   language: "vi" | "en";
+  voice?: "male1" | "male2" | "female1" | "female2";
 }
 
 export interface SynthesizeSpeechResult {

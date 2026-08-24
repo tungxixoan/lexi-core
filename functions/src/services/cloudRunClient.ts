@@ -63,11 +63,12 @@ async function callCloudRun<T>(serviceUrl: string, options: CloudRunRequestOptio
 export async function synthesizeViaCloudRun(
   serviceUrl: string,
   text: string,
-  language: "vi" | "en"
+  language: "vi" | "en",
+  voice?: "male1" | "male2" | "female1" | "female2"
 ): Promise<Buffer> {
   const data = await callCloudRun<ArrayBuffer | Buffer>(serviceUrl, {
     path: "/synthesize",
-    body: JSON.stringify({ text, language }),
+    body: JSON.stringify({ text, language, voice }),
     headers: { "Content-Type": "application/json" },
     responseType: "arraybuffer",
   });

@@ -4,16 +4,21 @@ import { synthesizeViaCloudRun, toHttpsError } from "./services/cloudRunClient";
 export interface SynthesizeSpeechRequest {
   text: string;
   language: "vi" | "en";
+  voice?: "male1" | "male2" | "female1" | "female2";
 }
+
+const VALID_VOICES = ["male1", "male2", "female1", "female2"] as const;
 
 function isSynthesizeSpeechRequest(data: unknown): data is SynthesizeSpeechRequest {
   if (typeof data !== "object" || data === null) return false;
   const d = data as Record<string, unknown>;
+  const voiceValid = d.voice === undefined || (VALID_VOICES as readonly unknown[]).includes(d.voice);
   return (
     typeof d.text === "string" &&
     d.text.trim().length > 0 &&
     d.text.trim().length <= 500 &&
-    (d.language === "vi" || d.language === "en")
+    (d.language === "vi" || d.language === "en") &&
+    voiceValid
   );
 }
 
@@ -24,7 +29,7 @@ export async function synthesizeSpeechHandler(
     throw new HttpsError("unauthenticated", "Sign in required.");
   }
   if (!isSynthesizeSpeechRequest(request.data)) {
-    throw new HttpsError("invalid-argument", "Expected { text, language: 'vi'|'en' }.");
+    throw new HttpsError("invalid-argument", "Expected { text, language: 'vi'|'en', voice?: 'male1'|'male2'|'female1'|'female2' }.");
   }
   const serviceUrl = process.env.TTS_STT_SERVICE_URL ?? "";
   if (!serviceUrl) {
@@ -32,7 +37,12 @@ export async function synthesizeSpeechHandler(
   }
 
   try {
-    const audio = await synthesizeViaCloudRun(serviceUrl, request.data.text, request.data.language);
+    const audio = await synthesizeViaCloudRun(
+      serviceUrl,
+      request.data.text,
+      request.data.language,
+      request.data.voice
+    );
     return { audioBase64: audio.toString("base64") };
   } catch (err) {
     throw toHttpsError(err, "Speech synthesis failed. Please try again.");
