@@ -545,6 +545,7 @@ describe("DictationPage (result phase)", () => {
     expect(await screen.findByText("Đã lưu ✔")).toBeInTheDocument();
     expect(saveListeningExercise).toHaveBeenCalledWith(
       "u1",
+      "dictation",
       expect.objectContaining({ target: "I ate an apple today." }),
       { difficulty: "hard" },
       "english"

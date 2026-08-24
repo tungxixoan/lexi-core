@@ -158,7 +158,7 @@ function DictationPageContent() {
     setFetchingSaved(true);
     let found = false;
     try {
-      const saved = await getRandomSavedListeningExercise(user.uid, "english", { difficulty }, excludeId);
+      const saved = await getRandomSavedListeningExercise(user.uid, "english", "dictation", { difficulty }, excludeId);
       if (saved) {
         found = true;
         startSession(saved.item, "reused");
@@ -250,7 +250,7 @@ function DictationPageContent() {
     setSaving(true);
     setSaveError(null);
     try {
-      const newId = await saveListeningExercise(user.uid, item, { difficulty }, "english");
+      const newId = await saveListeningExercise(user.uid, "dictation", item, { difficulty }, "english");
       setJustSavedId(newId);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : String(err));
