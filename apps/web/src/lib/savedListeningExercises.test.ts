@@ -118,37 +118,58 @@ const COMPREHENSION_ITEM = parseListeningPassage(
 
 describe("saveListeningExercise (comprehension)", () => {
   it("saves a comprehension exercise with its own filters shape, including speakerGenders", async () => {
-    const newId = await saveListeningExercise(
-      "user-123",
-      "comprehension",
-      {
-        kind: COMPREHENSION_ITEM.kind,
-        turns: COMPREHENSION_ITEM.turns,
-        questions: COMPREHENSION_ITEM.questions,
-        speakerGenders: COMPREHENSION_ITEM.speakerGenders,
-      },
-      { context: "general", level: "b1" },
-      "english"
+    vi.mocked(doc).mockReturnValue({ id: "new-comprehension-id" } as never);
+
+    const item = {
+      kind: COMPREHENSION_ITEM.kind,
+      turns: COMPREHENSION_ITEM.turns,
+      questions: COMPREHENSION_ITEM.questions,
+      speakerGenders: COMPREHENSION_ITEM.speakerGenders,
+    };
+
+    const newId = await saveListeningExercise("user-123", "comprehension", item, { context: "general", level: "b1" }, "english");
+
+    expect(setDoc).toHaveBeenCalledWith(
+      { id: "new-comprehension-id" },
+      expect.objectContaining({
+        id: "new-comprehension-id",
+        type: "comprehension",
+        item: expect.objectContaining({
+          speakerGenders: expect.objectContaining({ solo: "male" }),
+        }),
+        generationFilters: { context: "general", level: "b1" },
+        targetLanguage: "english",
+      })
     );
-    expect(typeof newId).toBe("string");
+    expect(newId).toBe("new-comprehension-id");
   });
 });
 
 describe("getRandomSavedListeningExercise (comprehension) — does not cross-match dictation docs", () => {
   it("never returns a dictation-typed doc when asking for comprehension, even with an identical-looking filter shape", async () => {
-    // Regression guard mirroring savedReadingExercises.ts's own cross-type
-    // test: the `ex.type !== type` check must run unconditionally, before
-    // any filter-shape comparison, so two different types sharing similar
-    // field names can never cross-match.
+    // Regression guard mirroring savedReadingExercises.test.ts's own
+    // cross-type test ("never returns a document of a different type..."):
+    // seed a doc of the OTHER type whose generationFilters shape would
+    // trivially satisfy matchesComprehension's context/level check if the
+    // `ex.type !== type` guard were ever removed, then assert it's excluded.
+    const dictationDoc = {
+      id: "dict-1",
+      type: "dictation" as const,
+      item: ITEM,
+      // Deliberately comprehension-shaped filters on a dictation-typed doc:
+      // this is what makes the guard load-bearing rather than the filter
+      // comparison itself.
+      generationFilters: { context: "general", level: "b1" } as never,
+      targetLanguage: "english" as const,
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    vi.mocked(getDocs).mockResolvedValue({ docs: [{ id: dictationDoc.id, data: () => dictationDoc }] } as never);
+
     const result = await getRandomSavedListeningExercise("user-123", "english", "comprehension", {
       context: "general",
       level: "b1",
     });
-    // In a fresh in-memory/mocked Firestore with no comprehension docs
-    // saved yet, this must be null, not a dictation doc that happens to
-    // exist — the actual mock setup for this test file (Firestore
-    // read mocking) should follow this file's own existing convention for
-    // the "dictation" tests above.
-    expect(result === null || result.type === "comprehension").toBe(true);
+
+    expect(result).toBeNull();
   });
 });
