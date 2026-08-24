@@ -78,9 +78,6 @@ export function useComprehensionAudio(
   useEffect(() => {
     voiceAssignmentRef.current = voiceAssignment;
   }, [voiceAssignment]);
-  useEffect(() => {
-    currentTurnIndexRef.current = currentTurnIndex;
-  }, [currentTurnIndex]);
 
   // Reset all state on a genuine passage/session change — never on initial
   // mount. Mirrors useDictationAudio's own reset effect exactly, extended
@@ -96,6 +93,7 @@ export function useComprehensionAudio(
 
     setIsSpeaking(false);
     setCurrentTurnIndex(0);
+    currentTurnIndexRef.current = 0;
     setEstimatedGlobalWordIndex(0);
     setError(null);
     clipUrlsRef.current = new Map();
@@ -178,6 +176,7 @@ export function useComprehensionAudio(
       baseGlobalWordIndexRef.current = offsets[turnIndex] ?? 0;
       setEstimatedGlobalWordIndex(baseGlobalWordIndexRef.current);
       setCurrentTurnIndex(turnIndex);
+      currentTurnIndexRef.current = turnIndex;
       setIsSpeaking(true);
       setError(null);
 
@@ -244,6 +243,7 @@ export function useComprehensionAudio(
     baseGlobalWordIndexRef.current = offsets[newIndex] ?? 0;
     setEstimatedGlobalWordIndex(baseGlobalWordIndexRef.current);
     setCurrentTurnIndex(newIndex);
+    currentTurnIndexRef.current = newIndex;
     setIsSpeaking(false);
   }, []);
 
@@ -257,6 +257,7 @@ export function useComprehensionAudio(
     baseGlobalWordIndexRef.current = offsets[newIndex] ?? 0;
     setEstimatedGlobalWordIndex(baseGlobalWordIndexRef.current);
     setCurrentTurnIndex(newIndex);
+    currentTurnIndexRef.current = newIndex;
     setIsSpeaking(false);
   }, []);
 
@@ -266,6 +267,7 @@ export function useComprehensionAudio(
     baseGlobalWordIndexRef.current = 0;
     setEstimatedGlobalWordIndex(0);
     setCurrentTurnIndex(0);
+    currentTurnIndexRef.current = 0;
     setIsSpeaking(false);
   }, []);
 
@@ -280,6 +282,7 @@ export function useComprehensionAudio(
     baseGlobalWordIndexRef.current = offsets[turnIndex] + wordIndex;
     setEstimatedGlobalWordIndex(baseGlobalWordIndexRef.current);
     setCurrentTurnIndex(turnIndex);
+    currentTurnIndexRef.current = turnIndex;
     setError(null);
 
     playTokenRef.current += 1;

@@ -40,6 +40,20 @@ const TWO_SPEAKER_PASSAGE: ListeningPassage = {
   targetLanguage: "english",
 };
 
+const THREE_TURN_PASSAGE: ListeningPassage = {
+  kind: "conversation",
+  turns: [
+    { speaker: "A", text: "Hello there friend" }, // 3 words
+    { speaker: "B", text: "Hi how are you" }, // 4 words
+    { speaker: "A", text: "I am doing fine" }, // 4 words
+  ],
+  questions: [],
+  speakerGenders: { A: "male", B: "female" },
+  level: "b1",
+  context: "general",
+  targetLanguage: "english",
+};
+
 const VOICES: Partial<Record<Speaker, VoiceId>> = { A: "male1", B: "female1" };
 
 describe("useComprehensionAudio", () => {
@@ -145,6 +159,40 @@ describe("useComprehensionAudio", () => {
     });
 
     expect(audioInstances[audioInstances.length - 1].playbackRate).toBe(1.5);
+  });
+
+  it("nextTurn called twice in the same synchronous batch advances by two, not one (ref must not lag behind state)", async () => {
+    const { result } = renderHook(() => useComprehensionAudio(THREE_TURN_PASSAGE, VOICES, 1));
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(3));
+
+    await act(async () => {
+      result.current.nextTurn();
+      result.current.nextTurn();
+    });
+
+    expect(result.current.currentTurnIndex).toBe(2);
+  });
+
+  it("nextTurn(); play() in the same synchronous batch plays the post-navigation turn, not the pre-navigation one", async () => {
+    vi.mocked(synthesizeSpeech).mockImplementation(async ({ text }: { text: string }) => {
+      if (text === "Hello there friend") return { audioBase64: "AAAA" };
+      if (text === "Hi how are you") return { audioBase64: "BBBB" };
+      return { audioBase64: "CCCC" };
+    });
+
+    const { result } = renderHook(() => useComprehensionAudio(THREE_TURN_PASSAGE, VOICES, 1));
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(3));
+
+    await act(async () => {
+      result.current.nextTurn();
+      result.current.play();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.currentTurnIndex).toBe(1);
+    const lastAudio = audioInstances[audioInstances.length - 1];
+    expect(lastAudio.src).toBe("data:audio/wav;base64,BBBB");
   });
 
   it("a stale prefetch from a discarded session does not clobber a new session's clip", async () => {
