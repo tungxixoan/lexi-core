@@ -77,8 +77,15 @@ function DictationPageContent() {
   // identical document) keeps item.target byte-identical across sessions,
   // so useDictationAudio's reset must not rely on the sentence alone.
   const sessionKeyRef = useRef(0);
+  const isDraggingSeekRef = useRef(false);
 
   const audio = useDictationAudio(item?.target ?? "", sessionKeyRef.current);
+
+  useEffect(() => {
+    if (!isDraggingSeekRef.current) {
+      setSeekPreviewIndex(audio.estimatedWordIndex);
+    }
+  }, [audio.estimatedWordIndex]);
 
   useEffect(() => {
     if (!user) return;
@@ -359,9 +366,24 @@ function DictationPageContent() {
             aria-label="Tua theo từ"
             disabled={audio.isLoading}
             onChange={(e) => setSeekPreviewIndex(Number(e.target.value))}
-            onMouseUp={(e) => void audio.seekTo(Number(e.currentTarget.value))}
-            onTouchEnd={(e) => void audio.seekTo(Number(e.currentTarget.value))}
-            onKeyUp={(e) => void audio.seekTo(Number(e.currentTarget.value))}
+            onMouseDown={() => {
+              isDraggingSeekRef.current = true;
+            }}
+            onTouchStart={() => {
+              isDraggingSeekRef.current = true;
+            }}
+            onMouseUp={(e) => {
+              isDraggingSeekRef.current = false;
+              void audio.seekTo(Number(e.currentTarget.value));
+            }}
+            onTouchEnd={(e) => {
+              isDraggingSeekRef.current = false;
+              void audio.seekTo(Number(e.currentTarget.value));
+            }}
+            onKeyUp={(e) => {
+              isDraggingSeekRef.current = false;
+              void audio.seekTo(Number(e.currentTarget.value));
+            }}
           />
         )}
         <div className="reading-session-body">

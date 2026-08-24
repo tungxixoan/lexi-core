@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import DictationPage from "./page";
 import { useAuthUser } from "@/lib/useAuthUser";
@@ -24,6 +24,9 @@ vi.mock("@/lib/savedListeningExercises", () => ({
 vi.mock("@/components/SignInButton", () => ({
   SignInButton: () => <button>Đăng nhập với Google</button>,
 }));
+
+const RealAudio = window.Audio;
+let audioInstances: HTMLAudioElement[];
 
 const pushMock = vi.fn();
 const replaceMock = vi.fn();
@@ -84,6 +87,17 @@ beforeEach(() => {
   vi.mocked(getVocabRecords).mockResolvedValue(TWO_WORDS);
   vi.mocked(synthesizeSpeech).mockResolvedValue({ audioBase64: "AAAA" });
   vi.mocked(getRandomSavedListeningExercise).mockResolvedValue(null);
+
+  audioInstances = [];
+  vi.spyOn(window, "Audio").mockImplementation(function () {
+    const el = new RealAudio();
+    audioInstances.push(el);
+    return el as unknown as HTMLAudioElement;
+  } as unknown as typeof Audio);
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe("DictationPage (language gate)", () => {
@@ -296,6 +310,13 @@ describe("DictationPage (session phase — Khó / free text)", () => {
     fireEvent.touchEnd(slider);
     await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledTimes(baseline + 1));
     expect(synthesizeSpeech).toHaveBeenCalledWith({ text: "apple today.", language: "en" });
+    // seekTo(3) also updates audio.estimatedWordIndex, which the live-tracking
+    // sync effect (added in this task) picks up — but that effect's own React
+    // commit can lag behind the synthesizeSpeech assertion above by one more
+    // microtask/effect-flush cycle in this test environment. Without this
+    // extra flush, the pending sync-effect run can land *after* the next
+    // fireEvent.change below and stomp it back to the old estimatedWordIndex.
+    await waitFor(() => {});
 
     vi.mocked(synthesizeSpeech).mockClear();
     fireEvent.change(slider, { target: { value: "0" } });
@@ -327,6 +348,49 @@ describe("DictationPage (session phase — Khó / free text)", () => {
 
     resolveSpeech({ audioBase64: "AAAA" });
     await waitFor(() => expect(screen.getByLabelText("Tua theo từ")).not.toBeDisabled());
+  });
+
+  it("the seek slider tracks audio.estimatedWordIndex while the user is not dragging", async () => {
+    mockSignedIn();
+    await generateSession();
+
+    fireEvent.click(screen.getByRole("button", { name: "▶ Phát" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "▶ Nghe lại (0)" })).toBeInTheDocument());
+
+    const audioEl = audioInstances[audioInstances.length - 1];
+    const slider = screen.getByLabelText("Tua theo từ") as HTMLInputElement;
+
+    // words = ["I", "ate", "an", "apple", "today."] — 5 words
+    Object.defineProperty(audioEl, "duration", { value: 5, configurable: true });
+    Object.defineProperty(audioEl, "currentTime", { value: 2, configurable: true });
+    fireEvent(audioEl, new Event("timeupdate"));
+
+    await waitFor(() => expect(slider.value).toBe("2"));
+  });
+
+  it("does not let the live-tracking playhead overwrite the slider while the user is dragging", async () => {
+    mockSignedIn();
+    await generateSession();
+
+    fireEvent.click(screen.getByRole("button", { name: "▶ Phát" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "▶ Nghe lại (0)" })).toBeInTheDocument());
+
+    const audioEl = audioInstances[audioInstances.length - 1];
+    const slider = screen.getByLabelText("Tua theo từ") as HTMLInputElement;
+
+    fireEvent.mouseDown(slider);
+    fireEvent.change(slider, { target: { value: "1" } });
+    expect(slider.value).toBe("1");
+
+    // Simulate playback progress arriving mid-drag — must not fight the user.
+    Object.defineProperty(audioEl, "duration", { value: 5, configurable: true });
+    Object.defineProperty(audioEl, "currentTime", { value: 4, configurable: true });
+    fireEvent(audioEl, new Event("timeupdate"));
+
+    expect(slider.value).toBe("1");
+
+    fireEvent.mouseUp(slider);
+    await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledWith({ text: "ate an apple today.", language: "en" }));
   });
 });
 
