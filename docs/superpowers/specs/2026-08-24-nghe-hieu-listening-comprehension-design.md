@@ -159,7 +159,7 @@ export interface ComprehensionFilters {
   }
 ```
 
-No audio, no chosen voices, and no `speakerGenders` are persisted — a reused passage's voices are re-assigned fresh via `assignVoices` each time it's played (the same turns, but possibly different actual voice files than the original session — acceptable, since nothing about which specific voice was used is meaningful to remember). `getRandomSavedListeningExercise` matches on `context`+`level` exact equality (mirrors dictation's exact-`difficulty`-equality rule, not reading's overlap-based topic matching).
+No audio and no specific *chosen voice slot* (`male1` vs `male2`, etc.) are persisted — `assignVoices` still runs fresh every time a passage (generated or reused) starts a session, picking slots in first-appearance order. `speakerGenders`, however, **is** persisted as part of the saved item: it's inherent content of the passage (which speaker is male vs female), not a playback-session detail — without it, a reused conversation would have nothing to derive gender from at all (the raw AI JSON's `gender` field only exists at generation time) and every reused conversation would silently collapse to same-gender voices for both speakers, losing the variety the whole feature exists to provide. `getRandomSavedListeningExercise` matches on `context`+`level` exact equality (mirrors dictation's exact-`difficulty`-equality rule, not reading's overlap-based topic matching).
 
 ### UI
 
