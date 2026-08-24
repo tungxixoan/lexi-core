@@ -48,7 +48,6 @@ function mockSignedIn(settings: UserSettings = DEFAULT_SETTINGS) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // Default mock for useSettingsContext (will be overridden in specific tests)
   vi.mocked(useSettingsContext).mockReturnValue({ settings: DEFAULT_SETTINGS, loading: false, error: null, save: vi.fn() } as never);
 });
 
@@ -61,7 +60,7 @@ describe("ListeningHubPage (auth)", () => {
 });
 
 describe("ListeningHubPage (language gate)", () => {
-  it("shows a blocking message and no action buttons when the target language isn't English", async () => {
+  it("shows a blocking message and no cards when the target language isn't English", async () => {
     mockSignedIn({ ...DEFAULT_SETTINGS, targetLanguage: "korean" });
     vi.mocked(getVocabRecords).mockResolvedValue([]);
 
@@ -70,17 +69,51 @@ describe("ListeningHubPage (language gate)", () => {
     expect(
       await screen.findByText("Nghe chép hiện chỉ hỗ trợ khi Ngôn ngữ mục tiêu là Tiếng Anh — đổi trong Cài đặt để dùng.")
     ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Tạo bài luyện" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "🔀 Lấy bài có sẵn" })).not.toBeInTheDocument();
+    expect(screen.queryByText("🎤 Nghe chép")).not.toBeInTheDocument();
+    expect(screen.queryByText("🎧 Nghe hiểu")).not.toBeInTheDocument();
   });
 });
 
-describe("ListeningHubPage (word gating)", () => {
+describe("ListeningHubPage (cards)", () => {
+  it("renders both mode cards, with no filter row or action buttons until one is picked", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue([]);
+    render(<ListeningHubPage />);
+
+    expect(await screen.findByText("🎤 Nghe chép")).toBeInTheDocument();
+    expect(screen.getByText("🎧 Nghe hiểu")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Tạo bài luyện" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "🔀 Lấy bài có sẵn" })).not.toBeInTheDocument();
+  });
+
+  it("shows the difficulty filter only when the dictation card is selected", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue([]);
+    render(<ListeningHubPage />);
+
+    fireEvent.click(await screen.findByText("🎤 Nghe chép"));
+    expect(screen.getByText("Khó")).toBeInTheDocument();
+    expect(screen.queryByText(/General/)).not.toBeInTheDocument();
+  });
+
+  it("shows the topic/level filters only when the comprehension card is selected", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue([]);
+    render(<ListeningHubPage />);
+
+    fireEvent.click(await screen.findByText("🎧 Nghe hiểu"));
+    expect(screen.getByText(/General/)).toBeInTheDocument();
+    expect(screen.queryByText("Khó")).not.toBeInTheDocument();
+  });
+});
+
+describe("ListeningHubPage (dictation word gating)", () => {
   it("shows the min-words hint instead of Tạo bài luyện when fewer than 2 eligible words exist", async () => {
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1" })]);
 
     render(<ListeningHubPage />);
+    fireEvent.click(await screen.findByText("🎤 Nghe chép"));
 
     expect(
       await screen.findByText("Hãy lưu ít nhất 2 từ tiếng Anh vào Ngân hàng từ vựng. Hiện có 1 từ.")
@@ -96,6 +129,7 @@ describe("ListeningHubPage (word gating)", () => {
     ]);
 
     render(<ListeningHubPage />);
+    fireEvent.click(await screen.findByText("🎤 Nghe chép"));
 
     expect(await screen.findByText(/Hiện có 1 từ\./)).toBeInTheDocument();
   });
@@ -105,6 +139,7 @@ describe("ListeningHubPage (word gating)", () => {
     vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1" }), makeRecord({ id: "2" })]);
 
     render(<ListeningHubPage />);
+    fireEvent.click(await screen.findByText("🎤 Nghe chép"));
 
     expect(await screen.findByRole("button", { name: "Tạo bài luyện" })).not.toBeDisabled();
   });
@@ -114,30 +149,68 @@ describe("ListeningHubPage (word gating)", () => {
     vi.mocked(getVocabRecords).mockResolvedValue([]);
 
     render(<ListeningHubPage />);
+    fireEvent.click(await screen.findByText("🎤 Nghe chép"));
 
     expect(await screen.findByRole("button", { name: "🔀 Lấy bài có sẵn" })).not.toBeDisabled();
   });
 });
 
-describe("ListeningHubPage (navigation)", () => {
-  it("defaults to difficulty=hard and navigates with action=generate", async () => {
-    mockSignedIn();
-    vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1" }), makeRecord({ id: "2" })]);
-
-    render(<ListeningHubPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "Tạo bài luyện" }));
-
-    expect(pushMock).toHaveBeenCalledWith("/listening/dictation?difficulty=hard&action=generate");
-  });
-
-  it("navigates with the selected difficulty and action=existing", async () => {
+describe("ListeningHubPage (comprehension is never gated on vocab count)", () => {
+  it("always shows Tạo bài luyện for comprehension, even with 0 vocab records", async () => {
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue([]);
 
     render(<ListeningHubPage />);
-    fireEvent.click(await screen.findByRole("button", { name: "Dễ" }));
+    fireEvent.click(await screen.findByText("🎧 Nghe hiểu"));
+
+    expect(await screen.findByRole("button", { name: "Tạo bài luyện" })).not.toBeDisabled();
+  });
+});
+
+describe("ListeningHubPage (navigation)", () => {
+  it("dictation defaults to difficulty=hard and navigates with action=generate", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1" }), makeRecord({ id: "2" })]);
+
+    render(<ListeningHubPage />);
+    fireEvent.click(await screen.findByText("🎤 Nghe chép"));
+    fireEvent.click(screen.getByRole("button", { name: "Tạo bài luyện" }));
+
+    expect(pushMock).toHaveBeenCalledWith("/listening/dictation?difficulty=hard&action=generate");
+  });
+
+  it("dictation navigates with the selected difficulty and action=existing", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue([]);
+
+    render(<ListeningHubPage />);
+    fireEvent.click(await screen.findByText("🎤 Nghe chép"));
+    fireEvent.click(screen.getByRole("button", { name: "Dễ" }));
     fireEvent.click(screen.getByRole("button", { name: "🔀 Lấy bài có sẵn" }));
 
     expect(pushMock).toHaveBeenCalledWith("/listening/dictation?difficulty=easy&action=existing");
+  });
+
+  it("comprehension defaults to context=general, level omitted (defaults to b1 on the destination page), and navigates with action=generate", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue([]);
+
+    render(<ListeningHubPage />);
+    fireEvent.click(await screen.findByText("🎧 Nghe hiểu"));
+    fireEvent.click(screen.getByRole("button", { name: "Tạo bài luyện" }));
+
+    expect(pushMock).toHaveBeenCalledWith("/listening/comprehension?context=general&level=b1&action=generate");
+  });
+
+  it("comprehension navigates with the selected context/level and action=existing", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue([]);
+
+    render(<ListeningHubPage />);
+    fireEvent.click(await screen.findByText("🎧 Nghe hiểu"));
+    fireEvent.click(screen.getByText(/Business/));
+    fireEvent.click(screen.getByRole("button", { name: "🔀 Lấy bài có sẵn" }));
+
+    expect(pushMock).toHaveBeenCalledWith("/listening/comprehension?context=business&level=b1&action=existing");
   });
 });
