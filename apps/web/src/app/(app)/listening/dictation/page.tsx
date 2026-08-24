@@ -29,7 +29,9 @@ import { DiffText } from "@/components/listening/DiffText";
 
 type Phase = "loading" | "session" | "result";
 const MIN_VOCAB_WORDS = 2;
-const SPEEDS = [0.75, 1, 1.25] as const;
+const MIN_SPEED = 0.5;
+const MAX_SPEED = 2;
+const SPEED_STEP = 0.05;
 
 function isDifficulty(value: string | null): value is DictationDifficulty {
   return value === "easy" || value === "medium" || value === "hard";
@@ -343,16 +345,17 @@ function DictationPageContent() {
             {audio.hasPlayedOnce ? `▶ Nghe lại (${audio.replayCount})` : "▶ Phát"}
           </button>
           <div className="dictation-speed-selector">
-            {SPEEDS.map((s) => (
-              <button
-                key={s}
-                type="button"
-                className={`vb-chip${audio.speed === s ? " active" : ""}`}
-                onClick={() => audio.setSpeed(s)}
-              >
-                {s}x
-              </button>
-            ))}
+            <input
+              type="range"
+              min={MIN_SPEED}
+              max={MAX_SPEED}
+              step={SPEED_STEP}
+              value={audio.speed}
+              className="dictation-speed-slider"
+              aria-label="Tốc độ phát"
+              onChange={(e) => audio.setSpeed(Number(e.target.value))}
+            />
+            <span className="dictation-speed-label">{audio.speed.toFixed(2)}x</span>
           </div>
         </div>
         {words.length > 1 && (

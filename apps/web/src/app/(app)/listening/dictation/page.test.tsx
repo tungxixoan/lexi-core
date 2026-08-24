@@ -392,6 +392,19 @@ describe("DictationPage (session phase — Khó / free text)", () => {
     fireEvent.mouseUp(slider);
     await waitFor(() => expect(synthesizeSpeech).toHaveBeenCalledWith({ text: "ate an apple today.", language: "en" }));
   });
+
+  it("the speed slider applies every onChange tick immediately, not gated to release", async () => {
+    mockSignedIn();
+    await generateSession();
+
+    const speedSlider = screen.getByLabelText("Tốc độ phát") as HTMLInputElement;
+    expect(speedSlider.value).toBe("1");
+    expect(screen.getByText("1.00x")).toBeInTheDocument();
+
+    fireEvent.change(speedSlider, { target: { value: "1.5" } });
+
+    expect(screen.getByText("1.50x")).toBeInTheDocument();
+  });
 });
 
 describe("DictationPage (session phase — Dễ/Trung bình / cloze)", () => {
