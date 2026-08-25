@@ -31,10 +31,14 @@ describe("bloom.css design tokens", () => {
     expect(css).not.toContain("fonts.googleapis.com");
   });
 
-  it("app-frame has no max-width cap but keeps the floating-card look", () => {
+  it("app-frame is borderless and edge-to-edge — no max-width cap, no rounded corners, no shadow", () => {
+    // Decided permanent: the floating-card look (rounded corners + shadow +
+    // max-width cap) was an experiment; the borderless, edge-to-edge frame
+    // is the kept design.
     const frameBlock = css.match(/\.app-frame \{[^}]*\}/)?.[0] ?? "";
     expect(frameBlock).not.toContain("max-width");
-    expect(frameBlock).toContain("border-radius: 26px;");
-    expect(frameBlock).toContain("box-shadow");
+    expect(frameBlock).toContain("border-radius: 0;");
+    expect(frameBlock).toContain("border: none;");
+    expect(frameBlock).toContain("box-shadow: none;");
   });
 });
