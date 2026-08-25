@@ -1382,3 +1382,17 @@ Review (sonnet): independently confirmed `selectSessionWords` semantics genuinel
 Spec: ✅. Code quality: Approved. Zero findings (Critical/Important/Minor) — first task this plan with a clean first-pass review, no fix round needed.
 
 Task 4: complete (commits 841f41a..7db1686, review clean, no fix round).
+
+## Task 5: 6-page daily-activity integration — complete
+
+Added `recordDailyActivity` calls to the 6 remaining result pages (commit `aaba323`): `reading/bilingual`, `reading/part5`, `reading/part6`, `reading/part7` (each via a new `useEffect`+guard-ref pair, since none had an existing "runs once on result phase" effect), `listening/dictation` and `listening/comprehension` (inline in their existing `handleSubmit`, at the point `phase` becomes `"result"`). Completes the Global Constraint that streak/weekly-log scope matches Flutter exactly across all 7 result screens (Ôn tập was Task 4).
+
+Review (sonnet) checked all 6 files individually rather than sampling, and found an Important bug specific to the 4 reading pages: each has a `handleNewSession()` ("Làm bài mới" button) that transitions the SAME component instance back into a new session in place, without remounting — but the new guard ref was never reset there, so `recordDailyActivity` only fired for the FIRST session completed per page load; every subsequent in-place session silently dropped its word count from the weekly log. The 2 listening pages don't have this bug (their calls are inline in `handleSubmit`, re-fired fresh on every submission).
+
+Controller independently verified before dispatching a fix (mirroring the Task 1/Task 3 override-investigation pattern): confirmed `handleNewSession()` in `reading/part5/page.tsx` really doesn't reset the ref, then confirmed the established correct convention already exists in this exact codebase — `practice/page.tsx`'s own `sm2WrittenRef` guard is explicitly reset (`sm2WrittenRef.current = false;`) inside `handleStart()` at line 122. This proved the finding was a genuine implementation gap (the brief's snippet just omitted the reset), not a deliberate design choice, so a fix was dispatched rather than escalated.
+
+Fix (commit `6723583`): added the equivalent one-line reset at the start of `handleNewSession()` in all 4 reading pages, plus a test per file asserting a SECOND `recordDailyActivity` call fires after a second in-place session.
+
+Re-review (sonnet): Approved — went further than reading the diff: temporarily reverted the fix in 2 of the 4 files and reran the new tests to confirm they genuinely fail without the fix (not just re-asserting the first call), then restored the files and confirmed a clean `git status`. 90/90 pass, tsc clean.
+
+Task 5: complete (commits f54a9da..6723583, review clean after 1 fix round; 1 Important finding independently verified and fixed, not just accepted on the reviewer's word).
