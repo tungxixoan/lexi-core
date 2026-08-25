@@ -1396,3 +1396,27 @@ Fix (commit `6723583`): added the equivalent one-line reset at the start of `han
 Re-review (sonnet): Approved — went further than reading the diff: temporarily reverted the fix in 2 of the 4 files and reran the new tests to confirm they genuinely fail without the fix (not just re-asserting the first call), then restored the files and confirmed a clean `git status`. 90/90 pass, tsc clean.
 
 Task 5: complete (commits f54a9da..6723583, review clean after 1 fix round; 1 Important finding independently verified and fixed, not just accepted on the reviewer's word).
+
+## Final whole-branch review — complete
+
+Dispatched on opus (most capable available model, per skill guidance for final reviews), covering the full branch diff (16 commits, `8835ed4..5f6b2cf` — MERGE_BASE = the commit right before the design spec was first committed).
+
+Independently re-verified rather than trusting the ledger: ran the full test suite (697/697), `tsc --noEmit`, and `npm run build` itself; wrote and ran its own temporary probe test against `practice/page.tsx` to confirm a second in-place session really does fire a second `recordDailyActivity` call; temporarily reverted the Task-5 ref-reset fix in `part6/page.tsx` a SECOND time (independently of the Task-5 re-reviewer) to re-confirm the fix is load-bearing. Traced `isDue` end-to-end across `learningStats.ts` → `practiceSession.ts` → `/practice?action=start`'s auto-trigger to confirm the Task 1 override genuinely makes the dashboard's promised due-count match what the CTA actually starts.
+
+**Verdict: Ready to ship, no fix round required.** Zero Critical findings, zero correctness defects, zero spec gaps. Both prior override/fix decisions (Task 1's `isDue` override, Task 5's ref-reset fix) held up under fresh independent scrutiny.
+
+2 Important findings — both test-coverage gaps on code that already behaves correctly, not live bugs — were folded in before closing (commit `ee7b746`): (1) `practice/page.tsx` had no automated test for the same "second in-place session" scenario that already needed a real fix in the 4 reading pages, even though its own reset happens to be safe today (piggybacking on `sm2WrittenRef`, not a daily-activity-owned ref) — added the equivalent test; (2) the dashboard's 7-day CSS chart (the branch's only new UI mechanism) had zero test coverage — added tests for 7-column count, zero-fill on missing days, chronological order, and today's visual distinction.
+
+8 Minor findings logged, not actioned (none blocking, several are pre-existing patterns or faithful Flutter-parity choices, not regressions):
+- Dashboard subtitle claims "real-time" updates but the page only fetches on mount (no `onSnapshot`) — copy overclaim, `dashboard/page.tsx:77`.
+- `dateKey()` duplicated verbatim between `dailyActivity.ts` (writer) and `dashboard/page.tsx` (chart reader) — must stay in sync or the chart silently reads nothing; should be exported from `dailyActivity.ts` instead.
+- The 4 reading pages' effect+ref block for `recordDailyActivity` is identical across all 4 files — a shared hook (`useRecordActivityOnResult`) would collapse the duplication and the Task-5 bug class structurally.
+- `recordDailyActivity`'s Firestore read-modify-write is not transactional/merged — two near-simultaneous calls (two tabs, or two exercises finished within ~300ms) can clobber each other. Within the declared best-effort constraint and matches Flutter's own non-atomic SharedPreferences pair, so not a spec violation; cheap hardening available later (`{merge:true}` + `increment()`, or `runTransaction`) if it ever matters.
+- Streak has no staleness/expiry check — a 10-day-old streak displays unchanged until the next session resets it. Faithful port of Flutter's own behavior (no staleness check there either), flagged only because the web dashboard is a prominent top-level sidebar destination vs. Flutter's buried "Tiến độ học tập" card — a deliberate future divergence, not a bug, if ever wanted.
+- 🔥/❄️ banner emoji lack `aria-hidden` (the CTA's `→` correctly has it) — screen readers would announce "fire"/"snowflake".
+- No `firestore.rules` file exists in this repo to verify the new `users/{uid}/stats` path against (Console-managed rules) — the README's documented recursive `users/{userId}/{document=**}` rule almost certainly already covers it, but this plan (unlike prior plans in this repo) had no explicit rules-verification step, and a permission-denied write would be invisible by design (swallowed by the mandated best-effort `.catch(console.error)`) — **recommend a manual post-deploy check: finish any exercise, reload `/dashboard`, confirm the streak and today's bar actually moved.**
+- Minor CSS eyeball-worthy item: `.dash-chart-value`'s `top: -18px` positioning at a 1000.000000e+00ight bar — likely fine given the card's padding, but worth a visual check at a real max value.
+
+# Tổng quan (Dashboard) on Web: PLAN COMPLETE
+
+All 5 tasks implemented, individually reviewed (1 fix round each on Tasks 1, 3, 5; Task 2 and Task 4 passed clean on first review), and the whole branch passed final review with one small test-coverage fix round. 18 commits total (`318e164..ee7b746`). Nothing pushed to `origin/master` yet.
