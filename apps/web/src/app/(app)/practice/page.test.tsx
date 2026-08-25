@@ -286,6 +286,38 @@ describe("PracticePage (result phase)", () => {
     expect(screen.getByTestId("flashcard-card")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Bắt đầu" })).not.toBeInTheDocument();
   });
+
+  it('records daily activity again after completing a second session in place via "Ôn tập lại ngay" (sm2WrittenRef must reset, not just fire once per page load)', async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
+    vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1", headword: "first" })]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(computeSm2).mockReturnValue({
+      sm2Repetitions: 1,
+      sm2EaseFactor: 2.5,
+      sm2Interval: 1,
+      nextReviewAt: "2026-08-18T00:00:00.000Z",
+      updatedAt: "2026-08-17T00:00:00.000Z",
+    });
+    vi.mocked(updateVocabRecordSm2).mockResolvedValue(undefined);
+
+    render(<PracticePage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
+    await screen.findByText("first");
+    fireEvent.click(screen.getByTestId("flashcard-card"));
+    fireEvent.click(screen.getByRole("button", { name: "Đã hiểu" }));
+    await screen.findByText("100%");
+
+    await waitFor(() => expect(recordDailyActivity).toHaveBeenCalledTimes(1));
+    expect(recordDailyActivity).toHaveBeenCalledWith("u1", 1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Ôn tập lại ngay" }));
+    await screen.findByText("Từ 1 / 1");
+    fireEvent.click(screen.getByTestId("flashcard-card"));
+    fireEvent.click(screen.getByRole("button", { name: "Đã hiểu" }));
+    await screen.findByText("100%");
+
+    await waitFor(() => expect(recordDailyActivity).toHaveBeenCalledTimes(2));
+  });
 });
 
 describe("PracticePage (action=start auto-trigger)", () => {

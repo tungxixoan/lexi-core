@@ -95,6 +95,63 @@ describe("DashboardPage (streak + stats)", () => {
   });
 });
 
+describe("DashboardPage (7-day chart)", () => {
+  // Mirrors page.tsx's own dateKey/lastNDays helpers so the expected day keys
+  // always line up with "today" regardless of when this test actually runs —
+  // avoids needing to fake system time (and the testing-library/fake-timer
+  // interaction flakiness that comes with it).
+  function dateKey(d: Date): string {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  function lastNDays(n: number, from: Date = new Date()): string[] {
+    const keys: string[] = [];
+    for (let i = n - 1; i >= 0; i--) {
+      keys.push(dateKey(new Date(from.getTime() - i * 24 * 60 * 60 * 1000)));
+    }
+    return keys;
+  }
+
+  it("renders 7 day-columns in chronological order, zero-filling days with no weeklyLog entry, with today's column marked", async () => {
+    const days = lastNDays(7);
+    // Only 3 of the 7 days have a weeklyLog entry (including today, the last
+    // day) — the other 4 must still render their own column with value 0
+    // rather than being skipped or crashing.
+    vi.mocked(getVocabRecords).mockResolvedValue([]);
+    vi.mocked(getDailyActivity).mockResolvedValue({
+      currentStreak: 1,
+      lastPracticedDate: days[6],
+      weeklyLog: {
+        [days[0]]: 3,
+        [days[2]]: 5,
+        [days[6]]: 2,
+      },
+    });
+
+    const { container } = render(<DashboardPage />);
+    await screen.findByText("7 ngày gần đây");
+
+    const columns = container.querySelectorAll(".dash-chart-col");
+    expect(columns).toHaveLength(7);
+
+    const values = Array.from(columns).map((col) => col.querySelector(".dash-chart-value")?.textContent);
+    expect(values).toEqual(["3", "0", "5", "0", "0", "0", "2"]);
+
+    // Today (the last, chronologically most recent column) is visually
+    // distinguished via the "today" class; no other column carries it.
+    columns.forEach((col, i) => {
+      if (i === 6) {
+        expect(col).toHaveClass("today");
+      } else {
+        expect(col).not.toHaveClass("today");
+      }
+    });
+  });
+});
+
 describe("DashboardPage (error handling)", () => {
   it("shows an inline error for the streak/activity section without breaking the stat cards", async () => {
     vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1", nextReviewAt: null })]);
