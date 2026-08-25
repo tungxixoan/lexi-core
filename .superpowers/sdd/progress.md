@@ -1360,3 +1360,15 @@ Reviewer (sonnet) independently re-verified this diagnosis rather than trusting 
 Spec: ✅. Code quality: Approved. 3 Minor findings logged, none blocking: (1) `getDailyActivity` returns the shared `DEFAULT_ACTIVITY` object by reference on missing-doc, same pre-existing pattern as `settings.ts`'s `DEFAULT_SETTINGS` — not a regression; (2) TS omits a `?? 1` defensive fallback Dart has for its same-day branch, unreachable in both since Firestore writes `currentStreak`/`lastPracticedDate` atomically together (unlike Dart's two separate SharedPreferences writes); (3) no `firestore.rules` coverage for the new path, equally true of the existing `settings.ts` path already.
 
 Task 2: complete (commits f09643f..0b500cd, review clean).
+
+## Task 3: /dashboard page — complete
+
+Implemented `apps/web/src/app/(app)/dashboard/page.tsx` + test + `bloom.css` additions (commit `281d970`), consuming Tasks 1-2. Streak banner (2 states), 2 stat cards, CTA (aria-hidden arrow), 6-level CEFR breakdown, hand-rolled 7-day CSS bar chart. No new charting dependency.
+
+Review (sonnet): spec ✅, code quality — 1 Important + 3 Minor findings. Important: `getVocabRecords` failure was silently swallowed to an empty array with no user-facing indication (inherited from the brief's own sample code, which diverged from the brief's own instruction to mirror `practice/page.tsx`'s `loadError` convention) — a failed vocab fetch would render as "user has 0 words" with no alert. Minors: chart recomputed `lastNDays`/`Math.max` every iteration instead of once; redundant `role="link"` on a Next.js `<Link>`; streak error message interpolated a raw JS `Error.message` into an otherwise-Vietnamese string.
+
+Dispatched a fix (commit `05831eb`) addressing all 4 findings: added an independent `recordsError` state + Vietnamese `role="alert"` for the stats section (verified genuinely independent from `activityError` — separate `.then/.catch` chains, not `Promise.all`), hoisted the chart's per-render computations, removed the redundant role, and made the streak error message plain Vietnamese with no diagnostic interpolation. Added a test for the new error state.
+
+Re-review (sonnet): Approved — all 4 findings verified resolved by reading the actual code (not just the report), new test asserts the two error states stay independent, 8/8 dashboard tests + tsc clean.
+
+Task 3: complete (commits d6eb3ab..05831eb, review clean after 1 fix round).
