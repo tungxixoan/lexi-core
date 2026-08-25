@@ -5,14 +5,30 @@ import { useAuthUser } from "@/lib/useAuthUser";
 import { getVocabRecords, updateVocabRecordSm2, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics } from "@/lib/topics";
 import { computeSm2 } from "@/lib/sm2";
+import { recordDailyActivity } from "@/lib/dailyActivity";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
 vi.mock("@/lib/vocabRecords", () => ({ getVocabRecords: vi.fn(), updateVocabRecordSm2: vi.fn() }));
 vi.mock("@/lib/topics", () => ({ getTopics: vi.fn() }));
 vi.mock("@/lib/sm2", () => ({ computeSm2: vi.fn() }));
+vi.mock("@/lib/dailyActivity", () => ({ recordDailyActivity: vi.fn() }));
+
+let mockSearchParams = new URLSearchParams();
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => mockSearchParams,
+}));
+
+function setSearchParams(params: Record<string, string>) {
+  mockSearchParams = new URLSearchParams(params);
+}
+
+function mockSignedIn() {
+  vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
+}
 
 beforeEach(() => {
   vi.clearAllMocks();
+  setSearchParams({});
   // Every session-phase test can reach the "result" phase by grading the last word, which
   // fires the batch SM-2 write effect — give it harmless defaults so tests that don't care
   // about SM-2 output (e.g. the session-phase progression tests) don't crash on an
@@ -26,6 +42,7 @@ beforeEach(() => {
     updatedAt: "2026-08-17T00:00:00.000Z",
   });
   vi.mocked(updateVocabRecordSm2).mockResolvedValue(undefined);
+  vi.mocked(recordDailyActivity).mockResolvedValue(undefined);
 });
 vi.mock("@/components/SignInButton", () => ({
   SignInButton: () => <button>Đăng nhập với Google</button>,
@@ -268,5 +285,67 @@ describe("PracticePage (result phase)", () => {
     expect(await screen.findByText("Từ 1 / 1")).toBeInTheDocument();
     expect(screen.getByTestId("flashcard-card")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Bắt đầu" })).not.toBeInTheDocument();
+  });
+});
+
+describe("PracticePage (action=start auto-trigger)", () => {
+  it("action=start auto-starts a session with ALL due words, ignoring the default word-count cap", async () => {
+    mockSignedIn();
+    setSearchParams({ action: "start" });
+    const dueWords = Array.from({ length: 15 }, (_, i) => makeRecord({ id: `due-${i}`, nextReviewAt: null }));
+    vi.mocked(getVocabRecords).mockResolvedValue(dueWords);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<PracticePage />);
+
+    // Session phase reached directly (skipped the setup picker), showing
+    // progress through however many due words were selected — must be 15,
+    // not capped to the picker's own default of 10.
+    await screen.findByText("Từ 1 / 15");
+  });
+
+  it("does nothing when action is absent — manual picker flow is unchanged", async () => {
+    mockSignedIn();
+    setSearchParams({});
+    vi.mocked(getVocabRecords).mockResolvedValue([makeRecord({ id: "1", nextReviewAt: null })]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<PracticePage />);
+
+    expect(await screen.findByRole("button", { name: "Bắt đầu" })).toBeInTheDocument();
+  });
+
+  it("action=start with zero eligible words falls through to the normal setup screen", async () => {
+    mockSignedIn();
+    setSearchParams({ action: "start" });
+    vi.mocked(getVocabRecords).mockResolvedValue([]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<PracticePage />);
+
+    expect(await screen.findByRole("button", { name: "Bắt đầu" })).toBeInTheDocument();
+  });
+
+  it("records daily activity with the number of words graded once the result phase is reached", async () => {
+    mockSignedIn();
+    setSearchParams({});
+    vi.mocked(getVocabRecords).mockResolvedValue([
+      makeRecord({ id: "1", nextReviewAt: null }),
+      makeRecord({ id: "2", nextReviewAt: null }),
+    ]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<PracticePage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
+
+    // Each flashcard must be flipped (click the card) before its grade
+    // buttons ("Chưa hiểu"/"Đã hiểu", quality 1/5) are clickable — mirrors
+    // this file's own existing grading tests exactly.
+    fireEvent.click(screen.getByTestId("flashcard-card"));
+    fireEvent.click(screen.getByRole("button", { name: "Đã hiểu" }));
+    fireEvent.click(screen.getByTestId("flashcard-card"));
+    fireEvent.click(screen.getByRole("button", { name: "Đã hiểu" }));
+
+    await waitFor(() => expect(recordDailyActivity).toHaveBeenCalledWith("u1", 2));
   });
 });

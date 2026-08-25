@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuthUser } from "@/lib/useAuthUser";
+import { recordDailyActivity } from "@/lib/dailyActivity";
 import { SignInButton } from "@/components/SignInButton";
 import { getVocabRecords, updateVocabRecordSm2, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics, type Topic } from "@/lib/topics";
@@ -33,8 +35,11 @@ export interface SessionGradeResult {
   quality: 1 | 5;
 }
 
-export default function PracticePage() {
+function PracticePageContent() {
   const { user, loading: authLoading } = useAuthUser();
+  const searchParams = useSearchParams();
+  const action = searchParams.get("action");
+  const autoStartTriggeredRef = useRef(false);
   const [records, setRecords] = useState<VocabRecord[] | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -61,8 +66,25 @@ export default function PracticePage() {
   }, [user]);
 
   useEffect(() => {
+    if (action !== "start" || !records || autoStartTriggeredRef.current) return;
+    autoStartTriggeredRef.current = true;
+    // Every currently-due word, not the picker's own default 10-word cap —
+    // the dashboard's "Ôn N từ ngay" button promises exactly N words.
+    const words = selectSessionWords(records, { topicIds: new Set(), maxCefr: null, count: null });
+    if (words.length === 0) return;
+    setSessionWords(words);
+    setCurrentIndex(0);
+    setSessionResults([]);
+    sm2WrittenRef.current = false;
+    setPhase("session");
+  }, [action, records]);
+
+  useEffect(() => {
     if (phase !== "result" || sm2WrittenRef.current || !user) return;
     sm2WrittenRef.current = true;
+    recordDailyActivity(user.uid, sessionResults.length).catch((err: unknown) => {
+      console.error("Failed to record daily activity", err);
+    });
     const now = new Date();
     const updatedFieldsById = new Map<string, Sm2Fields>();
     for (const result of sessionResults) {
@@ -227,5 +249,13 @@ export default function PracticePage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function PracticePage() {
+  return (
+    <Suspense fallback={<p>Đang tải…</p>}>
+      <PracticePageContent />
+    </Suspense>
   );
 }
