@@ -13,6 +13,10 @@ export interface LearningStats {
 // Ports StatsService.computeStats()'s mastered threshold exactly.
 export const MASTERED_INTERVAL_THRESHOLD = 21;
 
+// Uses `<=` not `<` to match practiceSession.ts's isDue exactly — so /dashboard's
+// due-count agrees with what /practice actually selects as due. This intentional
+// match matters more than Flutter-parity on an edge case: a word due at exactly
+// `now` must count as due in both places, or the two pages will disagree.
 function isDue(record: VocabRecord, now: Date): boolean {
   return record.nextReviewAt === null || new Date(record.nextReviewAt).getTime() <= now.getTime();
 }

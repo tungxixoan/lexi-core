@@ -70,4 +70,13 @@ describe("computeLearningStats", () => {
     expect(stats.cefrBreakdown.c1).toBe(0);
     expect(stats.totalCount).toBe(3);
   });
+
+  it("counts a word due at exactly `now` as due — matches practiceSession.ts's isDue exactly, not Flutter's strict isBefore", () => {
+    const now = new Date("2026-08-25T12:00:00.000Z");
+    const records = [
+      makeRecord({ id: "1", nextReviewAt: "2026-08-25T12:00:00.000Z" }), // exactly now
+    ];
+    const stats = computeLearningStats(records, now);
+    expect(stats.dueCount).toBe(1);
+  });
 });
