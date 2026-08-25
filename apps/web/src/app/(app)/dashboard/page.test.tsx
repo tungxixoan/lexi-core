@@ -103,4 +103,14 @@ describe("DashboardPage (error handling)", () => {
     expect(await screen.findByRole("alert")).toBeInTheDocument();
     expect(screen.getByText("Hôm nay")).toBeInTheDocument(); // stat cards still render
   });
+
+  it("shows an inline error for the stats section without breaking the streak banner when getVocabRecords fails", async () => {
+    vi.mocked(getVocabRecords).mockRejectedValue(new Error("network down"));
+    vi.mocked(getDailyActivity).mockResolvedValue({ currentStreak: 5, lastPracticedDate: "2026-08-25", weeklyLog: {} });
+    render(<DashboardPage />);
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(screen.getByText("5")).toBeInTheDocument(); // streak banner still renders
+    expect(screen.queryByText("Hôm nay")).not.toBeInTheDocument(); // stat cards do not render
+    expect(screen.queryByText("Theo cấp độ CEFR")).not.toBeInTheDocument(); // CEFR breakdown does not render
+  });
 });

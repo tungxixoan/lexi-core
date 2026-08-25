@@ -38,17 +38,18 @@ function weekdayLabel(key: string): string {
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuthUser();
   const [records, setRecords] = useState<VocabRecord[] | null>(null);
+  const [recordsError, setRecordsError] = useState(false);
   const [activity, setActivity] = useState<DailyActivity | null>(null);
-  const [activityError, setActivityError] = useState<string | null>(null);
+  const [activityError, setActivityError] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     getVocabRecords(user.uid)
       .then(setRecords)
-      .catch(() => setRecords([]));
+      .catch(() => setRecordsError(true));
     getDailyActivity(user.uid)
       .then(setActivity)
-      .catch((err: unknown) => setActivityError(err instanceof Error ? err.message : String(err)));
+      .catch(() => setActivityError(true));
   }, [user]);
 
   if (authLoading) return <p>Đang tải…</p>;
@@ -63,17 +64,19 @@ export default function DashboardPage() {
     );
   }
 
-  if (records === null) return <p>Đang tải…</p>;
+  if (records === null && !recordsError) return <p>Đang tải…</p>;
 
-  const stats: LearningStats = computeLearningStats(records);
-  const totalForChart = stats.totalCount;
+  const stats: LearningStats | null = records ? computeLearningStats(records) : null;
+  const totalForChart = stats?.totalCount ?? 0;
+  const chartDays = lastNDays(CHART_DAYS);
+  const chartMax = activity ? Math.max(...chartDays.map((k) => activity.weeklyLog[k] ?? 0), 1) : 1;
 
   return (
     <div>
       <h2 className="scr-title">Tổng quan</h2>
       <p className="scr-sub">Tiến độ học tập của bạn, cập nhật theo thời gian thực.</p>
 
-      {activityError && <p role="alert">Không tải được dữ liệu streak: {activityError}</p>}
+      {activityError && <p role="alert">Không tải được dữ liệu streak.</p>}
 
       {activity && (
         <div className="dash-streak-banner">
@@ -96,52 +99,57 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="dash-stat-grid">
-        <div className="dash-stat-card">
-          <div className="dash-stat-label">Hôm nay</div>
-          <div className="dash-stat-value">{stats.dueCount}</div>
-          <div className="dash-stat-foot">từ đến hạn ôn tập</div>
-        </div>
-        <div className="dash-stat-card">
-          <div className="dash-stat-label">Đã thuộc</div>
-          <div className="dash-stat-value">{stats.masteredCount}</div>
-          <div className="dash-stat-foot">/ {stats.totalCount} từ</div>
-        </div>
-      </div>
+      {recordsError && <p role="alert">Không tải được dữ liệu từ vựng.</p>}
 
-      {stats.dueCount > 0 && (
-        <Link href="/practice?action=start" role="link" className="btn-primary dash-cta">
-          Ôn {stats.dueCount} từ ngay <span aria-hidden="true">→</span>
-        </Link>
+      {stats && (
+        <>
+          <div className="dash-stat-grid">
+            <div className="dash-stat-card">
+              <div className="dash-stat-label">Hôm nay</div>
+              <div className="dash-stat-value">{stats.dueCount}</div>
+              <div className="dash-stat-foot">từ đến hạn ôn tập</div>
+            </div>
+            <div className="dash-stat-card">
+              <div className="dash-stat-label">Đã thuộc</div>
+              <div className="dash-stat-value">{stats.masteredCount}</div>
+              <div className="dash-stat-foot">/ {stats.totalCount} từ</div>
+            </div>
+          </div>
+
+          {stats.dueCount > 0 && (
+            <Link href="/practice?action=start" className="btn-primary dash-cta">
+              Ôn {stats.dueCount} từ ngay <span aria-hidden="true">→</span>
+            </Link>
+          )}
+
+          <div className="dash-card">
+            <h3>Theo cấp độ CEFR</h3>
+            <div className="dash-cefr-rows">
+              {CEFR_LEVELS.map((level) => {
+                const count = stats.cefrBreakdown[level];
+                const pct = totalForChart === 0 ? 0 : (count / totalForChart) * 100;
+                return (
+                  <div key={level} className="dash-cefr-row">
+                    <span className="dash-cefr-tag">{level.toUpperCase()}</span>
+                    <div className="dash-cefr-track">
+                      <div className="dash-cefr-fill" style={{ width: `${pct}%` }} />
+                    </div>
+                    <span className="dash-cefr-count">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
       )}
-
-      <div className="dash-card">
-        <h3>Theo cấp độ CEFR</h3>
-        <div className="dash-cefr-rows">
-          {CEFR_LEVELS.map((level) => {
-            const count = stats.cefrBreakdown[level];
-            const pct = totalForChart === 0 ? 0 : (count / totalForChart) * 100;
-            return (
-              <div key={level} className="dash-cefr-row">
-                <span className="dash-cefr-tag">{level.toUpperCase()}</span>
-                <div className="dash-cefr-track">
-                  <div className="dash-cefr-fill" style={{ width: `${pct}%` }} />
-                </div>
-                <span className="dash-cefr-count">{count}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
 
       {activity && (
         <div className="dash-card">
           <h3>7 ngày gần đây</h3>
           <div className="dash-chart">
-            {lastNDays(CHART_DAYS).map((key) => {
+            {chartDays.map((key) => {
               const value = activity.weeklyLog[key] ?? 0;
-              const max = Math.max(...lastNDays(CHART_DAYS).map((k) => activity.weeklyLog[k] ?? 0), 1);
-              const pct = value === 0 ? 4 : Math.max(10, (value / max) * 100);
+              const pct = value === 0 ? 4 : Math.max(10, (value / chartMax) * 100);
               const isToday = key === dateKey(new Date());
               return (
                 <div key={key} className={`dash-chart-col${isToday ? " today" : ""}`}>
