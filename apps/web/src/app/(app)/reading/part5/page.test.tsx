@@ -9,12 +9,14 @@ import { generateContent } from "@/lib/generateContent";
 import { getRandomSavedExercise, saveReadingExercise } from "@/lib/savedReadingExercises";
 import { DEFAULT_SETTINGS, type UserSettings } from "@/lib/settings";
 import type { Part5Set } from "@/lib/part5";
+import { recordDailyActivity } from "@/lib/dailyActivity";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
 vi.mock("@/lib/SettingsContext", () => ({ useSettingsContext: vi.fn() }));
 vi.mock("@/lib/vocabRecords", () => ({ getVocabRecords: vi.fn() }));
 vi.mock("@/lib/topics", () => ({ getTopics: vi.fn() }));
 vi.mock("@/lib/generateContent", () => ({ generateContent: vi.fn() }));
+vi.mock("@/lib/dailyActivity", () => ({ recordDailyActivity: vi.fn() }));
 vi.mock("@/lib/savedReadingExercises", async () => {
   const actual = await vi.importActual<typeof import("@/lib/savedReadingExercises")>("@/lib/savedReadingExercises");
   return {
@@ -63,6 +65,7 @@ beforeEach(() => {
   vi.mocked(getVocabRecords).mockResolvedValue([]);
   vi.mocked(getTopics).mockResolvedValue([]);
   vi.mocked(getRandomSavedExercise).mockResolvedValue(null);
+  vi.mocked(recordDailyActivity).mockResolvedValue(undefined);
 });
 
 describe("Part5Page (loading phase)", () => {
@@ -241,6 +244,7 @@ describe("Part5Page (result phase)", () => {
 
     expect(screen.getByText("1/1")).toBeInTheDocument();
     expect(screen.getByText("Giải thích: Giải thích A.")).toBeInTheDocument();
+    await waitFor(() => expect(recordDailyActivity).toHaveBeenCalledWith("u1", 1));
     const suggestions = screen.getByTestId("vocab-suggestions");
     expect(suggestions).toHaveAttribute("data-text", "She ___ to work.");
   });

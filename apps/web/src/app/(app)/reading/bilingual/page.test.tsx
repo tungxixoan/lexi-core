@@ -9,12 +9,14 @@ import { generateContent } from "@/lib/generateContent";
 import { getAllUsedVocabIds, getRandomSavedExercise, saveReadingExercise } from "@/lib/savedReadingExercises";
 import type { SavedReadingExercise } from "@/lib/savedReadingExercises";
 import { DEFAULT_SETTINGS, type UserSettings } from "@/lib/settings";
+import { recordDailyActivity } from "@/lib/dailyActivity";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
 vi.mock("@/lib/SettingsContext", () => ({ useSettingsContext: vi.fn() }));
 vi.mock("@/lib/vocabRecords", () => ({ getVocabRecords: vi.fn() }));
 vi.mock("@/lib/topics", () => ({ getTopics: vi.fn() }));
 vi.mock("@/lib/generateContent", () => ({ generateContent: vi.fn() }));
+vi.mock("@/lib/dailyActivity", () => ({ recordDailyActivity: vi.fn() }));
 vi.mock("@/lib/savedReadingExercises", async () => {
   const actual = await vi.importActual<typeof import("@/lib/savedReadingExercises")>(
     "@/lib/savedReadingExercises"
@@ -108,6 +110,7 @@ beforeEach(() => {
   setSearchParams({ wordCount: "10", action: "generate" });
   vi.mocked(getAllUsedVocabIds).mockResolvedValue(new Set());
   vi.mocked(getRandomSavedExercise).mockResolvedValue(null);
+  vi.mocked(recordDailyActivity).mockResolvedValue(undefined);
 });
 
 describe("BilingualReadingPage (loading phase)", () => {
@@ -443,6 +446,10 @@ describe("BilingualReadingPage (result phase)", () => {
 
     const suggestions = screen.getByTestId("vocab-suggestions");
     expect(suggestions).toHaveAttribute("data-text", "Hi there. Bye now.");
+
+    // "word0" is the only headword referenced via a sentence's vocabWords,
+    // so passage.vocabIds resolves to exactly 1 id.
+    await waitFor(() => expect(recordDailyActivity).toHaveBeenCalledWith("u1", 1));
   });
 
   it('shows a "Lưu bài" button for a freshly AI-generated session, and hides it once saved', async () => {

@@ -15,6 +15,7 @@ import {
 } from "@/lib/readingPassage";
 import { generateContent } from "@/lib/generateContent";
 import { parseAiJsonObject } from "@/lib/parseAiJson";
+import { recordDailyActivity } from "@/lib/dailyActivity";
 import { TypingSentence } from "@/components/reading/TypingSentence";
 import { PassageReview } from "@/components/reading/PassageReview";
 import {
@@ -204,6 +205,16 @@ function BilingualReadingPageContent() {
     void runAction();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, settings, records, action]);
+
+  const dailyActivityRecordedRef = useRef(false);
+  useEffect(() => {
+    if (phase !== "result" || dailyActivityRecordedRef.current || !user || !passage) return;
+    dailyActivityRecordedRef.current = true;
+    recordDailyActivity(user.uid, passage.vocabIds.length).catch((err: unknown) => {
+      console.error("Failed to record daily activity", err);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
   async function handleSaveExercise() {
     if (saving || !user || !settings || !passage) return;

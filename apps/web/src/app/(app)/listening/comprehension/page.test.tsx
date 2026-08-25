@@ -9,12 +9,14 @@ import { generateContent } from "@/lib/generateContent";
 import { synthesizeSpeech } from "@/lib/synthesizeSpeechClient";
 import { getRandomSavedListeningExercise, saveListeningExercise } from "@/lib/savedListeningExercises";
 import { DEFAULT_SETTINGS, type UserSettings } from "@/lib/settings";
+import { recordDailyActivity } from "@/lib/dailyActivity";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
 vi.mock("@/lib/SettingsContext", () => ({ useSettingsContext: vi.fn() }));
 vi.mock("@/lib/vocabRecords", () => ({ getVocabRecords: vi.fn() }));
 vi.mock("@/lib/topics", () => ({ getTopics: vi.fn() }));
 vi.mock("@/lib/generateContent", () => ({ generateContent: vi.fn() }));
+vi.mock("@/lib/dailyActivity", () => ({ recordDailyActivity: vi.fn() }));
 vi.mock("@/lib/synthesizeSpeechClient", async () => {
   const actual = await vi.importActual<typeof import("@/lib/synthesizeSpeechClient")>("@/lib/synthesizeSpeechClient");
   return { ...actual, synthesizeSpeech: vi.fn() };
@@ -74,6 +76,7 @@ beforeEach(() => {
   vi.mocked(synthesizeSpeech).mockResolvedValue({ audioBase64: "AAAA" });
   vi.mocked(getRandomSavedListeningExercise).mockResolvedValue(null);
   vi.mocked(generateContent).mockResolvedValue({ text: JSON.stringify(VALID_PASSAGE_JSON) });
+  vi.mocked(recordDailyActivity).mockResolvedValue(undefined);
 
   audioInstances = [];
   vi.spyOn(window, "Audio").mockImplementation(function () {
@@ -246,6 +249,9 @@ describe("ComprehensionPage (result + save/reuse)", () => {
     await completeSession();
     expect(screen.getByText("A: Welcome to the store.")).toBeInTheDocument();
     expect(screen.getByText("B: Thanks, I need a laptop.")).toBeInTheDocument();
+
+    // VALID_PASSAGE_JSON has 3 questions.
+    await waitFor(() => expect(recordDailyActivity).toHaveBeenCalledWith("u1", 3));
   });
 
   it("offers Lưu bài for a generated session", async () => {

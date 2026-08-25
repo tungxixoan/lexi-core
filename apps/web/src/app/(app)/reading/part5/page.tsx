@@ -11,6 +11,7 @@ import { type EconomyVolume } from "@/lib/toeicFilters";
 import { buildPart5Prompt, parsePart5Set, type Part5Set } from "@/lib/part5";
 import { generateContent } from "@/lib/generateContent";
 import { parseAiJsonObject } from "@/lib/parseAiJson";
+import { recordDailyActivity } from "@/lib/dailyActivity";
 import { getRandomSavedExercise, saveReadingExercise, type ToeicFilters } from "@/lib/savedReadingExercises";
 import { McQuestionCard } from "@/components/reading/McQuestionCard";
 import { VocabSuggestionsSection } from "@/components/shared/VocabSuggestionsSection";
@@ -156,6 +157,16 @@ function Part5PageContent() {
     void runAction();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, settings, contextLoaded, action]);
+
+  const dailyActivityRecordedRef = useRef(false);
+  useEffect(() => {
+    if (phase !== "result" || dailyActivityRecordedRef.current || !user || !set) return;
+    dailyActivityRecordedRef.current = true;
+    recordDailyActivity(user.uid, set.questions.length).catch((err: unknown) => {
+      console.error("Failed to record daily activity", err);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
   async function handleSaveExercise() {
     if (saving || !user || !settings || !set) return;

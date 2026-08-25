@@ -7,6 +7,7 @@ import { useSettingsContext } from "@/lib/SettingsContext";
 import { SignInButton } from "@/components/SignInButton";
 import { getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics, type Topic } from "@/lib/topics";
+import { recordDailyActivity } from "@/lib/dailyActivity";
 import { generateContent } from "@/lib/generateContent";
 import { parseAiJsonObject } from "@/lib/parseAiJson";
 import {
@@ -258,6 +259,11 @@ function ComprehensionPageContent() {
     const score = scoreComprehension(passage, selectedAnswers);
     setFinalScore(score);
     setPhase("result");
+    if (user) {
+      recordDailyActivity(user.uid, passage.questions.length).catch((err: unknown) => {
+        console.error("Failed to record daily activity", err);
+      });
+    }
   }
 
   async function handleNewSession() {

@@ -8,11 +8,13 @@ import { generateContent } from "@/lib/generateContent";
 import { synthesizeSpeech } from "@/lib/synthesizeSpeechClient";
 import { getRandomSavedListeningExercise, saveListeningExercise } from "@/lib/savedListeningExercises";
 import { DEFAULT_SETTINGS, type UserSettings } from "@/lib/settings";
+import { recordDailyActivity } from "@/lib/dailyActivity";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
 vi.mock("@/lib/SettingsContext", () => ({ useSettingsContext: vi.fn() }));
 vi.mock("@/lib/vocabRecords", () => ({ getVocabRecords: vi.fn(), updateVocabRecordSm2: vi.fn() }));
 vi.mock("@/lib/generateContent", () => ({ generateContent: vi.fn() }));
+vi.mock("@/lib/dailyActivity", () => ({ recordDailyActivity: vi.fn() }));
 vi.mock("@/lib/synthesizeSpeechClient", async () => {
   const actual = await vi.importActual<typeof import("@/lib/synthesizeSpeechClient")>("@/lib/synthesizeSpeechClient");
   return { ...actual, synthesizeSpeech: vi.fn() };
@@ -87,6 +89,7 @@ beforeEach(() => {
   vi.mocked(getVocabRecords).mockResolvedValue(TWO_WORDS);
   vi.mocked(synthesizeSpeech).mockResolvedValue({ audioBase64: "AAAA" });
   vi.mocked(getRandomSavedListeningExercise).mockResolvedValue(null);
+  vi.mocked(recordDailyActivity).mockResolvedValue(undefined);
 
   audioInstances = [];
   vi.spyOn(window, "Audio").mockImplementation(function () {
@@ -533,6 +536,14 @@ describe("DictationPage (result phase)", () => {
     await completeHardSession();
 
     await waitFor(() => expect(updateVocabRecordSm2).toHaveBeenCalledWith("u1", "v2", expect.any(Object)));
+  });
+
+  it("records daily activity with the session's vocabIds count", async () => {
+    mockSignedIn();
+    await completeHardSession();
+
+    // item.vocabIds resolves to ["v1", "v2"] from vocabWords ["apple", "run"].
+    await waitFor(() => expect(recordDailyActivity).toHaveBeenCalledWith("u1", 2));
   });
 
   it('shows "Lưu bài" for a generated session and saves with type "dictation"', async () => {

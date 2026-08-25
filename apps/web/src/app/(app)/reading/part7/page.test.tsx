@@ -9,12 +9,14 @@ import { generateContent } from "@/lib/generateContent";
 import { getRandomSavedExercise, saveReadingExercise } from "@/lib/savedReadingExercises";
 import { DEFAULT_SETTINGS, type UserSettings } from "@/lib/settings";
 import type { Part7Set } from "@/lib/part7";
+import { recordDailyActivity } from "@/lib/dailyActivity";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
 vi.mock("@/lib/SettingsContext", () => ({ useSettingsContext: vi.fn() }));
 vi.mock("@/lib/vocabRecords", () => ({ getVocabRecords: vi.fn() }));
 vi.mock("@/lib/topics", () => ({ getTopics: vi.fn() }));
 vi.mock("@/lib/generateContent", () => ({ generateContent: vi.fn() }));
+vi.mock("@/lib/dailyActivity", () => ({ recordDailyActivity: vi.fn() }));
 vi.mock("@/lib/savedReadingExercises", async () => {
   const actual = await vi.importActual<typeof import("@/lib/savedReadingExercises")>("@/lib/savedReadingExercises");
   return {
@@ -160,6 +162,7 @@ beforeEach(() => {
   vi.mocked(getVocabRecords).mockResolvedValue([]);
   vi.mocked(getTopics).mockResolvedValue([]);
   vi.mocked(getRandomSavedExercise).mockResolvedValue(null);
+  vi.mocked(recordDailyActivity).mockResolvedValue(undefined);
 });
 
 describe("Part7Page (loading phase)", () => {
@@ -378,6 +381,7 @@ describe("Part7Page (result phase)", () => {
     expect(screen.getByText("8/12")).toBeInTheDocument();
     expect(screen.getByText("Giải thích: Nói về chính sách đỗ xe.")).toBeInTheDocument();
     expect(screen.getByText("Giải thích: Cần đối chiếu cả 2 văn bản.")).toBeInTheDocument();
+    await waitFor(() => expect(recordDailyActivity).toHaveBeenCalledWith("u1", 12));
     const suggestions = screen.getByTestId("vocab-suggestions");
     expect(suggestions).toHaveAttribute(
       "data-text",

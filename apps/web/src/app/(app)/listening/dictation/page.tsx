@@ -7,6 +7,7 @@ import { useSettingsContext } from "@/lib/SettingsContext";
 import { SignInButton } from "@/components/SignInButton";
 import { getVocabRecords, updateVocabRecordSm2, type VocabRecord } from "@/lib/vocabRecords";
 import { computeSm2, type Sm2Fields } from "@/lib/sm2";
+import { recordDailyActivity } from "@/lib/dailyActivity";
 import { generateContent } from "@/lib/generateContent";
 import { parseAiJsonObject } from "@/lib/parseAiJson";
 import {
@@ -217,6 +218,9 @@ function DictationPageContent() {
     setPhase("result");
 
     if (!user) return;
+    recordDailyActivity(user.uid, item.vocabIds.length).catch((err: unknown) => {
+      console.error("Failed to record daily activity", err);
+    });
     const quality = sm2QualityFromScore(score);
     const updatedFieldsById = new Map<string, Sm2Fields>();
     for (const vocabId of item.vocabIds) {
