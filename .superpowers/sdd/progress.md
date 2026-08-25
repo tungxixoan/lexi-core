@@ -1372,3 +1372,13 @@ Dispatched a fix (commit `05831eb`) addressing all 4 findings: added an independ
 Re-review (sonnet): Approved — all 4 findings verified resolved by reading the actual code (not just the report), new test asserts the two error states stay independent, 8/8 dashboard tests + tsc clean.
 
 Task 3: complete (commits d6eb3ab..05831eb, review clean after 1 fix round).
+
+## Task 4: /practice?action=start auto-trigger + daily-activity record — complete
+
+Modified `apps/web/src/app/(app)/practice/page.tsx` (commit `7db1686`): added the page's first-ever `useSearchParams()`/`<Suspense>` wrapper (verified byte-for-byte pattern parity with `listening/dictation/page.tsx`), an `action=start` auto-trigger calling `selectSessionWords` with `count: null` (uncapped) so the auto-started session size matches the Dashboard CTA's promised due-word count, and a `recordDailyActivity(user.uid, sessionResults.length)` call added inside the existing SM-2-batch-write effect (guarded by the pre-existing `sm2WrittenRef`, fire-and-forget with `.catch(console.error)`).
+
+Review (sonnet): independently confirmed `selectSessionWords` semantics genuinely bypass the picker's default cap, confirmed the Suspense wrapper matches an existing page's pattern exactly, confirmed the daily-activity call is single-fire/non-blocking inside the correct existing effect (not a new racing effect), confirmed all 11 pre-existing tests were left assertion-unchanged (only additive), confirmed the new tests' flip-click + "Chưa hiểu"/"Đã hiểu" labels are real and correct against `FlashcardCard.tsx`. 15/15 tests pass, tsc clean, build clean.
+
+Spec: ✅. Code quality: Approved. Zero findings (Critical/Important/Minor) — first task this plan with a clean first-pass review, no fix round needed.
+
+Task 4: complete (commits 841f41a..7db1686, review clean, no fix round).
