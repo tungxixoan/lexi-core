@@ -191,6 +191,7 @@ function Part5PageContent() {
   }
 
   async function handleNewSession() {
+    dailyActivityRecordedRef.current = false;
     if (sessionMode === "reused") {
       // fetchSavedExercise's "not found" path always falls through to
       // handleGenerate() here (Part 5 has no minimum-words precondition

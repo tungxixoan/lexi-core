@@ -507,6 +507,38 @@ describe("Part6Page (result phase)", () => {
     expect(pushMock).toHaveBeenCalledWith("/reading");
   });
 
+  it('records daily activity again after completing a second session in place via "Bài khác" (dailyActivityRecordedRef must reset, not just fire once per page load)', async () => {
+    mockSignedIn();
+    await completeSession();
+    await waitFor(() => expect(recordDailyActivity).toHaveBeenCalledTimes(1));
+    expect(recordDailyActivity).toHaveBeenCalledWith("u1", 4);
+
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        passages: [
+          {
+            passageText: "New passage.",
+            questions: [
+              { options: ["a", "b", "c", "d"], correctIndex: 0, explanation: "E." },
+              { options: ["a", "b", "c", "d"], correctIndex: 0, explanation: "E." },
+              { options: ["a", "b", "c", "d"], correctIndex: 0, explanation: "E." },
+              { options: ["a", "b", "c", "d"], correctIndex: 0, explanation: "E." },
+            ],
+          },
+        ],
+      }),
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Bài khác" }));
+    await screen.findByText("New passage.");
+    for (const button of screen.getAllByRole("button", { name: "a" })) {
+      fireEvent.click(button);
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Nộp bài" }));
+    await screen.findByText("4/4");
+
+    await waitFor(() => expect(recordDailyActivity).toHaveBeenCalledTimes(2));
+  });
+
   it('surfaces a save error via role="alert" when saveReadingExercise rejects', async () => {
     mockSignedIn();
     vi.mocked(saveReadingExercise).mockRejectedValue(new Error("network down"));

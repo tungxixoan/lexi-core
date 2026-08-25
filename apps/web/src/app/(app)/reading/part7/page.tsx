@@ -209,6 +209,7 @@ function Part7PageContent() {
   }
 
   async function handleNewSession() {
+    dailyActivityRecordedRef.current = false;
     if (sessionMode === "reused") {
       await fetchSavedExercise(justSavedId ?? undefined);
       return;

@@ -455,6 +455,55 @@ describe("Part7Page (result phase)", () => {
     expect(pushMock).toHaveBeenCalledWith("/reading");
   });
 
+  it('records daily activity again after completing a second session in place via "Bài khác" (dailyActivityRecordedRef must reset, not just fire once per page load)', async () => {
+    mockSignedIn();
+    await completeSession();
+    await waitFor(() => expect(recordDailyActivity).toHaveBeenCalledTimes(1));
+    expect(recordDailyActivity).toHaveBeenCalledWith("u1", 12);
+
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        passageGroups: [
+          {
+            documents: ["New group document."],
+            questions: [
+              { question: "New question?", options: ["w", "x", "y", "z"], correctIndex: 0, explanation: "E." },
+              { question: "New question 2?", options: ["w2", "x2", "y2", "z2"], correctIndex: 0, explanation: "E." },
+              { question: "New question 3?", options: ["w3", "x3", "y3", "z3"], correctIndex: 0, explanation: "E." },
+            ],
+          },
+          {
+            documents: ["Second new document."],
+            questions: [
+              { question: "Q4?", options: ["a4", "b4", "c4", "d4"], correctIndex: 0, explanation: "E." },
+              { question: "Q5?", options: ["a5", "b5", "c5", "d5"], correctIndex: 0, explanation: "E." },
+              { question: "Q6?", options: ["a6", "b6", "c6", "d6"], correctIndex: 0, explanation: "E." },
+            ],
+          },
+          {
+            documents: ["Third doc A.", "Third doc B."],
+            questions: Array.from({ length: 5 }, (_, i) => ({
+              question: `DQ${i}?`,
+              options: [`da${i}`, `db${i}`, `dc${i}`, `dd${i}`],
+              correctIndex: 0,
+              explanation: "E.",
+            })),
+          },
+        ],
+      }),
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Bài khác" }));
+    await screen.findByText("New group document.");
+    for (const name of ["w", "w2", "w3", "a4", "a5", "a6", "da0", "da1", "da2", "da3", "da4"]) {
+      fireEvent.click(screen.getByRole("button", { name }));
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Nộp bài" }));
+    await screen.findByText("11/11");
+
+    await waitFor(() => expect(recordDailyActivity).toHaveBeenCalledTimes(2));
+    expect(recordDailyActivity).toHaveBeenNthCalledWith(2, "u1", 11);
+  });
+
   it('surfaces a save error via role="alert" when saveReadingExercise rejects', async () => {
     mockSignedIn();
     vi.mocked(saveReadingExercise).mockRejectedValue(new Error("network down"));

@@ -593,6 +593,30 @@ describe("BilingualReadingPage (result phase)", () => {
     expect(await screen.findByText("Câu 1 / 1")).toBeInTheDocument();
   });
 
+  it('records daily activity again after completing a second session in place via "Sinh bài mới" (dailyActivityRecordedRef must reset, not just fire once per page load)', async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    await completeASession();
+    await waitFor(() => expect(recordDailyActivity).toHaveBeenCalledTimes(1));
+    expect(recordDailyActivity).toHaveBeenCalledWith("u1", 1);
+
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        sentences: [{ target: "New one.", vietnamese: "Bài mới.", vocabWords: ["word0"] }],
+      }),
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sinh bài mới" }));
+    await screen.findByText("Câu 1 / 1");
+    fireEvent.change(screen.getByTestId("reading-type-input"), { target: { value: "New one." } });
+    await waitFor(() => expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument());
+
+    await waitFor(() => expect(recordDailyActivity).toHaveBeenCalledTimes(2));
+  });
+
   it('shows a generateError alert on the result phase when "Sinh bài mới" fails to regenerate a "generated" session', async () => {
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue(

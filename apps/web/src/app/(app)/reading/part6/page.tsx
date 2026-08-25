@@ -205,6 +205,7 @@ function Part6PageContent() {
   }
 
   async function handleNewSession() {
+    dailyActivityRecordedRef.current = false;
     if (sessionMode === "reused") {
       // fetchSavedExercise always leaves user-visible feedback on this same
       // "result" phase — either a new session, an AI-fallback notice, or
