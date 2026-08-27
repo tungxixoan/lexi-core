@@ -1452,3 +1452,13 @@ Review (sonnet) resolved a test-count red herring first: the brief's own prose s
 Fixed (commit `f1dbeff`): replaced "highlight" with "tô sáng". Re-review (haiku, appropriately cheap for a 1-line trivial fix) confirmed the sentence reads correctly and nothing else changed. 6/6 tests, tsc clean throughout.
 
 Task 3: complete (commits 145c3ff..f1dbeff, review clean after 1 fix round; both findings traced to plan-authoring gaps, neither an implementer error).
+
+## Task 4: Reading hub — 5th card — complete
+
+Added "🔎 Quét từ vựng" card to `apps/web/src/app/(app)/reading/page.tsx` (commit `164a0ec`), navigating straight to `/reading/word-radar` via `router.push` — no `setMode`, no toggle-group styling, no mode/filter-footer involvement.
+
+Review (haiku, appropriate for this small single-file mechanical task): spec ✅, code quality Approved, zero findings. Clean on first pass — no fix round. 17/17 reading hub tests, tsc clean.
+
+Task 4: complete (commits 28b7652..164a0ec, review clean, no fix round).
+
+All 4 tasks of the Word Radar plan are now implemented and individually reviewed. Next: final whole-branch review.
