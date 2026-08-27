@@ -1507,3 +1507,15 @@ Review (sonnet) independently verified both extras rather than trusting the repo
 Spec: ✅. Code quality: Approved. 1 Minor logged, not fixed: `reschedule()` has no try/catch at 2 of its 3 call sites (`NotificationNotifier.build()`'s microtask/listener, `app_shell.dart`'s lifecycle callback) — pre-existing gap, not introduced by this task, but risk is now materially higher since the underlying calls hit live Firestore instead of local Hive. Flagged for the final whole-branch review to triage against the plan's "async failures must be caught, no crash" global constraint.
 
 Task 2: complete (commits 71b4569..7faa308, review clean, no fix round). 4/4 tests, flutter analyze confined to the 2 files explicitly deferred to Task 3 plus the pre-existing Task-1-deferred uid error.
+
+## Task 3: Async-aware progress/practice screens — complete
+
+Updated `progress_screen.dart` (`AsyncValue<LearningStats>` via `.when(loading/error/data)`, Vietnamese error message) and `practice_home_screen.dart` (due-count badge properly awaited with `mounted` guards before/after the async gap, best-effort silent-fail-to-0 on error) — commit `35d6a87`.
+
+Implementer correctly detected Task 2's implementer had already converted `app_providers.dart`'s `learningStatsProvider` (a necessary side effect noted in Task 2's own ledger entry) and left it untouched rather than re-doing/conflicting with already-correct work — confirmed by the reviewer as a genuinely empty diff on that file.
+
+Review (sonnet) went beyond count-matching on the "32 pre-existing test failures, zero new" claim: checked out the pre-Task-3 baseline, extracted the actual failing test IDENTITIES (not just the count) from both runs, and confirmed byte-identical failure sets — ruling out a hidden pass↔fail swap that a bare count match could have masked. Also diffed `progress_screen.dart`'s `data:` branch against its pre-Task-3 version to confirm the real UI logic is unchanged, only the async wrapping is new.
+
+Spec: ✅. Code quality: Approved. Zero findings — clean on first pass, no fix round (2nd task in this plan to pass clean first-try, after Task 1).
+
+Task 3: complete (commits ed28a02..35d6a87, review clean, no fix round).
