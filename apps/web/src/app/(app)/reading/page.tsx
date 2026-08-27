@@ -153,6 +153,16 @@ export default function ReadingHubPage() {
             3 nhóm văn bản, 9-13 câu hỏi đọc hiểu kiểu TOEIC.
           </span>
         </button>
+        <button
+          type="button"
+          className="reading-hub-card"
+          onClick={() => router.push("/reading/word-radar")}
+        >
+          <span className="reading-hub-card-title">🔎 Quét từ vựng</span>
+          <span className="reading-hub-card-desc">
+            Dán văn bản bất kỳ, tự nhận từ đã học và gợi ý từ mới.
+          </span>
+        </button>
       </div>
 
       {mode === "bilingual" && (
