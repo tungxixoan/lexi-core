@@ -1442,3 +1442,13 @@ Fixed (commit `b57b25f`): moved the period into the `translationReminder` string
 2 Minor findings logged, not fixed (both inert today, will matter once Task 3 is the first real `includeTranslation=true` consumer): (1) `VocabSuggestionsSection`'s `load()` resets `suggestions`/`error` on reload but never `translation` — a stale translation could flash briefly on a retry/reload once a real caller uses `includeTranslation`; (2) a pre-existing test title in `vocabSuggestions.test.ts` ("returns an empty array...") is now stale since the function returns an object, not a bare array — cosmetic only, inherited from the brief.
 
 Task 2: complete (commits aa587fc..b57b25f, review clean after 1 fix round; 1 Important finding traced to a plan-text gap, not an implementer error, and fixed).
+
+## Task 3: /reading/word-radar page — complete
+
+Implemented `apps/web/src/app/(app)/reading/word-radar/page.tsx` + test (commit `3e6c46a`), consuming Task 1's `HighlightedText` (interactive variant) and Task 2's `VocabSuggestionsSection` (`includeTranslation`) — the first real caller of `includeTranslation=true`. Paste box (3000-char cap), instant local highlight of language-filtered known words, AI translation+suggestions when enabled, Vietnamese hint when not. Auth/settings gating matches `lookup/page.tsx`'s established pattern.
+
+Review (sonnet) resolved a test-count red herring first: the brief's own prose said "7/7" but only 6 `it()` blocks actually existed in its Step 1 code — a pre-existing inconsistency in the brief document itself, not a dropped test or implementer gap (confirmed by counting the brief's actual test blocks directly). Then found 1 real Important issue: the page's subtitle spliced the English word "highlight" into an otherwise-Vietnamese sentence — traced to the plan's own Step 3 code (this session's plan-writer's mistake, not an implementer deviation), and flagged as inconsistent with every other page's pure-Vietnamese `scr-sub` subtitle in this app.
+
+Fixed (commit `f1dbeff`): replaced "highlight" with "tô sáng". Re-review (haiku, appropriately cheap for a 1-line trivial fix) confirmed the sentence reads correctly and nothing else changed. 6/6 tests, tsc clean throughout.
+
+Task 3: complete (commits 145c3ff..f1dbeff, review clean after 1 fix round; both findings traced to plan-authoring gaps, neither an implementer error).
