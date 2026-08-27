@@ -37,7 +37,7 @@ export function buildVocabSuggestionsPrompt(
     ? '"translation":"Vietnamese translation of the full text",'
     : "";
   const translationReminder = includeTranslation
-    ? ' Always provide the "translation" even when "suggestions" is empty.'
+    ? '. Always provide the "translation" even when "suggestions" is empty.'
     : "";
   return (
     `You are a language learning assistant helping a Vietnamese speaker learn ${languageLabel}. ` +
@@ -51,7 +51,7 @@ export function buildVocabSuggestionsPrompt(
     `"suggestedTopics":["exactly one topic chosen from: Daily Life, Travel, Food & Drink, Business, ` +
     `Technology, Health, Education, Entertainment, Nature, Emotion, Academic, Idioms, Phrasal Verbs, ` +
     `Slang, Social/Casual, Sports, Art & Culture, Science, Law & Politics, Other"],` +
-    `"cefrLevel":"a1, a2, b1, b2, c1, or c2"}]}.${translationReminder} ` +
+    `"cefrLevel":"a1, a2, b1, b2, c1, or c2"}]}${translationReminder} ` +
     `Every suggestion's "suggestedTopics" array is REQUIRED and must contain exactly one topic from ` +
     `that list — never an empty array, even when generating many suggestions at once. ` +
     `Every "meaning" field must use only Vietnamese script — ` +
