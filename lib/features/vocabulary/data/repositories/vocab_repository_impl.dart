@@ -1,6 +1,5 @@
 // lib/features/vocabulary/data/repositories/vocab_repository_impl.dart
-import 'dart:convert';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/cefr_level.dart';
 import '../../domain/entities/topic.dart';
 import '../../domain/entities/vocab_record.dart';
@@ -9,17 +8,20 @@ import '../../../../features/dictionary/domain/entities/input_type.dart';
 import '../../../../features/dictionary/domain/entities/language.dart';
 
 class VocabRepositoryImpl implements VocabRepository {
-  const VocabRepositoryImpl();
+  VocabRepositoryImpl({required this.uid, FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  static const _vocabBoxName = 'vocab_records';
-  static const _topicsBoxName = 'topics';
+  final String uid;
+  final FirebaseFirestore _firestore;
 
-  Box<String> get _vocabBox => Hive.box<String>(_vocabBoxName);
-  Box<String> get _topicsBox => Hive.box<String>(_topicsBoxName);
+  CollectionReference<Map<String, dynamic>> get _vocabCol =>
+      _firestore.collection('users').doc(uid).collection('vocab_records');
+  CollectionReference<Map<String, dynamic>> get _topicsCol =>
+      _firestore.collection('users').doc(uid).collection('topics');
 
   @override
   Future<void> save(VocabRecord record) async {
-    await _vocabBox.put(record.id, jsonEncode(record.toJson()));
+    await _vocabCol.doc(record.id).set(record.toJson());
   }
 
   @override
@@ -30,9 +32,9 @@ class VocabRepositoryImpl implements VocabRepository {
     CEFRLevel? maxCefrLevel,
     bool dueOnly = false,
   }) async {
-    var records = _vocabBox.values
-        .map((s) => VocabRecord.fromJson(jsonDecode(s) as Map<String, dynamic>))
-        .toList();
+    final snapshot = await _vocabCol.get();
+    var records =
+        snapshot.docs.map((d) => VocabRecord.fromJson(d.data())).toList();
     if (topicId != null) {
       records = records.where((r) => r.topicIds.contains(topicId)).toList();
     }
@@ -59,38 +61,35 @@ class VocabRepositoryImpl implements VocabRepository {
 
   @override
   Future<VocabRecord?> getById(String id) async {
-    final raw = _vocabBox.get(id);
-    if (raw == null) return null;
-    return VocabRecord.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    final doc = await _vocabCol.doc(id).get();
+    if (!doc.exists) return null;
+    return VocabRecord.fromJson(doc.data()!);
   }
 
   @override
   Future<void> update(VocabRecord record) async {
-    await _vocabBox.put(record.id, jsonEncode(record.toJson()));
+    await _vocabCol.doc(record.id).set(record.toJson());
   }
 
   @override
   Future<void> delete(String id) async {
-    await _vocabBox.delete(id);
+    await _vocabCol.doc(id).delete();
   }
 
   @override
   Future<bool> existsByHeadword(String headword, Language language) async {
-    return _vocabBox.values.any((s) {
-      final map = jsonDecode(s) as Map<String, dynamic>;
-      return (map['headword'] as String).toLowerCase() == headword.toLowerCase() &&
-          map['targetLanguage'] == language.name;
-    });
+    return await getByHeadword(headword, language) != null;
   }
 
   @override
   Future<VocabRecord?> getByHeadword(String headword, Language language) async {
     final lc = headword.toLowerCase();
-    for (final s in _vocabBox.values) {
-      final map = jsonDecode(s) as Map<String, dynamic>;
-      if ((map['headword'] as String).toLowerCase() == lc &&
-          map['targetLanguage'] == language.name) {
-        return VocabRecord.fromJson(map);
+    final snapshot =
+        await _vocabCol.where('targetLanguage', isEqualTo: language.name).get();
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      if ((data['headword'] as String).toLowerCase() == lc) {
+        return VocabRecord.fromJson(data);
       }
     }
     return null;
@@ -98,12 +97,12 @@ class VocabRepositoryImpl implements VocabRepository {
 
   @override
   Future<List<Topic>> getTopics() async {
-    if (_topicsBox.isEmpty) {
+    var snapshot = await _topicsCol.get();
+    if (snapshot.docs.isEmpty) {
       await _seedTopics();
+      snapshot = await _topicsCol.get();
     }
-    final topics = _topicsBox.values
-        .map((s) => Topic.fromJson(jsonDecode(s) as Map<String, dynamic>))
-        .toList();
+    final topics = snapshot.docs.map((d) => Topic.fromJson(d.data())).toList();
     topics.sort((a, b) {
       if (a.isPredefined && !b.isPredefined) return -1;
       if (!a.isPredefined && b.isPredefined) return 1;
@@ -114,12 +113,11 @@ class VocabRepositoryImpl implements VocabRepository {
 
   @override
   Future<void> addTopic(Topic topic) async {
-    await _topicsBox.put(topic.id, jsonEncode(topic.toJson()));
+    await _topicsCol.doc(topic.id).set(topic.toJson());
   }
 
   @override
   Future<void> deleteTopic(String id) async {
-    // Reassign all words with this topic to 'other'
     final all = await getAll();
     for (final record in all) {
       if (record.topicIds.contains(id)) {
@@ -131,12 +129,14 @@ class VocabRepositoryImpl implements VocabRepository {
         ));
       }
     }
-    await _topicsBox.delete(id);
+    await _topicsCol.doc(id).delete();
   }
 
   Future<void> _seedTopics() async {
+    final batch = _firestore.batch();
     for (final topic in Topic.predefined) {
-      await _topicsBox.put(topic.id, jsonEncode(topic.toJson()));
+      batch.set(_topicsCol.doc(topic.id), topic.toJson());
     }
+    await batch.commit();
   }
 }
