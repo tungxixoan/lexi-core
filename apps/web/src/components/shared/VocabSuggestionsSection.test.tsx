@@ -246,3 +246,58 @@ describe("VocabSuggestionsSection", () => {
     expect(call.prompt).toContain("Do NOT suggest any of these already-known words: meticulous.");
   });
 });
+
+describe("VocabSuggestionsSection (includeTranslation)", () => {
+  it("requests and renders the translation above the suggestion list when includeTranslation is true", async () => {
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        translation: "Cô ấy rất tỉ mỉ.",
+        suggestions: [{ headword: "meticulous", ipa: "/x/", meaning: "tỉ mỉ", cefrLevel: "c1" }],
+      }),
+    });
+
+    render(
+      <VocabSuggestionsSection
+        text="She is meticulous."
+        existingRecords={[]}
+        topics={[]}
+        includeTranslation
+      />
+    );
+
+    expect(await screen.findByText("Cô ấy rất tỉ mỉ.")).toBeInTheDocument();
+    expect(screen.getByText("meticulous")).toBeInTheDocument();
+  });
+
+  it("passes includeTranslation through to the prompt request", async () => {
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({ translation: "x", suggestions: [] }),
+    });
+
+    render(
+      <VocabSuggestionsSection
+        text="Some text."
+        existingRecords={[]}
+        topics={[]}
+        includeTranslation
+      />
+    );
+
+    await screen.findByText("x");
+    const [[call]] = vi.mocked(generateContent).mock.calls;
+    expect(call.prompt).toContain("translate the full text into Vietnamese");
+  });
+
+  it("renders no translation block when includeTranslation is false or omitted", async () => {
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        suggestions: [{ headword: "meticulous", ipa: "/x/", meaning: "tỉ mỉ", cefrLevel: "c1" }],
+      }),
+    });
+
+    render(<VocabSuggestionsSection text="She is meticulous." existingRecords={[]} topics={[]} />);
+
+    await screen.findByText("meticulous");
+    expect(screen.queryByText(/Bản dịch/)).not.toBeInTheDocument();
+  });
+});

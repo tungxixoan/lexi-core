@@ -16,32 +16,42 @@ export function findKnownHeadwords(text: string, records: VocabRecord[]): string
   return known;
 }
 
-// Ports word_radar_source.dart's suggestion prompt, minus the
-// includeTranslation branch — the reading result screen has no need for a
-// full-text translation, every sentence already has one.
+// Ports word_radar_source.dart's suggestion prompt, including the
+// includeTranslation branch — some call sites (e.g. Word Radar) need a
+// full-text translation alongside the suggestions.
 export function buildVocabSuggestionsPrompt(
   text: string,
   targetLanguage: TargetLanguage,
-  knownHeadwords: string[]
+  knownHeadwords: string[],
+  includeTranslation: boolean = false
 ): string {
   const languageLabel = LANGUAGE_LABELS[targetLanguage];
   const knownClause =
     knownHeadwords.length === 0
       ? ""
       : ` Do NOT suggest any of these already-known words: ${knownHeadwords.join(", ")}.`;
+  const task = includeTranslation
+    ? "do two things. First, translate the full text into Vietnamese. Second, suggest"
+    : "suggest";
+  const translationField = includeTranslation
+    ? '"translation":"Vietnamese translation of the full text",'
+    : "";
+  const translationReminder = includeTranslation
+    ? ' Always provide the "translation" even when "suggestions" is empty.'
+    : "";
   return (
     `You are a language learning assistant helping a Vietnamese speaker learn ${languageLabel}. ` +
-    `Given this text: "${text}", suggest up to 10 words or short phrases from the text that are ` +
+    `Given this text: "${text}", ${task} up to 10 words or short phrases from the text that are ` +
     `worth learning.${knownClause} If nothing in the text is worth learning, use an empty ` +
     `"suggestions" array. Respond with JSON only (no markdown, no code fences): ` +
-    `{"suggestions":[{"headword":"exact word or phrase from the text","ipa":"IPA transcription",` +
+    `{${translationField}"suggestions":[{"headword":"exact word or phrase from the text","ipa":"IPA transcription",` +
     `"meaning":"Vietnamese definition","definition":"English definition",` +
     `"synonyms":["2-4 English synonyms, or empty array if none fit"],` +
     `"examples":["example 1","example 2"],` +
     `"suggestedTopics":["exactly one topic chosen from: Daily Life, Travel, Food & Drink, Business, ` +
     `Technology, Health, Education, Entertainment, Nature, Emotion, Academic, Idioms, Phrasal Verbs, ` +
     `Slang, Social/Casual, Sports, Art & Culture, Science, Law & Politics, Other"],` +
-    `"cefrLevel":"a1, a2, b1, b2, c1, or c2"}]} ` +
+    `"cefrLevel":"a1, a2, b1, b2, c1, or c2"}]}.${translationReminder} ` +
     `Every suggestion's "suggestedTopics" array is REQUIRED and must contain exactly one topic from ` +
     `that list — never an empty array, even when generating many suggestions at once. ` +
     `Every "meaning" field must use only Vietnamese script — ` +
@@ -49,7 +59,12 @@ export function buildVocabSuggestionsPrompt(
   );
 }
 
-export function parseVocabSuggestions(json: Record<string, unknown>): WordPhraseResult[] {
+export interface VocabSuggestionsResult {
+  suggestions: WordPhraseResult[];
+  translation: string;
+}
+
+export function parseVocabSuggestions(json: Record<string, unknown>): VocabSuggestionsResult {
   const rawSuggestions = Array.isArray(json.suggestions) ? json.suggestions : [];
   const suggestions: WordPhraseResult[] = [];
   for (const raw of rawSuggestions) {
@@ -59,5 +74,8 @@ export function parseVocabSuggestions(json: Record<string, unknown>): WordPhrase
     const parsed = parseLookupResult(item, "word", item.headword);
     if (parsed.kind === "wordPhrase") suggestions.push(parsed);
   }
-  return suggestions;
+  return {
+    suggestions,
+    translation: typeof json.translation === "string" ? json.translation : "",
+  };
 }

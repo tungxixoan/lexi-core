@@ -100,29 +100,64 @@ describe("parseVocabSuggestions", () => {
 
     const result = parseVocabSuggestions(json);
 
-    expect(result).toEqual([
-      {
-        kind: "wordPhrase",
-        headword: "meticulous",
-        inputType: "word",
-        ipa: "/məˈtɪkjələs/",
-        meaning: "tỉ mỉ",
-        examples: ["She is meticulous."],
-        definition: "showing great attention to detail",
-        synonyms: ["thorough"],
-        suggestedTopics: ["Academic"],
-        cefrLevel: "c1",
-      },
-    ]);
+    expect(result).toEqual({
+      suggestions: [
+        {
+          kind: "wordPhrase",
+          headword: "meticulous",
+          inputType: "word",
+          ipa: "/məˈtɪkjələs/",
+          meaning: "tỉ mỉ",
+          examples: ["She is meticulous."],
+          definition: "showing great attention to detail",
+          synonyms: ["thorough"],
+          suggestedTopics: ["Academic"],
+          cefrLevel: "c1",
+        },
+      ],
+      translation: "",
+    });
   });
 
   it("skips a suggestion item with no headword instead of throwing", () => {
     const result = parseVocabSuggestions({ suggestions: [{ meaning: "no headword here" }] });
-    expect(result).toEqual([]);
+    expect(result).toEqual({ suggestions: [], translation: "" });
   });
 
   it("returns an empty array when suggestions is missing or not an array", () => {
-    expect(parseVocabSuggestions({})).toEqual([]);
-    expect(parseVocabSuggestions({ suggestions: "not an array" })).toEqual([]);
+    expect(parseVocabSuggestions({})).toEqual({ suggestions: [], translation: "" });
+    expect(parseVocabSuggestions({ suggestions: "not an array" })).toEqual({
+      suggestions: [],
+      translation: "",
+    });
+  });
+});
+
+describe("buildVocabSuggestionsPrompt (includeTranslation)", () => {
+  it("asks for a translation field first when includeTranslation is true", () => {
+    const prompt = buildVocabSuggestionsPrompt("Some text.", "english", [], true);
+    expect(prompt).toContain("translate the full text into Vietnamese");
+    expect(prompt).toContain('"translation":"Vietnamese translation of the full text"');
+  });
+
+  it("omits any translation mention when includeTranslation is false or omitted", () => {
+    const withoutFlag = buildVocabSuggestionsPrompt("Some text.", "english", []);
+    const withFalse = buildVocabSuggestionsPrompt("Some text.", "english", [], false);
+    for (const prompt of [withoutFlag, withFalse]) {
+      expect(prompt).not.toContain("translate the full text");
+      expect(prompt).not.toContain('"translation"');
+    }
+  });
+});
+
+describe("parseVocabSuggestions (translation)", () => {
+  it("parses a translation field when present", () => {
+    const result = parseVocabSuggestions({ translation: "Bản dịch.", suggestions: [] });
+    expect(result.translation).toBe("Bản dịch.");
+  });
+
+  it("defaults translation to an empty string when absent", () => {
+    const result = parseVocabSuggestions({ suggestions: [] });
+    expect(result.translation).toBe("");
   });
 });

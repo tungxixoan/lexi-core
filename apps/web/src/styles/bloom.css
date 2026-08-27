@@ -1910,3 +1910,12 @@ button.btn-secondary {
   color: var(--ink-soft);
   line-height: 1.4;
 }
+
+.translation-block {
+  margin-bottom: 20px;
+}
+
+.translation-block .suggestions-title {
+  display: block;
+  margin-bottom: 8px;
+}

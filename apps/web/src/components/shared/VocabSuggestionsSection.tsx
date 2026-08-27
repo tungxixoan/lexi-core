@@ -18,6 +18,7 @@ import {
   type VocabRecordUpdate,
 } from "@/lib/vocabRecords";
 import { EditVocabModal } from "@/components/vocab-bank/EditVocabModal";
+import { HighlightedText } from "./HighlightedText";
 import type { Topic } from "@/lib/topics";
 import type { WordPhraseResult } from "@/lib/lookup";
 
@@ -25,13 +26,20 @@ interface VocabSuggestionsSectionProps {
   text: string;
   existingRecords: VocabRecord[];
   topics: Topic[];
+  includeTranslation?: boolean;
 }
 
-export function VocabSuggestionsSection({ text, existingRecords, topics }: VocabSuggestionsSectionProps) {
+export function VocabSuggestionsSection({
+  text,
+  existingRecords,
+  topics,
+  includeTranslation = false,
+}: VocabSuggestionsSectionProps) {
   const { user } = useAuthUser();
   const { settings } = useSettingsContext();
 
   const [suggestions, setSuggestions] = useState<WordPhraseResult[] | null>(null);
+  const [translation, setTranslation] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [savedHeadwords, setSavedHeadwords] = useState<Set<string>>(new Set());
   const [dismissedHeadwords, setDismissedHeadwords] = useState<Set<string>>(new Set());
@@ -53,7 +61,12 @@ export function VocabSuggestionsSection({ text, existingRecords, topics }: Vocab
       setSuggestions(null);
       try {
         const knownHeadwords = findKnownHeadwords(text, existingRecords);
-        const prompt = buildVocabSuggestionsPrompt(text, settings!.targetLanguage, knownHeadwords);
+        const prompt = buildVocabSuggestionsPrompt(
+          text,
+          settings!.targetLanguage,
+          knownHeadwords,
+          includeTranslation
+        );
         const response = await generateContent({
           provider: settings!.activeProvider,
           model: activeConfig!.model,
@@ -62,7 +75,9 @@ export function VocabSuggestionsSection({ text, existingRecords, topics }: Vocab
         });
         if (cancelled) return;
         const json = parseAiJsonObject(response.text);
-        setSuggestions(parseVocabSuggestions(json));
+        const parsed = parseVocabSuggestions(json);
+        setSuggestions(parsed.suggestions);
+        setTranslation(parsed.translation);
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err));
       }
@@ -123,6 +138,16 @@ export function VocabSuggestionsSection({ text, existingRecords, topics }: Vocab
 
   return (
     <div className="suggestions-section">
+      {includeTranslation && translation && (
+        <div className="translation-block">
+          <span className="suggestions-title">Bản dịch</span>
+          <HighlightedText
+            text={translation}
+            variant="static"
+            highlights={existingRecords.map((r) => r.meaning).filter((m) => m.length > 0)}
+          />
+        </div>
+      )}
       <div className="suggestions-header">
         <span className="suggestions-title">Gợi ý từ mới</span>
         {hasUnsaved && suggestions && (
