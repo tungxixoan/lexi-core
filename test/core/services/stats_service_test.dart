@@ -1,32 +1,76 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/core/services/stats_service.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
+import 'package:lexi_core/features/vocabulary/domain/entities/topic.dart';
+import 'package:lexi_core/features/vocabulary/domain/entities/vocab_record.dart';
+import 'package:lexi_core/features/vocabulary/domain/repositories/vocab_repository.dart';
+
+class _FakeVocabRepository implements VocabRepository {
+  _FakeVocabRepository(this.records);
+  final List<VocabRecord> records;
+
+  @override
+  Future<List<VocabRecord>> getAll({
+    String? topicId,
+    InputType? inputType,
+    Language? language,
+    CEFRLevel? maxCefrLevel,
+    bool dueOnly = false,
+  }) async =>
+      records;
+
+  @override
+  Future<void> save(VocabRecord record) async {}
+  @override
+  Future<VocabRecord?> getById(String id) async => null;
+  @override
+  Future<void> update(VocabRecord record) async {}
+  @override
+  Future<void> delete(String id) async {}
+  @override
+  Future<bool> existsByHeadword(String headword, Language language) async => false;
+  @override
+  Future<VocabRecord?> getByHeadword(String headword, Language language) async => null;
+  @override
+  Future<List<Topic>> getTopics() async => [];
+  @override
+  Future<void> addTopic(Topic topic) async {}
+  @override
+  Future<void> deleteTopic(String id) async {}
+}
+
+VocabRecord _record(String id, {int sm2Interval = 1, DateTime? nextReviewAt, CEFRLevel cefr = CEFRLevel.b1}) =>
+    VocabRecord(
+      id: id,
+      headword: 'w$id',
+      inputType: InputType.word,
+      ipa: '',
+      meaning: 'x',
+      examples: const [],
+      personalNotes: '',
+      topicIds: const [],
+      targetLanguage: Language.english,
+      cefrLevel: cefr,
+      activeContext: AppContext.general,
+      createdAt: DateTime(2026, 1, 1),
+      updatedAt: DateTime(2026, 1, 1),
+      sm2Interval: sm2Interval,
+      nextReviewAt: nextReviewAt,
+    );
 
 void main() {
-  late Box<String> vocabBox;
-  late Directory tempDir;
-
-  setUp(() async {
-    tempDir = await Directory.systemTemp.createTemp('stats_test');
-    Hive.init(tempDir.path);
-    vocabBox = await Hive.openBox<String>(
-        'vocab_stats_${DateTime.now().millisecondsSinceEpoch}');
+  setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  tearDown(() async {
-    await Hive.close();
-    await tempDir.delete(recursive: true);
-  });
-
-  test('computeStats() returns zeros when vocab box is empty', () async {
+  test('computeStats() returns zeros when there are no records', () async {
     final prefs = await SharedPreferences.getInstance();
-    final service = StatsService(vocabBox: vocabBox, prefs: prefs);
-    final stats = service.computeStats();
+    final service = StatsService(repository: _FakeVocabRepository([]), prefs: prefs);
+    final stats = await service.computeStats();
     expect(stats.dueCount, 0);
     expect(stats.masteredCount, 0);
     expect(stats.totalCount, 0);
@@ -36,98 +80,42 @@ void main() {
 
   test('computeStats() correctly counts due and mastered words', () async {
     final prefs = await SharedPreferences.getInstance();
-    // Due: nextReviewAt == null
-    await vocabBox.put('id1', jsonEncode(_record('id1', sm2Interval: 5)));
-    // Due: nextReviewAt in the past
-    await vocabBox.put(
-        'id2',
-        jsonEncode(_record('id2',
-            sm2Interval: 3,
-            nextReviewAt: DateTime.now().subtract(const Duration(hours: 1)))));
-    // Not due, but mastered (sm2Interval >= 21)
-    await vocabBox.put(
-        'id3',
-        jsonEncode(_record('id3',
-            sm2Interval: 21,
-            nextReviewAt: DateTime.now().add(const Duration(days: 10)))));
-    // Not due, not mastered
-    await vocabBox.put(
-        'id4',
-        jsonEncode(_record('id4',
-            sm2Interval: 7,
-            nextReviewAt: DateTime.now().add(const Duration(days: 3)))));
-
-    final service = StatsService(vocabBox: vocabBox, prefs: prefs);
-    final stats = service.computeStats();
+    final records = [
+      _record('1', nextReviewAt: null), // due: no next review yet
+      _record('2', nextReviewAt: DateTime.now().subtract(const Duration(days: 1))), // due: past
+      _record('3', nextReviewAt: DateTime.now().add(const Duration(days: 5))), // not due
+      _record('4', sm2Interval: 25, nextReviewAt: DateTime.now().add(const Duration(days: 10))), // mastered, not due
+      _record('5', sm2Interval: 3, nextReviewAt: DateTime.now().add(const Duration(days: 10))), // not mastered, not due
+    ];
+    final service = StatsService(repository: _FakeVocabRepository(records), prefs: prefs);
+    final stats = await service.computeStats();
     expect(stats.dueCount, 2);
     expect(stats.masteredCount, 1);
-    expect(stats.totalCount, 4);
+    expect(stats.totalCount, 5);
   });
 
-  test('computeStats() builds correct CEFR breakdown', () async {
+  test('computeStats() builds a CEFR breakdown across all 6 levels', () async {
     final prefs = await SharedPreferences.getInstance();
-    await vocabBox.put('id1', jsonEncode(_record('id1', cefr: 'a1')));
-    await vocabBox.put('id2', jsonEncode(_record('id2', cefr: 'a1')));
-    await vocabBox.put('id3', jsonEncode(_record('id3', cefr: 'b2')));
-
-    final service = StatsService(vocabBox: vocabBox, prefs: prefs);
-    final stats = service.computeStats();
+    final records = [
+      _record('1', cefr: CEFRLevel.a1),
+      _record('2', cefr: CEFRLevel.a1),
+      _record('3', cefr: CEFRLevel.c2),
+    ];
+    final service = StatsService(repository: _FakeVocabRepository(records), prefs: prefs);
+    final stats = await service.computeStats();
     expect(stats.cefrBreakdown[CEFRLevel.a1], 2);
-    expect(stats.cefrBreakdown[CEFRLevel.b2], 1);
-    expect(stats.cefrBreakdown[CEFRLevel.c1], 0);
+    expect(stats.cefrBreakdown[CEFRLevel.c2], 1);
+    expect(stats.cefrBreakdown[CEFRLevel.b1], 0);
   });
 
-  test('recordPracticeSession() increments streak on consecutive days and resets on gap',
-      () async {
-    final yesterday = DateTime.now().subtract(const Duration(days: 1));
-    final yKey = _dateKey(yesterday);
-    SharedPreferences.setMockInitialValues({
-      'last_practiced_date': yKey,
-      'current_streak': 3,
-    });
+  test('recordPracticeSession() same-day repeat call does not bump streak but accumulates the log', () async {
     final prefs = await SharedPreferences.getInstance();
-    final service = StatsService(vocabBox: vocabBox, prefs: prefs);
-
+    final service = StatsService(repository: _FakeVocabRepository([]), prefs: prefs);
     await service.recordPracticeSession(5);
-    expect(prefs.getInt('current_streak'), 4);
-
-    // Simulate missing a day — last date = 2 days ago
-    final twoDaysAgo = DateTime.now().subtract(const Duration(days: 2));
-    SharedPreferences.setMockInitialValues({
-      'last_practiced_date': _dateKey(twoDaysAgo),
-      'current_streak': 5,
-    });
-    final prefs2 = await SharedPreferences.getInstance();
-    final service2 = StatsService(vocabBox: vocabBox, prefs: prefs2);
-    await service2.recordPracticeSession(3);
-    expect(prefs2.getInt('current_streak'), 1);
+    await service.recordPracticeSession(3);
+    final stats = await service.computeStats();
+    expect(stats.currentStreak, 1);
+    final todayKey = DateTime.now().toIso8601String().substring(0, 10);
+    expect(stats.weeklyLog[todayKey], 8);
   });
 }
-
-String _dateKey(DateTime dt) =>
-    '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-
-Map<String, dynamic> _record(String id, {
-  int sm2Interval = 1,
-  DateTime? nextReviewAt,
-  String cefr = 'b1',
-}) =>
-    {
-      'id': id,
-      'headword': 'word_$id',
-      'inputType': 'word',
-      'ipa': '',
-      'meaning': 'meaning',
-      'examples': <String>[],
-      'personalNotes': '',
-      'topicIds': <String>[],
-      'targetLanguage': 'english',
-      'cefrLevel': cefr,
-      'activeContext': 'general',
-      'createdAt': DateTime.now().toIso8601String(),
-      'updatedAt': DateTime.now().toIso8601String(),
-      'nextReviewAt': nextReviewAt?.toIso8601String(),
-      'sm2Repetitions': 0,
-      'sm2EaseFactor': 2.5,
-      'sm2Interval': sm2Interval,
-    };

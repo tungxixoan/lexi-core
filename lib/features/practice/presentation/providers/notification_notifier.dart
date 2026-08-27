@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:hive/hive.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../../../core/services/notification_service.dart';
@@ -27,8 +25,8 @@ class NotificationNotifier extends _$NotificationNotifier {
       await _service.cancelAll();
       return;
     }
-    final stats = ref.read(getLearningStatsUseCaseProvider).execute();
-    final nextDueAt = _computeNextDueAt();
+    final stats = await ref.read(getLearningStatsUseCaseProvider).execute();
+    final nextDueAt = await _computeNextDueAt();
     await _service.scheduleAll(
       enabled: settings.reminderEnabled,
       hour: settings.reminderHour,
@@ -38,21 +36,17 @@ class NotificationNotifier extends _$NotificationNotifier {
     );
   }
 
-  DateTime? _computeNextDueAt() {
-    final box = Hive.box<String>('vocab_records');
+  Future<DateTime?> _computeNextDueAt() async {
+    final records = await ref.read(vocabRepositoryProvider).getAll();
     final now = DateTime.now();
     DateTime? earliest;
-    for (final raw in box.values) {
-      try {
-        final map = jsonDecode(raw) as Map<String, dynamic>;
-        final nextReviewRaw = map['nextReviewAt'] as String?;
-        if (nextReviewRaw == null) continue;
-        final dt = DateTime.parse(nextReviewRaw);
-        if (dt.isAfter(now)) {
-          if (earliest == null || dt.isBefore(earliest)) earliest = dt;
+    for (final r in records) {
+      final nextReviewAt = r.nextReviewAt;
+      if (nextReviewAt == null) continue;
+      if (nextReviewAt.isAfter(now)) {
+        if (earliest == null || nextReviewAt.isBefore(earliest)) {
+          earliest = nextReviewAt;
         }
-      } catch (_) {
-        // Skip malformed records — don't abort the whole search
       }
     }
     return earliest;

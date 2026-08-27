@@ -1,21 +1,18 @@
 import 'dart:convert';
-import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/practice/domain/entities/learning_stats.dart';
 import '../../features/vocabulary/domain/entities/cefr_level.dart';
-import '../../features/vocabulary/domain/entities/vocab_record.dart';
+import '../../features/vocabulary/domain/repositories/vocab_repository.dart';
 
 class StatsService {
-  StatsService({required this.vocabBox, required this.prefs});
+  StatsService({required this.repository, required this.prefs});
 
-  final Box<String> vocabBox;
+  final VocabRepository repository;
   final SharedPreferences prefs;
 
-  LearningStats computeStats() {
+  Future<LearningStats> computeStats() async {
     final now = DateTime.now();
-    final records = vocabBox.values
-        .map((s) => VocabRecord.fromJson(jsonDecode(s) as Map<String, dynamic>))
-        .toList();
+    final records = await repository.getAll();
 
     int dueCount = 0;
     int masteredCount = 0;

@@ -331,7 +331,7 @@ final computeSm2UseCaseProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ComputeSm2UseCaseRef = AutoDisposeProviderRef<ComputeSm2UseCase>;
-String _$statsServiceHash() => r'3b24bed980c79f059e05e5a42b2a35da37449792';
+String _$statsServiceHash() => r'647e931f4448655142f6912214700d446a2afaac';
 
 /// See also [statsService].
 @ProviderFor(statsService)
@@ -367,11 +367,11 @@ final getLearningStatsUseCaseProvider =
 // ignore: unused_element
 typedef GetLearningStatsUseCaseRef
     = AutoDisposeProviderRef<GetLearningStatsUseCase>;
-String _$learningStatsHash() => r'b5fa1644d79e0b76772000725ac4a6a356a8d518';
+String _$learningStatsHash() => r'af579709efdf19e1d6727795804a7a8f06ebbe95';
 
 /// See also [learningStats].
 @ProviderFor(learningStats)
-final learningStatsProvider = AutoDisposeProvider<LearningStats>.internal(
+final learningStatsProvider = AutoDisposeFutureProvider<LearningStats>.internal(
   learningStats,
   name: r'learningStatsProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -383,7 +383,7 @@ final learningStatsProvider = AutoDisposeProvider<LearningStats>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef LearningStatsRef = AutoDisposeProviderRef<LearningStats>;
+typedef LearningStatsRef = AutoDisposeFutureProviderRef<LearningStats>;
 String _$readingPassageSourceHash() =>
     r'7476106924c848b50feb02085568427634ec40c2';
 

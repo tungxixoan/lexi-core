@@ -5,5 +5,5 @@ class GetLearningStatsUseCase {
   const GetLearningStatsUseCase(this._statsService);
   final StatsService _statsService;
 
-  LearningStats execute() => _statsService.computeStats();
+  Future<LearningStats> execute() => _statsService.computeStats();
 }

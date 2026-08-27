@@ -24,7 +24,6 @@ import '../../features/practice/data/sources/exercise_generator_source.dart';
 import '../../features/practice/domain/use_cases/compute_sm2_use_case.dart';
 import '../../features/practice/domain/use_cases/generate_exercise_use_case.dart';
 // --- Stats DI (Plan 5) ---
-import 'package:hive/hive.dart';
 import '../services/stats_service.dart';
 import '../../features/practice/domain/entities/learning_stats.dart';
 import '../../features/practice/domain/use_cases/get_learning_stats_use_case.dart';
@@ -134,7 +133,7 @@ ComputeSm2UseCase computeSm2UseCase(ComputeSm2UseCaseRef ref) =>
 
 @riverpod
 StatsService statsService(StatsServiceRef ref) => StatsService(
-      vocabBox: Hive.box<String>('vocab_records'),
+      repository: ref.watch(vocabRepositoryProvider),
       prefs: ref.read(sharedPreferencesProvider),
     );
 
@@ -144,7 +143,7 @@ GetLearningStatsUseCase getLearningStatsUseCase(
     GetLearningStatsUseCase(ref.read(statsServiceProvider));
 
 @riverpod
-LearningStats learningStats(LearningStatsRef ref) =>
+Future<LearningStats> learningStats(LearningStatsRef ref) =>
     ref.watch(statsServiceProvider).computeStats();
 
 @riverpod
