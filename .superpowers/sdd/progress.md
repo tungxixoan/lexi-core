@@ -1495,3 +1495,15 @@ Review (sonnet): spec ✅, code quality Approved, zero findings — clean on fir
 Flagged for awareness (not a defect): `flutter analyze lib/` on the whole project is expected to stay red at `app_providers.dart:91` (`const VocabRepositoryImpl()` needs the now-required `uid`) until Task 4 wires up the signed-in-user DI — explicitly scoped there per the plan, not a Task 1 gap.
 
 Task 1: complete (commits b0d7803..f59cda4, review clean, no fix round). 13/13 tests, flutter analyze clean on the touched file.
+
+## Task 2: StatsService + notification scheduling — async — complete
+
+Converted `StatsService.computeStats()` from a synchronous Hive-box scan to `Future<LearningStats>` reading via `VocabRepository.getAll()` (commit `7faa308`), rippled through `GetLearningStatsUseCase` and `notification_notifier.dart`'s `_computeNextDueAt()`.
+
+Implementer went one step beyond the brief's literal Step 3 code: also converted `app_providers.dart`'s `learningStatsProvider` from sync `LearningStats` to `Future<LearningStats>` — necessary because `computeStats()` becoming async otherwise makes `app_providers.dart` itself fail to compile (Dart doesn't implicitly unwrap Futures), a plan gap since Task 2's own brief only showed the change reaching Task 3's file, not the ripple back into the DI file Task 2 was already editing. Also fixed a real bug in the brief's own verbatim test fixture (2 records missing `nextReviewAt` would default to "due," silently breaking the asserted `dueCount: 2`).
+
+Review (sonnet) independently verified both extras rather than trusting the report: reverted the `learningStatsProvider` fix to reproduce the exact compile error and confirm it was forced not optional; hand-traced the corrected test fixture to confirm `dueCount: 2` genuinely holds. Confirmed via `git show`/`git stash` that the one remaining `app_providers.dart` error (`VocabRepositoryImpl` missing `uid`) predates this task (Task 1's deliberate deferral to Task 4/5).
+
+Spec: ✅. Code quality: Approved. 1 Minor logged, not fixed: `reschedule()` has no try/catch at 2 of its 3 call sites (`NotificationNotifier.build()`'s microtask/listener, `app_shell.dart`'s lifecycle callback) — pre-existing gap, not introduced by this task, but risk is now materially higher since the underlying calls hit live Firestore instead of local Hive. Flagged for the final whole-branch review to triage against the plan's "async failures must be caught, no crash" global constraint.
+
+Task 2: complete (commits 71b4569..7faa308, review clean, no fix round). 4/4 tests, flutter analyze confined to the 2 files explicitly deferred to Task 3 plus the pre-existing Task-1-deferred uid error.
