@@ -73,6 +73,28 @@ describe("buildVocabSuggestionsPrompt", () => {
     expect(prompt).not.toContain("Do NOT suggest");
   });
 
+  it("matches the full exact prompt string when includeTranslation is false (regression lock)", () => {
+    const prompt = buildVocabSuggestionsPrompt("text", "english", [], false);
+    expect(prompt).toBe(
+      'You are a language learning assistant helping a Vietnamese speaker learn English. ' +
+        'Given this text: "text", suggest up to 10 words or short phrases from the text that are ' +
+        'worth learning. If nothing in the text is worth learning, use an empty ' +
+        '"suggestions" array. Respond with JSON only (no markdown, no code fences): ' +
+        '{"suggestions":[{"headword":"exact word or phrase from the text","ipa":"IPA transcription",' +
+        '"meaning":"Vietnamese definition","definition":"English definition",' +
+        '"synonyms":["2-4 English synonyms, or empty array if none fit"],' +
+        '"examples":["example 1","example 2"],' +
+        '"suggestedTopics":["exactly one topic chosen from: Daily Life, Travel, Food & Drink, Business, ' +
+        'Technology, Health, Education, Entertainment, Nature, Emotion, Academic, Idioms, Phrasal Verbs, ' +
+        'Slang, Social/Casual, Sports, Art & Culture, Science, Law & Politics, Other"],' +
+        '"cefrLevel":"a1, a2, b1, b2, c1, or c2"}]} ' +
+        'Every suggestion\'s "suggestedTopics" array is REQUIRED and must contain exactly one topic from ' +
+        'that list — never an empty array, even when generating many suggestions at once. ' +
+        'Every "meaning" field must use only Vietnamese script — ' +
+        'never Chinese, Japanese, or other non-Vietnamese characters.'
+    );
+  });
+
   it("requires a non-empty suggestedTopics for every suggestion, even across a batch", () => {
     const prompt = buildVocabSuggestionsPrompt("text", "english", []);
     expect(prompt).toContain("exactly one topic chosen from");
@@ -124,7 +146,7 @@ describe("parseVocabSuggestions", () => {
     expect(result).toEqual({ suggestions: [], translation: "" });
   });
 
-  it("returns an empty array when suggestions is missing or not an array", () => {
+  it("returns an empty suggestions array when suggestions is missing or not an array", () => {
     expect(parseVocabSuggestions({})).toEqual({ suggestions: [], translation: "" });
     expect(parseVocabSuggestions({ suggestions: "not an array" })).toEqual({
       suggestions: [],

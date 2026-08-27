@@ -141,4 +141,30 @@ describe("WordRadarPage (scan)", () => {
     expect(screen.getByText("Bật AI trong Cài đặt để nhận gợi ý từ mới.")).toBeInTheDocument();
     expect(screen.queryByTestId("suggestions-section")).not.toBeInTheDocument();
   });
+
+  it("resets stale highlight/popover state (HighlightedText) on a second scan with different known words", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue([
+      makeRecord({ id: "r1", headword: "increase", targetLanguage: "english" }),
+      makeRecord({ id: "r2", headword: "decrease", targetLanguage: "english" }),
+    ]);
+
+    render(<WordRadarPage />);
+    const textarea = await screen.findByPlaceholderText("Dán văn bản vào đây…");
+
+    // First scan: open the popover for "increase".
+    fireEvent.change(textarea, { target: { value: "A big increase happened." } });
+    fireEvent.click(screen.getByRole("button", { name: "Quét" }));
+    fireEvent.click(screen.getByRole("button", { name: "increase" }));
+    expect(screen.getByRole("tooltip")).toBeInTheDocument();
+
+    // Second scan with a different known word: the old word must be gone, the new
+    // word must be highlighted, and no stale popover should carry over.
+    fireEvent.change(textarea, { target: { value: "A steep decrease happened." } });
+    fireEvent.click(screen.getByRole("button", { name: "Quét" }));
+
+    expect(screen.queryByRole("button", { name: "increase" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "decrease" })).toBeInTheDocument();
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
 });

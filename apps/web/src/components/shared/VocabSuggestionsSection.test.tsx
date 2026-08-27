@@ -288,6 +288,35 @@ describe("VocabSuggestionsSection (includeTranslation)", () => {
     expect(call.prompt).toContain("translate the full text into Vietnamese");
   });
 
+  it("highlights only the meaning of headwords that actually appear in the scanned text", async () => {
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        translation: "Cô ấy rất tỉ mỉ, không phù du chút nào.",
+        suggestions: [],
+      }),
+    });
+    const existing = [
+      makeRecord({ headword: "meticulous", meaning: "tỉ mỉ" }),
+      makeRecord({ headword: "ephemeral", meaning: "phù du" }),
+    ];
+
+    const { container } = render(
+      <VocabSuggestionsSection
+        text="She is meticulous and diligent."
+        existingRecords={existing}
+        topics={[]}
+        includeTranslation
+      />
+    );
+
+    await screen.findByText("Không có gợi ý mới.");
+
+    const marks = container.querySelectorAll(".translation-block mark");
+    const markTexts = Array.from(marks).map((m) => m.textContent);
+    expect(markTexts).toContain("tỉ mỉ");
+    expect(markTexts).not.toContain("phù du");
+  });
+
   it("renders no translation block when includeTranslation is false or omitted", async () => {
     vi.mocked(generateContent).mockResolvedValue({
       text: JSON.stringify({

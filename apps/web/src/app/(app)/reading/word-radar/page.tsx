@@ -20,6 +20,7 @@ export default function WordRadarPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [text, setText] = useState("");
   const [scannedText, setScannedText] = useState<string | null>(null);
+  const [scanId, setScanId] = useState(0);
 
   useEffect(() => {
     if (!user) return;
@@ -74,7 +75,10 @@ export default function WordRadarPage() {
             type="button"
             className="btn-primary"
             disabled={text.length === 0}
-            onClick={() => setScannedText(text)}
+            onClick={() => {
+              setScannedText(text);
+              setScanId((id) => id + 1);
+            }}
           >
             Quét
           </button>
@@ -86,6 +90,7 @@ export default function WordRadarPage() {
           <div className="word-radar-result-card">
             <p className="suggestions-title">Văn bản</p>
             <HighlightedText
+              key={scanId}
               text={scannedText}
               variant="interactive"
               records={knownRecords}
@@ -95,6 +100,7 @@ export default function WordRadarPage() {
 
           {aiEnabled ? (
             <VocabSuggestionsSection
+              key={scanId}
               text={scannedText}
               existingRecords={knownRecords}
               topics={topics}

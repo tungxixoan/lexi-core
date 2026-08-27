@@ -1334,15 +1334,11 @@ button.btn-secondary {
   flex-direction: column;
   gap: 10px;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid transparent;
   border-radius: 18px;
   padding: 26px 28px;
   text-decoration: none;
   color: var(--ink);
-}
-
-.reading-hub-card-toggle {
-  border: 2px solid transparent;
   cursor: pointer;
   font-family: inherit;
   text-align: left;
@@ -1871,9 +1867,8 @@ button.btn-secondary {
 
 .word-popover {
   position: absolute;
-  left: 50%;
-  bottom: calc(100% + 8px);
-  transform: translateX(-50%);
+  top: calc(100% + 8px);
+  left: 0;
   z-index: 10;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1927,6 +1922,11 @@ button.btn-secondary {
   border-radius: 16px;
   padding: 20px;
   margin-bottom: 20px;
+}
+
+.word-radar-result-card p,
+.translation-block p {
+  white-space: pre-wrap;
 }
 
 .word-radar-textarea {

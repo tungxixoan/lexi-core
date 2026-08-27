@@ -144,7 +144,10 @@ export function VocabSuggestionsSection({
           <HighlightedText
             text={translation}
             variant="static"
-            highlights={existingRecords.map((r) => r.meaning).filter((m) => m.length > 0)}
+            highlights={existingRecords
+              .filter((r) => text.toLowerCase().includes(r.headword.toLowerCase()))
+              .map((r) => r.meaning)
+              .filter((m) => m.length > 0)}
           />
         </div>
       )}
