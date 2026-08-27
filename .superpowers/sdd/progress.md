@@ -1462,3 +1462,24 @@ Review (haiku, appropriate for this small single-file mechanical task): spec ✅
 Task 4: complete (commits 28b7652..164a0ec, review clean, no fix round).
 
 All 4 tasks of the Word Radar plan are now implemented and individually reviewed. Next: final whole-branch review.
+
+## Final whole-branch review — complete
+
+Dispatched on opus (most capable available model), covering the full branch diff (13 commits, `05f8a5d..6bf7dc5` — MERGE_BASE = the commit right before the design spec was first committed).
+
+Independently re-verified every ledger claim rather than trusting the narrative (byte-for-byte re-derived the Task 2 prompt-parity fix from git history and diffed both paths programmatically, compared the highlight algorithm line-by-line against the real Flutter source, benchmarked `splitIntoSpans`'s performance rather than assuming it was fine). Found the branch NOT ready to ship on the first pass — 4 Important findings invisible to any single task's own reviewer:
+
+1. **Stale cross-scan state** — scanning a second piece of text doesn't remount `HighlightedText`/`VocabSuggestionsSection` (no `key`, same JSX position), so a stale translation from the FIRST scan stays on screen during/after the second scan's AI call — reproduced live by the reviewer, not just reasoned about.
+2. **Translation over-highlighting** — the translation block highlighted meanings of the user's ENTIRE vocab bank (all known-language records) instead of only words that actually appear in the scanned text, diverging from Flutter's real behavior — reproduced live.
+3. **Reading hub 5th card missing shared styling** — the new "Quét từ vựng" card used only the base `.reading-hub-card` class, but `cursor: pointer`/`font-family`/`text-align`/`border` all lived in the sibling-only `.reading-hub-card-toggle` class, so the new card rendered center-aligned with no pointer cursor and a visible border its siblings don't have — invisible to jsdom tests, only visible in the real rendered page.
+4. **Popover clipped by the app shell** — `.main`'s `overflow-y: auto` makes it a clipping container on both axes; the popover's centered/upward positioning could push it past the container's unreachable left edge — traced to CSS overflow-axis computation rules, not assumed.
+
+Dispatched ONE fix subagent (per skill guidance — not one per finding) covering all 4 Important + 6 Minor findings in a single commit (`e2426ef`): `scanId` + `key` remount strategy, filtered translation highlights to text-matched records only, moved shared button-reset CSS into the base hub-card class, repositioned the popover to open downward/left-aligned matching the existing `.vb-topic-popover` pattern, plus `white-space: pre-wrap` for pasted line breaks, a stale test title rename, and 3 new regression tests (second-scan staleness, translation-highlight filtering, an exact-string prompt-parity lock).
+
+Re-review (opus): Approved. Went further than reading the diff — mutation-tested both behavioral fixes (temporarily reverted each, confirmed the new tests genuinely fail without the fix, restored), traced the CSS cascade specificity to prove the 4 pre-existing hub cards' appearance is unchanged, and confirmed the popover fix is a real equivalent (not just moved, genuinely un-clippable) by reasoning through `overflow-x`'s computed-value coupling to `overflow-y`.
+
+**Verdict: Ready to ship.** 61/61 covering tests, 122/122 legacy-consumer tests, tsc clean. One nit logged (not fixed): `VocabSuggestionsSection`'s translation-highlight filter duplicates `findKnownHeadwords`'s matching logic inline instead of reusing it — cosmetic DRY opportunity, not a correctness issue.
+
+# Quét từ vựng (Word Radar) on Web: PLAN COMPLETE
+
+All 4 tasks implemented, individually reviewed (1 fix round each on Tasks 1, 2, 3; Task 4 passed clean on first review), and the whole branch passed final review after one fix round addressing 4 Important cross-task integration bugs that no single task's own review could have caught. This closes out the last remaining Flutter feature not yet ported to the React web app. 15 commits total (`2b30c37..e2426ef`). Nothing pushed to `origin/master` yet.
