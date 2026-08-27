@@ -1843,3 +1843,66 @@ button.btn-secondary {
 .dash-chart-value { position: absolute; top: -18px; font-size: 0.7rem; font-weight: 700; color: var(--ink-soft); left: 50%; transform: translateX(-50%); white-space: nowrap; }
 .dash-chart-day { font-size: 0.7rem; color: var(--ink-faint); font-weight: 600; }
 .dash-chart-col.today .dash-chart-day { color: var(--accent); font-weight: 800; }
+
+.known-highlight {
+  background: var(--sage-bg);
+  color: var(--sage);
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 1px 3px;
+}
+
+.known-highlight-interactive {
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+.known-highlight-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.word-popover {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  z-index: 10;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  font-weight: 400;
+}
+
+.pop-head-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pop-headword {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.pop-ipa {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.pop-meaning {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
