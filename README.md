@@ -507,12 +507,9 @@ users/
 - [x] Nghe hiểu (TOEIC-style listening comprehension)
 - [x] **Word Radar** — dán văn bản bất kỳ, tự động highlight từ đã học (Vocab Bank), gợi ý từ mới đáng học, và dịch nghĩa cả đoạn văn
 
-**Ưu tiên tiếp theo:**
-
-- [ ] **Serial Story** — AI viết truyện nhiều kỳ dùng từ vựng sắp đến hạn ôn, ra chương mới mỗi ngày
-
 **Ý tưởng khác đã brainstorm (chưa xếp lịch):**
 
+- [ ] **Serial Story** — AI viết truyện nhiều kỳ dùng từ vựng sắp đến hạn ôn, ra chương mới mỗi ngày
 - [ ] AI Roleplay Conversation — luyện hội thoại tình huống với AI đóng vai đối phương, chấm điểm cuối buổi
 - [ ] Shadowing Practice — nói đè lên TTS, AI so sánh nhịp điệu/độ trễ
 - [ ] Error Pattern Coach — AI phân tích lịch sử làm bài để tự sinh bài tập nhắm đúng lỗi hay lặp lại
