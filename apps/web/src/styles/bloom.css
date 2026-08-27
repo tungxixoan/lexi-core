@@ -1919,3 +1919,48 @@ button.btn-secondary {
   display: block;
   margin-bottom: 8px;
 }
+
+.word-radar-input-card,
+.word-radar-result-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.word-radar-textarea {
+  width: 100%;
+  min-height: 140px;
+  resize: vertical;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: 16px;
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+.word-radar-input-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.word-radar-char-count {
+  font-size: 13px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.word-radar-ai-hint {
+  background: var(--amber-bg);
+  color: var(--amber);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
