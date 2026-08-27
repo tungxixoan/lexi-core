@@ -1430,3 +1430,15 @@ Implemented `apps/web/src/components/shared/HighlightedText.tsx` + test (commit 
 Review (sonnet): spec ✅, code quality Approved with 1 Minor finding — `.known-highlight-static` was referenced in the JSX but never defined in `bloom.css` (traced to a gap in the plan's own CSS step, not an implementer deviation — the implementer correctly transcribed the brief verbatim). Fixed (commit `a039fe2`, `cursor: default`) and re-reviewed clean.
 
 Task 1: complete (commits f496791..a039fe2, review clean after 1 trivial fix round).
+
+## Task 2: vocabSuggestions.ts + VocabSuggestionsSection — complete
+
+Implemented `includeTranslation` opt-in on both `apps/web/src/lib/vocabSuggestions.ts` (prompt/parse) and `apps/web/src/components/shared/VocabSuggestionsSection.tsx` (renders the translation via Task 1's `HighlightedText` static variant) in one commit (`6b97922`) — deliberately unsplit per the plan's own Part A/Part B instruction, since `parseVocabSuggestions`'s return-type change and its one call site's update are interdependent and splitting them would have left `tsc` broken between commits.
+
+Review (sonnet) found 1 Important + 2 Minor. **Important**: the plan's own Step 3 prompt template (copied from Flutter's `word_radar_source.dart`, which always bakes in a trailing period) inserted a period into the `includeTranslation=false`/omitted path that the pre-Task-2 prompt never had — a real, verified byte-for-byte deviation from the Global Constraint that the 5 existing call sites' behavior must be unaffected. Traced by the reviewer directly against the pre-Task-2 git blob, not assumed. Root cause: a gap in the plan text itself (this session's plan-writer ported Flutter's punctuation without checking it against the pre-existing web prompt's own punctuation), not an implementer deviation.
+
+Fixed (commit `b57b25f`): moved the period into the `translationReminder` string itself so the false-path output is period-free again (byte-for-byte identical to before), while the true-path still reads correctly. Re-review (sonnet) independently re-derived the original pre-Task-2 string from git history (not trusting either report's prose) and confirmed genuine byte-for-byte parity restored.
+
+2 Minor findings logged, not fixed (both inert today, will matter once Task 3 is the first real `includeTranslation=true` consumer): (1) `VocabSuggestionsSection`'s `load()` resets `suggestions`/`error` on reload but never `translation` — a stale translation could flash briefly on a retry/reload once a real caller uses `includeTranslation`; (2) a pre-existing test title in `vocabSuggestions.test.ts` ("returns an empty array...") is now stale since the function returns an object, not a bare array — cosmetic only, inherited from the brief.
+
+Task 2: complete (commits aa587fc..b57b25f, review clean after 1 fix round; 1 Important finding traced to a plan-text gap, not an implementer error, and fixed).
