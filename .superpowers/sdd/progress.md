@@ -1483,3 +1483,15 @@ Re-review (opus): Approved. Went further than reading the diff — mutation-test
 # Quét từ vựng (Word Radar) on Web: PLAN COMPLETE
 
 All 4 tasks implemented, individually reviewed (1 fix round each on Tasks 1, 2, 3; Task 4 passed clean on first review), and the whole branch passed final review after one fix round addressing 4 Important cross-task integration bugs that no single task's own review could have caught. This closes out the last remaining Flutter feature not yet ported to the React web app. 15 commits total (`2b30c37..e2426ef`). Nothing pushed to `origin/master` yet.
+
+# LexiCore — Flutter: Drop Hive, Firestore-Direct + Mandatory Sign-In
+
+## Task 1: VocabRepositoryImpl — Firestore-backed — complete
+
+Rewrote `lib/features/vocabulary/data/repositories/vocab_repository_impl.dart` (commit `f59cda4`) against Firestore (`users/{uid}/vocab_records`, `users/{uid}/topics`), keeping the abstract `VocabRepository` interface completely unchanged so every existing consumer needs no changes. Added `fake_cloud_firestore` dev dependency for testing.
+
+Review (sonnet): spec ✅, code quality Approved, zero findings — clean on first pass. Independently diffed the filter/reassignment logic against the original Hive implementation (`git show` of the pre-Task-1 commit) to confirm byte-for-byte behavioral parity, not just "looks reasonable." Confirmed topic seeding is atomic (1 batch, not 20 writes) and genuinely doesn't reseed on a second call (real test proving 21, not 40, after adding 1 custom topic).
+
+Flagged for awareness (not a defect): `flutter analyze lib/` on the whole project is expected to stay red at `app_providers.dart:91` (`const VocabRepositoryImpl()` needs the now-required `uid`) until Task 4 wires up the signed-in-user DI — explicitly scoped there per the plan, not a Task 1 gap.
+
+Task 1: complete (commits b0d7803..f59cda4, review clean, no fix round). 13/13 tests, flutter analyze clean on the touched file.
