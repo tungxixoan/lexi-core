@@ -31,14 +31,17 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
   void initState() {
     super.initState();
     // Initialize CEFR filter from the user's default setting, and load due count
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       final settings = ref.read(userSettingsNotifierProvider);
-      final stats = ref.read(statsServiceProvider).computeStats();
-      setState(() {
-        _maxCefrLevel = settings.targetCefrLevel;
-        _dueCount = stats.dueCount;
-      });
+      setState(() => _maxCefrLevel = settings.targetCefrLevel);
+      try {
+        final stats = await ref.read(statsServiceProvider).computeStats();
+        if (!mounted) return;
+        setState(() => _dueCount = stats.dueCount);
+      } catch (_) {
+        // Best-effort: leave _dueCount at its initial 0 on failure.
+      }
     });
   }
 

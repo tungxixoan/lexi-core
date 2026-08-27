@@ -20,62 +20,76 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final stats = ref.watch(learningStatsProvider);
+    final statsAsync = ref.watch(learningStatsProvider);
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Tiến độ học')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _StreakBanner(streak: stats.currentStreak),
-          const SizedBox(height: 16),
-          Row(
+    return statsAsync.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => Scaffold(
+        appBar: AppBar(title: const Text('Tiến độ học')),
+        body: const Center(child: Text('Không tải được dữ liệu tiến độ.')),
+      ),
+      data: (stats) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('Tiến độ học')),
+          body: ListView(
+            padding: const EdgeInsets.all(16),
             children: [
-              Expanded(
-                child: _StatCard(
-                  label: 'Hôm nay',
-                  value: '${stats.dueCount}',
-                  icon: Icons.today_outlined,
-                ),
+              _StreakBanner(streak: stats.currentStreak),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatCard(
+                      label: 'Hôm nay',
+                      value: '${stats.dueCount}',
+                      icon: Icons.today_outlined,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _StatCard(
+                      label: 'Đã thuộc',
+                      value: '${stats.masteredCount}',
+                      icon: Icons.military_tech_outlined,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatCard(
-                  label: 'Đã thuộc',
-                  value: '${stats.masteredCount}',
-                  icon: Icons.military_tech_outlined,
+              const SizedBox(height: 12),
+              if (stats.dueCount > 0) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed:
+                        _loading ? null : () => _startDueSession(context),
+                    icon: _loading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.play_arrow),
+                    label: Text(_loading
+                        ? 'Đang tải...'
+                        : 'Ôn ${stats.dueCount} từ ngay'),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 24),
+              ],
+              Text('7 ngày qua', style: theme.textTheme.titleMedium),
+              const SizedBox(height: 8),
+              _WeeklyChart(weeklyLog: stats.weeklyLog),
+              const SizedBox(height: 24),
+              Text('Theo cấp độ', style: theme.textTheme.titleMedium),
+              const SizedBox(height: 8),
+              _CefrBreakdown(
+                  breakdown: stats.cefrBreakdown, total: stats.totalCount),
             ],
           ),
-          const SizedBox(height: 12),
-          if (stats.dueCount > 0) ...[
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _loading ? null : () => _startDueSession(context),
-                icon: _loading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.play_arrow),
-                label: Text(_loading ? 'Đang tải...' : 'Ôn ${stats.dueCount} từ ngay'),
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
-          Text('7 ngày qua', style: theme.textTheme.titleMedium),
-          const SizedBox(height: 8),
-          _WeeklyChart(weeklyLog: stats.weeklyLog),
-          const SizedBox(height: 24),
-          Text('Theo cấp độ', style: theme.textTheme.titleMedium),
-          const SizedBox(height: 8),
-          _CefrBreakdown(
-              breakdown: stats.cefrBreakdown, total: stats.totalCount),
-        ],
-      ),
+        );
+      },
     );
   }
 
