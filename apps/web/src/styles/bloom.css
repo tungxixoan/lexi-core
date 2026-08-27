@@ -1860,6 +1860,10 @@ button.btn-secondary {
   text-decoration-style: dotted;
 }
 
+.known-highlight-static {
+  cursor: default;
+}
+
 .known-highlight-wrap {
   position: relative;
   display: inline-block;
