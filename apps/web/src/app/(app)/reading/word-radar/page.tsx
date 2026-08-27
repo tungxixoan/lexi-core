@@ -54,7 +54,7 @@ export default function WordRadarPage() {
     <div>
       <h2 className="scr-title">Quét từ vựng</h2>
       <p className="scr-sub">
-        Dán bất kỳ văn bản nào — highlight ngay từ bạn đã học, và (nếu bật AI) nhận bản dịch cùng gợi
+        Dán bất kỳ văn bản nào — tô sáng ngay từ bạn đã học, và (nếu bật AI) nhận bản dịch cùng gợi
         ý từ mới.
       </p>
 
