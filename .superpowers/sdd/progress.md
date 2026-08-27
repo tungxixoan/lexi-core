@@ -1420,3 +1420,13 @@ Independently re-verified rather than trusting the ledger: ran the full test sui
 # Tổng quan (Dashboard) on Web: PLAN COMPLETE
 
 All 5 tasks implemented, individually reviewed (1 fix round each on Tasks 1, 3, 5; Task 2 and Task 4 passed clean on first review), and the whole branch passed final review with one small test-coverage fix round. 18 commits total (`318e164..ee7b746`). Nothing pushed to `origin/master` yet.
+
+# LexiCore — Quét từ vựng (Word Radar) on Web
+
+## Task 1: HighlightedText shared component — complete
+
+Implemented `apps/web/src/components/shared/HighlightedText.tsx` + test (commit `34f0309`), a direct port of Flutter's `word_radar_screen.dart`'s `_HighlightedText` matching algorithm (earliest-occurrence-wins, no length tie-break) — verified line-by-line against the real Dart source by the reviewer, including tracing a case where a shorter, later-in-candidate-list word still wins because its occurrence starts earlier in the text. Two variants: `interactive` (clickable, opens a popover reusing the existing `PronunciationButton`) and `static` (plain `<mark>`, no click handler — used by Task 2 for translation highlighting).
+
+Review (sonnet): spec ✅, code quality Approved with 1 Minor finding — `.known-highlight-static` was referenced in the JSX but never defined in `bloom.css` (traced to a gap in the plan's own CSS step, not an implementer deviation — the implementer correctly transcribed the brief verbatim). Fixed (commit `a039fe2`, `cursor: default`) and re-reviewed clean.
+
+Task 1: complete (commits f496791..a039fe2, review clean after 1 trivial fix round).
