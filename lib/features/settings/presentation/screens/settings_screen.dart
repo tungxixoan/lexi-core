@@ -2,7 +2,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/services/sync_service.dart';
 import '../../../../core/widgets/selection_sheets.dart';
 import '../../../../features/dictionary/domain/entities/ai_provider.dart';
 import '../../../../features/dictionary/domain/entities/language.dart';
@@ -10,7 +9,6 @@ import '../../../../features/dictionary/domain/entities/user_settings_state.dart
 import '../../../../features/dictionary/presentation/providers/user_settings_provider.dart';
 import '../../../../features/vocabulary/domain/entities/cefr_level.dart';
 import '../providers/auth_notifier.dart';
-import '../providers/sync_notifier.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -19,7 +17,6 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(userSettingsNotifierProvider);
     final authAsync = ref.watch(authNotifierProvider);
-    final syncStatus = ref.watch(syncNotifierProvider);
     final notifier = ref.read(userSettingsNotifierProvider.notifier);
     final theme = Theme.of(context);
 
@@ -33,29 +30,11 @@ class SettingsScreen extends ConsumerWidget {
           // ── Tài khoản ─────────────────────────────────────────
           _SectionHeader('Tài khoản'),
           authAsync.when(
-            data: (user) => user == null
-                ? _SignedOutCard(
-                    onSignIn: () async {
-                      try {
-                        await ref
-                            .read(authNotifierProvider.notifier)
-                            .signInWithGoogle();
-                      } catch (_) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Đăng nhập thất bại. Thử lại.')),
-                          );
-                        }
-                      }
-                    },
-                  )
-                : _SignedInSection(
-                    user: user,
-                    syncStatus: syncStatus,
-                    onSignOut: () =>
-                        ref.read(authNotifierProvider.notifier).signOut(),
-                  ),
+            data: (user) => _SignedInSection(
+              user: user!,
+              onSignOut: () =>
+                  ref.read(authNotifierProvider.notifier).signOut(),
+            ),
             loading: () => const LinearProgressIndicator(),
             error: (_, __) =>
                 const ListTile(title: Text('Lỗi xác thực')),
@@ -338,88 +317,35 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _SignedOutCard extends StatelessWidget {
-  const _SignedOutCard({required this.onSignIn});
-  final VoidCallback onSignIn;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text('Đăng nhập để đồng bộ dữ liệu trên nhiều thiết bị'),
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: onSignIn,
-              icon: const Icon(Icons.login),
-              label: const Text('Đăng nhập với Google'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _SignedInSection extends StatelessWidget {
   const _SignedInSection({
     required this.user,
-    required this.syncStatus,
     required this.onSignOut,
   });
   final User user;
-  final SyncStatus syncStatus;
   final VoidCallback onSignOut;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        ListTile(
-          leading: CircleAvatar(
-            backgroundImage: user.photoURL != null
-                ? NetworkImage(user.photoURL!)
-                : null,
-            child: user.photoURL == null
-                ? Text(
-                    (user.displayName?.isNotEmpty ?? false)
-                        ? user.displayName![0].toUpperCase()
-                        : '?',
-                  )
-                : null,
-          ),
-          title: Text(user.displayName ?? 'Người dùng'),
-          subtitle: Text(user.email ?? ''),
-          trailing: TextButton(
-            onPressed: onSignOut,
-            child: const Text('Đăng xuất'),
-          ),
-        ),
-        ListTile(
-          leading: syncStatus == SyncStatus.syncing
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Icon(
-                  syncStatus == SyncStatus.error
-                      ? Icons.sync_problem_outlined
-                      : Icons.sync_outlined,
-                  color: syncStatus == SyncStatus.error ? Colors.red : null,
-                ),
-          title: const Text('Đồng bộ'),
-          subtitle: Text(switch (syncStatus) {
-            SyncStatus.idle => 'Đã đồng bộ',
-            SyncStatus.syncing => 'Đang đồng bộ...',
-            SyncStatus.error => 'Lỗi đồng bộ',
-          }),
-        ),
-      ],
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundImage: user.photoURL != null
+            ? NetworkImage(user.photoURL!)
+            : null,
+        child: user.photoURL == null
+            ? Text(
+                (user.displayName?.isNotEmpty ?? false)
+                    ? user.displayName![0].toUpperCase()
+                    : '?',
+              )
+            : null,
+      ),
+      title: Text(user.displayName ?? 'Người dùng'),
+      subtitle: Text(user.email ?? ''),
+      trailing: TextButton(
+        onPressed: onSignOut,
+        child: const Text('Đăng xuất'),
+      ),
     );
   }
 }
