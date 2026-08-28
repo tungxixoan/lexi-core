@@ -56,7 +56,12 @@ String? authRedirectDecision({
   if (!signedIn) {
     return matchedLocation == '/sign-in' ? null : '/sign-in';
   }
-  if (matchedLocation == '/splash' || matchedLocation == '/sign-in') return '/';
+  // Signed in: /splash auto-proceeds to home. /sign-in does NOT — the
+  // sign-in screen itself navigates away only once its post-sign-in
+  // migration step has genuinely settled (see sign_in_screen.dart), so a
+  // migration failure can show a real error + retry instead of being
+  // raced away by this redirect.
+  if (matchedLocation == '/splash') return '/';
   return null;
 }
 

@@ -1,6 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/services/hive_migration_service.dart';
 import '../providers/auth_notifier.dart';
 
@@ -11,37 +12,61 @@ class SignInScreen extends ConsumerStatefulWidget {
   ConsumerState<SignInScreen> createState() => _SignInScreenState();
 }
 
+enum _Step { idle, signingIn, migrating }
+
 class _SignInScreenState extends ConsumerState<SignInScreen> {
-  bool _loading = false;
-  String? _error;
+  _Step _step = _Step.idle;
+  String? _signInError;
+  String? _migrationError;
 
   Future<void> _signIn() async {
     setState(() {
-      _loading = true;
-      _error = null;
+      _step = _Step.signingIn;
+      _signInError = null;
+      _migrationError = null;
     });
     try {
       await ref.read(authNotifierProvider.notifier).signInWithGoogle();
-      final user = ref.read(authNotifierProvider).valueOrNull;
-      if (user != null) {
-        final migration = HiveMigrationService(
-          vocabBox: Hive.box<String>('vocab_records'),
-          topicsBox: Hive.box<String>('topics'),
-        );
-        await migration.migrateIfNeeded(user.uid);
-      }
-      // On success, the router's redirect (driven by authNotifierProvider's
-      // stream) automatically navigates away from this screen — no
-      // explicit navigation call needed here.
     } catch (e) {
-      if (mounted) setState(() => _error = 'Đăng nhập thất bại. Thử lại.');
-    } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _step = _Step.idle;
+          _signInError = 'Đăng nhập thất bại. Thử lại.';
+        });
+      }
+      return;
     }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      // Sign-in flow completed without an authenticated user (e.g. the
+      // user dismissed the Google account picker) — quietly return to the
+      // idle state, no error message needed for a user-initiated cancel.
+      if (mounted) setState(() => _step = _Step.idle);
+      return;
+    }
+
+    if (mounted) setState(() => _step = _Step.migrating);
+    try {
+      final migration = HiveMigrationService();
+      await migration.migrateIfNeeded(user.uid);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _step = _Step.idle;
+          _migrationError =
+              'Không thể chuyển dữ liệu từ vựng cũ lên máy chủ. Vui lòng thử lại.';
+        });
+      }
+      return;
+    }
+
+    if (mounted) context.go('/');
   }
 
   @override
   Widget build(BuildContext context) {
+    final loading = _step != _Step.idle;
     return Scaffold(
       body: Center(
         child: Padding(
@@ -54,9 +79,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              const Text('Đăng nhập để tiếp tục'),
+              Text(
+                _step == _Step.migrating
+                    ? 'Đang chuyển dữ liệu từ vựng cũ…'
+                    : 'Đăng nhập để tiếp tục',
+              ),
               const SizedBox(height: 24),
-              if (_loading)
+              if (loading)
                 const CircularProgressIndicator()
               else
                 FilledButton.icon(
@@ -64,9 +93,18 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   icon: const Icon(Icons.login),
                   label: const Text('Đăng nhập với Google'),
                 ),
-              if (_error != null) ...[
+              if (_signInError != null) ...[
                 const SizedBox(height: 12),
-                Text(_error!, style: const TextStyle(color: Colors.red)),
+                Text(_signInError!, style: const TextStyle(color: Colors.red)),
+              ],
+              if (_migrationError != null) ...[
+                const SizedBox(height: 12),
+                Text(_migrationError!, style: const TextStyle(color: Colors.red)),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  onPressed: _signIn,
+                  child: const Text('Thử lại'),
+                ),
               ],
             ],
           ),

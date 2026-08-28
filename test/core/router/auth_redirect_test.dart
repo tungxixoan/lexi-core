@@ -38,10 +38,17 @@ void main() {
       );
     });
 
-    test('resolved + signed in + on /sign-in redirects home', () {
+    test('resolved + signed in + on /sign-in does NOT auto-redirect (the sign-in screen navigates away itself)', () {
       expect(
         authRedirectDecision(matchedLocation: '/sign-in', hasResolved: true, signedIn: true),
-        '/',
+        isNull,
+      );
+    });
+
+    test('not yet resolved + already signed in stays on /splash (auth-resolution check takes precedence)', () {
+      expect(
+        authRedirectDecision(matchedLocation: '/vocab', hasResolved: false, signedIn: true),
+        '/splash',
       );
     });
 

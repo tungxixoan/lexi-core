@@ -1,5 +1,4 @@
 // test/features/vocabulary/data/repositories/vocab_repository_impl_test.dart
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
@@ -9,7 +8,6 @@ import 'package:lexi_core/features/vocabulary/data/repositories/vocab_repository
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/topic.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/vocab_record.dart';
-import 'package:lexi_core/features/vocabulary/domain/repositories/vocab_repository.dart';
 
 VocabRecord _record({
   required String id,
