@@ -1245,8 +1245,10 @@ git commit -m "feat: mandatory sign-in gate + one-time Hive-to-Firestore migrati
 
 - [ ] **Step 1: Confirm nothing else references Hive before deleting**
 
+**Note: this step's expected output changed after Task 4's review-fix round (commit `44acf55`) — read this version, not an earlier one.** Task 4 ended up making `HiveMigrationService` open its own Hive boxes internally (so the migration path doesn't depend on `main.dart` keeping them open — this was itself a fix for a real cross-task bug), which moved where Hive is referenced from `app_providers.dart`/`sign_in_screen.dart` to `hive_migration_service.dart` instead.
+
 Run: `grep -rn "package:hive\|Hive\." lib/ --include="*.dart"`
-Expected output: only 3 remaining files — `lib/core/di/app_providers.dart` (the `vocabRepositoryProvider`, updated in Step 4 below), `lib/features/settings/presentation/screens/sign_in_screen.dart` (Task 4's migration call, intentionally still using Hive to read the boxes being migrated away from), and `lib/main.dart` (removed in Step 5 below). If anything else appears, stop and investigate before proceeding — it means an earlier task missed a call site.
+Expected output: only 2 remaining files — `lib/core/services/hive_migration_service.dart` (owns opening/reading/clearing the Hive boxes for the one-time migration — this is the intentional, permanent last consumer of Hive, not something Step 5 removes) and `lib/main.dart` (its `Hive.initFlutter()`/`openBox` calls are removed in Step 5 below, since nothing needs them open at startup anymore — `hive_migration_service.dart` opens them itself, lazily, only when a migration actually runs). `lib/core/di/app_providers.dart` and `lib/features/settings/presentation/screens/sign_in_screen.dart` should NOT appear — both stopped referencing Hive directly during Task 4's fix round. If the actual output doesn't match this, stop and investigate before proceeding — it means something drifted from this plan's assumptions and needs to be understood before deleting anything.
 
 - [ ] **Step 2: Delete `SyncService` and its test**
 
@@ -1260,31 +1262,9 @@ git rm lib/core/services/sync_service.dart test/core/services/sync_service_test.
 git rm lib/features/settings/presentation/providers/sync_notifier.dart lib/features/settings/presentation/providers/sync_notifier.g.dart
 ```
 
-- [ ] **Step 4: Update `vocabRepositoryProvider` to construct against the signed-in user**
+- [ ] **Step 4: `vocabRepositoryProvider` — already done, verify only**
 
-Read `lib/core/di/app_providers.dart` in full first to find the current `vocabRepositoryProvider` definition (it currently constructs `VocabRepositoryImpl()` with no arguments, or however it's currently wired — check the exact current code before editing). Replace it with:
-
-```dart
-@riverpod
-VocabRepository vocabRepository(VocabRepositoryRef ref) {
-  final user = ref.watch(authNotifierProvider).valueOrNull;
-  if (user == null) {
-    throw StateError(
-      'vocabRepositoryProvider read before sign-in — the router\'s mandatory '
-      'sign-in redirect should make this unreachable.',
-    );
-  }
-  return VocabRepositoryImpl(uid: user.uid);
-}
-```
-
-Add the import for `authNotifierProvider` if not already present in this file:
-```dart
-import '../../features/settings/presentation/providers/auth_notifier.dart';
-```
-
-Run: `dart run build_runner build --delete-conflicting-outputs`
-Expected: regenerates `app_providers.g.dart` cleanly.
+**This step was already completed during Task 4** (its implementer wired this up ahead of schedule, since `app_providers.dart` needed it to compile once Task 4's sign-in screen existed — confirmed correct and necessary by that task's own review). Read the current `lib/core/di/app_providers.dart` and confirm `vocabRepositoryProvider` already reads `authNotifierProvider` and constructs `VocabRepositoryImpl(uid: user.uid)`, throwing a `StateError` when signed out. If it matches (it should), do NOT re-edit it or re-run `build_runner` — this is a no-op confirmation step, same as Task 3 found for `learningStatsProvider`. Only take action here if the current code does NOT already match this description, in which case implement it as originally specified (construct `VocabRepositoryImpl(uid: user.uid)` from the signed-in `authNotifierProvider` user, throwing/erroring clearly if read while signed out) and treat that as a genuine gap worth flagging in your report.
 
 - [ ] **Step 5: Remove Hive initialization from `main.dart`**
 
@@ -1383,7 +1363,7 @@ class _SignedInSection extends StatelessWidget {
 
 - [ ] **Step 7: Remove `hive`/`hive_flutter` from `pubspec.yaml`**
 
-Run: `grep -rn "package:hive" lib/ test/ --include="*.dart"` — expected: no matches remain anywhere (Task 4's `sign_in_screen.dart` and `hive_migration_service.dart`/its test are the LAST legitimate Hive usages, and they stay — this grep should only find matches in those specific files, confirming everything else is clean; if it finds nothing at all, `hive`/`hive_flutter` are still needed for the migration path, so do NOT remove them from `pubspec.yaml` — they remain dependencies as long as `HiveMigrationService`/`sign_in_screen.dart` exist, which is permanently, since a real user could still update from an old Hive-only version at any point in the future).
+Run: `grep -rn "package:hive" lib/ test/ --include="*.dart"` — expected: matches remain ONLY in `lib/core/services/hive_migration_service.dart` and `test/core/services/hive_migration_service_test.dart` (per Step 1's updated note above, Task 4's fix round moved the last legitimate Hive usage there — `sign_in_screen.dart` no longer touches Hive directly). These are the LAST legitimate Hive usages, and they stay — `hive`/`hive_flutter` remain dependencies as long as `HiveMigrationService` exists, which is permanently, since a real user could still update from an old Hive-only version at any point in the future.
 
 Given this, **do not remove `hive`/`hive_flutter` from `pubspec.yaml`** — leave this step as a no-op confirmation only, not a removal. (Correcting the task's own file list above: `pubspec.yaml` needs no edit in this task.)
 
@@ -1399,5 +1379,5 @@ Expected: all tests pass.
 
 ```bash
 git add -A
-git commit -m "chore: delete SyncService/SyncNotifier, wire vocabRepositoryProvider to signed-in uid, clean up Settings"
+git commit -m "chore: delete SyncService/SyncNotifier, remove Hive init from main.dart, clean up Settings"
 ```
