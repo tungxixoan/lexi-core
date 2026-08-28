@@ -1,11 +1,23 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { VocabRecordCount } from "./VocabRecordCount";
 import { useAuthUser } from "@/lib/useAuthUser";
+import { useSettingsContext } from "@/lib/SettingsContext";
 import { countVocabRecords } from "@/lib/vocabRecords";
+import { DEFAULT_SETTINGS } from "@/lib/settings";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
+vi.mock("@/lib/SettingsContext", () => ({ useSettingsContext: vi.fn() }));
 vi.mock("@/lib/vocabRecords", () => ({ countVocabRecords: vi.fn() }));
+
+beforeEach(() => {
+  vi.mocked(useSettingsContext).mockReturnValue({
+    settings: DEFAULT_SETTINGS,
+    loading: false,
+    error: null,
+    save: vi.fn(),
+  } as never);
+});
 
 describe("VocabRecordCount", () => {
   it("renders nothing when signed out", () => {
@@ -26,6 +38,7 @@ describe("VocabRecordCount", () => {
         screen.getByText("Bạn có 7 từ trong Ngân hàng từ vựng.")
       ).toBeInTheDocument()
     );
+    expect(countVocabRecords).toHaveBeenCalledWith("user-123", "english");
   });
 
   it("shows an error message if the Firestore read fails", async () => {

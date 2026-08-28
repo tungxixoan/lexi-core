@@ -23,14 +23,14 @@ export default function WordRadarPage() {
   const [scanId, setScanId] = useState(0);
 
   useEffect(() => {
-    if (!user) return;
-    Promise.all([getVocabRecords(user.uid), getTopics(user.uid)])
+    if (!user || !settings) return;
+    Promise.all([getVocabRecords(user.uid, settings.targetLanguage), getTopics(user.uid)])
       .then(([r, t]) => {
         setRecords(r);
         setTopics(t);
       })
       .catch(() => {});
-  }, [user]);
+  }, [user, settings]);
 
   if (authLoading) return <p>Đang tải…</p>;
 
@@ -46,7 +46,6 @@ export default function WordRadarPage() {
 
   if (settingsLoading || !settings) return <p>Đang tải…</p>;
 
-  const knownRecords = records.filter((r) => r.targetLanguage === settings.targetLanguage);
   const activeConfig = settings.providers[settings.activeProvider];
   const aiEnabled = Boolean(activeConfig.apiKeyCiphertext);
   const ttsLang = ttsLanguageCode(settings.targetLanguage);
@@ -93,7 +92,7 @@ export default function WordRadarPage() {
               key={scanId}
               text={scannedText}
               variant="interactive"
-              records={knownRecords}
+              records={records}
               ttsLanguage={ttsLang}
             />
           </div>
@@ -102,7 +101,7 @@ export default function WordRadarPage() {
             <VocabSuggestionsSection
               key={scanId}
               text={scannedText}
-              existingRecords={knownRecords}
+              existingRecords={records}
               topics={topics}
               includeTranslation
             />

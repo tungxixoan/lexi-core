@@ -2,10 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import VocabBankPage from "./page";
 import { useAuthUser } from "@/lib/useAuthUser";
+import { useSettingsContext } from "@/lib/SettingsContext";
 import { deleteVocabRecord, getVocabRecords, updateVocabRecord } from "@/lib/vocabRecords";
 import { getTopics } from "@/lib/topics";
+import { DEFAULT_SETTINGS } from "@/lib/settings";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
+vi.mock("@/lib/SettingsContext", () => ({ useSettingsContext: vi.fn() }));
 vi.mock("@/lib/vocabRecords", () => ({
   getVocabRecords: vi.fn(),
   deleteVocabRecord: vi.fn(),
@@ -18,6 +21,12 @@ vi.mock("@/components/SignInButton", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(useSettingsContext).mockReturnValue({
+    settings: DEFAULT_SETTINGS,
+    loading: false,
+    error: null,
+    save: vi.fn(),
+  } as never);
   Element.prototype.scrollIntoView = vi.fn();
   class FakeIntersectionObserver {
     observe = vi.fn();
@@ -160,7 +169,7 @@ describe("VocabBankPage", () => {
     fireEvent.click(screen.getByText("meticulous"));
     fireEvent.click(screen.getByRole("button", { name: "Xoá" }));
 
-    await waitFor(() => expect(deleteVocabRecord).toHaveBeenCalledWith("u1", "2"));
+    await waitFor(() => expect(deleteVocabRecord).toHaveBeenCalledWith("u1", "2", "english"));
     await waitFor(() => expect(screen.queryByText("meticulous")).not.toBeInTheDocument());
   });
 
@@ -303,7 +312,7 @@ describe("VocabBankPage", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Lưu" }));
 
-    await waitFor(() => expect(updateVocabRecord).toHaveBeenCalledWith("u1", "2", expect.any(Object)));
+    await waitFor(() => expect(updateVocabRecord).toHaveBeenCalledWith("u1", "2", expect.any(Object), "english"));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     // Both the list row and the still-open drawer reflect the update in place (no refetch).
     expect(screen.getAllByText("nghĩa đã sửa")).toHaveLength(2);
@@ -405,7 +414,7 @@ describe("VocabBankPage", () => {
     fireEvent.click(screen.getByText("w25")); // select a page-3 record
     fireEvent.click(screen.getByRole("button", { name: "Xoá" }));
 
-    await waitFor(() => expect(deleteVocabRecord).toHaveBeenCalledWith("u1", "huge-25"));
+    await waitFor(() => expect(deleteVocabRecord).toHaveBeenCalledWith("u1", "huge-25", "english"));
     // Deleting is a data mutation with an unchanged filter -> filterSignature
     // is unchanged -> pagination must NOT collapse back to page 1.
     expect(screen.getByText("w20")).toBeInTheDocument();

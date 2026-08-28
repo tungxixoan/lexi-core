@@ -61,19 +61,19 @@ function Part6PageContent() {
   }
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !settings) return;
     // Best-effort: these only feed VocabSuggestionsSection on the result
     // screen — but the auto-trigger effect below still waits for this to
     // settle (success or failure) via contextLoaded, since resolvedTopicNames()
     // needs `topics` populated before building the generation prompt.
-    Promise.all([getVocabRecords(user.uid), getTopics(user.uid)])
+    Promise.all([getVocabRecords(user.uid, settings.targetLanguage), getTopics(user.uid)])
       .then(([r, t]) => {
         setRecords(r);
         setTopics(t);
       })
       .catch(() => {})
       .finally(() => setContextLoaded(true));
-  }, [user]);
+  }, [user, settings]);
 
   function resolvedTopicNames(): string[] {
     return topics.filter((t) => topicIds.includes(t.id)).map((t) => t.name);

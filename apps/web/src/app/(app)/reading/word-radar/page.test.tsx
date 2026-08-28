@@ -99,18 +99,14 @@ describe("WordRadarPage (scan)", () => {
     expect(screen.getByRole("button", { name: "increase" })).toBeInTheDocument();
   });
 
-  it("excludes known-word records from a different target language", async () => {
+  it("fetches vocab records scoped to the current target language (per-language collection, no client-side filter needed)", async () => {
     mockSignedIn();
-    vi.mocked(getVocabRecords).mockResolvedValue([
-      makeRecord({ id: "r1", headword: "increase", targetLanguage: "chinese" }),
-    ]);
+    vi.mocked(getVocabRecords).mockResolvedValue([]);
 
     render(<WordRadarPage />);
-    const textarea = await screen.findByPlaceholderText("Dán văn bản vào đây…");
-    fireEvent.change(textarea, { target: { value: "A big increase happened." } });
-    fireEvent.click(screen.getByRole("button", { name: "Quét" }));
+    await screen.findByPlaceholderText("Dán văn bản vào đây…");
 
-    expect(screen.queryByRole("button", { name: "increase" })).not.toBeInTheDocument();
+    expect(getVocabRecords).toHaveBeenCalledWith("u1", "english");
   });
 
   it("enforces a 3000-character max on the textarea", async () => {

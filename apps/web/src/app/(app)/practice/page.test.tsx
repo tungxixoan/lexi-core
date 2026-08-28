@@ -2,12 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import PracticePage from "./page";
 import { useAuthUser } from "@/lib/useAuthUser";
+import { useSettingsContext } from "@/lib/SettingsContext";
 import { getVocabRecords, updateVocabRecordSm2, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics } from "@/lib/topics";
 import { computeSm2 } from "@/lib/sm2";
 import { recordDailyActivity } from "@/lib/dailyActivity";
+import { DEFAULT_SETTINGS } from "@/lib/settings";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
+vi.mock("@/lib/SettingsContext", () => ({ useSettingsContext: vi.fn() }));
 vi.mock("@/lib/vocabRecords", () => ({ getVocabRecords: vi.fn(), updateVocabRecordSm2: vi.fn() }));
 vi.mock("@/lib/topics", () => ({ getTopics: vi.fn() }));
 vi.mock("@/lib/sm2", () => ({ computeSm2: vi.fn() }));
@@ -29,6 +32,12 @@ function mockSignedIn() {
 beforeEach(() => {
   vi.clearAllMocks();
   setSearchParams({});
+  vi.mocked(useSettingsContext).mockReturnValue({
+    settings: DEFAULT_SETTINGS,
+    loading: false,
+    error: null,
+    save: vi.fn(),
+  } as never);
   // Every session-phase test can reach the "result" phase by grading the last word, which
   // fires the batch SM-2 write effect — give it harmless defaults so tests that don't care
   // about SM-2 output (e.g. the session-phase progression tests) don't crash on an
@@ -229,7 +238,8 @@ describe("PracticePage (result phase)", () => {
       expect(updateVocabRecordSm2).toHaveBeenCalledWith(
         "u1",
         "1",
-        expect.objectContaining({ sm2Repetitions: 1 })
+        expect.objectContaining({ sm2Repetitions: 1 }),
+        "english"
       )
     );
     expect(computeSm2).toHaveBeenCalledTimes(1);

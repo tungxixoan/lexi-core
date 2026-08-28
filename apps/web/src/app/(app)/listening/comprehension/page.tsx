@@ -90,14 +90,14 @@ function ComprehensionPageContent() {
   }, [audio.estimatedGlobalWordIndex]);
 
   useEffect(() => {
-    if (!user) return;
-    Promise.all([getVocabRecords(user.uid), getTopics(user.uid)])
+    if (!user || !settings) return;
+    Promise.all([getVocabRecords(user.uid, settings.targetLanguage), getTopics(user.uid)])
       .then(([r, t]) => {
         setRecords(r);
         setTopics(t);
       })
       .catch(() => {});
-  }, [user]);
+  }, [user, settings]);
 
   function startSession(newPassage: ListeningPassage, mode: "generated" | "reused") {
     sessionKeyRef.current += 1;

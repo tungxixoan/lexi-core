@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthUser } from "@/lib/useAuthUser";
+import { useSettingsContext } from "@/lib/SettingsContext";
 import { SignInButton } from "@/components/SignInButton";
 import { getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics, type Topic } from "@/lib/topics";
@@ -31,6 +32,7 @@ type Mode = "bilingual" | "part5" | "part6" | "part7";
 
 export default function ReadingHubPage() {
   const { user, loading: authLoading } = useAuthUser();
+  const { settings } = useSettingsContext();
   const router = useRouter();
 
   const [records, setRecords] = useState<VocabRecord[]>([]);
@@ -42,14 +44,14 @@ export default function ReadingHubPage() {
   const [selectedVolumes, setSelectedVolumes] = useState<Set<EconomyVolume>>(new Set());
 
   useEffect(() => {
-    if (!user) return;
-    Promise.all([getVocabRecords(user.uid), getTopics(user.uid)])
+    if (!user || !settings) return;
+    Promise.all([getVocabRecords(user.uid, settings.targetLanguage), getTopics(user.uid)])
       .then(([r, t]) => {
         setRecords(r);
         setTopics(t);
       })
       .catch(() => {});
-  }, [user]);
+  }, [user, settings]);
 
   function toggleVolume(v: EconomyVolume) {
     setSelectedVolumes((prev) => {

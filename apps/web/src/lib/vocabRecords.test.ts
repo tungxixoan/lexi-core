@@ -28,14 +28,6 @@ vi.mock("./firebase", () => ({
   getFirebaseDb: vi.fn(() => "mock-db"),
 }));
 
-describe("countVocabRecords", () => {
-  it("returns the number of documents in the user's vocab_records subcollection", async () => {
-    vi.mocked(getDocs).mockResolvedValue({ size: 3 } as never);
-    const count = await countVocabRecords("user-123");
-    expect(count).toBe(3);
-  });
-});
-
 const RECORD: VocabRecord = {
   id: "abc",
   headword: "meticulous",
@@ -58,13 +50,21 @@ const RECORD: VocabRecord = {
   synonyms: [],
 };
 
+describe("countVocabRecords", () => {
+  it("returns the number of documents in the user's per-language vocab_records subcollection", async () => {
+    vi.mocked(getDocs).mockResolvedValue({ size: 3 } as never);
+    const count = await countVocabRecords("user-123", "english");
+    expect(count).toBe(3);
+  });
+});
+
 describe("getVocabRecords", () => {
-  it("queries the subcollection ordered by createdAt desc and returns the raw docs", async () => {
+  it("queries the language-scoped subcollection ordered by createdAt desc and returns the raw docs", async () => {
     vi.mocked(getDocs).mockResolvedValue({
       docs: [{ id: RECORD.id, data: () => RECORD }],
     } as never);
 
-    const records = await getVocabRecords("user-123");
+    const records = await getVocabRecords("user-123", "english");
 
     expect(orderBy).toHaveBeenCalledWith("createdAt", "desc");
     expect(query).toHaveBeenCalledWith("mock-collection-ref", "mock-order-by");
@@ -81,30 +81,30 @@ describe("getVocabRecords", () => {
       ],
     } as never);
 
-    const records = await getVocabRecords("user-123");
+    const records = await getVocabRecords("user-123", "english");
 
     expect(records[0].id).toBe("real-doc-id");
   });
 });
 
 describe("deleteVocabRecord", () => {
-  it("deletes the record document by id", async () => {
-    await deleteVocabRecord("user-123", "abc");
-    expect(doc).toHaveBeenCalledWith("mock-db", "users", "user-123", "vocab_records", "abc");
+  it("deletes the record document by id from the language-scoped collection", async () => {
+    await deleteVocabRecord("user-123", "abc", "english");
+    expect(doc).toHaveBeenCalledWith("mock-db", "users", "user-123", "vocab_records_english", "abc");
     expect(deleteDoc).toHaveBeenCalledWith("mock-doc-ref");
   });
 });
 
 describe("updateVocabRecord", () => {
-  it("updates the editable fields plus updatedAt, by document id", async () => {
+  it("updates the editable fields plus updatedAt, by document id, in the language-scoped collection", async () => {
     await updateVocabRecord("user-123", "abc", {
       meaning: "nghĩa mới",
       examples: ["ví dụ mới"],
       topicIds: ["business"],
       personalNotes: "ghi chú",
-    });
+    }, "english");
 
-    expect(doc).toHaveBeenCalledWith("mock-db", "users", "user-123", "vocab_records", "abc");
+    expect(doc).toHaveBeenCalledWith("mock-db", "users", "user-123", "vocab_records_english", "abc");
     expect(updateDoc).toHaveBeenCalledWith(
       "mock-doc-ref",
       expect.objectContaining({
@@ -119,14 +119,13 @@ describe("updateVocabRecord", () => {
 });
 
 describe("getVocabRecordByHeadword", () => {
-  it("queries by headword and targetLanguage, and returns null when nothing matches", async () => {
+  it("queries the language-scoped collection by headword only, and returns null when nothing matches", async () => {
     vi.mocked(getDocs).mockResolvedValue({ empty: true, docs: [] } as never);
 
     const result = await getVocabRecordByHeadword("user-123", "meticulous", "english");
 
     expect(where).toHaveBeenCalledWith("headword", "==", "meticulous");
-    expect(where).toHaveBeenCalledWith("targetLanguage", "==", "english");
-    expect(query).toHaveBeenCalledWith("mock-collection-ref", "mock-where", "mock-where");
+    expect(query).toHaveBeenCalledWith("mock-collection-ref", "mock-where");
     expect(result).toBeNull();
   });
 
@@ -144,9 +143,9 @@ describe("getVocabRecordByHeadword", () => {
 });
 
 describe("saveVocabRecord", () => {
-  it("creates a new document with an auto-generated id and returns it", async () => {
+  it("creates a new document in the collection matching the record's own targetLanguage", async () => {
     vi.mocked(doc).mockReturnValue({ id: "new-doc-id" } as never);
-    const { id: _omit, ...newRecord } = RECORD;
+    const { id: _omit, ...newRecord } = RECORD; // targetLanguage: "english"
 
     const newId = await saveVocabRecord("user-123", newRecord);
 
@@ -157,11 +156,7 @@ describe("saveVocabRecord", () => {
 });
 
 describe("updateVocabRecordSm2", () => {
-  it("writes exactly the SM-2 fields, by document id, with no updatedAt override of its own", async () => {
-    // The saveVocabRecord test above overrides doc()'s mock return value
-    // (via mockReturnValue, not mockReturnValueOnce) and this suite has no
-    // afterEach/resetAllMocks, so it leaks into later tests. Restore the
-    // shared default explicitly rather than relying on run order.
+  it("writes exactly the SM-2 fields, by document id, in the language-scoped collection, with no updatedAt override of its own", async () => {
     vi.mocked(doc).mockReturnValue("mock-doc-ref" as never);
 
     const sm2Fields: Sm2Fields = {
@@ -172,9 +167,9 @@ describe("updateVocabRecordSm2", () => {
       updatedAt: "2026-08-16T12:00:00.000Z",
     };
 
-    await updateVocabRecordSm2("user-123", "abc", sm2Fields);
+    await updateVocabRecordSm2("user-123", "abc", sm2Fields, "english");
 
-    expect(doc).toHaveBeenCalledWith("mock-db", "users", "user-123", "vocab_records", "abc");
+    expect(doc).toHaveBeenCalledWith("mock-db", "users", "user-123", "vocab_records_english", "abc");
     expect(updateDoc).toHaveBeenCalledWith("mock-doc-ref", sm2Fields);
   });
 });

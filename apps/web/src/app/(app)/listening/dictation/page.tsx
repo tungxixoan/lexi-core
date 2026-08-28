@@ -91,11 +91,11 @@ function DictationPageContent() {
   }, [audio.estimatedWordIndex]);
 
   useEffect(() => {
-    if (!user) return;
-    getVocabRecords(user.uid)
+    if (!user || !settings) return;
+    getVocabRecords(user.uid, settings.targetLanguage)
       .then(setRecords)
       .catch(() => setRecords([]));
-  }, [user]);
+  }, [user, settings]);
 
   function startSession(newItem: DictationItem, mode: "generated" | "reused") {
     const computedBlanks = selectDictationBlanks(newItem.target, difficulty);
@@ -228,7 +228,7 @@ function DictationPageContent() {
         const record = (records ?? []).find((r) => r.id === vocabId);
         if (!record) continue;
         const fields = computeSm2(record, quality);
-        await updateVocabRecordSm2(user.uid, vocabId, fields);
+        await updateVocabRecordSm2(user.uid, vocabId, fields, record.targetLanguage);
         updatedFieldsById.set(vocabId, fields);
       } catch {
         // best-effort — one record's failure shouldn't block the others

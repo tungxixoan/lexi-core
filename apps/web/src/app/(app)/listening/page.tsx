@@ -40,11 +40,11 @@ export default function ListeningHubPage() {
   const [level, setLevel] = useState<CefrLevel | null>(null);
 
   useEffect(() => {
-    if (!user) return;
-    getVocabRecords(user.uid)
+    if (!user || !settings) return;
+    getVocabRecords(user.uid, settings.targetLanguage)
       .then(setRecords)
       .catch(() => {});
-  }, [user]);
+  }, [user, settings]);
 
   if (authLoading) return <p>Đang tải…</p>;
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuthUser } from "@/lib/useAuthUser";
+import { useSettingsContext } from "@/lib/SettingsContext";
 import { SignInButton } from "@/components/SignInButton";
 import { getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
 import { computeLearningStats, type LearningStats } from "@/lib/learningStats";
@@ -37,6 +38,7 @@ function weekdayLabel(key: string): string {
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuthUser();
+  const { settings } = useSettingsContext();
   const [records, setRecords] = useState<VocabRecord[] | null>(null);
   const [recordsError, setRecordsError] = useState(false);
   const [activity, setActivity] = useState<DailyActivity | null>(null);
@@ -44,13 +46,17 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!user) return;
-    getVocabRecords(user.uid)
-      .then(setRecords)
-      .catch(() => setRecordsError(true));
     getDailyActivity(user.uid)
       .then(setActivity)
       .catch(() => setActivityError(true));
   }, [user]);
+
+  useEffect(() => {
+    if (!user || !settings) return;
+    getVocabRecords(user.uid, settings.targetLanguage)
+      .then(setRecords)
+      .catch(() => setRecordsError(true));
+  }, [user, settings]);
 
   if (authLoading) return <p>Đang tải…</p>;
 

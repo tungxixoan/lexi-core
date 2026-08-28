@@ -69,15 +69,15 @@ function Part7PageContent() {
   }
 
   useEffect(() => {
-    if (!user) return;
-    Promise.all([getVocabRecords(user.uid), getTopics(user.uid)])
+    if (!user || !settings) return;
+    Promise.all([getVocabRecords(user.uid, settings.targetLanguage), getTopics(user.uid)])
       .then(([r, t]) => {
         setRecords(r);
         setTopics(t);
       })
       .catch(() => {})
       .finally(() => setContextLoaded(true));
-  }, [user]);
+  }, [user, settings]);
 
   function resolvedTopicNames(): string[] {
     return topics.filter((t) => topicIds.includes(t.id)).map((t) => t.name);

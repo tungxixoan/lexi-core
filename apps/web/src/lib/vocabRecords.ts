@@ -34,47 +34,44 @@ export interface VocabRecord {
 
 export type VocabRecordUpdate = Pick<VocabRecord, "meaning" | "examples" | "topicIds" | "personalNotes">;
 export type NewVocabRecord = Omit<VocabRecord, "id">;
+type TargetLanguage = VocabRecord["targetLanguage"];
 
-function vocabRecordsCol(uid: string) {
-  return collection(getFirebaseDb(), "users", uid, "vocab_records");
+function vocabRecordsCol(uid: string, language: TargetLanguage) {
+  return collection(getFirebaseDb(), "users", uid, `vocab_records_${language}`);
 }
 
-export async function countVocabRecords(uid: string): Promise<number> {
-  const col = collection(getFirebaseDb(), "users", uid, "vocab_records");
-  const snapshot = await getDocs(col);
+export async function countVocabRecords(uid: string, language: TargetLanguage): Promise<number> {
+  const snapshot = await getDocs(vocabRecordsCol(uid, language));
   return snapshot.size;
 }
 
-export async function getVocabRecords(uid: string): Promise<VocabRecord[]> {
-  const q = query(vocabRecordsCol(uid), orderBy("createdAt", "desc"));
+export async function getVocabRecords(uid: string, language: TargetLanguage): Promise<VocabRecord[]> {
+  const q = query(vocabRecordsCol(uid, language), orderBy("createdAt", "desc"));
   const snapshot = await getDocs(q);
   return snapshot.docs.map((d) => ({ ...(d.data() as VocabRecord), id: d.id }));
 }
 
-export async function deleteVocabRecord(uid: string, id: string): Promise<void> {
-  const ref = doc(getFirebaseDb(), "users", uid, "vocab_records", id);
+export async function deleteVocabRecord(uid: string, id: string, language: TargetLanguage): Promise<void> {
+  const ref = doc(getFirebaseDb(), "users", uid, `vocab_records_${language}`, id);
   await deleteDoc(ref);
 }
 
 export async function updateVocabRecord(
   uid: string,
   id: string,
-  updates: VocabRecordUpdate
+  updates: VocabRecordUpdate,
+  language: TargetLanguage
 ): Promise<void> {
-  const ref = doc(getFirebaseDb(), "users", uid, "vocab_records", id);
+  const ref = doc(getFirebaseDb(), "users", uid, `vocab_records_${language}`, id);
   await updateDoc(ref, { ...updates, updatedAt: new Date().toISOString() });
 }
 
 export async function getVocabRecordByHeadword(
   uid: string,
   headword: string,
-  targetLanguage: VocabRecord["targetLanguage"]
+  targetLanguage: TargetLanguage
 ): Promise<VocabRecord | null> {
-  const q = query(
-    vocabRecordsCol(uid),
-    where("headword", "==", headword),
-    where("targetLanguage", "==", targetLanguage)
-  );
+  const q = query(vocabRecordsCol(uid, targetLanguage), where("headword", "==", headword));
   const snapshot = await getDocs(q);
   if (snapshot.empty) return null;
   const d = snapshot.docs[0];
@@ -82,15 +79,20 @@ export async function getVocabRecordByHeadword(
 }
 
 export async function saveVocabRecord(uid: string, record: NewVocabRecord): Promise<string> {
-  const ref = doc(vocabRecordsCol(uid));
-  // Flutter's sync_service.dart caches the raw document body into Hive and
-  // reads `json['id']` from it directly (non-nullable) — the doc must carry
-  // its own id field, not rely on the caller reading ref.id separately.
+  const ref = doc(vocabRecordsCol(uid, record.targetLanguage));
+  // Flutter's sync_service.dart caches the raw document body and reads
+  // json['id'] from it directly (non-nullable) — the doc must carry its
+  // own id field, not rely on the caller reading ref.id separately.
   await setDoc(ref, { ...record, id: ref.id });
   return ref.id;
 }
 
-export async function updateVocabRecordSm2(uid: string, id: string, sm2Fields: Sm2Fields): Promise<void> {
-  const ref = doc(getFirebaseDb(), "users", uid, "vocab_records", id);
+export async function updateVocabRecordSm2(
+  uid: string,
+  id: string,
+  sm2Fields: Sm2Fields,
+  language: TargetLanguage
+): Promise<void> {
+  const ref = doc(getFirebaseDb(), "users", uid, `vocab_records_${language}`, id);
   await updateDoc(ref, { ...sm2Fields });
 }

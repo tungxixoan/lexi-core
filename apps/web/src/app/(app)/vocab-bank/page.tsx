@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useAuthUser } from "@/lib/useAuthUser";
+import { useSettingsContext } from "@/lib/SettingsContext";
 import {
   deleteVocabRecord,
   getVocabRecords,
@@ -21,6 +22,7 @@ import { TopicFilterPopover } from "@/components/vocab-bank/TopicFilterPopover";
 
 export default function VocabBankPage() {
   const { user, loading: authLoading } = useAuthUser();
+  const { settings } = useSettingsContext();
   const [records, setRecords] = useState<VocabRecord[] | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -33,18 +35,18 @@ export default function VocabBankPage() {
 
   useEffect(() => {
     setError(null);
-    if (!user) {
+    if (!user || !settings) {
       setRecords(null);
       return;
     }
     setRecords(null);
-    Promise.all([getVocabRecords(user.uid), getTopics(user.uid)])
+    Promise.all([getVocabRecords(user.uid, settings.targetLanguage), getTopics(user.uid)])
       .then(([r, t]) => {
         setRecords(r);
         setTopics(t);
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)));
-  }, [user]);
+  }, [user, settings]);
 
   const now = useMemo(() => new Date(), [records]);
 
@@ -91,10 +93,12 @@ export default function VocabBankPage() {
 
   const handleDelete = async (id: string) => {
     if (!user) return;
+    const record = records?.find((r) => r.id === id);
+    if (!record) return;
     if (!window.confirm("Xoá từ này khỏi Ngân hàng từ vựng?")) return;
     setDeleteError(null);
     try {
-      await deleteVocabRecord(user.uid, id);
+      await deleteVocabRecord(user.uid, id, record.targetLanguage);
       setRecords((prev) => (prev ? prev.filter((r) => r.id !== id) : prev));
       setSelectedId(null);
     } catch (err: unknown) {
@@ -104,7 +108,7 @@ export default function VocabBankPage() {
 
   const handleUpdate = async (updates: VocabRecordUpdate) => {
     if (!user || !selected) return;
-    await updateVocabRecord(user.uid, selected.id, updates);
+    await updateVocabRecord(user.uid, selected.id, updates, selected.targetLanguage);
     setRecords((prev) =>
       prev ? prev.map((r) => (r.id === selected.id ? { ...r, ...updates } : r)) : prev
     );

@@ -76,15 +76,15 @@ function BilingualReadingPageContent() {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !settings) return;
     setLoadError(null);
-    Promise.all([getVocabRecords(user.uid), getTopics(user.uid)])
+    Promise.all([getVocabRecords(user.uid, settings.targetLanguage), getTopics(user.uid)])
       .then(([r, t]) => {
         setRecords(r);
         setTopics(t);
       })
       .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
-  }, [user]);
+  }, [user, settings]);
 
   async function handleGenerate() {
     if (!records || !user || !settings) return;

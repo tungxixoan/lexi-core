@@ -535,7 +535,7 @@ describe("DictationPage (result phase)", () => {
     mockSignedIn();
     await completeHardSession();
 
-    await waitFor(() => expect(updateVocabRecordSm2).toHaveBeenCalledWith("u1", "v2", expect.any(Object)));
+    await waitFor(() => expect(updateVocabRecordSm2).toHaveBeenCalledWith("u1", "v2", expect.any(Object), "english"));
   });
 
   it("records daily activity with the session's vocabIds count", async () => {
@@ -629,13 +629,15 @@ describe("DictationPage (local records refreshed after SM-2 write)", () => {
       1,
       "u1",
       "v1",
-      expect.objectContaining({ sm2Repetitions: 1, sm2Interval: 1 })
+      expect.objectContaining({ sm2Repetitions: 1, sm2Interval: 1 }),
+      "english"
     );
     expect(updateVocabRecordSm2).toHaveBeenNthCalledWith(
       2,
       "u1",
       "v2",
-      expect.objectContaining({ sm2Repetitions: 1, sm2Interval: 1 })
+      expect.objectContaining({ sm2Repetitions: 1, sm2Interval: 1 }),
+      "english"
     );
 
     // "Câu khác" starts a second session (same generated mode) within the
@@ -659,13 +661,15 @@ describe("DictationPage (local records refreshed after SM-2 write)", () => {
       3,
       "u1",
       "v1",
-      expect.objectContaining({ sm2Repetitions: 2, sm2Interval: 6 })
+      expect.objectContaining({ sm2Repetitions: 2, sm2Interval: 6 }),
+      "english"
     );
     expect(updateVocabRecordSm2).toHaveBeenNthCalledWith(
       4,
       "u1",
       "v2",
-      expect.objectContaining({ sm2Repetitions: 2, sm2Interval: 6 })
+      expect.objectContaining({ sm2Repetitions: 2, sm2Interval: 6 }),
+      "english"
     );
   });
 });

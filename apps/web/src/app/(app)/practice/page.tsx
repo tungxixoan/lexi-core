@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuthUser } from "@/lib/useAuthUser";
+import { useSettingsContext } from "@/lib/SettingsContext";
 import { recordDailyActivity } from "@/lib/dailyActivity";
 import { SignInButton } from "@/components/SignInButton";
 import { getVocabRecords, updateVocabRecordSm2, type VocabRecord } from "@/lib/vocabRecords";
@@ -37,6 +38,7 @@ export interface SessionGradeResult {
 
 function PracticePageContent() {
   const { user, loading: authLoading } = useAuthUser();
+  const { settings } = useSettingsContext();
   const searchParams = useSearchParams();
   const action = searchParams.get("action");
   const autoStartTriggeredRef = useRef(false);
@@ -55,15 +57,15 @@ function PracticePageContent() {
   const sm2WrittenRef = useRef(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !settings) return;
     setLoadError(null);
-    Promise.all([getVocabRecords(user.uid), getTopics(user.uid)])
+    Promise.all([getVocabRecords(user.uid, settings.targetLanguage), getTopics(user.uid)])
       .then(([r, t]) => {
         setRecords(r);
         setTopics(t);
       })
       .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : String(err)));
-  }, [user]);
+  }, [user, settings]);
 
   useEffect(() => {
     if (action !== "start" || !records || autoStartTriggeredRef.current) return;
@@ -92,7 +94,7 @@ function PracticePageContent() {
       if (!record) continue;
       const fields = computeSm2(record, result.quality, now);
       updatedFieldsById.set(result.vocabRecordId, fields);
-      updateVocabRecordSm2(user.uid, result.vocabRecordId, fields).catch((err: unknown) => {
+      updateVocabRecordSm2(user.uid, result.vocabRecordId, fields, record.targetLanguage).catch((err: unknown) => {
         console.error("Failed to save SM-2 result", err);
       });
     }

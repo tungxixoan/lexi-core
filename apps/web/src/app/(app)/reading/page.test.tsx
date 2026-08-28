@@ -2,13 +2,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import ReadingHubPage from "./page";
 import { useAuthUser } from "@/lib/useAuthUser";
+import { useSettingsContext } from "@/lib/SettingsContext";
 import { getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
 import { getTopics, type Topic } from "@/lib/topics";
 import { VOLUME_LABELS } from "@/lib/toeicFilters";
+import { DEFAULT_SETTINGS } from "@/lib/settings";
 
 const VOLUME_LABEL_VOL2 = VOLUME_LABELS.vol2;
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
+vi.mock("@/lib/SettingsContext", () => ({ useSettingsContext: vi.fn() }));
 vi.mock("@/lib/vocabRecords", () => ({ getVocabRecords: vi.fn() }));
 vi.mock("@/lib/topics", () => ({ getTopics: vi.fn() }));
 vi.mock("@/components/SignInButton", () => ({
@@ -50,6 +53,12 @@ function mockSignedIn() {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(getTopics).mockResolvedValue([]);
+  vi.mocked(useSettingsContext).mockReturnValue({
+    settings: DEFAULT_SETTINGS,
+    loading: false,
+    error: null,
+    save: vi.fn(),
+  } as never);
 });
 
 describe("ReadingHubPage (auth)", () => {

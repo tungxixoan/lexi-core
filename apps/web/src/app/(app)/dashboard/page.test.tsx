@@ -2,10 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import DashboardPage from "./page";
 import { useAuthUser } from "@/lib/useAuthUser";
+import { useSettingsContext } from "@/lib/SettingsContext";
 import { getVocabRecords, type VocabRecord } from "@/lib/vocabRecords";
 import { getDailyActivity } from "@/lib/dailyActivity";
+import { DEFAULT_SETTINGS } from "@/lib/settings";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
+vi.mock("@/lib/SettingsContext", () => ({ useSettingsContext: vi.fn() }));
 vi.mock("@/lib/vocabRecords", () => ({ getVocabRecords: vi.fn() }));
 vi.mock("@/lib/dailyActivity", () => ({ getDailyActivity: vi.fn() }));
 vi.mock("@/components/SignInButton", () => ({
@@ -40,6 +43,12 @@ function makeRecord(overrides: Partial<VocabRecord>): VocabRecord {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" }, loading: false } as never);
+  vi.mocked(useSettingsContext).mockReturnValue({
+    settings: DEFAULT_SETTINGS,
+    loading: false,
+    error: null,
+    save: vi.fn(),
+  } as never);
 });
 
 describe("DashboardPage (auth)", () => {
