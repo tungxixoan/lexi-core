@@ -9,6 +9,8 @@ import '../../features/dictionary/domain/repositories/dictionary_repository.dart
 import '../../features/dictionary/domain/use_cases/lookup_use_case.dart';
 import '../../features/dictionary/presentation/providers/user_settings_provider.dart';
 import '../../services/tts_service.dart';
+// --- Auth (mandatory sign-in) ---
+import '../../features/settings/presentation/providers/auth_notifier.dart';
 // --- Vocabulary DI (Plan 2) ---
 import '../../features/vocabulary/data/repositories/vocab_repository_impl.dart';
 import '../../features/vocabulary/domain/repositories/vocab_repository.dart';
@@ -86,8 +88,20 @@ LookupUseCase lookupUseCase(LookupUseCaseRef ref) =>
     LookupUseCase(ref.watch(dictionaryRepositoryProvider));
 
 @riverpod
-VocabRepository vocabRepository(VocabRepositoryRef ref) =>
-    const VocabRepositoryImpl();
+VocabRepository vocabRepository(VocabRepositoryRef ref) {
+  // Safe to assume signed-in: every screen that reaches this provider lives
+  // inside the router's ShellRoute, which the mandatory-sign-in redirect
+  // (see core/router/app_router.dart's authRedirectDecision) only allows
+  // reaching once a user is authenticated.
+  final user = ref.watch(authNotifierProvider).valueOrNull;
+  if (user == null) {
+    throw StateError(
+      'vocabRepositoryProvider was read while signed out; this should be '
+      'unreachable now that sign-in is mandatory app-wide.',
+    );
+  }
+  return VocabRepositoryImpl(uid: user.uid);
+}
 
 @riverpod
 SaveVocabUseCase saveVocabUseCase(SaveVocabUseCaseRef ref) =>

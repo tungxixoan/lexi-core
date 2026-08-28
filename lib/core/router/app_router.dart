@@ -1,5 +1,9 @@
+import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/app_shell.dart';
+import '../../features/settings/presentation/screens/sign_in_screen.dart';
 import '../../features/dictionary/presentation/screens/lookup_screen.dart';
 import '../../features/vocabulary/presentation/screens/vocab_bank_screen.dart';
 import '../../features/vocabulary/presentation/screens/vocab_detail_screen.dart';
@@ -38,9 +42,68 @@ import '../../features/listening/presentation/screens/comprehension_session_scre
 import '../../features/listening/presentation/screens/comprehension_result_screen.dart';
 import '../../features/listening/presentation/providers/listening_comprehension_provider.dart';
 
+/// Pure redirect decision, extracted so it's unit-testable without a full
+/// widget tree or a faked FirebaseAuth — see test/core/router/auth_redirect_test.dart.
+/// Returns the path to redirect to, or null to stay on [matchedLocation].
+String? authRedirectDecision({
+  required String matchedLocation,
+  required bool hasResolved,
+  required bool signedIn,
+}) {
+  if (!hasResolved) {
+    return matchedLocation == '/splash' ? null : '/splash';
+  }
+  if (!signedIn) {
+    return matchedLocation == '/sign-in' ? null : '/sign-in';
+  }
+  if (matchedLocation == '/splash' || matchedLocation == '/sign-in') return '/';
+  return null;
+}
+
+/// Bridges Firebase's async auth-state stream into something GoRouter's
+/// `refreshListenable` can react to, and tracks whether the stream has
+/// emitted at least once — until it has, [authRedirectDecision] can't yet
+/// tell whether the user is signed in, so it must not redirect prematurely
+/// (which would otherwise flash the sign-in screen for an already-
+/// authenticated user whose session Firebase hasn't finished restoring yet).
+class _AuthRefreshStream extends ChangeNotifier {
+  _AuthRefreshStream() {
+    _sub = FirebaseAuth.instance.authStateChanges().listen((_) {
+      hasResolved = true;
+      notifyListeners();
+    });
+  }
+
+  bool hasResolved = false;
+  late final StreamSubscription<User?> _sub;
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
+  }
+}
+
+final _authRefreshStream = _AuthRefreshStream();
+
 final appRouter = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/splash',
+  refreshListenable: _authRefreshStream,
+  redirect: (context, state) => authRedirectDecision(
+    matchedLocation: state.matchedLocation,
+    hasResolved: _authRefreshStream.hasResolved,
+    signedIn: FirebaseAuth.instance.currentUser != null,
+  ),
   routes: [
+    GoRoute(
+      path: '/splash',
+      builder: (context, state) =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+    ),
+    GoRoute(
+      path: '/sign-in',
+      builder: (context, state) => const SignInScreen(),
+    ),
     ShellRoute(
       builder: (context, state, child) => AppShell(child: child),
       routes: [
