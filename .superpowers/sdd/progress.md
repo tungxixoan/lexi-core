@@ -1536,3 +1536,15 @@ Re-review (opus) verified every fix by tracing the actual failure scenario again
 Re-reviewer also flagged that Task 4's fix round left Task 5's own plan text stale in 3 places (Step 1's grep expectations, Step 4 being already-done, Step 7's "last legitimate Hive usage" file list) — controller updated `docs/superpowers/plans/2026-08-27-flutter-drop-hive.md` accordingly (commit `5982d2f`) before dispatching Task 5, to prevent its implementer from halting incorrectly or redoing already-complete work.
 
 Task 4: complete (commits b77fc9c..44acf55, review clean after 1 fix round — the most significant fix round of this whole plan, 2 genuine Critical data-safety bugs caught only because the review was dispatched on the most capable available model rather than the usual mid-tier default).
+
+## Task 5: Delete SyncService/SyncNotifier, cleanup — complete
+
+Deleted `sync_service.dart`/its test and `sync_notifier.dart`/its generated file (commit `4607c2d`), removed Hive init from `main.dart`, cleaned up `settings_screen.dart`'s now-unreachable "not signed in" branch (`_SignedOutCard` deleted) and sync-status UI (`_SignedInSection` no longer takes `syncStatus`). Correctly confirmed Task 4 had already wired `vocabRepositoryProvider` and correctly left `pubspec.yaml`'s `hive`/`hive_flutter` untouched (still needed permanently by `hive_migration_service.dart`).
+
+Review (sonnet): spec ✅, code quality Approved, zero findings — clean on first pass (3rd task this plan to pass clean first-try). Independently grepped the whole `lib/`/`test/` tree for any remaining `SyncService`/`SyncNotifier`/`SyncStatus`/`syncNotifierProvider` reference (found none — 2 harmless substring false-positives only) and verified the 499→497 test-count drop is fully explained by deleting `sync_service_test.dart`'s exactly-2 tests, no other file's count silently changed.
+
+Task 5: complete (commits 0508206..4607c2d, review clean, no fix round).
+
+# LexiCore — Flutter: Drop Hive, Firestore-Direct + Mandatory Sign-In: ALL 5 TASKS COMPLETE
+
+Next: final whole-branch review on the most capable available model, per skill guidance — this plan's Task 4 already demonstrated the value of that (2 genuine Critical bugs a mid-tier reviewer likely would have missed), so hold the same bar for the final pass.
