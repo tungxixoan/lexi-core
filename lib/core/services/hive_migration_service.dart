@@ -38,6 +38,24 @@ class HiveMigrationService {
     final prefs = _prefs ?? await SharedPreferences.getInstance();
     if (prefs.getBool(_migratedFlagKey(uid)) ?? false) return false;
 
+    final vocabCol = _firestore.collection('users').doc(uid).collection('vocab_records');
+    final topicsCol = _firestore.collection('users').doc(uid).collection('topics');
+
+    // Only ever migrate into a genuinely empty account — if this uid
+    // already has vocab data on Firestore, this is a returning user whose
+    // Hive box is a stale local mirror (from the old SyncService), not
+    // their only copy. Pushing it would silently overwrite any edits made
+    // elsewhere (e.g. apps/web/) since the last sync and resurrect
+    // anything deleted there. Just mark it migrated and stop — the real
+    // data is already safely on Firestore. Deliberately don't touch the
+    // Hive boxes at all in this branch (not even to clear them) — that
+    // stays safe to clean up later rather than risking data loss now.
+    final existing = await vocabCol.limit(1).get();
+    if (existing.docs.isNotEmpty) {
+      await prefs.setBool(_migratedFlagKey(uid), true);
+      return false;
+    }
+
     await Hive.initFlutter();
     final vocabBox = await Hive.openBox<String>(_vocabBoxName);
     final topicsBox = await Hive.openBox<String>(_topicsBoxName);
@@ -47,31 +65,38 @@ class HiveMigrationService {
       return false;
     }
 
-    final vocabCol = _firestore.collection('users').doc(uid).collection('vocab_records');
-    final topicsCol = _firestore.collection('users').doc(uid).collection('topics');
-
     var batch = _firestore.batch();
     var count = 0;
 
     for (final raw in vocabBox.values) {
-      final map = jsonDecode(raw) as Map<String, dynamic>;
-      batch.set(vocabCol.doc(map['id'] as String), map);
-      count++;
-      if (count == 500) {
-        await batch.commit();
-        batch = _firestore.batch();
-        count = 0;
+      try {
+        final map = jsonDecode(raw) as Map<String, dynamic>;
+        batch.set(vocabCol.doc(map['id'] as String), map);
+        count++;
+        if (count == 500) {
+          await batch.commit();
+          batch = _firestore.batch();
+          count = 0;
+        }
+      } catch (_) {
+        // Skip one malformed/legacy record rather than aborting the
+        // whole migration over it.
       }
     }
 
     for (final raw in topicsBox.values) {
-      final map = jsonDecode(raw) as Map<String, dynamic>;
-      batch.set(topicsCol.doc(map['id'] as String), map);
-      count++;
-      if (count == 500) {
-        await batch.commit();
-        batch = _firestore.batch();
-        count = 0;
+      try {
+        final map = jsonDecode(raw) as Map<String, dynamic>;
+        batch.set(topicsCol.doc(map['id'] as String), map);
+        count++;
+        if (count == 500) {
+          await batch.commit();
+          batch = _firestore.batch();
+          count = 0;
+        }
+      } catch (_) {
+        // Skip one malformed/legacy record rather than aborting the
+        // whole migration over it.
       }
     }
 

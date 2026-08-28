@@ -98,4 +98,47 @@ void main() {
     final vocabSnapshot = await firestore.collection('users/u1/vocab_records').get();
     expect(vocabSnapshot.docs.map((d) => d.id), ['v1']);
   });
+
+  test('skips migration without touching Hive when Firestore already has vocab data for this uid', () async {
+    // Pre-existing Firestore data for u1 — as if they'd signed in before
+    // under the old SyncService and this Hive box is now just a stale
+    // local mirror, not their only copy.
+    await firestore
+        .collection('users/u1/vocab_records')
+        .doc('existing')
+        .set({'id': 'existing', 'headword': 'orange'});
+
+    // Different data sitting in Hive that must NOT get pushed.
+    await vocabBox.put('v1', jsonEncode({'id': 'v1', 'headword': 'apple'}));
+
+    final service = HiveMigrationService(firestore: firestore, prefs: prefs);
+    final migrated = await service.migrateIfNeeded('u1');
+
+    expect(migrated, isFalse);
+
+    // The pre-existing Firestore doc is untouched, and the stale Hive doc
+    // was never pushed.
+    final vocabSnapshot = await firestore.collection('users/u1/vocab_records').get();
+    expect(vocabSnapshot.docs.map((d) => d.id), ['existing']);
+    final existingDoc = await firestore.collection('users/u1/vocab_records').doc('existing').get();
+    expect(existingDoc.data()!['headword'], 'orange');
+
+    // Hive is left as-is (not cleared) in this path.
+    expect(vocabBox.containsKey('v1'), isTrue);
+    expect(vocabBox.get('v1'), jsonEncode({'id': 'v1', 'headword': 'apple'}));
+  });
+
+  test('skips one malformed Hive record but still migrates the valid ones', () async {
+    await vocabBox.put('bad', 'not valid json{');
+    await vocabBox.put('v1', jsonEncode({'id': 'v1', 'headword': 'apple'}));
+
+    final service = HiveMigrationService(firestore: firestore, prefs: prefs);
+    final migrated = await service.migrateIfNeeded('u1');
+
+    expect(migrated, isTrue);
+    final vocabDoc = await firestore.collection('users/u1/vocab_records').doc('v1').get();
+    expect(vocabDoc.data()!['headword'], 'apple');
+    final vocabSnapshot = await firestore.collection('users/u1/vocab_records').get();
+    expect(vocabSnapshot.docs.length, 1);
+  });
 }

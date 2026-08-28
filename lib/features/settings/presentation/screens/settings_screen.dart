@@ -30,11 +30,13 @@ class SettingsScreen extends ConsumerWidget {
           // ── Tài khoản ─────────────────────────────────────────
           _SectionHeader('Tài khoản'),
           authAsync.when(
-            data: (user) => _SignedInSection(
-              user: user!,
-              onSignOut: () =>
-                  ref.read(authNotifierProvider.notifier).signOut(),
-            ),
+            data: (user) => user == null
+                ? const SizedBox.shrink()
+                : _SignedInSection(
+                    user: user,
+                    onSignOut: () =>
+                        ref.read(authNotifierProvider.notifier).signOut(),
+                  ),
             loading: () => const LinearProgressIndicator(),
             error: (_, __) =>
                 const ListTile(title: Text('Lỗi xác thực')),
