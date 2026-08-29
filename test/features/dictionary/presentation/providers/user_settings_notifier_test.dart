@@ -1,7 +1,11 @@
 // test/features/dictionary/presentation/providers/user_settings_notifier_test.dart
 import 'dart:convert';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lexi_core/core/services/ai_settings_sync_service.dart';
+import 'package:lexi_core/core/services/cloud_function_caller.dart';
+import 'package:lexi_core/core/services/encrypt_api_key.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
@@ -10,13 +14,61 @@ import 'package:lexi_core/features/dictionary/presentation/providers/user_settin
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-Future<ProviderContainer> makeContainer(
-    {Map<String, Object> initialValues = const {}}) async {
+class _FakeCaller implements CloudFunctionCaller {
+  _FakeCaller({this.response, this.error}); // ignore: unused_element_parameter
+  Map<String, dynamic>? response;
+  Object? error;
+
+  @override
+  Future<Map<String, dynamic>> call(String name, Map<String, dynamic> data) async {
+    if (error != null) throw error!;
+    return response!;
+  }
+}
+
+Future<ProviderContainer> makeContainer({
+  Map<String, Object> initialValues = const {},
+  List<Override> extraOverrides = const [],
+}) async {
   SharedPreferences.setMockInitialValues(initialValues);
   final prefs = await SharedPreferences.getInstance();
-  return ProviderContainer(
-    overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-  );
+  return ProviderContainer(overrides: [
+    sharedPreferencesProvider.overrideWithValue(prefs),
+    // Default to signed-out so existing tests below never touch real
+    // FirebaseAuth (not initialized in plain unit tests). Tests that need
+    // to exercise the push-on-change path override this explicitly.
+    currentUidProvider.overrideWithValue(null),
+    ...extraOverrides,
+  ]);
+}
+
+class _FakeAiSettingsSyncService extends AiSettingsSyncService {
+  // Explicitly pass a FakeFirebaseFirestore and a fake encryptor — the
+  // default constructor's fallback (FirebaseFirestore.instance) throws
+  // immediately in a plain unit test with no real Firebase app initialized.
+  _FakeAiSettingsSyncService()
+      : super(
+          firestore: FakeFirebaseFirestore(),
+          encryptor: ApiKeyEncryptor(caller: _FakeCaller(response: {})),
+        );
+
+  int pushCount = 0;
+  String? lastUid;
+  AiProvider? lastActiveProvider;
+  Language? lastTargetLanguage;
+
+  @override
+  Future<void> pushProviderSettings(
+    String uid,
+    AiProvider activeProvider,
+    Map<AiProvider, ProviderConfig> providerConfigs,
+    Language targetLanguage,
+  ) async {
+    pushCount++;
+    lastUid = uid;
+    lastActiveProvider = activeProvider;
+    lastTargetLanguage = targetLanguage;
+  }
 }
 
 void main() {
@@ -76,6 +128,12 @@ void main() {
         // plaintext value is still recoverable for that later migration.)
         expect(state.activeConfig.apiKeyCiphertext, isNull);
         expect(state.activeConfig.model, 'gemini-2.5-flash');
+
+        final notifier = container.read(userSettingsNotifierProvider.notifier);
+        // It IS still recoverable as a legacy plaintext key — this is what
+        // AiSettingsSyncService.bootstrapSync uses to encrypt and migrate it
+        // on the next sign-in.
+        expect(notifier.legacyPlaintextApiKey(AiProvider.gemini), 'old-key-xyz');
 
         // Old key must be removed; new keys must exist.
         expect(prefs.containsKey('gemini_api_key'), false);
@@ -214,6 +272,88 @@ void main() {
         final prefs = container.read(sharedPreferencesProvider);
         expect(prefs.getInt('reminder_hour'), 8);
         expect(container.read(userSettingsNotifierProvider).reminderHour, 8);
+      });
+    });
+
+    group('Firestore push on change', () {
+      test('setActiveProvider() pushes when signed in', () async {
+        final fake = _FakeAiSettingsSyncService();
+        final container = await makeContainer(extraOverrides: [
+          currentUidProvider.overrideWithValue('uid-1'),
+          aiSettingsSyncServiceProvider.overrideWithValue(fake),
+        ]);
+        addTearDown(container.dispose);
+        container.read(userSettingsNotifierProvider.notifier).setActiveProvider(AiProvider.groq);
+        await Future<void>.delayed(Duration.zero);
+        expect(fake.pushCount, 1);
+        expect(fake.lastUid, 'uid-1');
+        expect(fake.lastActiveProvider, AiProvider.groq);
+      });
+
+      test('setActiveProvider() does not push when signed out', () async {
+        final fake = _FakeAiSettingsSyncService();
+        final container = await makeContainer(extraOverrides: [
+          aiSettingsSyncServiceProvider.overrideWithValue(fake),
+        ]);
+        addTearDown(container.dispose);
+        container.read(userSettingsNotifierProvider.notifier).setActiveProvider(AiProvider.groq);
+        await Future<void>.delayed(Duration.zero);
+        expect(fake.pushCount, 0);
+      });
+
+      test('setProviderConfig(sync: false) does not push (used by bootstrap merge)', () async {
+        final fake = _FakeAiSettingsSyncService();
+        final container = await makeContainer(extraOverrides: [
+          currentUidProvider.overrideWithValue('uid-1'),
+          aiSettingsSyncServiceProvider.overrideWithValue(fake),
+        ]);
+        addTearDown(container.dispose);
+        container.read(userSettingsNotifierProvider.notifier).setProviderConfig(
+            AiProvider.gemini,
+            const ProviderConfig(apiKeyCiphertext: 'c', model: 'gemini-2.5-flash'),
+            sync: false);
+        await Future<void>.delayed(Duration.zero);
+        expect(fake.pushCount, 0);
+      });
+
+      test('setTargetLanguage() pushes when signed in', () async {
+        final fake = _FakeAiSettingsSyncService();
+        final container = await makeContainer(extraOverrides: [
+          currentUidProvider.overrideWithValue('uid-1'),
+          aiSettingsSyncServiceProvider.overrideWithValue(fake),
+        ]);
+        addTearDown(container.dispose);
+        container.read(userSettingsNotifierProvider.notifier).setTargetLanguage(Language.korean);
+        await Future<void>.delayed(Duration.zero);
+        expect(fake.pushCount, 1);
+        expect(fake.lastTargetLanguage, Language.korean);
+      });
+    });
+
+    group('legacyPlaintextApiKey', () {
+      test('returns the raw key from a pre-migration JSON shape', () async {
+        final container = await makeContainer(initialValues: {
+          'ai_config_gemini': jsonEncode({'apiKey': 'old-plain-key', 'model': 'gemini-2.5-flash'}),
+        });
+        addTearDown(container.dispose);
+        final notifier = container.read(userSettingsNotifierProvider.notifier);
+        expect(notifier.legacyPlaintextApiKey(AiProvider.gemini), 'old-plain-key');
+      });
+
+      test('returns null once migrated to the ciphertext shape', () async {
+        final container = await makeContainer(initialValues: {
+          'ai_config_gemini': jsonEncode({'apiKeyCiphertext': 'cipher', 'model': 'gemini-2.5-flash'}),
+        });
+        addTearDown(container.dispose);
+        final notifier = container.read(userSettingsNotifierProvider.notifier);
+        expect(notifier.legacyPlaintextApiKey(AiProvider.gemini), isNull);
+      });
+
+      test('returns null when nothing is stored for the provider', () async {
+        final container = await makeContainer();
+        addTearDown(container.dispose);
+        final notifier = container.read(userSettingsNotifierProvider.notifier);
+        expect(notifier.legacyPlaintextApiKey(AiProvider.groq), isNull);
       });
     });
   });

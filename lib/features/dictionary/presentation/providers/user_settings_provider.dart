@@ -1,5 +1,7 @@
 // lib/features/dictionary/presentation/providers/user_settings_provider.dart
+import 'dart:async';
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/ai_provider.dart';
@@ -8,6 +10,7 @@ import '../../domain/entities/language.dart';
 import '../../domain/entities/provider_config.dart';
 import '../../domain/entities/user_settings_state.dart';
 import '../../../vocabulary/domain/entities/cefr_level.dart';
+import '../../../../core/services/ai_settings_sync_service.dart';
 import '../../../../core/services/encrypt_api_key.dart';
 
 part 'user_settings_provider.g.dart';
@@ -22,9 +25,57 @@ SharedPreferences sharedPreferences(SharedPreferencesRef ref) =>
 @Riverpod(keepAlive: true)
 ApiKeyEncryptor apiKeyEncryptor(ApiKeyEncryptorRef ref) => ApiKeyEncryptor();
 
+// Overridden in tests with a fixed value to avoid touching real
+// FirebaseAuth (which isn't initialized in plain unit tests).
+@Riverpod(keepAlive: true)
+String? currentUid(CurrentUidRef ref) => FirebaseAuth.instance.currentUser?.uid;
+
+// Overridden in tests with a fake to verify push-on-change without a real
+// Firestore/Cloud Functions round-trip.
+@Riverpod(keepAlive: true)
+AiSettingsSyncService aiSettingsSyncService(AiSettingsSyncServiceRef ref) =>
+    AiSettingsSyncService();
+
 @Riverpod(keepAlive: true)
 class UserSettingsNotifier extends _$UserSettingsNotifier {
   SharedPreferences get _prefs => ref.read(sharedPreferencesProvider);
+
+  AiSettingsSyncService get _syncService =>
+      ref.read(aiSettingsSyncServiceProvider);
+
+  /// Best-effort push of the fields AiSettingsSyncService syncs
+  /// (activeProvider/providerConfigs/targetLanguage) to Firestore. Never
+  /// throws — a failure here must never surface to a caller that just did a
+  /// successful local SharedPreferences write.
+  void _pushBestEffort() {
+    final uid = ref.read(currentUidProvider);
+    if (uid == null) return;
+    unawaited(
+      _syncService
+          .pushProviderSettings(uid, state.activeProvider, state.providerConfigs,
+              state.targetLanguage)
+          .catchError((Object _) {}),
+    );
+  }
+
+  /// Returns the raw legacy plaintext API key still stored under
+  /// [provider]'s SharedPreferences entry, if that entry is still in the
+  /// pre-encryption shape (`{"apiKey": "...", "model": "..."}` — no
+  /// `apiKeyCiphertext` key) — i.e. a key entered before this update that
+  /// hasn't been migrated to a Cloud KMS ciphertext yet. Returns null once
+  /// migrated (or if nothing was ever stored for this provider).
+  ///
+  /// Used only by AiSettingsSyncService.bootstrapSync — ProviderConfig
+  /// itself no longer reads the old `apiKey` field at all, so this is the
+  /// one remaining place that inspects the raw pre-migration JSON shape.
+  String? legacyPlaintextApiKey(AiProvider provider) {
+    final raw = _prefs.getString('ai_config_${provider.name}');
+    if (raw == null) return null;
+    final json = jsonDecode(raw) as Map<String, dynamic>;
+    if (json.containsKey('apiKeyCiphertext')) return null;
+    final legacy = json['apiKey'] as String?;
+    return (legacy != null && legacy.isNotEmpty) ? legacy : null;
+  }
 
   @override
   UserSettingsState build() {
@@ -72,9 +123,10 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
     );
   }
 
-  void setTargetLanguage(Language lang) {
+  void setTargetLanguage(Language lang, {bool sync = true}) {
     _prefs.setString('target_language', lang.name);
     state = state.copyWith(targetLanguage: lang);
+    if (sync) _pushBestEffort();
   }
 
   void setActiveContext(AppContext context) {
@@ -87,12 +139,13 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
     state = state.copyWith(aiEnabled: enabled);
   }
 
-  void setActiveProvider(AiProvider provider) {
+  void setActiveProvider(AiProvider provider, {bool sync = true}) {
     _prefs.setString('ai_active_provider', provider.name);
     state = state.copyWith(activeProvider: provider);
+    if (sync) _pushBestEffort();
   }
 
-  void setProviderConfig(AiProvider provider, ProviderConfig config) {
+  void setProviderConfig(AiProvider provider, ProviderConfig config, {bool sync = true}) {
     _prefs.setString(
       'ai_config_${provider.name}',
       jsonEncode(config.toJson()),
@@ -100,6 +153,7 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
     final updated = Map<AiProvider, ProviderConfig>.from(state.providerConfigs);
     updated[provider] = config;
     state = state.copyWith(providerConfigs: updated);
+    if (sync) _pushBestEffort();
   }
 
   void setApiKeyCiphertextForActiveProvider(String ciphertext) {

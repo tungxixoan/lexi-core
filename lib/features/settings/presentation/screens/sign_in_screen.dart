@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/services/hive_migration_service.dart';
+import '../../../dictionary/presentation/providers/user_settings_provider.dart';
 import '../providers/auth_notifier.dart';
 
 class SignInScreen extends ConsumerStatefulWidget {
@@ -60,6 +61,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       }
       return;
     }
+
+    // Best-effort: AiSettingsSyncService.bootstrapSync never throws (see its
+    // class doc), so this deliberately has no try/catch and never blocks
+    // navigation the way the Hive migration above does.
+    await ref.read(aiSettingsSyncServiceProvider).bootstrapSync(
+          user.uid,
+          ref.read(userSettingsNotifierProvider.notifier),
+        );
 
     if (mounted) context.go('/');
   }

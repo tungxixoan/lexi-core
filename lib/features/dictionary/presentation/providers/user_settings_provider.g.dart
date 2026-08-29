@@ -40,8 +40,42 @@ final apiKeyEncryptorProvider = Provider<ApiKeyEncryptor>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ApiKeyEncryptorRef = ProviderRef<ApiKeyEncryptor>;
+String _$currentUidHash() => r'3b61265a561a1edfd259ff3d91ac25c5a356ac11';
+
+/// See also [currentUid].
+@ProviderFor(currentUid)
+final currentUidProvider = Provider<String?>.internal(
+  currentUid,
+  name: r'currentUidProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$currentUidHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef CurrentUidRef = ProviderRef<String?>;
+String _$aiSettingsSyncServiceHash() =>
+    r'e1802517565a40adb349d41d9426aa4dd310c42d';
+
+/// See also [aiSettingsSyncService].
+@ProviderFor(aiSettingsSyncService)
+final aiSettingsSyncServiceProvider = Provider<AiSettingsSyncService>.internal(
+  aiSettingsSyncService,
+  name: r'aiSettingsSyncServiceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$aiSettingsSyncServiceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef AiSettingsSyncServiceRef = ProviderRef<AiSettingsSyncService>;
 String _$userSettingsNotifierHash() =>
-    r'e3321fdb16e41f7d49644cd36d2e1993eee57718';
+    r'c4f622586c475d1d48d0706ce37af306a145e8ed';
 
 /// See also [UserSettingsNotifier].
 @ProviderFor(UserSettingsNotifier)
