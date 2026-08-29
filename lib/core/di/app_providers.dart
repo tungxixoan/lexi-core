@@ -59,7 +59,11 @@ http.Client httpClient(HttpClientRef ref) {
 }
 
 @riverpod
-TtsService ttsService(TtsServiceRef ref) => CloudTtsService();
+TtsService ttsService(TtsServiceRef ref) {
+  final service = CloudTtsService();
+  ref.onDispose(() => service.dispose());
+  return service;
+}
 
 @riverpod
 FreeDictionarySource freeDictionarySource(FreeDictionarySourceRef ref) =>

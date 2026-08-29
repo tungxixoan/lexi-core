@@ -22,15 +22,34 @@ abstract class TtsService {
   Future<void> synthesize(String text, Language language, {String? voice, double? rate});
 
   Future<void> stop();
+
+  /// Releases the underlying native audio player, if one was ever created.
+  /// Called from `ttsServiceProvider`'s `ref.onDispose` since the provider
+  /// is auto-dispose and a fresh instance is built on every re-entry.
+  Future<void> dispose();
 }
 
 class CloudTtsService implements TtsService {
   CloudTtsService({CloudFunctionCaller? caller, AudioPlayer? player})
-      : _caller = caller ?? FirebaseCloudFunctionCaller(),
-        _player = player ?? AudioPlayer();
+      : _providedCaller = caller,
+        _providedPlayer = player;
 
-  final CloudFunctionCaller _caller;
-  final AudioPlayer _player;
+  final CloudFunctionCaller? _providedCaller;
+  final AudioPlayer? _providedPlayer;
+  CloudFunctionCaller? _resolvedCaller;
+  AudioPlayer? _resolvedPlayer;
+
+  // Lazy: constructing FirebaseCloudFunctionCaller()/AudioPlayer() touches
+  // Firebase/platform channels, which throws in any context without a real
+  // Firebase app initialized (e.g. a plain widget test that reads
+  // ttsServiceProvider without overriding it). Deferring until the first
+  // real pronounce()/synthesize()/stop() call means merely *constructing*
+  // a CloudTtsService (which ttsServiceProvider's default builder does
+  // unconditionally) never requires Firebase to already be initialized.
+  CloudFunctionCaller get _caller =>
+      _providedCaller ?? (_resolvedCaller ??= FirebaseCloudFunctionCaller());
+  AudioPlayer get _player =>
+      _providedPlayer ?? (_resolvedPlayer ??= AudioPlayer());
 
   @override
   Future<void> pronounce(String text, Language language, {required PronunciationTier tier}) async {
@@ -94,4 +113,9 @@ class CloudTtsService implements TtsService {
 
   @override
   Future<void> stop() => _player.stop();
+
+  @override
+  Future<void> dispose() async {
+    await _resolvedPlayer?.dispose();
+  }
 }

@@ -13,9 +13,14 @@ import 'package:lexi_core/services/tts_service.dart';
 
 class _FakeTtsService implements TtsService {
   @override
-  Future<void> speak(String text, Language language, {double pitch = 1.0, double? rate}) async {}
+  Future<void> pronounce(String text, Language language, {required PronunciationTier tier}) async {}
+  @override
+  Future<void> synthesize(String text, Language language, {String? voice, double? rate}) async {}
   @override
   Future<void> stop() async {}
+
+  @override
+  Future<void> dispose() async {}
 }
 
 final _testPassage = ListeningPassage(

@@ -14,15 +14,21 @@ import 'package:lexi_core/features/listening/presentation/screens/dictation_sess
 import 'package:lexi_core/services/tts_service.dart';
 
 class _FakeTtsService implements TtsService {
-  int speakCount = 0;
+  int synthesizeCount = 0;
 
   @override
-  Future<void> speak(String text, Language language, {double pitch = 1.0, double? rate}) async {
-    speakCount++;
+  Future<void> pronounce(String text, Language language, {required PronunciationTier tier}) async {}
+
+  @override
+  Future<void> synthesize(String text, Language language, {String? voice, double? rate}) async {
+    synthesizeCount++;
   }
 
   @override
   Future<void> stop() async {}
+
+  @override
+  Future<void> dispose() async {}
 }
 
 final _testItem = DictationItem(
