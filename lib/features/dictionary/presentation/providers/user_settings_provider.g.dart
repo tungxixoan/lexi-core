@@ -23,8 +23,25 @@ final sharedPreferencesProvider = Provider<SharedPreferences>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef SharedPreferencesRef = ProviderRef<SharedPreferences>;
+String _$apiKeyEncryptorHash() => r'7c16402d7f17eccdbaf67a93ca003fe2d704fd20';
+
+/// See also [apiKeyEncryptor].
+@ProviderFor(apiKeyEncryptor)
+final apiKeyEncryptorProvider = Provider<ApiKeyEncryptor>.internal(
+  apiKeyEncryptor,
+  name: r'apiKeyEncryptorProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$apiKeyEncryptorHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ApiKeyEncryptorRef = ProviderRef<ApiKeyEncryptor>;
 String _$userSettingsNotifierHash() =>
-    r'eeaa727e3b467492ff0fa681c0c39af8687adacd';
+    r'e3321fdb16e41f7d49644cd36d2e1993eee57718';
 
 /// See also [UserSettingsNotifier].
 @ProviderFor(UserSettingsNotifier)

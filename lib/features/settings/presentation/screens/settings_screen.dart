@@ -2,6 +2,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/services/encrypt_api_key.dart';
 import '../../../../core/widgets/selection_sheets.dart';
 import '../../../../features/dictionary/domain/entities/ai_provider.dart';
 import '../../../../features/dictionary/domain/entities/language.dart';
@@ -85,13 +86,16 @@ class SettingsScreen extends ConsumerWidget {
             ListTile(
               title: const Text('API Key'),
               subtitle: Text(
-                settings.activeConfig.apiKey.isEmpty
-                    ? 'Chưa cài đặt'
-                    : '••••••••${_lastFour(settings.activeConfig.apiKey)}',
+                (settings.activeConfig.apiKeyCiphertext?.isNotEmpty ?? false)
+                    ? 'Đã cài đặt'
+                    : 'Chưa cài đặt',
               ),
               trailing: const Icon(Icons.edit_outlined),
               onTap: () => _showApiKeyDialog(
-                  context, ref, settings.activeConfig.apiKey),
+                context,
+                ref,
+                settings.activeConfig.apiKeyCiphertext?.isNotEmpty ?? false,
+              ),
             ),
           ],
 
@@ -141,18 +145,16 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  String _lastFour(String key) =>
-      key.length > 4 ? key.substring(key.length - 4) : key;
-
   void _showApiKeyDialog(
-      BuildContext context, WidgetRef ref, String currentKey) {
+      BuildContext context, WidgetRef ref, bool isConfigured) {
     showDialog<void>(
       context: context,
       builder: (ctx) => _ApiKeyDialog(
-        currentKey: currentKey,
-        onSave: (key) => ref
+        isConfigured: isConfigured,
+        encryptor: ref.read(apiKeyEncryptorProvider),
+        onSave: (ciphertext) => ref
             .read(userSettingsNotifierProvider.notifier)
-            .setApiKeyForActiveProvider(key),
+            .setApiKeyCiphertextForActiveProvider(ciphertext),
       ),
     );
   }
@@ -353,22 +355,23 @@ class _SignedInSection extends StatelessWidget {
 }
 
 class _ApiKeyDialog extends StatefulWidget {
-  const _ApiKeyDialog({required this.currentKey, required this.onSave});
-  final String currentKey;
-  final void Function(String) onSave;
+  const _ApiKeyDialog({
+    required this.isConfigured,
+    required this.encryptor,
+    required this.onSave,
+  });
+  final bool isConfigured;
+  final ApiKeyEncryptor encryptor;
+  final void Function(String ciphertext) onSave;
 
   @override
   State<_ApiKeyDialog> createState() => _ApiKeyDialogState();
 }
 
 class _ApiKeyDialogState extends State<_ApiKeyDialog> {
-  late final TextEditingController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = TextEditingController(text: widget.currentKey);
-  }
+  final _ctrl = TextEditingController();
+  bool _saving = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -376,28 +379,65 @@ class _ApiKeyDialogState extends State<_ApiKeyDialog> {
     super.dispose();
   }
 
+  Future<void> _save() async {
+    final raw = _ctrl.text.trim();
+    if (raw.isEmpty) return;
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      final ciphertext = await widget.encryptor.encrypt(raw);
+      widget.onSave(ciphertext);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _error = e is EncryptApiKeyException
+            ? e.message
+            : 'Không thể mã hoá API key. Vui lòng thử lại.';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('API Key'),
-      content: TextField(
-        controller: _ctrl,
-        obscureText: true,
-        decoration: const InputDecoration(
-          hintText: 'Nhập API key...',
-          border: OutlineInputBorder(),
-        ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: _ctrl,
+            obscureText: true,
+            enabled: !_saving,
+            decoration: InputDecoration(
+              hintText: widget.isConfigured ? '••••••••' : 'Nhập API key...',
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(_error!, style: const TextStyle(color: Colors.red)),
+          ],
+        ],
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Huỷ')),
+          onPressed: _saving ? null : () => Navigator.pop(context),
+          child: const Text('Huỷ'),
+        ),
         FilledButton(
-          onPressed: () {
-            widget.onSave(_ctrl.text.trim());
-            Navigator.pop(context);
-          },
-          child: const Text('Lưu'),
+          onPressed: _saving ? null : () => _save(),
+          child: _saving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Lưu'),
         ),
       ],
     );

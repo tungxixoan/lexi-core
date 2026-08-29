@@ -37,4 +37,26 @@ extension AiProviderX on AiProvider {
             'mistralai/mixtral-8x7b-instruct',
           ],
       };
+
+  /// The lowercase provider id the `generateContent`/`encryptApiKey` Cloud
+  /// Functions and the shared `users/{uid}/settings/config` Firestore
+  /// document expect (functions/src/generateContent.ts,
+  /// apps/web/src/lib/settings.ts). Deliberately NOT `.name` — that
+  /// produces `"openRouter"` (Dart camelCase) for [AiProvider.openRouter],
+  /// which does not match the Cloud Function's `"openrouter"`.
+  String get cloudId => switch (this) {
+        AiProvider.gemini => 'gemini',
+        AiProvider.groq => 'groq',
+        AiProvider.openRouter => 'openrouter',
+      };
+}
+
+/// Reverse lookup for [AiProviderX.cloudId] — used when parsing the
+/// `activeProvider` field back out of Firestore. Returns null for an
+/// unrecognized id (malformed/future remote data) rather than throwing.
+AiProvider? aiProviderFromCloudId(String id) {
+  for (final provider in AiProvider.values) {
+    if (provider.cloudId == id) return provider;
+  }
+  return null;
 }

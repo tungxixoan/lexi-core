@@ -65,7 +65,7 @@ final class UserSettingsState {
     aiEnabled: false,
     activeProvider: AiProvider.gemini,
     providerConfigs: {
-      AiProvider.gemini: ProviderConfig(apiKey: '', model: 'gemini-2.5-flash'),
+      AiProvider.gemini: ProviderConfig(apiKeyCiphertext: null, model: 'gemini-2.5-flash'),
     },
     targetCefrLevel: null,
     reminderEnabled: false,

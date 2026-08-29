@@ -8,6 +8,7 @@ import '../../domain/entities/language.dart';
 import '../../domain/entities/provider_config.dart';
 import '../../domain/entities/user_settings_state.dart';
 import '../../../vocabulary/domain/entities/cefr_level.dart';
+import '../../../../core/services/encrypt_api_key.dart';
 
 part 'user_settings_provider.g.dart';
 
@@ -16,6 +17,10 @@ part 'user_settings_provider.g.dart';
 SharedPreferences sharedPreferences(SharedPreferencesRef ref) =>
     throw UnimplementedError(
         'sharedPreferencesProvider must be overridden in main.dart');
+
+// Overridden in tests with a fake to avoid a real Cloud Functions call.
+@Riverpod(keepAlive: true)
+ApiKeyEncryptor apiKeyEncryptor(ApiKeyEncryptorRef ref) => ApiKeyEncryptor();
 
 @Riverpod(keepAlive: true)
 class UserSettingsNotifier extends _$UserSettingsNotifier {
@@ -97,11 +102,11 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
     state = state.copyWith(providerConfigs: updated);
   }
 
-  void setApiKeyForActiveProvider(String key) {
+  void setApiKeyCiphertextForActiveProvider(String ciphertext) {
     final current = state.activeConfig;
     setProviderConfig(
       state.activeProvider,
-      ProviderConfig(apiKey: key, model: current.model),
+      ProviderConfig(apiKeyCiphertext: ciphertext, model: current.model),
     );
   }
 
@@ -109,7 +114,7 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
     final current = state.activeConfig;
     setProviderConfig(
       state.activeProvider,
-      ProviderConfig(apiKey: current.apiKey, model: model),
+      ProviderConfig(apiKeyCiphertext: current.apiKeyCiphertext, model: model),
     );
   }
 

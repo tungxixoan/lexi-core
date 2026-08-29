@@ -32,7 +32,7 @@ void main() {
       expect(state.aiEnabled, false);
       expect(state.activeProvider, AiProvider.gemini);
       expect(state.providerConfigs, isEmpty);
-      expect(state.activeConfig.apiKey, '');
+      expect(state.activeConfig.apiKeyCiphertext, isNull);
       expect(state.activeConfig.model, 'gemini-2.5-flash');
       expect(state.targetCefrLevel, isNull);
     });
@@ -43,7 +43,7 @@ void main() {
         'active_context': 'business',
         'ai_enabled': true,
         'ai_active_provider': 'groq',
-        'ai_config_groq': jsonEncode({'apiKey': 'gsk_test', 'model': 'llama-3.3-70b-versatile'}),
+        'ai_config_groq': jsonEncode({'apiKeyCiphertext': 'cipher_gsk_test', 'model': 'llama-3.3-70b-versatile'}),
         'target_cefr_level': 'b2',
       });
       addTearDown(container.dispose);
@@ -52,13 +52,13 @@ void main() {
       expect(state.activeContext, AppContext.business);
       expect(state.aiEnabled, true);
       expect(state.activeProvider, AiProvider.groq);
-      expect(state.activeConfig.apiKey, 'gsk_test');
+      expect(state.activeConfig.apiKeyCiphertext, 'cipher_gsk_test');
       expect(state.activeConfig.model, 'llama-3.3-70b-versatile');
       expect(state.targetCefrLevel, CEFRLevel.b2);
     });
 
     group('migration from old gemini_api_key', () {
-      test('migrates old gemini_api_key to ai_config_gemini on build()', () async {
+      test('migrates old gemini_api_key to ai_config_gemini, still in the plaintext shape', () async {
         final container = await makeContainer(initialValues: {
           'gemini_api_key': 'old-key-xyz',
         });
@@ -67,7 +67,14 @@ void main() {
         final state = container.read(userSettingsNotifierProvider);
 
         expect(state.activeProvider, AiProvider.gemini);
-        expect(state.activeConfig.apiKey, 'old-key-xyz');
+        // This ancient migration predates the apiKeyCiphertext rename — it
+        // still writes the OLD plaintext shape (`{"apiKey": ..., ...}`).
+        // ProviderConfig.fromJson only reads apiKeyCiphertext now, so this
+        // plaintext value is correctly NOT surfaced as a usable ciphertext.
+        // (Task 2 adds a follow-up assertion here once
+        // UserSettingsNotifier.legacyPlaintextApiKey exists, confirming the
+        // plaintext value is still recoverable for that later migration.)
+        expect(state.activeConfig.apiKeyCiphertext, isNull);
         expect(state.activeConfig.model, 'gemini-2.5-flash');
 
         // Old key must be removed; new keys must exist.
@@ -109,36 +116,36 @@ void main() {
       final container = await makeContainer();
       addTearDown(container.dispose);
       final prefs = container.read(sharedPreferencesProvider);
-      const config = ProviderConfig(apiKey: 'my-key', model: 'llama-3.1-8b-instant');
+      const config = ProviderConfig(apiKeyCiphertext: 'cipher-my-key', model: 'llama-3.1-8b-instant');
       container
           .read(userSettingsNotifierProvider.notifier)
           .setProviderConfig(AiProvider.groq, config);
       final state = container.read(userSettingsNotifierProvider);
-      expect(state.providerConfigs[AiProvider.groq]?.apiKey, 'my-key');
+      expect(state.providerConfigs[AiProvider.groq]?.apiKeyCiphertext, 'cipher-my-key');
       expect(state.providerConfigs[AiProvider.groq]?.model, 'llama-3.1-8b-instant');
       final stored = jsonDecode(prefs.getString('ai_config_groq')!) as Map<String, dynamic>;
-      expect(stored['apiKey'], 'my-key');
+      expect(stored['apiKeyCiphertext'], 'cipher-my-key');
       expect(stored['model'], 'llama-3.1-8b-instant');
     });
 
-    test('setApiKeyForActiveProvider() keeps model, updates key', () async {
+    test('setApiKeyCiphertextForActiveProvider() keeps model, updates ciphertext', () async {
       final container = await makeContainer(initialValues: {
         'ai_active_provider': 'gemini',
-        'ai_config_gemini': jsonEncode({'apiKey': 'old', 'model': 'gemini-2.5-pro'}),
+        'ai_config_gemini': jsonEncode({'apiKeyCiphertext': 'old-cipher', 'model': 'gemini-2.5-pro'}),
       });
       addTearDown(container.dispose);
       container
           .read(userSettingsNotifierProvider.notifier)
-          .setApiKeyForActiveProvider('new-key');
+          .setApiKeyCiphertextForActiveProvider('new-cipher');
       final config = container.read(userSettingsNotifierProvider).activeConfig;
-      expect(config.apiKey, 'new-key');
+      expect(config.apiKeyCiphertext, 'new-cipher');
       expect(config.model, 'gemini-2.5-pro'); // model unchanged
     });
 
-    test('setModelForActiveProvider() keeps key, updates model', () async {
+    test('setModelForActiveProvider() keeps ciphertext, updates model', () async {
       final container = await makeContainer(initialValues: {
         'ai_active_provider': 'gemini',
-        'ai_config_gemini': jsonEncode({'apiKey': 'test-key', 'model': 'gemini-2.5-flash'}),
+        'ai_config_gemini': jsonEncode({'apiKeyCiphertext': 'test-cipher', 'model': 'gemini-2.5-flash'}),
       });
       addTearDown(container.dispose);
       container
@@ -146,7 +153,7 @@ void main() {
           .setModelForActiveProvider('gemini-2.5-pro');
       final config = container.read(userSettingsNotifierProvider).activeConfig;
       expect(config.model, 'gemini-2.5-pro');
-      expect(config.apiKey, 'test-key'); // key unchanged
+      expect(config.apiKeyCiphertext, 'test-cipher'); // ciphertext unchanged
     });
 
     test('setTargetLanguage() updates state and writes to prefs', () async {
