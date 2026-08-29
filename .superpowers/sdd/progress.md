@@ -1708,3 +1708,13 @@ Dispatched on opus (most capable available model) over the full branch diff (7 c
 Both tasks implemented and reviewed (1 fix round each), plus a final whole-branch review that needed 2 further fix rounds — the most consequential being a Critical bug (the entire migration/sync path was unreachable for the one real production user) that neither task-level review caught because it only became visible once someone traced how `/splash`'s auto-redirect interacts with mandatory sign-in from an earlier, already-shipped plan. All work committed directly to `master` (this project's established single-branch workflow this session) — commits `de34c73..b8276de`. Nothing pushed to `origin/master` yet.
 
 **Not yet done**: push to origin, and (per this cleanup item's own nature — no user-facing feature, just an internal architecture change) decide whether a Flutter Web rebuild+redeploy is warranted before or separately from the next cleanup item. No real production data migration is needed for this plan (unlike vocab_records) — existing users' plaintext keys migrate automatically via `bootstrapSync`'s legacy-migration branch the next time they open the app, now that the reachability bug is fixed.
+
+# LexiCore — Flutter TTS Cloud Function Migration
+
+## Task 1: Nghe hiểu voice/gender infrastructure — complete
+
+`ListeningTurn` gained a `gender` field, `ListeningPassage` a `speakerGenders` map (default `const {}`, non-breaking); `ListeningPassageSource`'s prompt now asks the AI to declare each turn's gender (word-for-word matching `apps/web/src/lib/listeningPassage.ts`'s own addition), and `_parse` derives `speakerGenders` first-seen-wins. New `speakerKey`/`assignVoices` (ported from web's `assignVoices()`) pick 2 real Piper voices per speaker deterministically. Purely additive — nothing yet calls `assignVoices` or reads the new fields; Task 2 wires it in.
+
+Implementer: haiku. Caught a real bug in the plan's own code during implementation (correctly escalated rather than guessing): `speakerGenders[key] = gender;` doesn't type-check — Dart's `==` comparison does not type-promote a nullable variable the way `!= null`/`is` checks do, so `gender` stays `String?` even after `gender == 'male' || gender == 'female'`. Plan fixed (`gender!`) and re-dispatched from the corrected brief. Review (sonnet): spec-compliant, zero Critical/Important findings, confirmed the fix landed in the actual committed code (not just the brief) and confirmed no other call site of `ListeningPassage`/`ListeningTurn` exists anywhere in `lib/` that this task could have broken.
+
+Task 1: complete (commits 2daf68a..60daa4b, review clean). 544/544 tests.
