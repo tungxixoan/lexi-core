@@ -16,6 +16,16 @@ void main() {
       const turn = ListeningTurn(text: 'Attention all passengers.');
       expect(turn.speaker, isNull);
     });
+
+    test('gender is null when not provided', () {
+      const turn = ListeningTurn(speaker: 'A', text: 'Hello there.');
+      expect(turn.gender, isNull);
+    });
+
+    test('holds a declared gender', () {
+      const turn = ListeningTurn(speaker: 'A', gender: 'female', text: 'Hello there.');
+      expect(turn.gender, 'female');
+    });
   });
 
   group('ListeningQuestion', () {
@@ -74,6 +84,95 @@ void main() {
       expect(passage.level, CEFRLevel.b1);
       expect(passage.context, AppContext.general);
       expect(passage.targetLanguage, Language.english);
+    });
+
+    test('speakerGenders defaults to empty when not provided', () {
+      expect(passage.speakerGenders, isEmpty);
+    });
+  });
+
+  group('speakerKey', () {
+    test('returns the speaker letter unchanged', () {
+      expect(speakerKey('A'), 'A');
+      expect(speakerKey('B'), 'B');
+    });
+    test('returns "solo" for a null speaker (talk format)', () {
+      expect(speakerKey(null), 'solo');
+    });
+  });
+
+  group('assignVoices', () {
+    ListeningPassage passageWith(List<ListeningTurn> turns, Map<String, String> genders) =>
+        ListeningPassage(
+          id: 'p',
+          kind: ListeningKind.conversation,
+          turns: turns,
+          questions: const [],
+          speakerGenders: genders,
+          level: CEFRLevel.b1,
+          context: AppContext.general,
+          targetLanguage: Language.english,
+          generatedAt: DateTime(2026),
+        );
+
+    test('assigns distinct voices to two speakers of different genders', () {
+      final passage = passageWith(
+        const [
+          ListeningTurn(speaker: 'A', text: 'Hi.'),
+          ListeningTurn(speaker: 'B', text: 'Hello.'),
+        ],
+        {'A': 'male', 'B': 'female'},
+      );
+      final voices = assignVoices(passage);
+      expect(voices['A'], 'male1');
+      expect(voices['B'], 'female1');
+    });
+
+    test('two speakers of the same gender get slot 1 and slot 2', () {
+      final passage = passageWith(
+        const [
+          ListeningTurn(speaker: 'A', text: 'Hi.'),
+          ListeningTurn(speaker: 'B', text: 'Hello.'),
+        ],
+        {'A': 'male', 'B': 'male'},
+      );
+      final voices = assignVoices(passage);
+      expect(voices['A'], 'male1');
+      expect(voices['B'], 'male2');
+    });
+
+    test('orders by first appearance, not alphabetically', () {
+      final passage = passageWith(
+        const [
+          ListeningTurn(speaker: 'B', text: 'Hi.'),
+          ListeningTurn(speaker: 'A', text: 'Hello.'),
+        ],
+        {'A': 'male', 'B': 'female'},
+      );
+      final voices = assignVoices(passage);
+      expect(voices['B'], 'female1');
+      expect(voices['A'], 'male1');
+    });
+
+    test('defaults a speaker with no declared gender to female', () {
+      final passage = passageWith(
+        const [ListeningTurn(speaker: 'A', text: 'Hi.')],
+        const {},
+      );
+      expect(assignVoices(passage)['A'], 'female1');
+    });
+
+    test('a single-speaker talk gets one voice keyed by "solo"', () {
+      final passage = passageWith(
+        const [
+          ListeningTurn(text: 'Attention all passengers.'),
+          ListeningTurn(text: 'Flight 204 is now boarding.'),
+        ],
+        {'solo': 'male'},
+      );
+      final voices = assignVoices(passage);
+      expect(voices['solo'], 'male1');
+      expect(voices.length, 1);
     });
   });
 }

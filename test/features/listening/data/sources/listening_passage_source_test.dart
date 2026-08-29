@@ -24,8 +24,8 @@ void main() {
   final conversationJson = jsonEncode({
     'kind': 'conversation',
     'turns': [
-      {'speaker': 'A', 'text': 'Can I help you find something?'},
-      {'speaker': 'B', 'text': 'Yes, I am looking for a winter jacket.'},
+      {'speaker': 'A', 'gender': 'female', 'text': 'Can I help you find something?'},
+      {'speaker': 'B', 'gender': 'male', 'text': 'Yes, I am looking for a winter jacket.'},
     ],
     'questions': [
       {
@@ -60,6 +60,9 @@ void main() {
     expect(passage.turns.length, 2);
     expect(passage.turns[0].speaker, 'A');
     expect(passage.turns[1].speaker, 'B');
+    expect(passage.turns[0].gender, 'female');
+    expect(passage.turns[1].gender, 'male');
+    expect(passage.speakerGenders, {'A': 'female', 'B': 'male'});
     expect(passage.questions.length, 3);
     expect(passage.questions[0].options.length, 4);
     expect(passage.questions[0].correctIndex, 1);
@@ -123,5 +126,31 @@ void main() {
       ),
       throwsA(isA<FormatException>()),
     );
+  });
+
+  test('speakerGenders uses the first-seen gender when a later turn disagrees', () async {
+    final inconsistentJson = jsonEncode({
+      'kind': 'conversation',
+      'turns': [
+        {'speaker': 'A', 'gender': 'female', 'text': 'Can I help you?'},
+        {'speaker': 'B', 'gender': 'male', 'text': 'Yes, please.'},
+        {'speaker': 'A', 'gender': 'male', 'text': 'Sure thing.'}, // inconsistent — ignored
+      ],
+      'questions': [
+        {'question': 'Q1', 'options': ['a', 'b', 'c', 'd'], 'correctIndex': 0},
+        {'question': 'Q2', 'options': ['a', 'b', 'c', 'd'], 'correctIndex': 0},
+        {'question': 'Q3', 'options': ['a', 'b', 'c', 'd'], 'correctIndex': 0},
+      ],
+    });
+    final source = ListeningPassageSource.withModel(
+      FakeGenerativeModelClient(inconsistentJson),
+    );
+    final passage = await source.generate(
+      level: CEFRLevel.b1,
+      context: AppContext.general,
+      targetLanguage: Language.english,
+    );
+
+    expect(passage.speakerGenders['A'], 'female'); // first-seen wins, not the 3rd turn's 'male'
   });
 }
