@@ -102,6 +102,10 @@ class _AuthRefreshStream extends ChangeNotifier {
 /// not block the redirect the way sign_in_screen.dart's own bootstrapSync
 /// call blocks navigation there (that one has a real reason to wait — see
 /// its own comment).
+/// Waits for FirebaseAuth to resolve its current user (falling back to the
+/// first authStateChanges() event when currentUser isn't populated
+/// synchronously yet, as on Flutter Web) rather than assuming a
+/// synchronous null means signed-out.
 class _SplashScreen extends ConsumerStatefulWidget {
   const _SplashScreen();
 
@@ -113,15 +117,23 @@ class _SplashScreenState extends ConsumerState<_SplashScreen> {
   @override
   void initState() {
     super.initState();
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
-      unawaited(
-        ref.read(aiSettingsSyncServiceProvider).bootstrapSync(
-              uid,
-              ref.read(userSettingsNotifierProvider.notifier),
-            ),
-      );
-    }
+    // Capture both provider reads synchronously, before any await — ref
+    // must not be touched after this widget could have been disposed.
+    final service = ref.read(aiSettingsSyncServiceProvider);
+    final notifier = ref.read(userSettingsNotifierProvider.notifier);
+    unawaited(() async {
+      // On Flutter Web, FirebaseAuth.instance.currentUser stays null until
+      // the JS SDK finishes restoring the session from IndexedDB — reading
+      // it synchronously here would silently skip bootstrapSync for a
+      // returning web user (mobile seeds currentUser synchronously before
+      // runApp, so this only matters on web, but web is a live deployed
+      // surface until the domain cutover — see CLAUDE.md). Falling back to
+      // the first authStateChanges() event waits for that resolution
+      // instead of guessing null.
+      final user = FirebaseAuth.instance.currentUser ??
+          await FirebaseAuth.instance.authStateChanges().first;
+      if (user != null) await service.bootstrapSync(user.uid, notifier);
+    }());
   }
 
   @override

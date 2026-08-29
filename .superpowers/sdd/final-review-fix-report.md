@@ -100,3 +100,35 @@ Result: `+533: All tests passed!` — no regressions elsewhere.
 
 - The one deviation noted above (adding the `encryptor:` argument to the new Fix-2 test) was necessary for the test to exercise the actual bug rather than erroring on an unrelated Firebase-init issue; the assertions and fix logic are otherwise exactly as specified.
 - No other drift from the task's exact code blocks was found — all files matched the pre-fix state described in the task before edits were applied.
+
+## Fix Round 2 — Flutter Web auth-resolution race (Firebase auth currentUser sync issue)
+
+**File:** `lib/core/router/app_router.dart`
+
+**Problem:** On Flutter Web, `FirebaseAuth.instance.currentUser` stays `null` until the JS Firebase SDK finishes restoring the session from IndexedDB — which happens AFTER the splash screen's `initState()` runs. The original Fix 1 read `currentUser` synchronously in `_SplashScreenState.initState()`, which meant returning Flutter Web users saw `null` and never got `bootstrapSync` called. Mobile platforms seed `currentUser` synchronously before `runApp`, so they were unaffected, but Flutter Web remains a live deployed surface (`build/web`, per CLAUDE.md) until an explicit domain-cutover step — the bug needed fixing now.
+
+**Changes:**
+- Modified `_SplashScreenState.initState()` to capture the Riverpod provider refs synchronously (before any `await`, so `ref` stays valid), then call an async closure that:
+  - Falls back to `FirebaseAuth.instance.authStateChanges().first` when `currentUser` is still `null` — waiting for the JS SDK to finish restoring the session.
+  - Calls `bootstrapSync` with the resolved user's uid once available.
+- Updated the `_SplashScreen` class doc comment to explain the new behavior: waits for FirebaseAuth resolution rather than assuming a synchronous `null` means signed-out.
+
+**Tests:**
+- `test/core/router/auth_redirect_test.dart` (8/8 pass): Tests only the pure `authRedirectDecision` function, unaffected by this widget timing change — still passes unchanged.
+- Full suite: `flutter test` (533 tests pass) — no regressions.
+
+**Analysis output:**
+```
+flutter analyze: 21 issues — all pre-existing RadioListTile deprecation infos, no new errors/warnings.
+
+flutter test test/core/router/auth_redirect_test.dart
+00:00 +0: loading D:/Flutter/lexi-core/test/core/router/auth_redirect_test.dart
+[8 tests listed]
+00:00 +8: All tests passed!
+
+flutter test (full suite)
+[533 tests run]
+01:15 +533: All tests passed!
+```
+
+No new widget-level tests added — the async timing of `currentUser` vs `authStateChanges()` resolution is not practically testable without a fake FirebaseAuth seam, which this codebase lacks.
