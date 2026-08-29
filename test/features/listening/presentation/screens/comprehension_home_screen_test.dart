@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/listening/presentation/screens/comprehension_home_screen.dart';
@@ -60,5 +61,15 @@ void main() {
     expect(find.text('Ngôn ngữ'), findsOneWidget);
     expect(find.text('Chủ đề'), findsOneWidget);
     expect(find.text('Cấp độ'), findsOneWidget);
+  });
+
+  testWidgets('shows unsupported-language message when target language has no Piper voice', (tester) async {
+    await tester.pumpWidget(_buildHome(
+      settings: UserSettingsState.defaults
+          .copyWith(aiEnabled: true, targetLanguage: Language.japanese),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('chưa hỗ trợ'), findsOneWidget);
+    expect(find.text('Tạo bài luyện'), findsNothing);
   });
 }

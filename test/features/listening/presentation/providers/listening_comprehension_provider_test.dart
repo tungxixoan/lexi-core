@@ -58,7 +58,7 @@ void main() {
       ),
     ).thenAnswer((_) async => fixedPassage);
     when(
-      () => mockTts.speak(any(), any(), pitch: any(named: 'pitch'), rate: any(named: 'rate')),
+      () => mockTts.synthesize(any(), any(), voice: any(named: 'voice'), rate: any(named: 'rate')),
     ).thenAnswer((_) async {});
     when(() => mockTts.stop()).thenAnswer((_) async {});
 
@@ -85,13 +85,14 @@ void main() {
     expect(state.canSubmit, false);
   });
 
-  test('playCurrentTurn() speaks the current turn with the correct pitch and resets isSpeaking on completion', () async {
+  test('playCurrentTurn() speaks the current turn with the correct voice and resets isSpeaking on completion', () async {
     await generateFixed();
     await container.read(listeningComprehensionNotifierProvider.notifier).playCurrentTurn();
-    verify(() => mockTts.speak('Hello, can I help you?', Language.english, pitch: 1.0, rate: 0.5))
+    verify(() => mockTts.synthesize('Hello, can I help you?', Language.english,
+            voice: 'female1', rate: 1.0))
         .called(1);
     final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
-    expect(state.isSpeaking, false); // reset after the awaited speak() completes
+    expect(state.isSpeaking, false); // reset after the awaited synthesize() completes
   });
 
   test('playCurrentTurn() auto-continues through every turn until the last one', () async {
@@ -100,13 +101,14 @@ void main() {
 
     await notifier.playCurrentTurn();
 
-    verify(() => mockTts.speak('Hello, can I help you?', Language.english, pitch: 1.0, rate: 0.5))
+    verify(() => mockTts.synthesize('Hello, can I help you?', Language.english,
+            voice: 'female1', rate: 1.0))
         .called(1);
-    verify(() => mockTts.speak('Yes, I need a room for tonight.', Language.english, pitch: 1.3,
-            rate: 0.5))
+    verify(() => mockTts.synthesize('Yes, I need a room for tonight.', Language.english,
+            voice: 'female2', rate: 1.0))
         .called(1);
-    verify(() => mockTts.speak('Sure, for how many guests?', Language.english, pitch: 1.0,
-            rate: 0.5))
+    verify(() => mockTts.synthesize('Sure, for how many guests?', Language.english,
+            voice: 'female1', rate: 1.0))
         .called(1);
     final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.currentTurnIndex, 2); // last turn
@@ -117,7 +119,7 @@ void main() {
     await generateFixed();
     final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
     final completer = Completer<void>();
-    when(() => mockTts.speak(any(), any(), pitch: any(named: 'pitch'), rate: any(named: 'rate')))
+    when(() => mockTts.synthesize(any(), any(), voice: any(named: 'voice'), rate: any(named: 'rate')))
         .thenAnswer((_) => completer.future);
 
     final playFuture = notifier.playCurrentTurn();
@@ -127,7 +129,7 @@ void main() {
 
     final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.currentTurnIndex, 0); // stopPlayback() doesn't change turns
-    verify(() => mockTts.speak(any(), any(), pitch: any(named: 'pitch'), rate: any(named: 'rate')))
+    verify(() => mockTts.synthesize(any(), any(), voice: any(named: 'voice'), rate: any(named: 'rate')))
         .called(1); // no auto-continue
   });
 
@@ -221,11 +223,12 @@ void main() {
 
     final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.currentTurnIndex, 0);
-    verify(() => mockTts.speak('I help you?', Language.english, pitch: 1.0, rate: 0.5)).called(1);
+    verify(() => mockTts.synthesize('I help you?', Language.english, voice: 'female1', rate: 1.0))
+        .called(1);
   });
 
   test(
-      "seekToWord crossing into a later turn switches currentTurnIndex and uses that turn's pitch",
+      "seekToWord crossing into a later turn switches currentTurnIndex and uses that turn's voice",
       () async {
     await generateFixed();
     final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
@@ -234,8 +237,8 @@ void main() {
 
     final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.currentTurnIndex, 1);
-    verify(() => mockTts.speak('Yes, I need a room for tonight.', Language.english, pitch: 1.3,
-            rate: 0.5))
+    verify(() => mockTts.synthesize('Yes, I need a room for tonight.', Language.english,
+            voice: 'female2', rate: 1.0))
         .called(1);
   });
 
@@ -248,7 +251,7 @@ void main() {
 
     final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.currentTurnIndex, 0);
-    verifyNever(() => mockTts.speak(any(), any(), pitch: any(named: 'pitch'), rate: any(named: 'rate')));
+    verifyNever(() => mockTts.synthesize(any(), any(), voice: any(named: 'voice'), rate: any(named: 'rate')));
   });
 
   test('setSpeed() while idle only updates speedMultiplier and plays nothing', () async {
@@ -260,7 +263,7 @@ void main() {
     final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.speedMultiplier, 0.75);
     expect(state.isSpeaking, false);
-    verifyNever(() => mockTts.speak(any(), any(), pitch: any(named: 'pitch'), rate: any(named: 'rate')));
+    verifyNever(() => mockTts.synthesize(any(), any(), voice: any(named: 'voice'), rate: any(named: 'rate')));
     verifyNever(() => mockTts.stop());
   });
 
@@ -269,7 +272,7 @@ void main() {
     final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
 
     final completer = Completer<void>();
-    when(() => mockTts.speak(any(), any(), pitch: any(named: 'pitch'), rate: any(named: 'rate')))
+    when(() => mockTts.synthesize(any(), any(), voice: any(named: 'voice'), rate: any(named: 'rate')))
         .thenAnswer((_) => completer.future);
 
     final playFuture = notifier.playCurrentTurn(); // hangs on completer for turn 0
@@ -279,20 +282,22 @@ void main() {
     await speedFuture;
 
     verify(() => mockTts.stop()).called(1);
-    verify(() => mockTts.speak('Hello, can I help you?', Language.english, pitch: 1.0, rate: 0.375))
+    verify(() => mockTts.synthesize('Hello, can I help you?', Language.english,
+            voice: 'female1', rate: 0.75))
         .called(1); // the setSpeed()-triggered restart, at the new 0.75x rate
     final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.speedMultiplier, 0.75);
   });
 
-  test('setSpeed() maps 0.75x/1x/1.25x to 0.375/0.5/0.625 for the next playCurrentTurn()', () async {
+  test('setSpeed() passes 0.75x/1x/1.25x straight through as the playback rate for the next playCurrentTurn()', () async {
     await generateFixed();
     final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
 
     await notifier.setSpeed(1.25); // idle: just stores the choice
     await notifier.playCurrentTurn();
 
-    verify(() => mockTts.speak('Hello, can I help you?', Language.english, pitch: 1.0, rate: 0.625))
+    verify(() => mockTts.synthesize('Hello, can I help you?', Language.english,
+            voice: 'female1', rate: 1.25))
         .called(1);
   });
 

@@ -184,6 +184,11 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
                 message:
                     'Tính năng này yêu cầu AI. Bật AI trong Cài đặt để dùng.',
               )
+            else if (_language.ttsCloudCode == null)
+              AiDisabledCard(
+                message: 'Tính năng này chưa hỗ trợ ${_language.label}. '
+                    'Hãy chọn Tiếng Việt hoặc English.',
+              )
             else if (words == null)
               const Center(child: CircularProgressIndicator())
             else if (words.length < _minVocabWords)

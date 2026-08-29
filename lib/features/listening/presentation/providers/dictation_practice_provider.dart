@@ -171,7 +171,7 @@ final class DictationSessionState {
       );
 }
 
-double _rateFor(double speedMultiplier) => (0.5 * speedMultiplier).clamp(0.0, 1.0);
+double _rateFor(double speedMultiplier) => speedMultiplier;
 
 @riverpod
 class DictationPracticeNotifier extends _$DictationPracticeNotifier {
@@ -221,7 +221,7 @@ class DictationPracticeNotifier extends _$DictationPracticeNotifier {
         ? current.copyWith(replayCount: current.replayCount + 1, isSpeaking: true)
         : current.copyWith(hasPlayedOnce: true, isSpeaking: true);
     state = AsyncData(updated);
-    await ref.read(ttsServiceProvider).speak(
+    await ref.read(ttsServiceProvider).synthesize(
           current.item.target,
           current.item.targetLanguage,
           rate: _rateFor(updated.speedMultiplier),
@@ -252,7 +252,7 @@ class DictationPracticeNotifier extends _$DictationPracticeNotifier {
     state = AsyncData(updated);
 
     await ref.read(ttsServiceProvider).stop();
-    await ref.read(ttsServiceProvider).speak(
+    await ref.read(ttsServiceProvider).synthesize(
           words.skip(wordIndex).join(' '),
           current.item.targetLanguage,
           rate: _rateFor(updated.speedMultiplier),
@@ -275,7 +275,7 @@ class DictationPracticeNotifier extends _$DictationPracticeNotifier {
       replayCount: current.replayCount + 1,
       isSpeaking: true,
     ));
-    await ref.read(ttsServiceProvider).speak(
+    await ref.read(ttsServiceProvider).synthesize(
           current.item.target,
           current.item.targetLanguage,
           rate: _rateFor(multiplier),

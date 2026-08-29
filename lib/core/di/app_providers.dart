@@ -1,5 +1,4 @@
 // lib/core/di/app_providers.dart
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:http/http.dart' as http;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/dictionary/data/repositories/dictionary_repository_impl.dart';
@@ -60,11 +59,7 @@ http.Client httpClient(HttpClientRef ref) {
 }
 
 @riverpod
-FlutterTts flutterTts(FlutterTtsRef ref) => FlutterTts();
-
-@riverpod
-TtsService ttsService(TtsServiceRef ref) =>
-    FlutterTtsService(ref.watch(flutterTtsProvider));
+TtsService ttsService(TtsServiceRef ref) => CloudTtsService();
 
 @riverpod
 FreeDictionarySource freeDictionarySource(FreeDictionarySourceRef ref) =>

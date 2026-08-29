@@ -22,23 +22,7 @@ final httpClientProvider = Provider<http.Client>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef HttpClientRef = ProviderRef<http.Client>;
-String _$flutterTtsHash() => r'c34a069582a0236a5fc4e642f11e74ab9c51e4bb';
-
-/// See also [flutterTts].
-@ProviderFor(flutterTts)
-final flutterTtsProvider = AutoDisposeProvider<FlutterTts>.internal(
-  flutterTts,
-  name: r'flutterTtsProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$flutterTtsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef FlutterTtsRef = AutoDisposeProviderRef<FlutterTts>;
-String _$ttsServiceHash() => r'4378290c1f776ebed6e7390258d0ecbe15a0e64a';
+String _$ttsServiceHash() => r'6c8d941e97936bc762823a448c6953f4f7176bd7';
 
 /// See also [ttsService].
 @ProviderFor(ttsService)

@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../../../core/widgets/filter_tile.dart';
 import '../../../../core/widgets/selection_sheets.dart';
+import '../../../../services/tts_service.dart';
+import '../../../dictionary/domain/entities/language.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
 import '../../domain/entities/topic.dart';
 import '../../domain/entities/vocab_record.dart';
@@ -214,11 +216,12 @@ class _VocabDetailScreenState extends ConsumerState<VocabDetailScreen> {
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.volume_up_outlined),
-                  onPressed: () =>
-                      tts.speak(r.headword, settings.targetLanguage),
-                ),
+                if (settings.targetLanguage.ttsCloudCode != null)
+                  IconButton(
+                    icon: const Icon(Icons.volume_up_outlined),
+                    onPressed: () => tts.pronounce(r.headword, settings.targetLanguage,
+                        tier: PronunciationTier.word),
+                  ),
               ],
             ),
             const SizedBox(height: 16),
@@ -312,14 +315,16 @@ class _VocabDetailScreenState extends ConsumerState<VocabDetailScreen> {
                                   fontStyle: FontStyle.italic),
                             ),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.volume_up_outlined,
-                                size: 18),
-                            onPressed: () =>
-                                tts.speak(e.value, settings.targetLanguage),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
+                          if (settings.targetLanguage.ttsCloudCode != null)
+                            IconButton(
+                              icon: const Icon(Icons.volume_up_outlined,
+                                  size: 18),
+                              onPressed: () => tts.pronounce(
+                                  e.value, settings.targetLanguage,
+                                  tier: PronunciationTier.sentence),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
                         ],
                       ),
                     ),

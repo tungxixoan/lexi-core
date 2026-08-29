@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../../../features/vocabulary/presentation/providers/vocab_bank_provider.dart';
+import '../../../../services/tts_service.dart';
+import '../../domain/entities/language.dart';
 import '../../domain/entities/lookup_result.dart';
 import '../providers/user_settings_provider.dart';
 import 'save_vocab_sheet.dart';
@@ -36,11 +38,13 @@ class WordResultWidget extends ConsumerWidget {
                         ?.copyWith(fontWeight: FontWeight.bold),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.volume_up),
-                  tooltip: 'Pronounce word',
-                  onPressed: () => tts.speak(result.headword, targetLanguage),
-                ),
+                if (targetLanguage.ttsCloudCode != null)
+                  IconButton(
+                    icon: const Icon(Icons.volume_up),
+                    tooltip: 'Pronounce word',
+                    onPressed: () => tts.pronounce(result.headword, targetLanguage,
+                        tier: PronunciationTier.word),
+                  ),
               ],
             ),
             if (result.ipa.isNotEmpty)
@@ -92,11 +96,13 @@ class WordResultWidget extends ConsumerWidget {
                               ?.copyWith(fontStyle: FontStyle.italic),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.volume_up, size: 18),
-                        tooltip: 'Pronounce example',
-                        onPressed: () => tts.speak(ex, targetLanguage),
-                      ),
+                      if (targetLanguage.ttsCloudCode != null)
+                        IconButton(
+                          icon: const Icon(Icons.volume_up, size: 18),
+                          tooltip: 'Pronounce example',
+                          onPressed: () =>
+                              tts.pronounce(ex, targetLanguage, tier: PronunciationTier.sentence),
+                        ),
                     ],
                   ),
                 ),

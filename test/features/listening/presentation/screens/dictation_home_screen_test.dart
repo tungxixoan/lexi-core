@@ -262,4 +262,15 @@ void main() {
 
     expect(fakeNotifier.capturedDifficulty, DictationDifficulty.hard);
   });
+
+  testWidgets('shows unsupported-language message when target language has no Piper voice', (tester) async {
+    await tester.pumpWidget(_buildHome(
+      settings: UserSettingsState.defaults
+          .copyWith(aiEnabled: true, targetLanguage: Language.chinese),
+      vocabItems: List.generate(5, _record),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('chưa hỗ trợ'), findsOneWidget);
+    expect(find.text('Tạo bài luyện'), findsNothing);
+  });
 }

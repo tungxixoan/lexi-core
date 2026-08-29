@@ -31,4 +31,14 @@ enum Language {
       };
 
   bool get requiresAi => this != Language.english;
+
+  /// Matches apps/web/src/lib/pronunciation.ts's ttsLanguageCode() — the
+  /// self-hosted Piper TTS service only has voices deployed for Vietnamese
+  /// and English; null means no server-side pronunciation/audio is
+  /// available for this target language.
+  String? get ttsCloudCode => switch (this) {
+        Language.vietnamese => 'vi',
+        Language.english => 'en',
+        _ => null,
+      };
 }

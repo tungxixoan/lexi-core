@@ -332,7 +332,7 @@ void main() {
         ),
       ).thenAnswer((_) async => fixedItem);
 
-      when(() => mockTts.speak(fixedItem.target, fixedItem.targetLanguage,
+      when(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
               rate: any(named: 'rate')))
           .thenAnswer((_) async {});
       when(() => mockTts.stop()).thenAnswer((_) async {});
@@ -383,8 +383,8 @@ void main() {
       final state = c.read(dictationPracticeNotifierProvider).value!;
       expect(state.hasPlayedOnce, true);
       expect(state.replayCount, 0);
-      verify(() => mockTts.speak(fixedItem.target, fixedItem.targetLanguage,
-              rate: 0.5))
+      verify(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
+              rate: 1.0))
           .called(1);
     });
 
@@ -402,8 +402,8 @@ void main() {
       final state = c.read(dictationPracticeNotifierProvider).value!;
       expect(state.hasPlayedOnce, true);
       expect(state.replayCount, 1);
-      verify(() => mockTts.speak(fixedItem.target, fixedItem.targetLanguage,
-              rate: 0.5))
+      verify(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
+              rate: 1.0))
           .called(2);
     });
 
@@ -483,7 +483,7 @@ void main() {
           targetLanguage: Language.english,
         ),
       ).thenAnswer((_) async => fixedItem);
-      when(() => mockTts.speak(fixedItem.target, fixedItem.targetLanguage,
+      when(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
               rate: any(named: 'rate')))
           .thenAnswer((_) async {});
       when(() => mockTts.stop()).thenAnswer((_) async {});
@@ -637,7 +637,7 @@ void main() {
           targetLanguage: Language.english,
         ),
       ).thenAnswer((_) async => fixedItem);
-      when(() => mockTts.speak(any(), any(), rate: any(named: 'rate')))
+      when(() => mockTts.synthesize(any(), any(), rate: any(named: 'rate')))
           .thenAnswer((_) async {});
       when(() => mockTts.stop()).thenAnswer((_) async {});
     });
@@ -670,7 +670,7 @@ void main() {
       expect(state.seekCount, 1);
       expect(state.seekPenaltyTotal, 0.0);
       verify(() => mockTts.stop()).called(1);
-      verify(() => mockTts.speak('world.', fixedItem.targetLanguage, rate: 0.5)).called(1);
+      verify(() => mockTts.synthesize('world.', fixedItem.targetLanguage, rate: 1.0)).called(1);
     });
 
     test('seekTo() after the first listen adds the correct penalty fraction', () async {
@@ -685,7 +685,7 @@ void main() {
       final state = c.read(dictationPracticeNotifierProvider).value!;
       expect(state.seekCount, 2);
       expect(state.seekPenaltyTotal, closeTo(0.05, 0.0001));
-      verify(() => mockTts.speak('Hello world.', fixedItem.targetLanguage, rate: 0.5)).called(1);
+      verify(() => mockTts.synthesize('Hello world.', fixedItem.targetLanguage, rate: 1.0)).called(1);
     });
 
     test('seekTo() with an out-of-range wordIndex is a no-op', () async {
@@ -701,7 +701,7 @@ void main() {
       expect(state.hasPlayedOnce, false);
       expect(state.seekCount, 0);
       expect(state.seekPenaltyTotal, 0.0);
-      verifyNever(() => mockTts.speak(any(), any(), rate: any(named: 'rate')));
+      verifyNever(() => mockTts.synthesize(any(), any(), rate: any(named: 'rate')));
     });
   });
 
@@ -771,7 +771,7 @@ void main() {
       expect(state.speedMultiplier, 0.75);
       expect(state.hasPlayedOnce, false);
       expect(state.replayCount, 0);
-      verifyNever(() => mockTts.speak(fixedItem.target, fixedItem.targetLanguage,
+      verifyNever(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
           rate: any(named: 'rate')));
       verifyNever(() => mockTts.stop());
     });
@@ -784,7 +784,7 @@ void main() {
       await generateSession(notifier);
 
       final completer = Completer<void>();
-      when(() => mockTts.speak(fixedItem.target, fixedItem.targetLanguage,
+      when(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
               rate: any(named: 'rate')))
           .thenAnswer((_) => completer.future);
       when(() => mockTts.stop()).thenAnswer((_) async {});
@@ -800,28 +800,28 @@ void main() {
       expect(state.replayCount, 1);
       expect(state.isSpeaking, false);
       verify(() => mockTts.stop()).called(1);
-      verify(() => mockTts.speak(fixedItem.target, fixedItem.targetLanguage,
-              rate: 0.5))
+      verify(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
+              rate: 1.0))
           .called(1); // the original play(), at the default 1x rate
-      verify(() => mockTts.speak(fixedItem.target, fixedItem.targetLanguage,
-              rate: 0.375))
+      verify(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
+              rate: 0.75))
           .called(1); // the setSpeed()-triggered replay, at the new 0.75x rate
     });
 
-    test('setSpeed() maps 0.75x/1x/1.25x to 0.375/0.5/0.625 for the next play()', () async {
+    test('setSpeed() passes 0.75x/1x/1.25x straight through as the playback rate for the next play()', () async {
       final c = makeContainer();
       addTearDown(c.dispose);
       final notifier = c.read(dictationPracticeNotifierProvider.notifier);
       await generateSession(notifier);
-      when(() => mockTts.speak(fixedItem.target, fixedItem.targetLanguage,
+      when(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
               rate: any(named: 'rate')))
           .thenAnswer((_) async {});
 
       await notifier.setSpeed(1.25); // idle: just stores the choice
       await notifier.play();
 
-      verify(() => mockTts.speak(fixedItem.target, fixedItem.targetLanguage,
-              rate: 0.625))
+      verify(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
+              rate: 1.25))
           .called(1);
     });
   });

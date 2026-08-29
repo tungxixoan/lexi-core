@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../services/tts_service.dart';
+import '../../domain/entities/language.dart';
 import '../../domain/entities/lookup_result.dart';
 import '../providers/user_settings_provider.dart';
 
@@ -34,12 +36,13 @@ class SentenceResultWidget extends ConsumerWidget {
                         ?.copyWith(fontWeight: FontWeight.w500),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.volume_up),
-                  tooltip: 'Pronounce sentence',
-                  onPressed: () =>
-                      tts.speak(result.original, targetLanguage),
-                ),
+                if (targetLanguage.ttsCloudCode != null)
+                  IconButton(
+                    icon: const Icon(Icons.volume_up),
+                    tooltip: 'Pronounce sentence',
+                    onPressed: () => tts.pronounce(result.original, targetLanguage,
+                        tier: PronunciationTier.sentence),
+                  ),
               ],
             ),
             const SizedBox(height: 8),

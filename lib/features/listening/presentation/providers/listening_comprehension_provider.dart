@@ -66,7 +66,7 @@ final class ListeningSessionState {
       );
 }
 
-double _rateFor(double speedMultiplier) => (0.5 * speedMultiplier).clamp(0.0, 1.0);
+double _rateFor(double speedMultiplier) => speedMultiplier;
 
 List<String> _splitWords(String text) =>
     text.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
@@ -129,18 +129,17 @@ class ListeningComprehensionNotifier extends _$ListeningComprehensionNotifier {
     });
   }
 
-  double _pitchFor(String? speaker) => speaker == 'B' ? 1.3 : 1.0;
-
   Future<void> playCurrentTurn() async {
     final current = state.valueOrNull;
     if (current == null || current.isSubmitted) return;
     final token = current.playToken + 1;
     state = AsyncData(current.copyWith(isSpeaking: true, playToken: token));
     final turn = current.currentTurn;
-    await ref.read(ttsServiceProvider).speak(
+    final voices = assignVoices(current.passage);
+    await ref.read(ttsServiceProvider).synthesize(
           turn.text,
           current.passage.targetLanguage,
-          pitch: _pitchFor(turn.speaker),
+          voice: voices[speakerKey(turn.speaker)],
           rate: _rateFor(current.speedMultiplier),
         );
     final latest = state.valueOrNull;
@@ -171,10 +170,11 @@ class ListeningComprehensionNotifier extends _$ListeningComprehensionNotifier {
       playToken: token,
     ));
     await ref.read(ttsServiceProvider).stop();
-    await ref.read(ttsServiceProvider).speak(
+    final voices = assignVoices(current.passage);
+    await ref.read(ttsServiceProvider).synthesize(
           words.skip(resolved.wordIndex).join(' '),
           current.passage.targetLanguage,
-          pitch: _pitchFor(turn.speaker),
+          voice: voices[speakerKey(turn.speaker)],
           rate: _rateFor(current.speedMultiplier),
         );
     final latest = state.valueOrNull;
