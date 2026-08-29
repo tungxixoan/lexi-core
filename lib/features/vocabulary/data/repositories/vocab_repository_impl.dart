@@ -14,25 +14,27 @@ class VocabRepositoryImpl implements VocabRepository {
   final String uid;
   final FirebaseFirestore _firestore;
 
-  CollectionReference<Map<String, dynamic>> get _vocabCol =>
-      _firestore.collection('users').doc(uid).collection('vocab_records');
+  CollectionReference<Map<String, dynamic>> _vocabCol(Language language) => _firestore
+      .collection('users')
+      .doc(uid)
+      .collection('vocab_records_${language.name}');
   CollectionReference<Map<String, dynamic>> get _topicsCol =>
       _firestore.collection('users').doc(uid).collection('topics');
 
   @override
   Future<void> save(VocabRecord record) async {
-    await _vocabCol.doc(record.id).set(record.toJson());
+    await _vocabCol(record.targetLanguage).doc(record.id).set(record.toJson());
   }
 
   @override
   Future<List<VocabRecord>> getAll({
+    required Language language,
     String? topicId,
     InputType? inputType,
-    Language? language,
     CEFRLevel? maxCefrLevel,
     bool dueOnly = false,
   }) async {
-    final snapshot = await _vocabCol.get();
+    final snapshot = await _vocabCol(language).get();
     var records =
         snapshot.docs.map((d) => VocabRecord.fromJson(d.data())).toList();
     if (topicId != null) {
@@ -40,9 +42,6 @@ class VocabRepositoryImpl implements VocabRepository {
     }
     if (inputType != null) {
       records = records.where((r) => r.inputType == inputType).toList();
-    }
-    if (language != null) {
-      records = records.where((r) => r.targetLanguage == language).toList();
     }
     if (maxCefrLevel != null) {
       records = records
@@ -60,20 +59,20 @@ class VocabRepositoryImpl implements VocabRepository {
   }
 
   @override
-  Future<VocabRecord?> getById(String id) async {
-    final doc = await _vocabCol.doc(id).get();
+  Future<VocabRecord?> getById(String id, {required Language language}) async {
+    final doc = await _vocabCol(language).doc(id).get();
     if (!doc.exists) return null;
     return VocabRecord.fromJson(doc.data()!);
   }
 
   @override
   Future<void> update(VocabRecord record) async {
-    await _vocabCol.doc(record.id).set(record.toJson());
+    await _vocabCol(record.targetLanguage).doc(record.id).set(record.toJson());
   }
 
   @override
-  Future<void> delete(String id) async {
-    await _vocabCol.doc(id).delete();
+  Future<void> delete(String id, {required Language language}) async {
+    await _vocabCol(language).doc(id).delete();
   }
 
   @override
@@ -84,8 +83,7 @@ class VocabRepositoryImpl implements VocabRepository {
   @override
   Future<VocabRecord?> getByHeadword(String headword, Language language) async {
     final lc = headword.toLowerCase();
-    final snapshot =
-        await _vocabCol.where('targetLanguage', isEqualTo: language.name).get();
+    final snapshot = await _vocabCol(language).get();
     for (final doc in snapshot.docs) {
       final data = doc.data();
       if ((data['headword'] as String).toLowerCase() == lc) {
@@ -118,15 +116,20 @@ class VocabRepositoryImpl implements VocabRepository {
 
   @override
   Future<void> deleteTopic(String id) async {
-    final all = await getAll();
-    for (final record in all) {
-      if (record.topicIds.contains(id)) {
-        final newTopicIds = record.topicIds.where((t) => t != id).toList();
-        if (newTopicIds.isEmpty) newTopicIds.add('other');
-        await update(record.copyWith(
-          topicIds: newTopicIds,
-          updatedAt: DateTime.now(),
-        ));
+    // topics stays a single shared collection across all languages, but
+    // vocab_records is now split — a topic could be referenced by records
+    // in ANY language's collection, so reassignment must check every one.
+    for (final language in Language.values) {
+      final all = await getAll(language: language);
+      for (final record in all) {
+        if (record.topicIds.contains(id)) {
+          final newTopicIds = record.topicIds.where((t) => t != id).toList();
+          if (newTopicIds.isEmpty) newTopicIds.add('other');
+          await update(record.copyWith(
+            topicIds: newTopicIds,
+            updatedAt: DateTime.now(),
+          ));
+        }
       }
     }
     await _topicsCol.doc(id).delete();

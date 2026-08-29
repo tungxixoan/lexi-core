@@ -27,7 +27,7 @@ class NotificationNotifier extends _$NotificationNotifier {
         await _service.cancelAll();
         return;
       }
-      final records = await ref.read(vocabRepositoryProvider).getAll();
+      final records = await ref.read(vocabRepositoryProvider).getAll(language: settings.targetLanguage);
       final now = DateTime.now();
       final dueCount = records
           .where((r) => r.nextReviewAt == null || r.nextReviewAt!.isBefore(now))

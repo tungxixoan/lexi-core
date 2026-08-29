@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../dictionary/presentation/providers/user_settings_provider.dart';
 import '../../domain/entities/exercise_result.dart';
 import '../../../vocabulary/domain/entities/cefr_level.dart';
 import '../../../vocabulary/domain/entities/vocab_record.dart';
@@ -97,8 +98,10 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     if (_loading) return;
     setState(() => _loading = true);
     try {
-      final words =
-          await ref.read(getVocabListUseCaseProvider).execute(dueOnly: true);
+      final language = ref.read(userSettingsNotifierProvider).targetLanguage;
+      final words = await ref
+          .read(getVocabListUseCaseProvider)
+          .execute(language: language, dueOnly: true);
       if (words.isEmpty || !context.mounted) return;
       final shuffled = List<VocabRecord>.from(words)..shuffle();
       context.push('/practice/session', extra: SessionConfig(words: shuffled));

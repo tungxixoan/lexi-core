@@ -15,9 +15,9 @@ class _FakeVocabRepository implements VocabRepository {
 
   @override
   Future<List<VocabRecord>> getAll({
+    required Language language,
     String? topicId,
     InputType? inputType,
-    Language? language,
     CEFRLevel? maxCefrLevel,
     bool dueOnly = false,
   }) async =>
@@ -26,11 +26,11 @@ class _FakeVocabRepository implements VocabRepository {
   @override
   Future<void> save(VocabRecord record) async {}
   @override
-  Future<VocabRecord?> getById(String id) async => null;
+  Future<VocabRecord?> getById(String id, {required Language language}) async => null;
   @override
   Future<void> update(VocabRecord record) async {}
   @override
-  Future<void> delete(String id) async {}
+  Future<void> delete(String id, {required Language language}) async {}
   @override
   Future<bool> existsByHeadword(String headword, Language language) async => false;
   @override
@@ -70,7 +70,7 @@ void main() {
   test('computeStats() returns zeros when there are no records', () async {
     final prefs = await SharedPreferences.getInstance();
     final service = StatsService(repository: _FakeVocabRepository([]), prefs: prefs);
-    final stats = await service.computeStats();
+    final stats = await service.computeStats(Language.english);
     expect(stats.dueCount, 0);
     expect(stats.masteredCount, 0);
     expect(stats.totalCount, 0);
@@ -88,7 +88,7 @@ void main() {
       _record('5', sm2Interval: 3, nextReviewAt: DateTime.now().add(const Duration(days: 10))), // not mastered, not due
     ];
     final service = StatsService(repository: _FakeVocabRepository(records), prefs: prefs);
-    final stats = await service.computeStats();
+    final stats = await service.computeStats(Language.english);
     expect(stats.dueCount, 2);
     expect(stats.masteredCount, 1);
     expect(stats.totalCount, 5);
@@ -102,7 +102,7 @@ void main() {
       _record('3', cefr: CEFRLevel.c2),
     ];
     final service = StatsService(repository: _FakeVocabRepository(records), prefs: prefs);
-    final stats = await service.computeStats();
+    final stats = await service.computeStats(Language.english);
     expect(stats.cefrBreakdown[CEFRLevel.a1], 2);
     expect(stats.cefrBreakdown[CEFRLevel.c2], 1);
     expect(stats.cefrBreakdown[CEFRLevel.b1], 0);
@@ -113,7 +113,7 @@ void main() {
     final service = StatsService(repository: _FakeVocabRepository([]), prefs: prefs);
     await service.recordPracticeSession(5);
     await service.recordPracticeSession(3);
-    final stats = await service.computeStats();
+    final stats = await service.computeStats(Language.english);
     expect(stats.currentStreak, 1);
     final todayKey = DateTime.now().toIso8601String().substring(0, 10);
     expect(stats.weeklyLog[todayKey], 8);

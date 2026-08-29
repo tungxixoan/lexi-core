@@ -8,6 +8,8 @@ import 'package:lexi_core/core/services/stats_service.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
+import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/topic.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/vocab_record.dart';
@@ -19,6 +21,13 @@ import 'package:lexi_core/features/listening/domain/entities/blank_span.dart';
 import 'package:lexi_core/features/listening/domain/entities/dictation_difficulty.dart';
 
 class MockStatsService extends Mock implements StatsService {}
+
+class _FakeSettingsNotifier extends UserSettingsNotifier {
+  _FakeSettingsNotifier(this._state);
+  final UserSettingsState _state;
+  @override
+  UserSettingsState build() => _state;
+}
 
 VocabRecord _record(String id) => VocabRecord(
       id: id,
@@ -43,9 +52,9 @@ class _CapturingVocabRepository implements VocabRepository {
 
   @override
   Future<List<VocabRecord>> getAll({
+    required Language language,
     String? topicId,
     InputType? inputType,
-    Language? language,
     CEFRLevel? maxCefrLevel,
     bool dueOnly = false,
   }) async =>
@@ -58,7 +67,7 @@ class _CapturingVocabRepository implements VocabRepository {
   Future<void> save(VocabRecord record) async {}
 
   @override
-  Future<VocabRecord?> getById(String id) async => null;
+  Future<VocabRecord?> getById(String id, {required Language language}) async => null;
 
   @override
   Future<void> update(VocabRecord record) async {
@@ -66,7 +75,7 @@ class _CapturingVocabRepository implements VocabRepository {
   }
 
   @override
-  Future<void> delete(String id) async {}
+  Future<void> delete(String id, {required Language language}) async {}
 
   @override
   Future<bool> existsByHeadword(String headword, Language language) async =>
@@ -88,9 +97,9 @@ class _ThrowingVocabRepository implements VocabRepository {
 
   @override
   Future<List<VocabRecord>> getAll({
+    required Language language,
     String? topicId,
     InputType? inputType,
-    Language? language,
     CEFRLevel? maxCefrLevel,
     bool dueOnly = false,
   }) async =>
@@ -103,7 +112,7 @@ class _ThrowingVocabRepository implements VocabRepository {
   Future<void> save(VocabRecord record) async {}
 
   @override
-  Future<VocabRecord?> getById(String id) async => null;
+  Future<VocabRecord?> getById(String id, {required Language language}) async => null;
 
   @override
   Future<void> update(VocabRecord record) async {
@@ -111,7 +120,7 @@ class _ThrowingVocabRepository implements VocabRepository {
   }
 
   @override
-  Future<void> delete(String id) async {}
+  Future<void> delete(String id, {required Language language}) async {}
 
   @override
   Future<bool> existsByHeadword(String headword, Language language) async =>
@@ -166,6 +175,9 @@ Widget _buildResult(
   return ProviderScope(
     overrides: [
       vocabRepositoryProvider.overrideWithValue(repo),
+      userSettingsNotifierProvider.overrideWith(
+        () => _FakeSettingsNotifier(UserSettingsState.defaults),
+      ),
       ...extraOverrides,
     ],
     child: MaterialApp.router(routerConfig: router),

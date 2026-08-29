@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../dictionary/presentation/providers/user_settings_provider.dart';
 import '../../domain/entities/vocab_record.dart';
 
 part 'vocab_bank_provider.g.dart';
@@ -9,8 +10,10 @@ part 'vocab_bank_provider.g.dart';
 @riverpod
 class VocabBankNotifier extends _$VocabBankNotifier {
   @override
-  Future<List<VocabRecord>> build() =>
-      ref.read(getVocabListUseCaseProvider).execute();
+  Future<List<VocabRecord>> build() {
+    final language = ref.watch(userSettingsNotifierProvider).targetLanguage;
+    return ref.read(getVocabListUseCaseProvider).execute(language: language);
+  }
 
   Future<void> save(VocabRecord record) async {
     await ref.read(saveVocabUseCaseProvider).execute(record);
@@ -23,7 +26,8 @@ class VocabBankNotifier extends _$VocabBankNotifier {
   }
 
   Future<void> delete(String id) async {
-    await ref.read(deleteVocabUseCaseProvider).execute(id);
+    final language = ref.read(userSettingsNotifierProvider).targetLanguage;
+    await ref.read(deleteVocabUseCaseProvider).execute(id, language: language);
     ref.invalidateSelf();
   }
 }

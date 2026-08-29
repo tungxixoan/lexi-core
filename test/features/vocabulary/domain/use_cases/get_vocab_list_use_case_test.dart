@@ -30,6 +30,10 @@ void main() {
   late MockVocabRepository repo;
   late GetVocabListUseCase useCase;
 
+  setUpAll(() {
+    registerFallbackValue(Language.english);
+  });
+
   setUp(() {
     repo = MockVocabRepository();
     useCase = GetVocabListUseCase(repo);
@@ -37,18 +41,18 @@ void main() {
 
   test('execute() with no maxCefrLevel passes null to repo', () async {
     when(() => repo.getAll(
+          language: any(named: 'language'),
           topicId: any(named: 'topicId'),
           inputType: any(named: 'inputType'),
-          language: any(named: 'language'),
           maxCefrLevel: any(named: 'maxCefrLevel'),
         )).thenAnswer((_) async => []);
 
-    await useCase.execute();
+    await useCase.execute(language: Language.english);
 
     verify(() => repo.getAll(
+          language: Language.english,
           topicId: null,
           inputType: null,
-          language: null,
           maxCefrLevel: null,
         )).called(1);
   });
@@ -56,26 +60,27 @@ void main() {
   test('execute() passes maxCefrLevel to repo and returns its result', () async {
     final records = [_makeRecord('word1', CEFRLevel.b1)];
     when(() => repo.getAll(
+          language: any(named: 'language'),
           topicId: any(named: 'topicId'),
           inputType: any(named: 'inputType'),
-          language: any(named: 'language'),
           maxCefrLevel: any(named: 'maxCefrLevel'),
         )).thenAnswer((_) async => records);
 
-    final result = await useCase.execute(maxCefrLevel: CEFRLevel.b2);
+    final result = await useCase.execute(language: Language.english, maxCefrLevel: CEFRLevel.b2);
 
     verify(() => repo.getAll(
+          language: Language.english,
           topicId: null,
           inputType: null,
-          language: null,
           maxCefrLevel: CEFRLevel.b2,
         )).called(1);
     expect(result, records);
   });
 
   test('execute with dueOnly=true passes dueOnly to repository', () async {
-    when(() => repo.getAll(dueOnly: true)).thenAnswer((_) async => []);
-    await useCase.execute(dueOnly: true);
-    verify(() => repo.getAll(dueOnly: true)).called(1);
+    when(() => repo.getAll(language: Language.english, dueOnly: true))
+        .thenAnswer((_) async => []);
+    await useCase.execute(language: Language.english, dueOnly: true);
+    verify(() => repo.getAll(language: Language.english, dueOnly: true)).called(1);
   });
 }

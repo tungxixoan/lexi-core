@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../features/dictionary/domain/entities/language.dart';
 import '../../features/practice/domain/entities/learning_stats.dart';
 import '../../features/vocabulary/domain/entities/cefr_level.dart';
 import '../../features/vocabulary/domain/repositories/vocab_repository.dart';
@@ -10,9 +11,9 @@ class StatsService {
   final VocabRepository repository;
   final SharedPreferences prefs;
 
-  Future<LearningStats> computeStats() async {
+  Future<LearningStats> computeStats(Language language) async {
     final now = DateTime.now();
-    final records = await repository.getAll();
+    final records = await repository.getAll(language: language);
 
     int dueCount = 0;
     int masteredCount = 0;

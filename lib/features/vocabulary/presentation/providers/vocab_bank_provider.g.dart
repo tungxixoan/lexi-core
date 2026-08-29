@@ -25,7 +25,7 @@ final vocabBankProvider = AutoDisposeProvider<List<VocabRecord>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef VocabBankRef = AutoDisposeProviderRef<List<VocabRecord>>;
-String _$vocabBankNotifierHash() => r'd9bbfd29d822aa5c250119baf75b5bdcaf35c23c';
+String _$vocabBankNotifierHash() => r'6cd0a192880911fb62619834ba4b1009d81c1cbc';
 
 /// See also [VocabBankNotifier].
 @ProviderFor(VocabBankNotifier)

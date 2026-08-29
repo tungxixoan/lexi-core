@@ -129,7 +129,7 @@ final lookupUseCaseProvider = AutoDisposeProvider<LookupUseCase>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef LookupUseCaseRef = AutoDisposeProviderRef<LookupUseCase>;
-String _$vocabRepositoryHash() => r'aeb458d0df2997aa05dbf426a9110f25bac8fd9c';
+String _$vocabRepositoryHash() => r'18b30ea754706eaa3ac424f47410bfe6cd9db7e6';
 
 /// See also [vocabRepository].
 @ProviderFor(vocabRepository)
@@ -367,7 +367,7 @@ final getLearningStatsUseCaseProvider =
 // ignore: unused_element
 typedef GetLearningStatsUseCaseRef
     = AutoDisposeProviderRef<GetLearningStatsUseCase>;
-String _$learningStatsHash() => r'af579709efdf19e1d6727795804a7a8f06ebbe95';
+String _$learningStatsHash() => r'f4b8f7072df6547e01ac4860d8c74f328c543417';
 
 /// See also [learningStats].
 @ProviderFor(learningStats)

@@ -17,21 +17,21 @@ abstract interface class VocabRepository {
   /// Saves a new vocab record. Throws [VocabException] if already exists.
   Future<void> save(VocabRecord record);
 
-  /// Returns all records, optionally filtered.
+  /// Returns all records for [language]. Optionally further filtered.
   /// Results are sorted newest-first by [createdAt].
   Future<List<VocabRecord>> getAll({
+    required Language language,
     String? topicId,
     InputType? inputType,
-    Language? language,
     CEFRLevel? maxCefrLevel,
     bool dueOnly = false,
   });
 
-  Future<VocabRecord?> getById(String id);
+  Future<VocabRecord?> getById(String id, {required Language language});
 
   Future<void> update(VocabRecord record);
 
-  Future<void> delete(String id);
+  Future<void> delete(String id, {required Language language});
 
   /// Returns true if a VocabRecord with matching headword + language exists.
   Future<bool> existsByHeadword(String headword, Language language);

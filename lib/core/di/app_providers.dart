@@ -158,7 +158,9 @@ GetLearningStatsUseCase getLearningStatsUseCase(
 
 @riverpod
 Future<LearningStats> learningStats(LearningStatsRef ref) =>
-    ref.watch(statsServiceProvider).computeStats();
+    ref.watch(statsServiceProvider).computeStats(
+      ref.watch(userSettingsNotifierProvider).targetLanguage,
+    );
 
 @riverpod
 ReadingPassageSource readingPassageSource(ReadingPassageSourceRef ref) {

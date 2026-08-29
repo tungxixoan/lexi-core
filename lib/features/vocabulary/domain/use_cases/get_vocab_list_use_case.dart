@@ -9,16 +9,16 @@ class GetVocabListUseCase {
   final VocabRepository _repo;
 
   Future<List<VocabRecord>> execute({
+    required Language language,
     String? topicId,
     InputType? inputType,
-    Language? language,
     CEFRLevel? maxCefrLevel,
     bool dueOnly = false,
   }) =>
       _repo.getAll(
+        language: language,
         topicId: topicId,
         inputType: inputType,
-        language: language,
         maxCefrLevel: maxCefrLevel,
         dueOnly: dueOnly,
       );

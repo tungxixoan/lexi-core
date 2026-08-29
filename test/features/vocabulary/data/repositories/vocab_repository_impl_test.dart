@@ -42,59 +42,69 @@ void main() {
     repo = VocabRepositoryImpl(uid: 'u1', firestore: firestore);
   });
 
-  test('save() writes to users/u1/vocab_records/{id}', () async {
-    await repo.save(_record(id: 'v1', headword: 'apple'));
-    final doc =
-        await firestore.collection('users/u1/vocab_records').doc('v1').get();
+  test('save() writes to users/u1/vocab_records_english/{id} for an English record', () async {
+    await repo.save(_record(id: 'v1', headword: 'apple', language: Language.english));
+    final doc = await firestore
+        .collection('users/u1/vocab_records_english')
+        .doc('v1')
+        .get();
     expect(doc.exists, isTrue);
     expect(doc.data()!['headword'], 'apple');
   });
 
-  test('getAll() returns all records for this user, newest first', () async {
-    await repo.save(_record(id: 'v1', createdAt: DateTime(2026, 1, 1)));
-    await repo.save(_record(id: 'v2', createdAt: DateTime(2026, 1, 5)));
-    final all = await repo.getAll();
+  test('save() writes a Chinese record to a different collection than an English one', () async {
+    await repo.save(_record(id: 'v1', headword: 'apple', language: Language.english));
+    await repo.save(_record(id: 'v2', headword: '苹果', language: Language.chinese));
+    final englishDocs = await firestore.collection('users/u1/vocab_records_english').get();
+    final chineseDocs = await firestore.collection('users/u1/vocab_records_chinese').get();
+    expect(englishDocs.docs.map((d) => d.id), ['v1']);
+    expect(chineseDocs.docs.map((d) => d.id), ['v2']);
+  });
+
+  test('getAll(language:) returns only that language\'s collection, newest first', () async {
+    await repo.save(_record(id: 'v1', language: Language.english, createdAt: DateTime(2026, 1, 1)));
+    await repo.save(_record(id: 'v2', language: Language.english, createdAt: DateTime(2026, 1, 5)));
+    await repo.save(_record(id: 'v3', language: Language.chinese, createdAt: DateTime(2026, 1, 10)));
+    final all = await repo.getAll(language: Language.english);
     expect(all.map((r) => r.id).toList(), ['v2', 'v1']);
   });
 
-  test('getAll() filters by language when given', () async {
-    await repo.save(_record(id: 'v1', language: Language.english));
-    await repo.save(_record(id: 'v2', language: Language.chinese));
-    final all = await repo.getAll(language: Language.chinese);
-    expect(all.map((r) => r.id).toList(), ['v2']);
-  });
-
-  test('getAll() filters by topicId when given', () async {
-    await repo.save(_record(id: 'v1', topicIds: ['travel']));
-    await repo.save(_record(id: 'v2', topicIds: ['business']));
-    final all = await repo.getAll(topicId: 'travel');
+  test('getAll(language:) filters by topicId within that language', () async {
+    await repo.save(_record(id: 'v1', language: Language.english, topicIds: ['travel']));
+    await repo.save(_record(id: 'v2', language: Language.english, topicIds: ['business']));
+    final all = await repo.getAll(language: Language.english, topicId: 'travel');
     expect(all.map((r) => r.id).toList(), ['v1']);
   });
 
-  test('getAll() filters by maxCefrLevel when given', () async {
-    await repo.save(_record(id: 'v1', cefr: CEFRLevel.a1));
-    await repo.save(_record(id: 'v2', cefr: CEFRLevel.c2));
-    final all = await repo.getAll(maxCefrLevel: CEFRLevel.b1);
+  test('getAll(language:) filters by maxCefrLevel within that language', () async {
+    await repo.save(_record(id: 'v1', language: Language.english, cefr: CEFRLevel.a1));
+    await repo.save(_record(id: 'v2', language: Language.english, cefr: CEFRLevel.c2));
+    final all = await repo.getAll(language: Language.english, maxCefrLevel: CEFRLevel.b1);
     expect(all.map((r) => r.id).toList(), ['v1']);
   });
 
-  test('getById() returns the matching record or null', () async {
-    await repo.save(_record(id: 'v1', headword: 'apple'));
-    expect((await repo.getById('v1'))?.headword, 'apple');
-    expect(await repo.getById('missing'), isNull);
+  test('getById() with language: finds the record in that language\'s collection', () async {
+    await repo.save(_record(id: 'v1', headword: 'apple', language: Language.english));
+    expect((await repo.getById('v1', language: Language.english))?.headword, 'apple');
+    expect(await repo.getById('missing', language: Language.english), isNull);
   });
 
-  test('update() overwrites the stored record', () async {
-    await repo.save(_record(id: 'v1', headword: 'apple'));
-    final updated = _record(id: 'v1', headword: 'banana');
+  test('getById() with the wrong language does not find a record that exists in a different one', () async {
+    await repo.save(_record(id: 'v1', headword: 'apple', language: Language.english));
+    expect(await repo.getById('v1', language: Language.chinese), isNull);
+  });
+
+  test('update() overwrites the stored record using the record\'s own targetLanguage', () async {
+    await repo.save(_record(id: 'v1', headword: 'apple', language: Language.english));
+    final updated = _record(id: 'v1', headword: 'banana', language: Language.english);
     await repo.update(updated);
-    expect((await repo.getById('v1'))?.headword, 'banana');
+    expect((await repo.getById('v1', language: Language.english))?.headword, 'banana');
   });
 
-  test('delete() removes the record', () async {
-    await repo.save(_record(id: 'v1'));
-    await repo.delete('v1');
-    expect(await repo.getById('v1'), isNull);
+  test('delete() with language: removes the record from that language\'s collection', () async {
+    await repo.save(_record(id: 'v1', language: Language.english));
+    await repo.delete('v1', language: Language.english);
+    expect(await repo.getById('v1', language: Language.english), isNull);
   });
 
   test('existsByHeadword() is case-insensitive and language-scoped', () async {
@@ -132,7 +142,7 @@ void main() {
     expect(second.last.name, 'Aardvarks');
   });
 
-  test('deleteTopic() reassigns affected words to "other" and removes the topic', () async {
+  test('deleteTopic() reassigns affected words to "other" across EVERY language collection, not just one', () async {
     await repo.getTopics();
     await repo.addTopic(Topic(
       id: 'custom1',
@@ -141,10 +151,13 @@ void main() {
       isPredefined: false,
       createdAt: DateTime(2026, 2, 1),
     ));
-    await repo.save(_record(id: 'v1', topicIds: ['custom1']));
+    await repo.save(_record(id: 'v1', language: Language.english, topicIds: ['custom1']));
+    await repo.save(_record(id: 'v2', language: Language.chinese, topicIds: ['custom1']));
     await repo.deleteTopic('custom1');
-    final record = await repo.getById('v1');
-    expect(record!.topicIds, ['other']);
+    final englishRecord = await repo.getById('v1', language: Language.english);
+    final chineseRecord = await repo.getById('v2', language: Language.chinese);
+    expect(englishRecord!.topicIds, ['other']);
+    expect(chineseRecord!.topicIds, ['other']);
     final topics = await repo.getTopics();
     expect(topics.any((t) => t.id == 'custom1'), isFalse);
   });

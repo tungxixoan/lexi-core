@@ -103,9 +103,9 @@ class MockVocabRepository extends _i1.Mock implements _i8.VocabRepository {
 
   @override
   _i3.Future<List<_i9.VocabRecord>> getAll({
+    required _i5.Language? language,
     String? topicId,
     _i10.InputType? inputType,
-    _i5.Language? language,
     _i11.CEFRLevel? maxCefrLevel,
     bool? dueOnly = false,
   }) =>
@@ -114,9 +114,9 @@ class MockVocabRepository extends _i1.Mock implements _i8.VocabRepository {
           #getAll,
           [],
           {
+            #language: language,
             #topicId: topicId,
             #inputType: inputType,
-            #language: language,
             #maxCefrLevel: maxCefrLevel,
             #dueOnly: dueOnly,
           },
@@ -126,10 +126,15 @@ class MockVocabRepository extends _i1.Mock implements _i8.VocabRepository {
       ) as _i3.Future<List<_i9.VocabRecord>>);
 
   @override
-  _i3.Future<_i9.VocabRecord?> getById(String? id) => (super.noSuchMethod(
+  _i3.Future<_i9.VocabRecord?> getById(
+    String? id, {
+    required _i5.Language? language,
+  }) =>
+      (super.noSuchMethod(
         Invocation.method(
           #getById,
           [id],
+          {#language: language},
         ),
         returnValue: _i3.Future<_i9.VocabRecord?>.value(),
       ) as _i3.Future<_i9.VocabRecord?>);
@@ -145,10 +150,15 @@ class MockVocabRepository extends _i1.Mock implements _i8.VocabRepository {
       ) as _i3.Future<void>);
 
   @override
-  _i3.Future<void> delete(String? id) => (super.noSuchMethod(
+  _i3.Future<void> delete(
+    String? id, {
+    required _i5.Language? language,
+  }) =>
+      (super.noSuchMethod(
         Invocation.method(
           #delete,
           [id],
+          {#language: language},
         ),
         returnValue: _i3.Future<void>.value(),
         returnValueForMissingStub: _i3.Future<void>.value(),

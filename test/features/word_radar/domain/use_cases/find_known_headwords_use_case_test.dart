@@ -37,18 +37,16 @@ class _FakeVocabRepository implements VocabRepository {
 
   @override
   Future<List<VocabRecord>> getAll({
+    required Language language,
     String? topicId,
     InputType? inputType,
-    Language? language,
     CEFRLevel? maxCefrLevel,
     bool dueOnly = false,
   }) async =>
-      language == null
-          ? records
-          : records.where((r) => r.targetLanguage == language).toList();
+      records.where((r) => r.targetLanguage == language).toList();
 
   @override
-  Future<VocabRecord?> getById(String id) async => null;
+  Future<VocabRecord?> getById(String id, {required Language language}) async => null;
 
   @override
   Future<void> save(VocabRecord record) async {}
@@ -57,7 +55,7 @@ class _FakeVocabRepository implements VocabRepository {
   Future<void> update(VocabRecord record) async {}
 
   @override
-  Future<void> delete(String id) async {}
+  Future<void> delete(String id, {required Language language}) async {}
 
   @override
   Future<bool> existsByHeadword(String headword, Language language) async => false;

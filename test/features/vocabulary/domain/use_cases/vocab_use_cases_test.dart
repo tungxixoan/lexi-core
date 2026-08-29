@@ -57,10 +57,12 @@ void main() {
     mockRepo = MockVocabRepository();
     when(() => mockRepo.save(any())).thenAnswer((_) async {});
     when(() => mockRepo.update(any())).thenAnswer((_) async {});
-    when(() => mockRepo.delete(any())).thenAnswer((_) async {});
+    when(() => mockRepo.delete(any(), language: any(named: 'language')))
+        .thenAnswer((_) async {});
     when(() => mockRepo.deleteTopic(any())).thenAnswer((_) async {});
     when(() => mockRepo.addTopic(any())).thenAnswer((_) async {});
-    when(() => mockRepo.getAll()).thenAnswer((_) async => []);
+    when(() => mockRepo.getAll(language: any(named: 'language')))
+        .thenAnswer((_) async => []);
     when(() => mockRepo.getTopics()).thenAnswer((_) async => []);
     when(() => mockRepo.existsByHeadword(any(), any())).thenAnswer((_) async => false);
   });
@@ -133,22 +135,25 @@ void main() {
 
   group('DeleteVocabUseCase', () {
     test('calls repo.delete with given id', () async {
-      await DeleteVocabUseCase(mockRepo).execute('my-id');
-      verify(() => mockRepo.delete('my-id')).called(1);
+      await DeleteVocabUseCase(mockRepo).execute('my-id', language: Language.english);
+      verify(() => mockRepo.delete('my-id', language: Language.english)).called(1);
     });
   });
 
   group('GetVocabListUseCase', () {
     test('delegates to repo with no filters', () async {
-      when(() => mockRepo.getAll()).thenAnswer((_) async => [makeRecord()]);
-      final result = await GetVocabListUseCase(mockRepo).execute();
+      when(() => mockRepo.getAll(language: any(named: 'language')))
+          .thenAnswer((_) async => [makeRecord()]);
+      final result = await GetVocabListUseCase(mockRepo).execute(language: Language.english);
       expect(result.length, 1);
     });
 
     test('passes topicId filter to repo', () async {
-      when(() => mockRepo.getAll(topicId: 'business')).thenAnswer((_) async => []);
-      await GetVocabListUseCase(mockRepo).execute(topicId: 'business');
-      verify(() => mockRepo.getAll(topicId: 'business')).called(1);
+      when(() => mockRepo.getAll(language: Language.english, topicId: 'business'))
+          .thenAnswer((_) async => []);
+      await GetVocabListUseCase(mockRepo)
+          .execute(language: Language.english, topicId: 'business');
+      verify(() => mockRepo.getAll(language: Language.english, topicId: 'business')).called(1);
     });
   });
 

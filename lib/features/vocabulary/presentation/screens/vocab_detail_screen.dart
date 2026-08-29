@@ -38,7 +38,8 @@ class _VocabDetailScreenState extends ConsumerState<VocabDetailScreen> {
 
   Future<void> _loadRecord() async {
     final repo = ref.read(vocabRepositoryProvider);
-    final record = await repo.getById(widget.id);
+    final language = ref.read(userSettingsNotifierProvider).targetLanguage;
+    final record = await repo.getById(widget.id, language: language);
     setState(() {
       _record = record;
       _loading = false;

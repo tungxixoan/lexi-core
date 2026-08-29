@@ -36,7 +36,9 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
       final settings = ref.read(userSettingsNotifierProvider);
       setState(() => _maxCefrLevel = settings.targetCefrLevel);
       try {
-        final stats = await ref.read(statsServiceProvider).computeStats();
+        final stats = await ref
+            .read(statsServiceProvider)
+            .computeStats(settings.targetLanguage);
         if (!mounted) return;
         setState(() => _dueCount = stats.dueCount);
       } catch (_) {
@@ -92,7 +94,9 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
   }
 
   Future<void> _start() async {
+    final language = ref.read(userSettingsNotifierProvider).targetLanguage;
     final words = await ref.read(getVocabListUseCaseProvider).execute(
+          language: language,
           topicId: _selectedTopicId,
           maxCefrLevel: _maxCefrLevel,
         );
@@ -113,9 +117,10 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
   }
 
   Future<void> _startDueSession() async {
+    final language = ref.read(userSettingsNotifierProvider).targetLanguage;
     final words = await ref
         .read(getVocabListUseCaseProvider)
-        .execute(dueOnly: true);
+        .execute(language: language, dueOnly: true);
     if (words.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
