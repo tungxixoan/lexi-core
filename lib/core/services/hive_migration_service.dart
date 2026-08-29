@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/dictionary/domain/entities/language.dart';
 import '../../features/vocabulary/data/repositories/vocab_repository_impl.dart';
 import '../../features/vocabulary/domain/entities/vocab_record.dart';
+import '../../features/vocabulary/domain/repositories/vocab_repository.dart';
 
 /// One-time push of any pre-existing local Hive vocab/topics data into a
 /// newly-authenticated user's Firestore collections. Only relevant for a
@@ -25,12 +26,22 @@ import '../../features/vocabulary/domain/entities/vocab_record.dart';
 /// overwrites newer Firestore data with stale local Hive data) once a
 /// migration has already succeeded for that account.
 class HiveMigrationService {
-  HiveMigrationService({FirebaseFirestore? firestore, SharedPreferences? prefs})
-      : _firestore = firestore ?? FirebaseFirestore.instance,
-        _prefs = prefs;
+  HiveMigrationService({
+    FirebaseFirestore? firestore,
+    SharedPreferences? prefs,
+    VocabRepository Function(String uid)? vocabRepositoryBuilder,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _prefs = prefs,
+        _vocabRepositoryBuilder = vocabRepositoryBuilder;
 
   final FirebaseFirestore _firestore;
   final SharedPreferences? _prefs;
+
+  /// Test seam: lets tests substitute a fake/mock [VocabRepository] (e.g.
+  /// one whose `save()` throws) without needing a real Firestore write
+  /// failure, which `FakeFirebaseFirestore` has no way to simulate. Defaults
+  /// to the real [VocabRepositoryImpl] wired to [_firestore].
+  final VocabRepository Function(String uid)? _vocabRepositoryBuilder;
 
   static const _vocabBoxName = 'vocab_records';
   static const _topicsBoxName = 'topics';
@@ -90,17 +101,27 @@ class HiveMigrationService {
     // raw batch.set into a flat collection) so each record lands in the
     // correct per-language collection, the same as every other vocab write
     // in the app since the per-language split.
-    final vocabRepo = VocabRepositoryImpl(uid: uid, firestore: _firestore);
+    final vocabRepo = _vocabRepositoryBuilder != null
+        ? _vocabRepositoryBuilder(uid)
+        : VocabRepositoryImpl(uid: uid, firestore: _firestore);
     for (final raw in vocabBox.values) {
+      VocabRecord record;
       try {
         final map = jsonDecode(raw) as Map<String, dynamic>;
-        final record = VocabRecord.fromJson(map);
-        await vocabRepo.save(record);
+        record = VocabRecord.fromJson(map);
       } catch (_) {
         // Skip one malformed/legacy record (bad JSON, or JSON that fails to
         // parse into a well-formed VocabRecord) rather than aborting the
         // whole migration over it.
+        continue;
       }
+      // Deliberately NOT inside the catch above: a Firestore write failure
+      // here (permission-denied, network, resource-exhausted, ...) is a
+      // real, worth-surfacing failure, not a malformed-record skip. Let it
+      // propagate out of migrateIfNeeded entirely so the caller's error UI
+      // (sign_in_screen.dart's try/catch + "Thử lại" retry) can show it,
+      // instead of silently discarding the user's only copy of this data.
+      await vocabRepo.save(record);
     }
 
     // Topics stay a single shared collection across all languages —

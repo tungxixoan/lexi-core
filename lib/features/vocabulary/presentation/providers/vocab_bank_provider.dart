@@ -55,7 +55,17 @@ List<VocabRecord> vocabBank(Ref ref) {
 /// Resolving that session's vocab records must use the session's own known
 /// language — not the global one — or lookups can silently miss every
 /// record (see the dictation/reading result-screen SM-2 fix).
+///
+/// `autoDispose` + watching [vocabBankNotifierProvider] (rather than
+/// `.read`-ing the use case once and caching forever) mirrors how
+/// [VocabBankNotifier.save]/[VocabBankNotifier.updateRecord]/
+/// [VocabBankNotifier.delete] already invalidate `vocabBankNotifierProvider`
+/// on every mutation via `ref.invalidateSelf()`: watching it here means this
+/// family provider is torn down and refetched on that same signal, so a
+/// saved/updated/deleted word is reflected immediately instead of returning
+/// a list cached from the first read.
 final vocabListForLanguageProvider =
-    FutureProvider.family<List<VocabRecord>, Language>((ref, language) {
-  return ref.read(getVocabListUseCaseProvider).execute(language: language);
+    FutureProvider.autoDispose.family<List<VocabRecord>, Language>((ref, language) {
+  ref.watch(vocabBankNotifierProvider);
+  return ref.watch(getVocabListUseCaseProvider).execute(language: language);
 });
