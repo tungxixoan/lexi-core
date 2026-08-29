@@ -25,9 +25,14 @@ SharedPreferences sharedPreferences(SharedPreferencesRef ref) =>
 @Riverpod(keepAlive: true)
 ApiKeyEncryptor apiKeyEncryptor(ApiKeyEncryptorRef ref) => ApiKeyEncryptor();
 
-// Overridden in tests with a fixed value to avoid touching real
-// FirebaseAuth (which isn't initialized in plain unit tests).
-@Riverpod(keepAlive: true)
+// Deliberately NOT keepAlive: this must reflect FirebaseAuth's CURRENT
+// user on every read. A keepAlive provider would cache the uid from its
+// first read and never invalidate on sign-out/sign-in-as-a-different-
+// account within the same app session, causing settings to be pushed to a
+// stale (or another user's) Firestore document. Overridden in tests with a
+// fixed value to avoid touching real FirebaseAuth (which isn't initialized
+// in plain unit tests).
+@riverpod
 String? currentUid(CurrentUidRef ref) => FirebaseAuth.instance.currentUser?.uid;
 
 // Overridden in tests with a fake to verify push-on-change without a real

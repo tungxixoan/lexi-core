@@ -133,7 +133,17 @@ class AiSettingsSyncService {
           for (final entry in providerConfigs.entries)
             entry.key.cloudId: {
               'model': entry.value.model,
-              'apiKeyCiphertext': entry.value.apiKeyCiphertext,
+              // Omit apiKeyCiphertext entirely when this device has no key
+              // for this provider, rather than writing an explicit null.
+              // Firestore's merge:true is a deep merge on nested maps: an
+              // explicit null here WOULD overwrite a real key already
+              // configured on another device/platform — the same
+              // null-blanking bug already fixed on the read side
+              // (bootstrapSync's remote-wins branch), now closed here too
+              // on the write side.
+              if (entry.value.apiKeyCiphertext != null &&
+                  entry.value.apiKeyCiphertext!.isNotEmpty)
+                'apiKeyCiphertext': entry.value.apiKeyCiphertext,
             },
         },
         'targetLanguage': targetLanguage.name,

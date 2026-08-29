@@ -222,5 +222,31 @@ void main() {
       expect(data['fontSize'], 'large');
       expect(data['activeProvider'], 'gemini');
     });
+
+    test('a local null apiKeyCiphertext does not clobber a real remote ciphertext', () async {
+      final firestore = FakeFirebaseFirestore();
+      await firestore.collection('users').doc(_uid).collection('settings').doc('config').set({
+        'providers': {
+          'gemini': {'model': 'gemini-2.5-flash', 'apiKeyCiphertext': 'remote-real-cipher'},
+        },
+      });
+
+      final service = AiSettingsSyncService(
+        firestore: firestore,
+        encryptor: ApiKeyEncryptor(caller: _FakeCaller(response: {})),
+      );
+      await service.pushProviderSettings(
+        _uid,
+        AiProvider.gemini,
+        {AiProvider.gemini: const ProviderConfig(apiKeyCiphertext: null, model: 'gemini-2.5-pro')},
+        Language.english,
+      );
+
+      final doc =
+          await firestore.collection('users').doc(_uid).collection('settings').doc('config').get();
+      final data = doc.data()!;
+      expect(data['providers']['gemini']['apiKeyCiphertext'], 'remote-real-cipher');
+      expect(data['providers']['gemini']['model'], 'gemini-2.5-pro');
+    });
   });
 }

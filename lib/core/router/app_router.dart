@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/app_shell.dart';
+import '../../features/dictionary/presentation/providers/user_settings_provider.dart';
 import '../../features/settings/presentation/screens/sign_in_screen.dart';
 import '../../features/dictionary/presentation/screens/lookup_screen.dart';
 import '../../features/vocabulary/presentation/screens/vocab_bank_screen.dart';
@@ -89,6 +91,44 @@ class _AuthRefreshStream extends ChangeNotifier {
   }
 }
 
+/// Shown at app launch while Firebase Auth resolves whether a session
+/// already exists. For an already-authenticated returning user, `/splash`
+/// auto-redirects straight to `/` (see [authRedirectDecision]) without ever
+/// visiting `/sign-in` — so this is the ONLY reachable place to run
+/// AiSettingsSyncService.bootstrapSync on every normal app launch, not just
+/// right after an interactive sign-in. Fire-and-forget: the fetched
+/// settings land in UserSettingsNotifier's state reactively, so any screen
+/// already watching it updates itself once the merge completes; this must
+/// not block the redirect the way sign_in_screen.dart's own bootstrapSync
+/// call blocks navigation there (that one has a real reason to wait — see
+/// its own comment).
+class _SplashScreen extends ConsumerStatefulWidget {
+  const _SplashScreen();
+
+  @override
+  ConsumerState<_SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends ConsumerState<_SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      unawaited(
+        ref.read(aiSettingsSyncServiceProvider).bootstrapSync(
+              uid,
+              ref.read(userSettingsNotifierProvider.notifier),
+            ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      const Scaffold(body: Center(child: CircularProgressIndicator()));
+}
+
 final _authRefreshStream = _AuthRefreshStream();
 
 final appRouter = GoRouter(
@@ -102,8 +142,7 @@ final appRouter = GoRouter(
   routes: [
     GoRoute(
       path: '/splash',
-      builder: (context, state) =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      builder: (context, state) => const _SplashScreen(),
     ),
     GoRoute(
       path: '/sign-in',

@@ -40,11 +40,11 @@ final apiKeyEncryptorProvider = Provider<ApiKeyEncryptor>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ApiKeyEncryptorRef = ProviderRef<ApiKeyEncryptor>;
-String _$currentUidHash() => r'3b61265a561a1edfd259ff3d91ac25c5a356ac11';
+String _$currentUidHash() => r'581771cf5525570015d04314fece2a511b304e79';
 
 /// See also [currentUid].
 @ProviderFor(currentUid)
-final currentUidProvider = Provider<String?>.internal(
+final currentUidProvider = AutoDisposeProvider<String?>.internal(
   currentUid,
   name: r'currentUidProvider',
   debugGetCreateSourceHash:
@@ -55,7 +55,7 @@ final currentUidProvider = Provider<String?>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef CurrentUidRef = ProviderRef<String?>;
+typedef CurrentUidRef = AutoDisposeProviderRef<String?>;
 String _$aiSettingsSyncServiceHash() =>
     r'e1802517565a40adb349d41d9426aa4dd310c42d';
 
