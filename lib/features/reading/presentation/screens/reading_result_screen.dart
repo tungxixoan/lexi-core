@@ -40,7 +40,15 @@ class _ReadingResultScreenState extends ConsumerState<ReadingResultScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final vocabRecords = ref.watch(vocabBankProvider);
+    // Resolve against the SESSION's own language (result.passage.targetLanguage),
+    // not the globally-scoped vocabBankProvider (which follows
+    // userSettingsNotifierProvider's targetLanguage) — the reading home
+    // screen has its own in-screen language picker, so the session can be
+    // running in a language other than the current global setting.
+    final vocabAsync = ref.watch(
+      vocabListForLanguageProvider(result.passage.targetLanguage),
+    );
+    final vocabRecords = vocabAsync.valueOrNull ?? const <VocabRecord>[];
     final theme = Theme.of(context);
 
     final accuracyPct = (result.overallAccuracy * 100).toStringAsFixed(1);

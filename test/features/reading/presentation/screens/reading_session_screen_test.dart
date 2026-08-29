@@ -59,7 +59,8 @@ Widget _buildSession() {
     overrides: [
       readingPracticeNotifierProvider
           .overrideWith(() => _FakeReadingNotifier(_testSession)),
-      vocabBankProvider.overrideWith((_) => const []),
+      vocabListForLanguageProvider(Language.english)
+          .overrideWith((ref) => const []),
     ],
     child: MaterialApp.router(routerConfig: router),
   );

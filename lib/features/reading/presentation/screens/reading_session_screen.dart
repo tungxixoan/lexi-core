@@ -117,7 +117,15 @@ class _SessionScaffold extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final vocabRecords = ref.watch(vocabBankProvider);
+    // Resolve against the SESSION's own language (session.passage.targetLanguage),
+    // not the globally-scoped vocabBankProvider (which follows
+    // userSettingsNotifierProvider's targetLanguage) — this screen's own
+    // language picker on the home screen means the session can be running in
+    // a language other than the current global setting.
+    final vocabAsync = ref.watch(
+      vocabListForLanguageProvider(session.passage.targetLanguage),
+    );
+    final vocabRecords = vocabAsync.valueOrNull ?? const <VocabRecord>[];
 
     return Scaffold(
       appBar: AppBar(

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../../../core/utils/web_text_scale.dart';
-import '../../../vocabulary/presentation/providers/vocab_bank_provider.dart';
 import '../../domain/entities/dictation_difficulty.dart';
 import '../providers/dictation_practice_provider.dart';
 
@@ -32,11 +31,15 @@ class _DictationResultScreenState extends ConsumerState<DictationResultScreen> {
     try {
       final computeUseCase = ref.read(computeSm2UseCaseProvider);
       final updateUseCase = ref.read(updateVocabUseCaseProvider);
-      // vocabBankProvider reads synchronously off the underlying async
-      // notifier and returns [] while it's still loading, which races the
-      // fetch below. Await the notifier's future so the vocab list is
-      // guaranteed to be populated before we look up records to update.
-      final vocabRecords = await ref.read(vocabBankNotifierProvider.future);
+      // Resolve against the SESSION's own language, not the globally-scoped
+      // vocabBankNotifierProvider (which follows userSettingsNotifierProvider's
+      // targetLanguage). This screen's session may have been generated for a
+      // language other than the current global setting (dictation_home_screen
+      // has its own in-screen language picker), so fetching by the global
+      // setting could silently miss every record and drop all SM-2 updates.
+      final vocabRecords = await ref
+          .read(getVocabListUseCaseProvider)
+          .execute(language: widget.result.item.targetLanguage);
       final quality = widget.result.sm2Quality;
 
       for (final id in widget.result.item.vocabIds) {

@@ -107,7 +107,8 @@ Future<Widget> _buildResultWithBackspaces() async {
   );
   return ProviderScope(
     overrides: [
-      vocabBankProvider.overrideWith((_) => const []),
+      vocabListForLanguageProvider(Language.english)
+          .overrideWith((ref) => const []),
       sharedPreferencesProvider.overrideWithValue(prefs),
       userSettingsNotifierProvider.overrideWith(
         () => _FakeSettingsNotifier(UserSettingsState.defaults.copyWith(aiEnabled: true)),
@@ -138,7 +139,8 @@ Future<Widget> _buildResult({
   );
   return ProviderScope(
     overrides: [
-      vocabBankProvider.overrideWith((_) => const []),
+      vocabListForLanguageProvider(Language.english)
+          .overrideWith((ref) => const []),
       sharedPreferencesProvider.overrideWithValue(prefs),
       userSettingsNotifierProvider.overrideWith(
         () => _FakeSettingsNotifier(UserSettingsState.defaults.copyWith(aiEnabled: true)),
