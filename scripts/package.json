@@ -1,0 +1,12 @@
+{
+  "name": "lexicore-scripts",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Standalone maintenance/migration scripts for LexiCore, run manually via `node scripts/<name>.js`",
+  "scripts": {
+    "test": "node --test *.test.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.10.0"
+  }
+}
