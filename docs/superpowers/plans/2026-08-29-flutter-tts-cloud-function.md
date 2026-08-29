@@ -263,7 +263,7 @@ with:
       if (speakerGenders.containsKey(key)) continue;
       final gender = tm['gender'] as String?;
       if (gender == 'male' || gender == 'female') {
-        speakerGenders[key] = gender;
+        speakerGenders[key] = gender!;
       }
     }
 
