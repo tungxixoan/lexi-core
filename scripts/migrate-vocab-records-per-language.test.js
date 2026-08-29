@@ -70,7 +70,7 @@ test("flags a record with a missing or invalid targetLanguage instead of silentl
   assert.equal(englishDocs.docs.length, 0);
 });
 
-test("migrates every user found under the top-level users collection, not just one", async () => {
+test("migrates every user found via the vocab_records collection group, not just one", async () => {
   const app = initializeApp({ projectId: "test-migration-4" }, "app4");
   const db = getFirestore(app);
 
@@ -89,4 +89,56 @@ test("migrates every user found under the top-level users collection, not just o
 
   assert.equal(result.users, 2);
   assert.equal(result.migrated, 2);
+});
+
+test("finds users via the vocab_records collection group even when no users/{uid} parent document is ever created", async () => {
+  const app = initializeApp({ projectId: "test-migration-5" }, "app5");
+  const db = getFirestore(app);
+
+  // Deliberately never call db.collection("users").doc("u6").set(...) —
+  // this app's real data model never materializes that parent document,
+  // only the vocab_records subcollection underneath it.
+  await db.collection("users/u6/vocab_records").doc("v1").set({
+    id: "v1",
+    headword: "six",
+    targetLanguage: "korean",
+  });
+
+  // Prove, in this exact setup, that a naive top-level `users` collection
+  // listing would have found nothing — the parent document genuinely
+  // doesn't exist, it isn't just unread.
+  const topLevelUsers = await db.collection("users").get();
+  assert.equal(topLevelUsers.docs.length, 0);
+
+  const result = await migrateVocabRecords(db);
+
+  assert.equal(result.users, 1);
+  assert.equal(result.migrated, 1);
+  const koreanDocs = await db.collection("users/u6/vocab_records_korean").get();
+  assert.equal(koreanDocs.docs.length, 1);
+  assert.equal(koreanDocs.docs[0].data().headword, "six");
+});
+
+test("does not overwrite a destination document that already exists, and counts it as skipped", async () => {
+  const app = initializeApp({ projectId: "test-migration-6" }, "app6");
+  const db = getFirestore(app);
+
+  await db.collection("users/u7/vocab_records").doc("v1").set({
+    id: "v1",
+    headword: "source-value",
+    targetLanguage: "japanese",
+  });
+  // Pre-existing destination document, e.g. from a prior partial run.
+  await db.collection("users/u7/vocab_records_japanese").doc("v1").set({
+    id: "v1",
+    headword: "pre-existing-value",
+    targetLanguage: "japanese",
+  });
+
+  const result = await migrateVocabRecords(db);
+
+  assert.equal(result.skipped, 1);
+  assert.equal(result.migrated, 0);
+  const destDoc = await db.collection("users/u7/vocab_records_japanese").doc("v1").get();
+  assert.equal(destDoc.data().headword, "pre-existing-value");
 });

@@ -121,8 +121,41 @@ if (require.main === module) {
   const { getFirestore } = require("firebase-admin/firestore");
   const app = initializeApp();
   const db = getFirestore(app);
+
+  // Target-environment guard: this script writes real data, so the
+  // operator must be able to visually confirm — before any writes
+  // happen — which project it actually resolved to. A stray
+  // FIRESTORE_EMULATOR_HOST left over from testing, or ADC resolving to
+  // the wrong project, would otherwise silently redirect every read and
+  // write with no indication anything was wrong.
+  console.log(`Resolved Firebase project id: ${app.options.projectId}`);
+  console.log(
+    `FIRESTORE_EMULATOR_HOST: ${
+      process.env.FIRESTORE_EMULATOR_HOST
+        ? `${process.env.FIRESTORE_EMULATOR_HOST} (EMULATOR — not production!)`
+        : "(not set — targeting real Firestore)"
+    }`
+  );
+
   migrateVocabRecords(db)
-    .then(() => process.exit(0))
+    .then((result) => {
+      if (result.users === 0) {
+        // Zero users is NOT a plausible outcome against real production
+        // data (~290 known records at time of writing) — it means the
+        // script is pointed at the wrong project/environment, not that
+        // there is genuinely nothing to migrate. Flag loudly rather than
+        // exiting 0 as if this were a normal no-op success.
+        console.error(
+          "WARNING: 0 users found. This is unexpected against real production " +
+            "data and likely means this script is targeting the wrong Firestore " +
+            "project or environment (check the project id and " +
+            "FIRESTORE_EMULATOR_HOST logged above). Treating as a failure — " +
+            "no migration was performed."
+        );
+        process.exit(1);
+      }
+      process.exit(0);
+    })
     .catch((err) => {
       console.error("Migration failed:", err);
       process.exit(1);
