@@ -49,15 +49,26 @@ class AiSettingsSyncService {
         final remoteEntry =
             remoteProviders is Map<String, dynamic> ? remoteProviders[provider.cloudId] : null;
         if (remoteEntry is Map<String, dynamic>) {
-          notifier.setProviderConfig(
-            provider,
-            ProviderConfig(
-              apiKeyCiphertext: remoteEntry['apiKeyCiphertext'] as String?,
-              model: remoteEntry['model'] as String? ?? provider.defaultModel,
-            ),
-            sync: false,
-          );
-          continue;
+          final remoteCiphertext = remoteEntry['apiKeyCiphertext'] as String?;
+          if (remoteCiphertext != null && remoteCiphertext.isNotEmpty) {
+            notifier.setProviderConfig(
+              provider,
+              ProviderConfig(
+                apiKeyCiphertext: remoteCiphertext,
+                model: remoteEntry['model'] as String? ?? provider.defaultModel,
+              ),
+              sync: false,
+            );
+            continue;
+          }
+          // Remote has an entry for this provider but no key (e.g.
+          // apps/web/'s saveSettings persists its full
+          // DEFAULT_SETTINGS.providers map, including apiKeyCiphertext:
+          // null for every unconfigured provider, whenever ANY unrelated
+          // field is saved from the web app). Treating that as "remote
+          // wins" would silently blank out a real local key that simply
+          // hasn't been pushed yet — fall through to the same
+          // legacy-migration check as "no remote entry at all" instead.
         }
         final legacyKey = notifier.legacyPlaintextApiKey(provider);
         if (legacyKey != null) legacyToMigrate[provider] = legacyKey;

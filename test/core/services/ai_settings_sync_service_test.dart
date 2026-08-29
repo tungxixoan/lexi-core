@@ -71,6 +71,32 @@ void main() {
       expect(state.targetLanguage, Language.chinese);
     });
 
+    test('a remote entry with a null apiKeyCiphertext does not blank an existing local key', () async {
+      final firestore = FakeFirebaseFirestore();
+      await firestore.collection('users').doc(_uid).collection('settings').doc('config').set({
+        'providers': {
+          'gemini': {'model': 'gemini-2.5-flash', 'apiKeyCiphertext': null},
+        },
+      });
+
+      final container = await _makeContainer(initialValues: {
+        'ai_active_provider': 'gemini',
+        'ai_config_gemini':
+            jsonEncode({'apiKeyCiphertext': 'local-real-cipher', 'model': 'gemini-2.5-flash'}),
+      });
+      addTearDown(container.dispose);
+      final notifier = container.read(userSettingsNotifierProvider.notifier);
+
+      final service = AiSettingsSyncService(
+        firestore: firestore,
+        encryptor: ApiKeyEncryptor(caller: _FakeCaller(response: {})),
+      );
+      await service.bootstrapSync(_uid, notifier);
+
+      final state = container.read(userSettingsNotifierProvider);
+      expect(state.providerConfigs[AiProvider.gemini]?.apiKeyCiphertext, 'local-real-cipher');
+    });
+
     test('local plaintext migrates when Firestore has nothing for that provider, and pushes the result', () async {
       final firestore = FakeFirebaseFirestore(); // no settings doc — first-ever bootstrap
       final caller = _FakeCaller(response: {'ciphertext': 'newly-encrypted'});

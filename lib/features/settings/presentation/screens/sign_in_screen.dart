@@ -62,6 +62,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       return;
     }
 
+    if (!mounted) return;
+
     // Best-effort: AiSettingsSyncService.bootstrapSync never throws (see its
     // class doc), so this deliberately has no try/catch and never blocks
     // navigation the way the Hive migration above does.
