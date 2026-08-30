@@ -48,14 +48,27 @@ class GeminiDictionarySource {
       inputType: inputType,
       ipa: json['ipa'] as String,
       meaning: json['meaning'] as String,
-      examples: (json['examples'] as List).cast<String>(),
-      suggestedTopics: (json['suggestedTopics'] as List).cast<String>(),
+      examples: _parseStringList(json['examples']),
+      suggestedTopics: _parseStringList(json['suggestedTopics']),
       definition: json['definition'] as String? ?? '',
-      synonyms: (json['synonyms'] as List?)?.cast<String>() ?? const [],
+      synonyms: _parseStringList(json['synonyms']),
       cefrLevel: json['cefrLevel'] != null
           ? CEFRLevel.values.byName((json['cefrLevel'] as String).toLowerCase())
           : null,
     );
+  }
+
+  /// Parses a JSON value the prompt asked for as a list of strings, tolerating
+  /// a model that returns a single bare string instead of a one-element array
+  /// (observed in practice for "suggestedTopics", whose prompt phrasing —
+  /// "one topic from: ..." — evidently reads as "return that topic" rather
+  /// than "return an array containing that topic" to some models). Anything
+  /// else (missing, null, wrong type) degrades to an empty list rather than
+  /// throwing — a malformed field here shouldn't crash the whole lookup.
+  List<String> _parseStringList(dynamic value) {
+    if (value is List) return value.cast<String>();
+    if (value is String) return [value];
+    return const [];
   }
 
   Future<String> discoverWord({

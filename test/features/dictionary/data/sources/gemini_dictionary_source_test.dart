@@ -79,6 +79,57 @@ void main() {
     expect(r.cefrLevel, isNull);
   });
 
+  test('tolerates the AI returning a bare string instead of a one-item array for suggestedTopics', () async {
+    // Real observed AI response shape: {"suggestedTopics": "Daily Life"}
+    // instead of {"suggestedTopics": ["Daily Life"]} — must not crash the
+    // lookup with a TypeError.
+    final bareStringTopicJson = jsonEncode({
+      'headword': 'commute',
+      'ipa': '/kəˈmjuːt/',
+      'meaning': 'di chuyển hàng ngày',
+      'examples': ['I commute to work by train.'],
+      'suggestedTopics': 'Daily Life',
+    });
+    final source = GeminiDictionarySource.withModel(
+      FakeGenerativeModelClient(bareStringTopicJson),
+    );
+
+    final result = await source.lookup(
+      query: 'commute',
+      inputType: InputType.word,
+      targetLanguage: Language.english,
+      context: AppContext.general,
+    );
+
+    final r = result as WordPhraseResult;
+    expect(r.suggestedTopics, ['Daily Life']);
+  });
+
+  test('tolerates a bare string for examples and synonyms too', () async {
+    final bareStringsJson = jsonEncode({
+      'headword': 'run',
+      'ipa': '/rʌn/',
+      'meaning': 'chạy',
+      'examples': 'He runs every morning.',
+      'suggestedTopics': ['Sports'],
+      'synonyms': 'jog',
+    });
+    final source = GeminiDictionarySource.withModel(
+      FakeGenerativeModelClient(bareStringsJson),
+    );
+
+    final result = await source.lookup(
+      query: 'run',
+      inputType: InputType.word,
+      targetLanguage: Language.english,
+      context: AppContext.general,
+    );
+
+    final r = result as WordPhraseResult;
+    expect(r.examples, ['He runs every morning.']);
+    expect(r.synonyms, ['jog']);
+  });
+
   final sentenceJson = jsonEncode({
     'translation': 'Bạn có thể theo dõi với tôi không?',
   });
