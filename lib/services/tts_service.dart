@@ -24,8 +24,10 @@ abstract class TtsService {
   Future<void> stop();
 
   /// Releases the underlying native audio player, if one was ever created.
-  /// Called from `ttsServiceProvider`'s `ref.onDispose` since the provider
-  /// is auto-dispose and a fresh instance is built on every re-entry.
+  /// Called from `ttsServiceProvider`'s `ref.onDispose`, which — now that
+  /// the provider is keepAlive (a single shared instance for the app's
+  /// lifetime; see that provider's own comment for why) — fires only when
+  /// the ProviderContainer itself is torn down.
   Future<void> dispose();
 }
 
