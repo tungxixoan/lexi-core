@@ -14,14 +14,6 @@ enum Language {
         Language.japanese => 'ja',
       };
 
-  String get ttsLocale => switch (this) {
-        Language.vietnamese => 'vi-VN',
-        Language.english => 'en-US',
-        Language.chinese => 'zh-CN',
-        Language.korean => 'ko-KR',
-        Language.japanese => 'ja-JP',
-      };
-
   String get label => switch (this) {
         Language.vietnamese => 'Tiếng Việt',
         Language.english => 'English',

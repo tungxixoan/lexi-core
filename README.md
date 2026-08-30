@@ -59,7 +59,7 @@ Hub với 4 tính năng con (truy cập qua tab "Luyện tập" → card "Luyệ
   - Không ảnh hưởng SM-2
 
 ### Luyện nghe (Listening Practice)
-Hub với 2 tính năng con (truy cập qua tab "Luyện tập" → card "Luyện nghe"), dùng chung `TtsService` (flutter_tts) có sẵn, không cần package audio mới:
+Hub với 2 tính năng con (truy cập qua tab "Luyện tập" → card "Luyện nghe"), dùng chung `TtsService`, giờ phát qua Cloud Function Piper tự host (giống web) thay vì flutter_tts on-device — chỉ hỗ trợ Tiếng Việt và English (Piper chưa có giọng cho Trung/Hàn/Nhật):
 
 - **Nghe chép (dictation)** — AI tạo một câu vừa-dài dùng ~2 từ từ Vocab Bank; nghe (không tự phát, phải bấm) rồi gõ lại chính xác
   - **3 mức độ** (chọn mỗi phiên luyện tập, mặc định Khó):
@@ -139,7 +139,7 @@ Hỗ trợ 3 nhà cung cấp LLM, có thể chuyển đổi trong Cài đặt:
 | Auth & Cloud | Firebase Auth + Cloud Firestore + Google Sign-In |
 | AI — Gemini | [google_generative_ai](https://pub.dev/packages/google_generative_ai) |
 | AI — Groq/OpenRouter | [http](https://pub.dev/packages/http) (OpenAI-compatible REST) |
-| TTS | [flutter_tts](https://pub.dev/packages/flutter_tts) |
+| TTS | Piper (self-hosted, via Cloud Functions `getPronunciation`/`synthesizeSpeech`) + [audioplayers](https://pub.dev/packages/audioplayers) |
 | Notifications | [flutter_local_notifications](https://pub.dev/packages/flutter_local_notifications) + timezone |
 | Testing | flutter_test + [mocktail](https://pub.dev/packages/mocktail) + [mockito](https://pub.dev/packages/mockito) |
 
@@ -376,12 +376,13 @@ Vào **Cài đặt → AI** trong ứng dụng:
 | Ngôn ngữ | Tra từ (Free API) | Tra từ (AI) | TTS |
 |----------|------------------|------------|-----|
 | English | ✅ | ✅ | ✅ |
-| 中文 (Chinese) | — | ✅ | ✅ |
-| 한국어 (Korean) | — | ✅ | ✅ |
-| 日本語 (Japanese) | — | ✅ | ✅ |
+| 中文 (Chinese) | — | ✅ | — |
+| 한국어 (Korean) | — | ✅ | — |
+| 日本語 (Japanese) | — | ✅ | — |
 | Tiếng Việt | — | ✅ | ✅ |
 
 > Tiếng Anh dùng Free Dictionary API, không cần AI key. Các ngôn ngữ khác yêu cầu AI bật.
+> TTS (phát âm từ điển, Nghe chép, Nghe hiểu) chỉ hoạt động với English và Tiếng Việt — backend Piper tự host chưa có giọng cho Trung/Hàn/Nhật.
 
 ---
 

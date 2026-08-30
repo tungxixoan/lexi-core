@@ -58,7 +58,7 @@ http.Client httpClient(HttpClientRef ref) {
   return client;
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 TtsService ttsService(TtsServiceRef ref) {
   final service = CloudTtsService();
   ref.onDispose(() => service.dispose());

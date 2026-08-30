@@ -22,11 +22,11 @@ final httpClientProvider = Provider<http.Client>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef HttpClientRef = ProviderRef<http.Client>;
-String _$ttsServiceHash() => r'6c8d941e97936bc762823a448c6953f4f7176bd7';
+String _$ttsServiceHash() => r'669a11898a0737005e30530b0a8ad80842a4d40c';
 
 /// See also [ttsService].
 @ProviderFor(ttsService)
-final ttsServiceProvider = AutoDisposeProvider<TtsService>.internal(
+final ttsServiceProvider = Provider<TtsService>.internal(
   ttsService,
   name: r'ttsServiceProvider',
   debugGetCreateSourceHash:
@@ -37,7 +37,7 @@ final ttsServiceProvider = AutoDisposeProvider<TtsService>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef TtsServiceRef = AutoDisposeProviderRef<TtsService>;
+typedef TtsServiceRef = ProviderRef<TtsService>;
 String _$freeDictionarySourceHash() =>
     r'7f276bac193fb45b8a49880f72c287fd5032b808';
 

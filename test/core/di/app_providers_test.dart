@@ -41,4 +41,36 @@ void main() {
       );
     });
   });
+
+  group('ttsServiceProvider', () {
+    test(
+        'stays alive (same instance) across an async gap with no active watcher',
+        () async {
+      // Regression test: every listening/pronunciation call site obtains
+      // TtsService via a one-shot `ref.read(ttsServiceProvider)`, with
+      // nothing ever `ref.watch`-ing it. If ttsServiceProvider is autoDispose
+      // (the default for @riverpod), each read after the listener count
+      // drops to zero returns a NEW CloudTtsService wrapping its own native
+      // AudioPlayer — so stop() targets a different player than the one
+      // actually playing, and a lazily-created player gets disposed before
+      // it's ever used. Must be keepAlive so the whole app shares one player.
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final service1 = container.read(ttsServiceProvider);
+
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      final service2 = container.read(ttsServiceProvider);
+
+      expect(
+        identical(service1, service2),
+        isTrue,
+        reason:
+            'ttsServiceProvider was disposed (and its AudioPlayer torn down) '
+            'across the async gap even though nothing watched it.',
+      );
+    });
+  });
 }

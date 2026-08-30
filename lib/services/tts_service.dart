@@ -51,6 +51,13 @@ class CloudTtsService implements TtsService {
   AudioPlayer get _player =>
       _providedPlayer ?? (_resolvedPlayer ??= AudioPlayer());
 
+  /// The player if one exists already (injected for testing, or already
+  /// lazily constructed by a prior pronounce()/synthesize() call) — without
+  /// the side effect of constructing a new one. Used by stop() so calling
+  /// it before anything has ever played doesn't build a native player just
+  /// to immediately stop it.
+  AudioPlayer? get _existingPlayer => _providedPlayer ?? _resolvedPlayer;
+
   @override
   Future<void> pronounce(String text, Language language, {required PronunciationTier tier}) async {
     final code = language.ttsCloudCode;
@@ -63,6 +70,7 @@ class CloudTtsService implements TtsService {
       });
       final url = result['url'] as String?;
       if (url == null) return;
+      await _player.setPlaybackRate(1.0);
       await _playAndAwaitCompletion(UrlSource(url));
     } catch (_) {
       // Best-effort: no error-display UI exists at any pronounce() call
@@ -83,7 +91,9 @@ class CloudTtsService implements TtsService {
       final audioBase64 = result['audioBase64'] as String?;
       if (audioBase64 == null) return;
       if (rate != null) await _player.setPlaybackRate(rate);
-      await _playAndAwaitCompletion(BytesSource(base64Decode(audioBase64)));
+      await _playAndAwaitCompletion(
+        BytesSource(base64Decode(audioBase64), mimeType: 'audio/wav'),
+      );
     } catch (_) {
       // Best-effort — see pronounce()'s comment.
     }
@@ -112,7 +122,13 @@ class CloudTtsService implements TtsService {
   }
 
   @override
-  Future<void> stop() => _player.stop();
+  Future<void> stop() async {
+    try {
+      await _existingPlayer?.stop();
+    } catch (_) {
+      // Best-effort — see pronounce()'s comment.
+    }
+  }
 
   @override
   Future<void> dispose() async {

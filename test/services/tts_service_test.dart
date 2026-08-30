@@ -179,4 +179,27 @@ void main() {
       verify(() => mockPlayer.stop()).called(1);
     });
   });
+
+  group('CloudTtsService construction and disposal', () {
+    test('constructing with no args does not throw (no eager Firebase/platform-channel touch)', () {
+      expect(() => CloudTtsService(), returnsNormally);
+    });
+
+    test('stop() before anything has played is a no-op that completes cleanly', () async {
+      final service = CloudTtsService(caller: _FakeCaller());
+      await expectLater(service.stop(), completes);
+    });
+
+    test('dispose() never disposes an injected (test-owned) player', () async {
+      final service = CloudTtsService(caller: _FakeCaller(), player: mockPlayer);
+      await service.dispose();
+      verifyNever(() => mockPlayer.dispose());
+    });
+
+    test('stop() delegates to an injected player when one is provided', () async {
+      final service = CloudTtsService(caller: _FakeCaller(), player: mockPlayer);
+      await service.stop();
+      verify(() => mockPlayer.stop()).called(1);
+    });
+  });
 }
