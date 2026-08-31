@@ -2,10 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../features/vocabulary/presentation/providers/vocab_bank_provider.dart';
 import '../../../../services/tts_service.dart';
 import '../../domain/entities/lookup_result.dart';
 import '../providers/user_settings_provider.dart';
+import 'pronounce_button.dart';
 import 'save_vocab_sheet.dart';
 
 class WordResultWidget extends ConsumerWidget {
@@ -19,107 +21,101 @@ class WordResultWidget extends ConsumerWidget {
       userSettingsNotifierProvider.select((s) => s.targetLanguage),
     );
     final tts = ref.read(ttsServiceProvider);
-    final theme = Theme.of(context);
+    final c = context.bloom;
+    final canSpeak = targetLanguage.ttsCloudCode != null;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      child: BloomCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Expanded(
+                Flexible(
                   child: Text(
                     result.headword,
-                    style: theme.textTheme.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 22, fontWeight: FontWeight.w800),
                   ),
                 ),
-                if (targetLanguage.ttsCloudCode != null)
-                  IconButton(
-                    icon: const Icon(Icons.volume_up),
-                    tooltip: 'Pronounce word',
-                    onPressed: () => tts.pronounce(result.headword, targetLanguage,
-                        tier: PronunciationTier.word),
+                const SizedBox(width: 8),
+                if (canSpeak)
+                  PronounceButton(
+                    onPressed: () => tts.pronounce(result.headword,
+                        targetLanguage, tier: PronunciationTier.word),
                   ),
+                const Spacer(),
+                if (result.cefrLevel != null)
+                  BloomCefrPill(result.cefrLevel!.label),
               ],
             ),
-            if (result.ipa.isNotEmpty)
-              Text(
-                result.ipa,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.secondary,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            const SizedBox(height: 8),
-            Text(result.meaning, style: theme.textTheme.bodyLarge),
-            if (result.definition.isNotEmpty) ...[
+            if (result.ipa.isNotEmpty) ...[
               const SizedBox(height: 4),
-              Text(
-                result.definition,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.outline,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
+              Text(result.ipa,
+                  style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 13,
+                      color: c.inkSoft)),
+            ],
+            const SizedBox(height: 10),
+            Text(result.meaning,
+                style: const TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w600)),
+            if (result.definition.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(result.definition,
+                  style: TextStyle(
+                      fontStyle: FontStyle.italic, color: c.inkSoft)),
             ],
             if (result.synonyms.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Wrap(
                 spacing: 6,
-                runSpacing: 4,
-                children: result.synonyms
-                    .map((s) => Chip(
-                          label: Text(s, style: theme.textTheme.bodySmall),
-                          visualDensity: VisualDensity.compact,
-                          backgroundColor:
-                              theme.colorScheme.secondaryContainer,
-                        ))
-                    .toList(),
+                runSpacing: 6,
+                children: [
+                  for (final s in result.synonyms) BloomChip(label: s),
+                ],
               ),
             ],
             if (result.examples.isNotEmpty) ...[
-              const Divider(height: 24),
-              ...result.examples.map(
-                (ex) => Padding(
+              Divider(height: 24, color: c.border),
+              for (final ex in result.examples)
+                Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text(
-                          ex,
-                          style: theme.textTheme.bodyMedium
-                              ?.copyWith(fontStyle: FontStyle.italic),
-                        ),
+                        child: Text(ex,
+                            style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: c.inkSoft)),
                       ),
-                      if (targetLanguage.ttsCloudCode != null)
-                        IconButton(
-                          icon: const Icon(Icons.volume_up, size: 18),
-                          tooltip: 'Pronounce example',
-                          onPressed: () =>
-                              tts.pronounce(ex, targetLanguage, tier: PronunciationTier.sentence),
+                      if (canSpeak) ...[
+                        const SizedBox(width: 8),
+                        PronounceButton(
+                          size: 22,
+                          onPressed: () => tts.pronounce(ex, targetLanguage,
+                              tier: PronunciationTier.sentence),
                         ),
+                      ],
                     ],
                   ),
                 ),
-              ),
             ],
             if (result.suggestedTopics.isNotEmpty) ...[
               const SizedBox(height: 8),
               Wrap(
                 spacing: 6,
-                children: result.suggestedTopics
-                    .map((t) => Chip(
-                          label: Text(t),
-                          visualDensity: VisualDensity.compact,
-                        ))
-                    .toList(),
+                runSpacing: 6,
+                children: [
+                  for (final t in result.suggestedTopics)
+                    BloomChip(label: t, style: BloomChipStyle.topic),
+                ],
               ),
             ],
-            const SizedBox(height: 8),
+            const SizedBox(height: 14),
             _SaveButton(result: result),
           ],
         ),
@@ -136,6 +132,7 @@ class _SaveButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final vocabAsync = ref.watch(vocabBankNotifierProvider);
     final settings = ref.read(userSettingsNotifierProvider);
+    final c = context.bloom;
 
     final isSaved = vocabAsync.valueOrNull?.any(
           (r) =>
@@ -145,29 +142,28 @@ class _SaveButton extends ConsumerWidget {
         false;
 
     if (isSaved) {
-      return const Row(
+      return Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Icon(Icons.check_circle_outline, size: 16, color: Colors.green),
-          SizedBox(width: 4),
-          Text('Saved', style: TextStyle(color: Colors.green, fontSize: 13)),
+          Icon(Icons.check_circle_outline, size: 16, color: c.sage),
+          const SizedBox(width: 4),
+          Text('Đã lưu',
+              style: TextStyle(
+                  color: c.sage, fontSize: 13, fontWeight: FontWeight.w700)),
         ],
       );
     }
 
-    return Align(
-      alignment: Alignment.centerRight,
-      child: OutlinedButton.icon(
-        icon: const Icon(Icons.bookmark_add_outlined, size: 16),
-        label: const Text('Save'),
-        onPressed: () async {
-          await showModalBottomSheet<bool>(
-            context: context,
-            isScrollControlled: true,
-            builder: (_) => SaveVocabSheet(result: result),
-          );
-        },
-      ),
+    return BloomPillButton(
+      label: 'Lưu từ',
+      block: true,
+      onPressed: () async {
+        await showModalBottomSheet<bool>(
+          context: context,
+          isScrollControlled: true,
+          builder: (_) => SaveVocabSheet(result: result),
+        );
+      },
     );
   }
 }

@@ -2,9 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../services/tts_service.dart';
 import '../../domain/entities/lookup_result.dart';
 import '../providers/user_settings_provider.dart';
+import 'pronounce_button.dart';
 
 class SentenceResultWidget extends ConsumerWidget {
   const SentenceResultWidget({super.key, required this.result});
@@ -17,40 +19,34 @@ class SentenceResultWidget extends ConsumerWidget {
       userSettingsNotifierProvider.select((s) => s.targetLanguage),
     );
     final tts = ref.read(ttsServiceProvider);
-    final theme = Theme.of(context);
+    final c = context.bloom;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      child: BloomCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Text(
-                    result.original,
-                    style: theme.textTheme.bodyLarge
-                        ?.copyWith(fontWeight: FontWeight.w500),
-                  ),
+                  child: Text(result.original,
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.w600)),
                 ),
-                if (targetLanguage.ttsCloudCode != null)
-                  IconButton(
-                    icon: const Icon(Icons.volume_up),
-                    tooltip: 'Pronounce sentence',
-                    onPressed: () => tts.pronounce(result.original, targetLanguage,
-                        tier: PronunciationTier.sentence),
+                if (targetLanguage.ttsCloudCode != null) ...[
+                  const SizedBox(width: 8),
+                  PronounceButton(
+                    onPressed: () => tts.pronounce(result.original,
+                        targetLanguage, tier: PronunciationTier.sentence),
                   ),
+                ],
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              result.translation,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.primary,
-              ),
-            ),
+            const SizedBox(height: 10),
+            Text(result.translation,
+                style: TextStyle(fontSize: 18, color: c.inkSoft)),
           ],
         ),
       ),
