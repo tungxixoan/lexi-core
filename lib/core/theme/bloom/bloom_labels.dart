@@ -37,9 +37,9 @@ class BloomLeafMark extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: BloomGradients.leafMark(context.bloom),
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(999),
-          topRight: Radius.circular(999),
-          bottomLeft: Radius.circular(999),
+          topLeft: Radius.circular(BloomRadii.pill),
+          topRight: Radius.circular(BloomRadii.pill),
+          bottomLeft: Radius.circular(BloomRadii.pill),
           bottomRight: Radius.circular(4),
         ),
       ),

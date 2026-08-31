@@ -26,7 +26,7 @@ Flutter UI uses the **Bloom** design system, ported from `apps/web/src/styles/bl
 - **`AppTheme`** (`lib/core/theme/app_theme.dart`) keeps a Material `ThemeData` for low-level widgets (`Slider`, dialogs, `TextField` internals) but maps its `ColorScheme` onto Bloom tokens and attaches the `BloomColors` extension.
 - Color values in `bloom_tokens.dart` are copied verbatim from `bloom.css`. If you change a Bloom color, change it in **both** files.
 - Font: **Be Vietnam Pro**, bundled under `assets/fonts/` (family `BeVietnamPro`).
-- Light/dark follows `UserSettingsState.themePreference` (Sáng/Tối/Hệ thống), stored locally in SharedPreferences (`theme_preference`), not synced.
+- Light/dark follows `UserSettingsState.themePreference` (Sáng/Tối/Hệ thống), stored locally in SharedPreferences (`theme_preference`), not synced (the Sáng/Tối/Hệ thống picker UI lands in a later plan).
 
 ## Backend/data decisions (see the spec above for full reasoning)
 

@@ -66,7 +66,7 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: c.ink,
-        contentTextStyle: TextStyle(color: c.surface),
+        contentTextStyle: baseText.bodyMedium?.copyWith(color: c.surface),
       ),
       textSelectionTheme: TextSelectionThemeData(
         cursorColor: c.accent,

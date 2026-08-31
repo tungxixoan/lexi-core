@@ -25,7 +25,7 @@ class BloomAppBar extends StatelessWidget implements PreferredSizeWidget {
       leading: leading == null
           ? null
           : Padding(padding: const EdgeInsets.only(left: 16), child: leading),
-      leadingWidth: leading == null ? null : 44,
+      leadingWidth: leading == null ? null : 64,
       title: Text(
         title,
         style: Theme.of(context)
