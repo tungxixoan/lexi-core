@@ -1840,3 +1840,4 @@ Task 2 (C1b): complete. Removed the always-`general` `context`/`AppContext` para
 Task 2 (C1b): complete (commit bdb77ea, review clean). context/AppContext param removed from DictionaryRepository/LookupUseCase/GeminiDictionarySource (+2 prompt lines, now match web); 3 .mocks.dart regen; 622 tests, analyze 21.
 Task 3 (BloomTextField extend): complete (commit 39eea8d, review clean). +8 params (focusNode/keyboardType/textInputAction/onEditingComplete/readOnly/minLines/prefixIcon/suffix). 624 tests, analyze 21.
 Task 4 (lookup screen + search bar Bloom): complete (commit bbafee4, review clean). +2 smoke tests → 626, analyze 21. Minor: lookup_screen has no direct test coverage.
+Task 5 (result widgets Bloom): complete (commit d9a1e4c, review clean). +1 PronounceButton test → 627, analyze 21. New pronounce_button.dart widget. Behavior preserved (save flow, saved-detection, tts tier, ttsCloudCode gate).
