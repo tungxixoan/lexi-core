@@ -1868,3 +1868,13 @@ Minor findings for final review:
 - CONFIRM WITH USER: reading_home_screen:257 + dictation_home_screen:255 have NO per-session context picker → Bilingual Reading + Dictation generation now permanently AppContext.general (was global setting). Matches web/C1, but real steering loss on 2 screens.
 
 Fix batch dispatched: #1 (Important) + #3 #4 #5 #9 #12 (cheap Minors). Deferred: #2 (ask user), #6 (Plan 6), #7 #8 #10 #11.
+
+## Plan 2 final-fixes re-review (sonnet) — Ready to push: YES
+
+6 findings resolved (Important #1 headword wrap + Minor #3/#4/#5/#9/#12), FIX 1 & FIX 5 tests confirmed non-vacuous against pre-fix code. 638 tests, analyze 21. Commits 9b96eee..e636967.
+
+# PLAN 2 (Dictionary + Vocab Bank) — COMPLETE
+Range 804e45b..e636967 on master, NOT pushed. 638 tests, analyze 21.
+OPEN for user: (1) BloomSectionHeader uppercases Vietnamese section labels — keep or add uppercase:false? (2) confirm C1 side effect: Bilingual Reading + Dictation AI generation now permanently AppContext.general (no picker on those 2 screens; Part5/6/7 + Comprehension keep pickers).
+Deferred to Plan 6: #6 bloom mono type token. Left as-is: #7 FAB→lookup, #8 ListView.separated, #10 no lookup_screen test, #11 PronounceButton lives under features/dictionary.
+Next: Plan 3 (Practice core) — to be written.
