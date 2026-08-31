@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lexi_core/core/theme/app_theme.dart';
+import 'package:lexi_core/core/theme/bloom/bloom.dart';
 import 'package:lexi_core/features/practice/presentation/screens/practice_hub_screen.dart';
 
 Widget _buildHub() {
@@ -29,7 +31,7 @@ Widget _buildHub() {
       ),
     ],
   );
-  return MaterialApp.router(routerConfig: router);
+  return MaterialApp.router(routerConfig: router, theme: AppTheme.light);
 }
 
 void main() {
@@ -41,6 +43,7 @@ void main() {
     expect(find.text('Luyện nghe'), findsOneWidget);
     expect(find.text('Tiến độ học tập'), findsOneWidget);
     expect(find.text('Quét từ vựng'), findsOneWidget);
+    expect(find.byType(BloomScaffold), findsOneWidget);
   });
 
   testWidgets('tapping Quét từ vựng navigates to /practice/radar', (tester) async {
