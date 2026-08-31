@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/bloom/bloom.dart';
+import '../../../../core/widgets/filter_tile.dart';
 import '../../../../core/widgets/selection_sheets.dart';
 import '../../../dictionary/domain/entities/language.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
@@ -66,44 +68,55 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final c = context.bloom;
     final vocabAsync = ref.watch(vocabBankNotifierProvider);
     final topicsAsync = ref.watch(topicsNotifierProvider);
     final targetLanguage = ref.watch(
       userSettingsNotifierProvider.select((s) => s.targetLanguage),
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Vocab Bank · ${targetLanguage.label}'),
-        centerTitle: false,
+    return BloomScaffold(
+      appBar: BloomAppBar(
+        title: 'Ngân hàng từ · ${targetLanguage.label}',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'Add custom topic',
+          BloomIconButton(
+            icon: Icons.add,
+            tooltip: 'Thêm chủ đề',
             onPressed: () => _showAddTopicDialog(context),
           ),
         ],
+      ),
+      floatingActionButton: Material(
+        color: c.accent,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () => context.go('/'),
+          child: SizedBox(
+            width: 52,
+            height: 52,
+            child: Icon(Icons.add, color: c.accentInk, size: 26),
+          ),
+        ),
       ),
       body: Column(
         children: [
           // Search bar
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: SearchBar(
+            child: BloomTextField(
               controller: _searchCtrl,
-              hintText: 'Search words...',
-              leading: const Icon(Icons.search),
-              trailing: [
-                if (_searchQuery.isNotEmpty)
-                  IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _searchCtrl.clear();
-                      setState(() => _searchQuery = '');
-                    },
-                  ),
-              ],
+              hintText: 'Tìm từ…',
+              prefixIcon: Icons.search,
+              suffix: _searchQuery.isEmpty
+                  ? null
+                  : GestureDetector(
+                      onTap: () {
+                        _searchCtrl.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                      child: Icon(Icons.clear, size: 18, color: c.inkFaint),
+                    ),
               onChanged: (v) => setState(() => _searchQuery = v),
             ),
           ),
@@ -111,63 +124,48 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
           // Topic filter — opens a bottom sheet with multi-select checkboxes
           topicsAsync.when(
             data: (topics) => Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-              child: Material(
-                color: theme.colorScheme.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(12),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => _openTopicPicker(topics),
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Row(
-                      children: [
-                        Icon(Icons.sell_outlined,
-                            size: 20, color: theme.colorScheme.onSurfaceVariant),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            _selectedTopicIds.isEmpty
-                                ? 'Chủ đề: Tất cả'
-                                : 'Chủ đề: ${_selectedTopicIds.length} đã chọn',
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        ),
-                        Icon(Icons.keyboard_arrow_down,
-                            color: theme.colorScheme.onSurfaceVariant),
-                      ],
-                    ),
-                  ),
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: FilterTile(
+                icon: Icons.sell_outlined,
+                label: 'Chủ đề',
+                value: _selectedTopicIds.isEmpty
+                    ? 'Tất cả'
+                    : '${_selectedTopicIds.length} đã chọn',
+                onTap: () => _openTopicPicker(topics),
               ),
             ),
             loading: () => const SizedBox(height: 48),
             error: (_, __) => const SizedBox(height: 48),
           ),
-          const Divider(height: 1),
+          const SizedBox(height: 8),
+          Divider(height: 1, color: c.border),
           // Vocab list
           Expanded(
             child: vocabAsync.when(
               data: (records) {
                 final filtered = _filter(records, targetLanguage);
                 if (filtered.isEmpty && records.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Padding(
-                      padding: EdgeInsets.all(32),
+                      padding: const EdgeInsets.all(32),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.menu_book_outlined, size: 48, color: Colors.grey),
-                          SizedBox(height: 16),
+                          Icon(Icons.menu_book_outlined,
+                              size: 48, color: c.inkFaint),
+                          const SizedBox(height: 16),
                           Text(
-                            'No words saved yet.',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                            'Chưa lưu từ nào.',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: c.ink,
+                            ),
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
-                            'Look up a word and tap Save.',
-                            style: TextStyle(color: Colors.grey),
+                            'Tra một từ rồi bấm Lưu.',
+                            style: TextStyle(color: c.inkSoft),
                           ),
                         ],
                       ),
@@ -175,15 +173,36 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
                   );
                 }
                 if (filtered.isEmpty) {
-                  return const Center(
-                    child: Text('No words match your search or filter.'),
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Text(
+                        'Không có từ nào khớp tìm kiếm hoặc bộ lọc.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: c.inkSoft),
+                      ),
+                    ),
                   );
                 }
                 return ListView.builder(
-                  padding: const EdgeInsets.only(top: 8, bottom: 80),
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
                   itemCount: filtered.length,
-                  itemBuilder: (context, i) =>
-                      _VocabCard(record: filtered[i]),
+                  itemBuilder: (context, i) {
+                    final record = filtered[i];
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (i != 0) Divider(height: 1, color: c.border),
+                        BloomListRow(
+                          cefr: record.cefrLevel.label,
+                          headword: record.headword,
+                          meaning: record.meaning,
+                          trailingText: record.inputType.name,
+                          onTap: () => context.push('/vocab/${record.id}'),
+                        ),
+                      ],
+                    );
+                  },
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -202,29 +221,33 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('New Topic'),
+        title: const Text('Chủ đề mới'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
+            const BloomSectionHeader('Tên chủ đề'),
+            BloomTextField(
               controller: nameCtrl,
               autofocus: true,
-              decoration: const InputDecoration(
-                  labelText: 'Topic name', hintText: 'e.g. My Vocabulary'),
+              hintText: 'vd: Từ vựng của tôi',
             ),
             const SizedBox(height: 8),
-            TextField(
+            const BloomSectionHeader('Emoji'),
+            BloomTextField(
               controller: emojiCtrl,
-              decoration: const InputDecoration(labelText: 'Emoji'),
+              hintText: 'Emoji',
             ),
           ],
         ),
         actions: [
-          TextButton(
+          BloomPillButton(
+            label: 'Huỷ',
+            variant: BloomButtonVariant.secondary,
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
           ),
-          FilledButton(
+          BloomPillButton(
+            label: 'Thêm',
             onPressed: () async {
               try {
                 await ref
@@ -238,7 +261,6 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
                 }
               }
             },
-            child: const Text('Add'),
           ),
         ],
       ),
@@ -246,49 +268,5 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
 
     nameCtrl.dispose();
     emojiCtrl.dispose();
-  }
-}
-
-class _VocabCard extends StatelessWidget {
-  const _VocabCard({required this.record});
-  final VocabRecord record;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: ListTile(
-        onTap: () => context.push('/vocab/${record.id}'),
-        title: Text(
-          record.headword,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (record.ipa.isNotEmpty)
-              Text(
-                record.ipa,
-                style: TextStyle(
-                    fontStyle: FontStyle.italic,
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.secondary),
-              ),
-            Text(
-              record.meaning,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-        trailing: Chip(
-          label: Text(record.inputType.name,
-              style: const TextStyle(fontSize: 11)),
-          padding: EdgeInsets.zero,
-          visualDensity: VisualDensity.compact,
-        ),
-        isThreeLine: record.ipa.isNotEmpty,
-      ),
-    );
   }
 }
