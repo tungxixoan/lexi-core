@@ -208,7 +208,11 @@ function PracticePageContent() {
         <div className="practice-progress-track">
           <div className="practice-progress-fill" style={{ width: `${progressPct}%` }} />
         </div>
-        <FlashcardCard record={sessionWords[currentIndex]} onGrade={handleGrade} />
+        <FlashcardCard
+          key={sessionWords[currentIndex].id}
+          record={sessionWords[currentIndex]}
+          onGrade={handleGrade}
+        />
       </div>
     );
   }

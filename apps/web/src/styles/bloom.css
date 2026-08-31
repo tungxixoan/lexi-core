@@ -929,6 +929,18 @@ button.btn-primary:disabled {
   transform-style: preserve-3d;
   transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
   cursor: pointer;
+  /* Plays once when a fresh card is keyed in (next word after a grade), not
+     on flips — the same element re-rendering does not restart it. */
+  animation: fc-card-in 0.22s ease;
+}
+
+@keyframes fc-card-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .fc-face {

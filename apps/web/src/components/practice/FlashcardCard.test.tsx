@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { FlashcardCard } from "./FlashcardCard";
 import type { VocabRecord } from "@/lib/vocabRecords";
 
@@ -53,22 +53,37 @@ describe("FlashcardCard", () => {
     expect(onGrade).not.toHaveBeenCalled();
   });
 
-  it("calls onGrade(1) for Chưa hiểu and onGrade(5) for Đã hiểu, rotating forward either way", () => {
+  it("flips the graded card to its own front, then reports the grade once the flip settles", async () => {
     const onGrade = vi.fn();
     render(<FlashcardCard record={RECORD} onGrade={onGrade} />);
     const card = screen.getByTestId("flashcard-card");
-    fireEvent.click(card); // -> 180
+    fireEvent.click(card); // front -> back (180)
     fireEvent.click(screen.getByRole("button", { name: "Đã hiểu" }));
-    expect(onGrade).toHaveBeenCalledWith(5);
+
+    // Immediately: the card spins to its OWN front (360), and the grade is not
+    // reported yet — the next word must not be pulled in mid-rotation.
     expect(card).toHaveStyle({ transform: "rotate3d(1,1,0,360deg)" });
+    expect(onGrade).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(onGrade).toHaveBeenCalledWith(5));
   });
 
-  it("calls onGrade(1), not 5, for Chưa hiểu", () => {
+  it("reports quality 1 for Chưa hiểu once the flip settles", async () => {
     const onGrade = vi.fn();
     render(<FlashcardCard record={RECORD} onGrade={onGrade} />);
     fireEvent.click(screen.getByTestId("flashcard-card")); // -> 180
     fireEvent.click(screen.getByRole("button", { name: "Chưa hiểu" }));
-    expect(onGrade).toHaveBeenCalledWith(1);
+    await waitFor(() => expect(onGrade).toHaveBeenCalledWith(1));
+  });
+
+  it("ignores a second grade tap while the first flip-out is still running", async () => {
+    const onGrade = vi.fn();
+    render(<FlashcardCard record={RECORD} onGrade={onGrade} />);
+    fireEvent.click(screen.getByTestId("flashcard-card")); // -> 180
+    fireEvent.click(screen.getByRole("button", { name: "Đã hiểu" }));
+    fireEvent.click(screen.getByRole("button", { name: "Chưa hiểu" }));
+    await waitFor(() => expect(onGrade).toHaveBeenCalledTimes(1));
+    expect(onGrade).toHaveBeenCalledWith(5);
   });
 
   it("renders a semicolon-separated multi-sense meaning as separate lines", () => {

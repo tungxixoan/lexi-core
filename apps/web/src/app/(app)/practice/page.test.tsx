@@ -385,6 +385,10 @@ describe("PracticePage (action=start auto-trigger)", () => {
     // this file's own existing grading tests exactly.
     fireEvent.click(screen.getByTestId("flashcard-card"));
     fireEvent.click(screen.getByRole("button", { name: "Đã hiểu" }));
+
+    // The graded card finishes flipping back to its own front before the next
+    // word is keyed in, so wait for word 2 before flipping/grading it.
+    await screen.findByText("Từ 2 / 2");
     fireEvent.click(screen.getByTestId("flashcard-card"));
     fireEvent.click(screen.getByRole("button", { name: "Đã hiểu" }));
 
