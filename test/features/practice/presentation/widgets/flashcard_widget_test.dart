@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lexi_core/core/theme/app_theme.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
@@ -26,6 +27,7 @@ final _record = VocabRecord(
 );
 
 Widget _buildCard(void Function(ExerciseResult) onResult) => MaterialApp(
+      theme: AppTheme.light,
       home: Scaffold(
         body: FlashcardWidget(
           exercise: FlashcardExercise(vocabRecord: _record),

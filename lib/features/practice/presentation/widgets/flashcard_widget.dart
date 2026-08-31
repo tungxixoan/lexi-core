@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:lexi_core/core/theme/bloom/bloom.dart';
 import '../../../../core/utils/web_text_scale.dart';
 import '../../../vocabulary/domain/entities/vocab_record.dart';
 import '../../domain/entities/exercise.dart';
@@ -90,14 +91,18 @@ class _CardFace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      child: Container(
-        width: double.infinity,
-        constraints: const BoxConstraints(minHeight: 240),
-        padding: const EdgeInsets.all(24),
-        child: child,
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(minHeight: 240, maxHeight: 360),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: context.bloom.surface,
+        border: Border.all(color: context.bloom.border),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: BloomShadows.warm(
+            Theme.of(context).brightness == Brightness.dark),
       ),
+      child: child,
     );
   }
 }
@@ -114,8 +119,7 @@ class _FrontContent extends StatelessWidget {
       children: [
         Text(record.headword,
             style: webScaled(
-              (theme.textTheme.headlineMedium ?? const TextStyle(fontSize: 28))
-                  .copyWith(fontWeight: FontWeight.bold),
+              const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
             ),
             textAlign: TextAlign.center),
         if (record.ipa.isNotEmpty) ...[
@@ -123,14 +127,16 @@ class _FrontContent extends StatelessWidget {
           Text(record.ipa,
               style: webScaled(
                 (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)).copyWith(
-                    fontStyle: FontStyle.italic, color: theme.colorScheme.secondary),
+                    fontStyle: FontStyle.italic, color: context.bloom.inkSoft),
               )),
         ],
+        const SizedBox(height: 8),
+        BloomCefrPill(record.cefrLevel.label),
         const SizedBox(height: 24),
-        Icon(Icons.touch_app_outlined, color: theme.colorScheme.outline, size: 20),
+        Icon(Icons.touch_app_outlined, color: context.bloom.inkFaint, size: 20),
         const SizedBox(height: 4),
         Text('Chạm vào thẻ để xem đáp án',
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+            style: theme.textTheme.bodySmall?.copyWith(color: context.bloom.inkFaint)),
       ],
     );
   }
@@ -165,15 +171,15 @@ class _BackContent extends StatelessWidget {
                 Text('"${record.examples.first}"',
                     style: webScaled(
                       (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)).copyWith(
-                          fontStyle: FontStyle.italic, color: theme.colorScheme.outline),
+                          fontStyle: FontStyle.italic, color: context.bloom.inkSoft),
                     ),
                     textAlign: TextAlign.center),
               ],
               const SizedBox(height: 12),
-              Icon(Icons.flip_camera_android_outlined, color: theme.colorScheme.outline, size: 18),
+              Icon(Icons.flip_camera_android_outlined, color: context.bloom.inkFaint, size: 18),
               const SizedBox(height: 4),
               Text('Chạm để xem lại từ vựng',
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+                  style: theme.textTheme.bodySmall?.copyWith(color: context.bloom.inkFaint)),
             ],
           ),
         ),
@@ -181,17 +187,20 @@ class _BackContent extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: OutlinedButton(
+              child: BloomPillButton(
+                label: 'Chưa hiểu',
+                variant: BloomButtonVariant.danger,
+                block: true,
                 onPressed: () => onSubmit(false),
-                style: OutlinedButton.styleFrom(foregroundColor: theme.colorScheme.error),
-                child: const Text('Chưa hiểu'),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: FilledButton(
+              child: BloomPillButton(
+                label: 'Đã hiểu',
+                variant: BloomButtonVariant.primary,
+                block: true,
                 onPressed: () => onSubmit(true),
-                child: const Text('Đã hiểu'),
               ),
             ),
           ],
