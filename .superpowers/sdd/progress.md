@@ -1843,3 +1843,13 @@ Task 4 (lookup screen + search bar Bloom): complete (commit bbafee4, review clea
 Task 5 (result widgets Bloom): complete (commit d9a1e4c, review clean). +1 PronounceButton test → 627, analyze 21. New pronounce_button.dart widget. Behavior preserved (save flow, saved-detection, tts tier, ttsCloudCode gate).
 Task 6 (save vocab sheet Bloom): complete (commit f5a2ad3, review clean). _save() record shape + _preSelectTopics + maxSelected:2 byte-identical. 627 tests, analyze 21. Minor for final review: BloomSectionHeader uppercases Vietnamese labels → "NGHĨA"/"VÍ DỤ" (design-system consistent w/ bloom.css).
 Task 7 (Vocab Bank screen Bloom): complete (commit 3e6f0b6, review clean). +3 smoke tests → 630, analyze 21. _filter/_openTopicPicker/_showAddTopicDialog byte-identical. title "Ngân hàng từ", BloomListRow list, rounded-18 accent FAB → lookup.
+Task 8 (Vocab detail screen Bloom): complete (commit db7c632, review clean). +4 smoke tests → 634, analyze 21. All _* methods byte-identical. _SectionLabel removed → BloomSectionHeader.
+
+# PLAN 2 — all 8 tasks done. Range 804e45b..db7c632. 634 tests, analyze 21. Next: final whole-branch review.
+
+Minor findings for final review:
+- BloomSectionHeader uppercases Vietnamese → "NGHĨA"/"VÍ DỤ"/"GHI CHÚ CÁ NHÂN" in save-vocab sheet + vocab detail. Design-system consistent (bloom.css uppercases section labels) but Vietnamese all-caps w/ diacritics may read shouty — user design call.
+- lookup_screen / word_result_widget / sentence_result_widget still have no direct widget test (pre-existing gap; smoke tests added for search_bar, vocab_bank_screen, vocab_detail_screen).
+- IPA rendered with fontFamily: 'monospace' (generic alias) in word_result_widget.
+- vocab_bank FAB → context.go('/') (jumps to lookup tab to add a word).
+- delete-after-confirm pop path untested in vocab_detail smoke test.
