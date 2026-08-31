@@ -1889,4 +1889,4 @@ Base commit before Task 1: 2fa3cae. Suite baseline: 638 pass, analyze 21.
 
 ## Progress
 
-(none complete yet — starting Task 1)
+Task 1 (BloomMcOption): complete (commits 8d33935..4322242, review clean + 2 Minor cleanups: barrel order, neutral label weight). 643 tests, analyze 21.
