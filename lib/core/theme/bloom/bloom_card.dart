@@ -24,21 +24,26 @@ class BloomCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.bloom;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final container = Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: selected ? c.surface3 : c.surface,
-        border: Border.all(color: selected ? c.accent : c.border),
-        borderRadius: BorderRadius.circular(BloomRadii.md),
-        boxShadow: elevated ? BloomShadows.warm(isDark) : null,
-      ),
-      child: child,
+    final decoration = BoxDecoration(
+      color: selected ? c.surface3 : c.surface,
+      border: Border.all(color: selected ? c.accent : c.border),
+      borderRadius: BorderRadius.circular(BloomRadii.md),
+      boxShadow: elevated ? BloomShadows.warm(isDark) : null,
     );
-    if (onTap == null) return container;
+    if (onTap == null) {
+      return Container(
+        padding: padding,
+        decoration: decoration,
+        child: child,
+      );
+    }
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(BloomRadii.md),
-      child: container,
+      child: Ink(
+        decoration: decoration,
+        child: Padding(padding: padding, child: child),
+      ),
     );
   }
 }

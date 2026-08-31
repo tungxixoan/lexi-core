@@ -30,37 +30,39 @@ class FilterTile extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(BloomRadii.pill),
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Ink(
           decoration: BoxDecoration(
             color: c.surface2,
             border: Border.all(color: c.border),
             borderRadius: BorderRadius.circular(BloomRadii.pill),
           ),
-          child: Row(
-            children: [
-              Icon(icon, size: 16, color: c.inkFaint),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: c.inkSoft,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              children: [
+                Icon(icon, size: 16, color: c.inkFaint),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: c.inkSoft,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              Flexible(
-                child: Text(
-                  value,
-                  textAlign: TextAlign.right,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: c.ink),
+                const Spacer(),
+                Flexible(
+                  child: Text(
+                    value,
+                    textAlign: TextAlign.right,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: c.ink),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Icon(Icons.chevron_right, size: 18, color: c.inkFaint),
-            ],
+                const SizedBox(width: 4),
+                Icon(Icons.chevron_right, size: 18, color: c.inkFaint),
+              ],
+            ),
           ),
         ),
       ),

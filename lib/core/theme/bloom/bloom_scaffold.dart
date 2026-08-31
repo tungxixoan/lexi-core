@@ -25,9 +25,11 @@ class BloomScaffold extends StatelessWidget {
       appBar: appBar,
       bottomNavigationBar: bottomNavigationBar,
       floatingActionButton: floatingActionButton,
-      body: DecoratedBox(
-        decoration: BoxDecoration(gradient: BloomGradients.pageBackground(c)),
-        child: body,
+      body: SizedBox.expand(
+        child: DecoratedBox(
+          decoration: BoxDecoration(gradient: BloomGradients.pageBackground(c)),
+          child: body,
+        ),
       ),
     );
   }

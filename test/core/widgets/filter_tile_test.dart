@@ -23,15 +23,21 @@ void main() {
     expect(find.text('🌐 General'), findsOneWidget);
     await tester.tap(find.text('Ngữ cảnh'));
     expect(taps, 1);
-    final box = tester.widget<Container>(
+    final box = tester.widget<Ink>(
       find
-          .descendant(
-              of: find.byType(FilterTile), matching: find.byType(Container))
+          .descendant(of: find.byType(FilterTile), matching: find.byType(Ink))
           .first,
     );
     final deco = box.decoration as BoxDecoration;
     expect(deco.color, BloomColors.light.surface2);
     expect(deco.borderRadius, BorderRadius.circular(BloomRadii.pill));
+
+    // Ripple: an interactive tile paints its fill on an Ink layer inside the
+    // InkWell, so the splash is visible.
+    expect(
+      find.descendant(of: find.byType(InkWell), matching: find.byType(Ink)),
+      findsOneWidget,
+    );
   });
 
   testWidgets('renders a chevron_right affordance, not a dropdown caret',

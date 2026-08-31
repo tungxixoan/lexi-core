@@ -45,29 +45,36 @@ class BloomChip extends StatelessWidget {
         border = c.danger;
     }
 
-    final content = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: bg,
-        border: Border.all(color: border),
-        borderRadius: BorderRadius.circular(BloomRadii.pill),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label,
-              style: TextStyle(
-                  color: fg, fontWeight: FontWeight.w700, fontSize: 13)),
-          if (trailing != null) ...[const SizedBox(width: 6), trailing!],
-        ],
-      ),
+    final decoration = BoxDecoration(
+      color: bg,
+      border: Border.all(color: border),
+      borderRadius: BorderRadius.circular(BloomRadii.pill),
+    );
+    const contentPadding = EdgeInsets.symmetric(horizontal: 12, vertical: 6);
+    final row = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label,
+            style: TextStyle(
+                color: fg, fontWeight: FontWeight.w700, fontSize: 13)),
+        if (trailing != null) ...[const SizedBox(width: 6), trailing!],
+      ],
     );
 
-    if (onTap == null) return content;
+    if (onTap == null) {
+      return Container(
+        padding: contentPadding,
+        decoration: decoration,
+        child: row,
+      );
+    }
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(BloomRadii.pill),
-      child: content,
+      child: Ink(
+        decoration: decoration,
+        child: Padding(padding: contentPadding, child: row),
+      ),
     );
   }
 }

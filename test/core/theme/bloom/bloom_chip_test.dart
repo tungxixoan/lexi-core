@@ -28,6 +28,17 @@ void main() {
     expect((box.decoration as BoxDecoration).color, BloomColors.light.sageBg);
   });
 
+  testWidgets('tappable chip paints its fill on an Ink layer (visible ripple)',
+      (tester) async {
+    await tester.pumpWidget(_host(
+      BloomChip(label: 'General', style: BloomChipStyle.active, onTap: () {}),
+    ));
+    final ink = tester.widget<Ink>(
+      find.descendant(of: find.byType(InkWell), matching: find.byType(Ink)),
+    );
+    expect((ink.decoration as BoxDecoration).color, BloomColors.light.accent);
+  });
+
   testWidgets('BloomCefrPill shows the level on a sage ground', (tester) async {
     await tester.pumpWidget(_host(const BloomCefrPill('B2')));
     expect(find.text('B2'), findsOneWidget);

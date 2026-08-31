@@ -42,4 +42,30 @@ void main() {
     await tester.tap(find.text('x'));
     expect(taps, 1);
   });
+
+  testWidgets('tappable card paints its fill on an Ink layer (visible ripple)',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light,
+      home: Scaffold(body: BloomCard(onTap: () {}, child: const Text('x'))),
+    ));
+    final ink = tester.widget<Ink>(
+      find.descendant(of: find.byType(InkWell), matching: find.byType(Ink)),
+    );
+    final deco = ink.decoration as BoxDecoration;
+    expect(deco.color, BloomColors.light.surface);
+    expect(deco.borderRadius, BorderRadius.circular(BloomRadii.md));
+  });
+
+  testWidgets('non-interactive card stays a plain Container (no InkWell)',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light,
+      home: const Scaffold(body: BloomCard(child: Text('x'))),
+    ));
+    expect(
+      find.descendant(of: find.byType(BloomCard), matching: find.byType(InkWell)),
+      findsNothing,
+    );
+  });
 }

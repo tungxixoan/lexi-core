@@ -6,16 +6,12 @@ import '../theme/bloom/bloom.dart';
 import '../../features/practice/presentation/providers/notification_notifier.dart';
 
 class _Dest {
-  const _Dest({
-    required this.path,
-    required this.icon,
-    required this.selectedIcon,
-    required this.label,
-  });
+  const _Dest({required this.path, required this.icon, required this.label});
   final String path;
   final IconData icon;
-  final IconData selectedIcon;
   final String label;
+
+  BloomNavItem get navItem => BloomNavItem(icon: icon, label: label);
 }
 
 class AppShell extends ConsumerStatefulWidget {
@@ -47,39 +43,17 @@ class _AppShellState extends ConsumerState<AppShell>
     }
   }
 
+  // The Bloom nav deliberately does NOT swap to a filled icon on select;
+  // selection is signalled by accent color + a `surface3` pill.
   static const _destinations = [
-    _Dest(
-      path: '/',
-      icon: Icons.search_outlined,
-      selectedIcon: Icons.search,
-      label: 'Tra từ',
-    ),
-    _Dest(
-      path: '/vocab',
-      icon: Icons.library_books_outlined,
-      selectedIcon: Icons.library_books,
-      label: 'Từ vựng',
-    ),
-    _Dest(
-      path: '/practice',
-      icon: Icons.school_outlined,
-      selectedIcon: Icons.school,
-      label: 'Luyện tập',
-    ),
-    _Dest(
-      path: '/settings',
-      icon: Icons.settings_outlined,
-      selectedIcon: Icons.settings,
-      label: 'Cài đặt',
-    ),
+    _Dest(path: '/', icon: Icons.search, label: 'Tra từ'),
+    _Dest(path: '/vocab', icon: Icons.library_books, label: 'Từ vựng'),
+    _Dest(path: '/practice', icon: Icons.school, label: 'Luyện tập'),
+    _Dest(path: '/settings', icon: Icons.settings, label: 'Cài đặt'),
   ];
 
-  static const _navItems = <BloomNavItem>[
-    BloomNavItem(icon: Icons.search, label: 'Tra từ'),
-    BloomNavItem(icon: Icons.library_books, label: 'Từ vựng'),
-    BloomNavItem(icon: Icons.school, label: 'Luyện tập'),
-    BloomNavItem(icon: Icons.settings, label: 'Cài đặt'),
-  ];
+  static final _navItems =
+      _destinations.map((d) => d.navItem).toList(growable: false);
 
   int _selectedIndex(BuildContext context, List<_Dest> dests) {
     final location = GoRouterState.of(context).matchedLocation;
