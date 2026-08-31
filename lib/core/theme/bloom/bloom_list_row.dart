@@ -41,9 +41,13 @@ class BloomListRow extends StatelessWidget {
             Expanded(
               child: Row(
                 children: [
-                  Text(headword,
-                      style:
-                          TextStyle(color: c.ink, fontWeight: FontWeight.w700)),
+                  Flexible(
+                    child: Text(headword,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style:
+                            TextStyle(color: c.ink, fontWeight: FontWeight.w700)),
+                  ),
                   const SizedBox(width: 2),
                   Expanded(
                     child: Text(meaning,

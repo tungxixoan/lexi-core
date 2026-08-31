@@ -25,4 +25,39 @@ void main() {
     await tester.tap(find.text('resilient'));
     expect(taps, 1);
   });
+
+  testWidgets('no trailing widget when trailingText is null', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light,
+      home: const Scaffold(
+          body: BloomListRow(cefr: 'A1', headword: 'x', meaning: 'y')),
+    ));
+    expect(find.text('2 ngày'), findsNothing);
+    // and no exception thrown building it
+  });
+
+  testWidgets('builds and taps are a no-op when onTap is null', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light,
+      home: const Scaffold(
+          body: BloomListRow(cefr: 'A1', headword: 'x', meaning: 'y')),
+    ));
+    await tester.tap(find.text('x')); // must not throw
+  });
+
+  testWidgets('long headword does not overflow', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light,
+      home: const Scaffold(
+          body: SizedBox(
+              width: 200,
+              child: BloomListRow(
+                cefr: 'B2',
+                headword: 'a very very very long multi word headword entry',
+                meaning: 'nghĩa dài',
+                trailingText: '2 ngày',
+              ))),
+    ));
+    expect(tester.takeException(), isNull);
+  });
 }
