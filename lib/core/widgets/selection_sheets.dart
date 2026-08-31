@@ -1,6 +1,9 @@
 // lib/core/widgets/selection_sheets.dart
 import 'package:flutter/material.dart';
 
+import '../theme/bloom/bloom_pill_button.dart';
+import '../theme/bloom_tokens.dart';
+
 /// A single choice in a selection bottom sheet.
 class SelectOption<T> {
   const SelectOption({required this.value, required this.label, this.emoji});
@@ -74,6 +77,7 @@ Future<SelectOption<T>?> showSingleSelectSheet<T>({
                   .map((o) => RadioListTile<T>(
                         value: o.value,
                         groupValue: selected,
+                        activeColor: ctx.bloom.accent,
                         title: Text(o.display),
                         onChanged: (_) => Navigator.pop(ctx, o),
                       ))
@@ -137,10 +141,11 @@ class _MultiSelectSheetState<T> extends State<_MultiSelectSheet<T>> {
                   ],
                 ),
                 const Spacer(),
-                TextButton(
+                BloomPillButton(
+                  variant: BloomButtonVariant.link,
+                  label: 'Bỏ chọn hết',
                   onPressed:
                       _selected.isEmpty ? null : () => setState(_selected.clear),
-                  child: const Text('Bỏ chọn hết'),
                 ),
               ],
             ),
@@ -153,6 +158,7 @@ class _MultiSelectSheetState<T> extends State<_MultiSelectSheet<T>> {
                 final isSelected = _selected.contains(o.value);
                 return CheckboxListTile(
                   value: isSelected,
+                  activeColor: context.bloom.accent,
                   controlAffinity: ListTileControlAffinity.leading,
                   title: Text(o.display),
                   onChanged: (!isSelected && atMax)
@@ -172,17 +178,13 @@ class _MultiSelectSheetState<T> extends State<_MultiSelectSheet<T>> {
             top: false,
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.pop(context, _selected),
-                  child: Text(
-                    widget.confirmLabel?.call(_selected.length) ??
-                        (_selected.isEmpty
-                            ? 'Xem tất cả'
-                            : 'Áp dụng (${_selected.length})'),
-                  ),
-                ),
+              child: BloomPillButton(
+                block: true,
+                label: widget.confirmLabel?.call(_selected.length) ??
+                    (_selected.isEmpty
+                        ? 'Xem tất cả'
+                        : 'Áp dụng (${_selected.length})'),
+                onPressed: () => Navigator.pop(context, _selected),
               ),
             ),
           ),
