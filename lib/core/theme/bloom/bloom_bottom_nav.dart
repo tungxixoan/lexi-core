@@ -34,13 +34,14 @@ class BloomBottomNav extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 7),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               for (var i = 0; i < items.length; i++)
-                _NavCell(
-                  item: items[i],
-                  selected: i == selectedIndex,
-                  onTap: () => onSelected(i),
+                Expanded(
+                  child: _NavCell(
+                    item: items[i],
+                    selected: i == selectedIndex,
+                    onTap: () => onSelected(i),
+                  ),
                 ),
             ],
           ),
@@ -60,27 +61,34 @@ class _NavCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.bloom;
     final color = selected ? c.accent : c.inkFaint;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(BloomRadii.pill),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-              decoration: BoxDecoration(
-                color: selected ? c.surface3 : Colors.transparent,
-                borderRadius: BorderRadius.circular(BloomRadii.pill),
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(BloomRadii.pill),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                decoration: BoxDecoration(
+                  color: selected ? c.surface3 : Colors.transparent,
+                  borderRadius: BorderRadius.circular(BloomRadii.pill),
+                ),
+                child: Icon(item.icon, size: 20, color: color),
               ),
-              child: Icon(item.icon, size: 20, color: color),
-            ),
-            const SizedBox(height: 3),
-            Text(item.label,
-                style: TextStyle(
-                    fontSize: 10, fontWeight: FontWeight.w700, color: color)),
-          ],
+              const SizedBox(height: 3),
+              Text(item.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 10, fontWeight: FontWeight.w700, color: color)),
+            ],
+          ),
         ),
       ),
     );
@@ -114,9 +122,12 @@ class BloomNavRail extends StatelessWidget {
       onDestinationSelected: onSelected,
       selectedIconTheme: IconThemeData(color: c.accent),
       unselectedIconTheme: IconThemeData(color: c.inkFaint),
-      selectedLabelTextStyle:
-          TextStyle(color: c.accent, fontWeight: FontWeight.w700),
-      unselectedLabelTextStyle: TextStyle(color: c.inkFaint),
+      selectedLabelTextStyle: TextStyle(
+          color: c.accent,
+          fontWeight: FontWeight.w700,
+          fontFamily: 'BeVietnamPro'),
+      unselectedLabelTextStyle:
+          TextStyle(color: c.inkFaint, fontFamily: 'BeVietnamPro'),
       destinations: [
         for (final it in items)
           NavigationRailDestination(

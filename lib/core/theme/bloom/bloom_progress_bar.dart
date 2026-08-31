@@ -22,6 +22,7 @@ class BloomProgressBar extends StatelessWidget {
           alignment: Alignment.centerLeft,
           child: FractionallySizedBox(
             widthFactor: clamped,
+            heightFactor: 1,
             child: DecoratedBox(
               key: const ValueKey('bloom-progress-fill'),
               decoration: BoxDecoration(gradient: BloomGradients.progressFill(c)),

@@ -14,6 +14,9 @@ void main() {
     final fill = tester.getSize(find.byKey(const ValueKey('bloom-progress-fill')));
     final track = tester.getSize(find.byKey(const ValueKey('bloom-progress-track')));
     expect(fill.width, closeTo(track.width * 0.5, 1.0));
+    // The fill must span the full track height (6px), not collapse to zero.
+    expect(fill.height, track.height);
+    expect(fill.height, 6);
   });
 
   testWidgets('value above 1 is clamped', (tester) async {

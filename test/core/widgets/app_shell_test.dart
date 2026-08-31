@@ -73,4 +73,19 @@ void main() {
     expect(find.text('Đọc'), findsNothing);
     expect(find.text('Luyện nghe'), findsNothing);
   });
+
+  testWidgets('bottom nav does not overflow on a 360dp-wide phone',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(360, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(await _buildShell());
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Tra từ'), findsOneWidget);
+    expect(find.text('Từ vựng'), findsOneWidget);
+    expect(find.text('Luyện tập'), findsOneWidget);
+    expect(find.text('Cài đặt'), findsOneWidget);
+  });
 }
