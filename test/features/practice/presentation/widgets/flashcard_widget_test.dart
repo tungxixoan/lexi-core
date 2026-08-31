@@ -26,12 +26,50 @@ final _record = VocabRecord(
   updatedAt: DateTime(2026),
 );
 
+final _longMeaning =
+    'Một tính từ dùng để mô tả những sự vật, hiện tượng chỉ tồn tại hoặc kédài '
+    'kéo dài trong một khoảng thời gian rất ngắn ngủi, thoáng qua rồi biến mất, chẳng hạn '
+    'như những xu hướng thời trang theo mùa, những đám mây trên bầu trời buổi '
+    'sớm, hay cảm xúc bồng bột nhất thời của tuổi trẻ; từ này thường mang sắc '
+    'thái tiếc nuối về sự phù du của vạn vật trong cuộc sống.';
+
+VocabRecord _recordWithMeaning(String meaning) => VocabRecord(
+      id: 'id1',
+      headword: 'ephemeral',
+      inputType: InputType.word,
+      ipa: '/ɪˈfem(ə)rəl/',
+      meaning: meaning,
+      examples: const ['Fashions are ephemeral.'],
+      personalNotes: '',
+      topicIds: const [],
+      targetLanguage: Language.english,
+      cefrLevel: CEFRLevel.b1,
+      activeContext: AppContext.general,
+      createdAt: DateTime(2026),
+      updatedAt: DateTime(2026),
+    );
+
 Widget _buildCard(void Function(ExerciseResult) onResult) => MaterialApp(
       theme: AppTheme.light,
       home: Scaffold(
         body: FlashcardWidget(
           exercise: FlashcardExercise(vocabRecord: _record),
           onResult: onResult,
+        ),
+      ),
+    );
+
+Widget _buildScrollableCard(VocabRecord record) => MaterialApp(
+      theme: AppTheme.light,
+      home: Scaffold(
+        body: SizedBox(
+          height: 600,
+          child: SingleChildScrollView(
+            child: FlashcardWidget(
+              exercise: FlashcardExercise(vocabRecord: record),
+              onResult: (_) {},
+            ),
+          ),
         ),
       ),
     );
@@ -111,6 +149,40 @@ void main() {
     expect(result, isNotNull);
     expect(result!.isCorrect, isFalse);
     expect(result!.quality, 1);
+  });
+
+  testWidgets('a very long meaning does not overflow the card', (tester) async {
+    expect(_longMeaning.length, greaterThan(300));
+    await tester.pumpWidget(_buildScrollableCard(_recordWithMeaning(_longMeaning)));
+
+    await tester.tap(find.text('ephemeral'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text(_longMeaning), findsOneWidget);
+  });
+
+  testWidgets('face content is hidden mid-flip and fully revealed once settled', (tester) async {
+    await tester.pumpWidget(_buildCard((_) {}));
+    await tester.tap(find.text('ephemeral'));
+    await tester.pump(); // start the flip ticker
+    // Exactly the midpoint of the 450ms flip: the card is edge-on, so its
+    // content must not be readable yet.
+    await tester.pump(const Duration(milliseconds: 225));
+
+    final midOpacity = tester.widget<Opacity>(
+      find.ancestor(of: find.text('ephemeral'), matching: find.byType(Opacity)).first,
+    );
+    expect(midOpacity.opacity, lessThan(0.05));
+
+    await tester.pumpAndSettle();
+    final settled = tester.widget<Opacity>(
+      find.ancestor(
+        of: find.text('tồn tại trong thời gian ngắn'),
+        matching: find.byType(Opacity),
+      ).first,
+    );
+    expect(settled.opacity, moreOrLessEquals(1.0));
   });
 
   testWidgets('grading buttons still work after flipping back and forth', (tester) async {
