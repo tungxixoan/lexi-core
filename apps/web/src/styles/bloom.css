@@ -922,9 +922,9 @@ button.btn-primary:disabled {
 
 .fc-card {
   position: relative;
-  min-height: 280px;
+  height: clamp(380px, 62vh, 520px);
   width: 100%;
-  max-width: 460px;
+  max-width: 520px;
   margin: 0 auto;
   transform-style: preserve-3d;
   transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
@@ -945,11 +945,25 @@ button.btn-primary:disabled {
   justify-content: center;
   padding: 30px;
   text-align: center;
+  overflow: hidden;
 }
 
 .fc-face-back {
   transform: rotate3d(1, 1, 0, 180deg);
   cursor: pointer;
+  justify-content: space-between;
+}
+
+.fc-back-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 12px;
 }
 
 .fc-headword {
@@ -1001,8 +1015,9 @@ button.btn-primary:disabled {
 
 .fc-grade-row {
   display: flex;
+  flex: 0 0 auto;
   gap: 12px;
-  margin-top: 26px;
+  margin-top: 16px;
   width: 100%;
 }
 
