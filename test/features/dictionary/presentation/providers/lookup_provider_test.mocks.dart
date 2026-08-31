@@ -5,10 +5,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i3;
 
-import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart'
-    as _i6;
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart'
-    as _i10;
+    as _i9;
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart'
     as _i5;
 import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart'
@@ -16,15 +14,15 @@ import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart
 import 'package:lexi_core/features/dictionary/domain/use_cases/lookup_use_case.dart'
     as _i2;
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart'
-    as _i11;
+    as _i10;
 import 'package:lexi_core/features/vocabulary/domain/entities/topic.dart'
-    as _i12;
+    as _i11;
 import 'package:lexi_core/features/vocabulary/domain/entities/vocab_record.dart'
-    as _i9;
-import 'package:lexi_core/features/vocabulary/domain/repositories/vocab_repository.dart'
     as _i8;
+import 'package:lexi_core/features/vocabulary/domain/repositories/vocab_repository.dart'
+    as _i7;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i7;
+import 'package:mockito/src/dummies.dart' as _i6;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -52,7 +50,6 @@ class MockLookupUseCase extends _i1.Mock implements _i2.LookupUseCase {
   _i3.Future<_i4.LookupResult> execute({
     required String? query,
     required _i5.Language? targetLanguage,
-    required _i6.AppContext? context,
     required bool? aiEnabled,
   }) =>
       (super.noSuchMethod(
@@ -62,12 +59,11 @@ class MockLookupUseCase extends _i1.Mock implements _i2.LookupUseCase {
           {
             #query: query,
             #targetLanguage: targetLanguage,
-            #context: context,
             #aiEnabled: aiEnabled,
           },
         ),
         returnValue:
-            _i3.Future<_i4.LookupResult>.value(_i7.dummyValue<_i4.LookupResult>(
+            _i3.Future<_i4.LookupResult>.value(_i6.dummyValue<_i4.LookupResult>(
           this,
           Invocation.method(
             #execute,
@@ -75,7 +71,6 @@ class MockLookupUseCase extends _i1.Mock implements _i2.LookupUseCase {
             {
               #query: query,
               #targetLanguage: targetLanguage,
-              #context: context,
               #aiEnabled: aiEnabled,
             },
           ),
@@ -86,13 +81,13 @@ class MockLookupUseCase extends _i1.Mock implements _i2.LookupUseCase {
 /// A class which mocks [VocabRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockVocabRepository extends _i1.Mock implements _i8.VocabRepository {
+class MockVocabRepository extends _i1.Mock implements _i7.VocabRepository {
   MockVocabRepository() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i3.Future<void> save(_i9.VocabRecord? record) => (super.noSuchMethod(
+  _i3.Future<void> save(_i8.VocabRecord? record) => (super.noSuchMethod(
         Invocation.method(
           #save,
           [record],
@@ -102,11 +97,11 @@ class MockVocabRepository extends _i1.Mock implements _i8.VocabRepository {
       ) as _i3.Future<void>);
 
   @override
-  _i3.Future<List<_i9.VocabRecord>> getAll({
+  _i3.Future<List<_i8.VocabRecord>> getAll({
     required _i5.Language? language,
     String? topicId,
-    _i10.InputType? inputType,
-    _i11.CEFRLevel? maxCefrLevel,
+    _i9.InputType? inputType,
+    _i10.CEFRLevel? maxCefrLevel,
     bool? dueOnly = false,
   }) =>
       (super.noSuchMethod(
@@ -122,11 +117,11 @@ class MockVocabRepository extends _i1.Mock implements _i8.VocabRepository {
           },
         ),
         returnValue:
-            _i3.Future<List<_i9.VocabRecord>>.value(<_i9.VocabRecord>[]),
-      ) as _i3.Future<List<_i9.VocabRecord>>);
+            _i3.Future<List<_i8.VocabRecord>>.value(<_i8.VocabRecord>[]),
+      ) as _i3.Future<List<_i8.VocabRecord>>);
 
   @override
-  _i3.Future<_i9.VocabRecord?> getById(
+  _i3.Future<_i8.VocabRecord?> getById(
     String? id, {
     required _i5.Language? language,
   }) =>
@@ -136,11 +131,11 @@ class MockVocabRepository extends _i1.Mock implements _i8.VocabRepository {
           [id],
           {#language: language},
         ),
-        returnValue: _i3.Future<_i9.VocabRecord?>.value(),
-      ) as _i3.Future<_i9.VocabRecord?>);
+        returnValue: _i3.Future<_i8.VocabRecord?>.value(),
+      ) as _i3.Future<_i8.VocabRecord?>);
 
   @override
-  _i3.Future<void> update(_i9.VocabRecord? record) => (super.noSuchMethod(
+  _i3.Future<void> update(_i8.VocabRecord? record) => (super.noSuchMethod(
         Invocation.method(
           #update,
           [record],
@@ -181,7 +176,7 @@ class MockVocabRepository extends _i1.Mock implements _i8.VocabRepository {
       ) as _i3.Future<bool>);
 
   @override
-  _i3.Future<_i9.VocabRecord?> getByHeadword(
+  _i3.Future<_i8.VocabRecord?> getByHeadword(
     String? headword,
     _i5.Language? language,
   ) =>
@@ -193,20 +188,20 @@ class MockVocabRepository extends _i1.Mock implements _i8.VocabRepository {
             language,
           ],
         ),
-        returnValue: _i3.Future<_i9.VocabRecord?>.value(),
-      ) as _i3.Future<_i9.VocabRecord?>);
+        returnValue: _i3.Future<_i8.VocabRecord?>.value(),
+      ) as _i3.Future<_i8.VocabRecord?>);
 
   @override
-  _i3.Future<List<_i12.Topic>> getTopics() => (super.noSuchMethod(
+  _i3.Future<List<_i11.Topic>> getTopics() => (super.noSuchMethod(
         Invocation.method(
           #getTopics,
           [],
         ),
-        returnValue: _i3.Future<List<_i12.Topic>>.value(<_i12.Topic>[]),
-      ) as _i3.Future<List<_i12.Topic>>);
+        returnValue: _i3.Future<List<_i11.Topic>>.value(<_i11.Topic>[]),
+      ) as _i3.Future<List<_i11.Topic>>);
 
   @override
-  _i3.Future<void> addTopic(_i12.Topic? topic) => (super.noSuchMethod(
+  _i3.Future<void> addTopic(_i11.Topic? topic) => (super.noSuchMethod(
         Invocation.method(
           #addTopic,
           [topic],

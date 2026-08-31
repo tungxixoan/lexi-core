@@ -1823,3 +1823,17 @@ All 8 in-scope findings resolved (Critical 1-2, Important 3-5, Minor 6-8/12/14),
 # PLAN 1 (Bloom Foundation) — COMPLETE
 Commits d55b2cd..HEAD (28 total: 21 task + 4 per-task fixes + 3 final-review fixes). On master, NOT pushed (user to review first). 625/625 tests, flutter analyze 21 (all pre-existing).
 Next: Plan 2 (Dictionary + Vocab Bank, incl. C1 activeContext removal) — to be written.
+
+---
+
+# Flutter Bloom Redesign — Plan 2 (Dictionary + Vocab Bank)
+
+Plan: docs/superpowers/plans/2026-08-31-flutter-bloom-plan2-dictionary-vocab.md (commit 804e45b)
+Execution: subagent-driven, committed directly to master, push after user review.
+Base commit before Task 1: 804e45b. Suite baseline: 625 pass, analyze 21.
+
+## Progress
+
+Task 1 (C1a): complete (commit 804e45b..a8acbab, review clean). Plan ripple list was incomplete — implementer also fixed part5/6/7_home, dictation_home, vocab_suggestions_section + vocab_bank_provider_test (all trivial → AppContext.general, per-session pickers intact). 622 tests (baseline 625 − 3 deleted context-selector tests), analyze 21.
+
+Task 2 (C1b): complete. Removed the always-`general` `context`/`AppContext` param from `DictionaryRepository`, its impl, `LookupUseCase`, `GeminiDictionarySource` (lookup + discoverWord + `_wordPhrasePrompt`), and dropped the two context lines from the prompt strings (now match web). `lookup_provider.dart` lost the 3 Task-1 `context: AppContext.general` args + the import. Mocks regenerated (3 `.mocks.dart` + `lookup_provider.g.dart` hash). No ripple beyond the 5 lib + 4 test files. 622 tests, analyze 21. `AppContext` enum retained (VocabRecord.activeContext etc.).

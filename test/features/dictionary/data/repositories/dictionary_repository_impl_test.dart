@@ -4,7 +4,6 @@ import 'package:mockito/mockito.dart';
 import 'package:lexi_core/features/dictionary/data/repositories/dictionary_repository_impl.dart';
 import 'package:lexi_core/features/dictionary/data/sources/free_dictionary_source.dart';
 import 'package:lexi_core/features/dictionary/data/sources/gemini_dictionary_source.dart';
-import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart';
@@ -57,13 +56,11 @@ void main() {
       query: anyNamed('query'),
       inputType: anyNamed('inputType'),
       targetLanguage: anyNamed('targetLanguage'),
-      context: anyNamed('context'),
     )).thenAnswer((_) async => wordResult);
 
     await repo.lookup(
       query: 'follow',
       targetLanguage: Language.english,
-      context: AppContext.general,
       aiEnabled: true,
     );
 
@@ -71,7 +68,6 @@ void main() {
       query: 'follow',
       inputType: InputType.word,
       targetLanguage: Language.english,
-      context: AppContext.general,
     )).called(1);
     verifyNever(mockFree.lookup(any));
   });
@@ -82,7 +78,6 @@ void main() {
     await repo.lookup(
       query: 'follow',
       targetLanguage: Language.english,
-      context: AppContext.general,
       aiEnabled: false,
     );
 
@@ -91,7 +86,6 @@ void main() {
       query: anyNamed('query'),
       inputType: anyNamed('inputType'),
       targetLanguage: anyNamed('targetLanguage'),
-      context: anyNamed('context'),
     ));
   });
 
@@ -100,7 +94,6 @@ void main() {
       () => repo.lookup(
         query: 'follow',
         targetLanguage: Language.korean,
-        context: AppContext.general,
         aiEnabled: false,
       ),
       throwsA(
@@ -118,7 +111,6 @@ void main() {
       () => repo.lookup(
         query: 'Can you follow up with me today',
         targetLanguage: Language.english,
-        context: AppContext.general,
         aiEnabled: false,
       ),
       throwsA(isA<DictionaryException>()),

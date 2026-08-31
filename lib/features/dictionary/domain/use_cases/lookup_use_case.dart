@@ -1,4 +1,3 @@
-import '../entities/app_context.dart';
 import '../entities/language.dart';
 import '../entities/lookup_result.dart';
 import '../repositories/dictionary_repository.dart';
@@ -11,7 +10,6 @@ class LookupUseCase {
   Future<LookupResult> execute({
     required String query,
     required Language targetLanguage,
-    required AppContext context,
     required bool aiEnabled,
   }) {
     final trimmed = query.trim();
@@ -21,7 +19,6 @@ class LookupUseCase {
     return _repository.lookup(
       query: trimmed,
       targetLanguage: targetLanguage,
-      context: context,
       aiEnabled: aiEnabled,
     );
   }

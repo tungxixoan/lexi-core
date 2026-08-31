@@ -35,7 +35,6 @@ void main() {
     when(mockUseCase.execute(
       query: anyNamed('query'),
       targetLanguage: anyNamed('targetLanguage'),
-      context: anyNamed('context'),
       aiEnabled: anyNamed('aiEnabled'),
     )).thenAnswer((_) async => fakeResult);
     // VocabBank always misses in these tests — force API path

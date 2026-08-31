@@ -1,5 +1,4 @@
 import '../../../../core/utils/input_detector.dart';
-import '../../domain/entities/app_context.dart';
 import '../../domain/entities/input_type.dart';
 import '../../domain/entities/language.dart';
 import '../../domain/entities/lookup_result.dart';
@@ -20,7 +19,6 @@ class DictionaryRepositoryImpl implements DictionaryRepository {
   Future<LookupResult> lookup({
     required String query,
     required Language targetLanguage,
-    required AppContext context,
     required bool aiEnabled,
   }) async {
     final inputType = InputDetector.detect(query);
@@ -30,7 +28,6 @@ class DictionaryRepositoryImpl implements DictionaryRepository {
         query: query,
         inputType: inputType,
         targetLanguage: targetLanguage,
-        context: context,
       );
     }
 

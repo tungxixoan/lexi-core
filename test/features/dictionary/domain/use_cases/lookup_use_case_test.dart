@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart';
@@ -34,21 +33,18 @@ void main() {
     when(mockRepo.lookup(
       query: anyNamed('query'),
       targetLanguage: anyNamed('targetLanguage'),
-      context: anyNamed('context'),
       aiEnabled: anyNamed('aiEnabled'),
     )).thenAnswer((_) async => fakeResult);
 
     await useCase.execute(
       query: '  follow  ',
       targetLanguage: Language.english,
-      context: AppContext.general,
       aiEnabled: true,
     );
 
     verify(mockRepo.lookup(
       query: 'follow',
       targetLanguage: Language.english,
-      context: AppContext.general,
       aiEnabled: true,
     )).called(1);
   });
@@ -58,7 +54,6 @@ void main() {
       () => useCase.execute(
         query: '   ',
         targetLanguage: Language.english,
-        context: AppContext.general,
         aiEnabled: true,
       ),
       throwsA(
@@ -72,7 +67,6 @@ void main() {
     verifyNever(mockRepo.lookup(
       query: anyNamed('query'),
       targetLanguage: anyNamed('targetLanguage'),
-      context: anyNamed('context'),
       aiEnabled: anyNamed('aiEnabled'),
     ));
   });

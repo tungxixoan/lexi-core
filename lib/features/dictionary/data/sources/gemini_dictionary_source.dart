@@ -2,7 +2,6 @@
 import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
 import '../../../../core/services/ai_client_factory.dart';
 import '../../../../core/utils/ai_json_parser.dart';
-import '../../domain/entities/app_context.dart';
 import '../../domain/entities/input_type.dart';
 import '../../domain/entities/language.dart';
 import '../../domain/entities/lookup_result.dart';
@@ -26,11 +25,10 @@ class GeminiDictionarySource {
     required String query,
     required InputType inputType,
     required Language targetLanguage,
-    required AppContext context,
   }) async {
     final prompt = inputType == InputType.sentence
         ? _sentencePrompt(query)
-        : _wordPhrasePrompt(query, inputType, targetLanguage, context);
+        : _wordPhrasePrompt(query, inputType, targetLanguage);
 
     final response = await _client.generateContent([Content.text(prompt)]);
     final text = response.text ?? '';
@@ -73,11 +71,9 @@ class GeminiDictionarySource {
 
   Future<String> discoverWord({
     required Language targetLanguage,
-    required AppContext context,
   }) async {
     final prompt =
         'Suggest one ${targetLanguage.label} vocabulary word for an intermediate learner. '
-        'Context: ${context.label}. '
         'Respond with JSON only: {"word": "the word"}';
     final response = await _client.generateContent([Content.text(prompt)]);
     final json = parseAiJsonObject(response.text ?? '{}');
@@ -88,7 +84,6 @@ class GeminiDictionarySource {
     String query,
     InputType inputType,
     Language targetLanguage,
-    AppContext context,
   ) =>
       'You are a language learning assistant helping a Vietnamese speaker learn ${targetLanguage.label}. '
       'Look up "$query" and respond with JSON only (no markdown, no code fences): '
@@ -102,7 +97,6 @@ class GeminiDictionarySource {
       'If the word has multiple common parts of speech (e.g. "record" as both noun and verb), '
       'cover each sense in both "meaning" and "definition" using this format: "(n) ...; (v) ...", '
       'and give an IPA per sense too, e.g. "N: /ˈrekɔːrd/; V: /rɪˈkɔːrd/". '
-      'Shape examples for context: ${context.label}. '
       'The "meaning" field must use only Vietnamese script — '
       'never Chinese, Japanese, or other non-Vietnamese characters.';
 

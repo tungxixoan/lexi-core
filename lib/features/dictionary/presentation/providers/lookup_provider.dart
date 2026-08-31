@@ -2,7 +2,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../../../core/utils/input_detector.dart';
-import '../../domain/entities/app_context.dart';
 import '../../domain/entities/input_type.dart';
 import '../../domain/entities/lookup_result.dart';
 import 'user_settings_provider.dart';
@@ -45,7 +44,6 @@ class LookupNotifier extends _$LookupNotifier {
       state = await AsyncValue.guard(() => useCase.execute(
             query: query,
             targetLanguage: settings.targetLanguage,
-            context: AppContext.general,
             aiEnabled: settings.aiEnabled,
           ));
     } catch (e, st) {
@@ -63,13 +61,11 @@ class LookupNotifier extends _$LookupNotifier {
     state = await AsyncValue.guard(() async {
       final word = await gemini.discoverWord(
         targetLanguage: settings.targetLanguage,
-        context: AppContext.general,
       );
       final useCase = ref.read(lookupUseCaseProvider);
       return useCase.execute(
         query: word,
         targetLanguage: settings.targetLanguage,
-        context: AppContext.general,
         aiEnabled: true,
       );
     });

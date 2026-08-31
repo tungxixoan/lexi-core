@@ -1,5 +1,4 @@
 // lib/features/dictionary/domain/repositories/dictionary_repository.dart
-import '../entities/app_context.dart';
 import '../entities/language.dart';
 import '../entities/lookup_result.dart';
 
@@ -15,7 +14,6 @@ abstract interface class DictionaryRepository {
   Future<LookupResult> lookup({
     required String query,
     required Language targetLanguage,
-    required AppContext context,
     required bool aiEnabled,
   });
 }

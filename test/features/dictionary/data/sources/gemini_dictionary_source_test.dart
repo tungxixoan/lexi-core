@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
 import 'package:lexi_core/features/dictionary/data/sources/gemini_dictionary_source.dart';
-import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart';
@@ -44,7 +43,6 @@ void main() {
       query: 'follow up',
       inputType: InputType.phrase,
       targetLanguage: Language.english,
-      context: AppContext.business,
     );
 
     expect(result, isA<WordPhraseResult>());
@@ -72,7 +70,6 @@ void main() {
       query: 'cat',
       inputType: InputType.word,
       targetLanguage: Language.english,
-      context: AppContext.general,
     );
 
     final r = result as WordPhraseResult;
@@ -98,7 +95,6 @@ void main() {
       query: 'commute',
       inputType: InputType.word,
       targetLanguage: Language.english,
-      context: AppContext.general,
     );
 
     final r = result as WordPhraseResult;
@@ -122,7 +118,6 @@ void main() {
       query: 'run',
       inputType: InputType.word,
       targetLanguage: Language.english,
-      context: AppContext.general,
     );
 
     final r = result as WordPhraseResult;
@@ -143,7 +138,6 @@ void main() {
       query: 'Can you follow up with me?',
       inputType: InputType.sentence,
       targetLanguage: Language.english,
-      context: AppContext.general,
     );
 
     expect(result, isA<SentenceResult>());

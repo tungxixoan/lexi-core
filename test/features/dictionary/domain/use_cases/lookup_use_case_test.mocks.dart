@@ -5,8 +5,6 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i3;
 
-import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart'
-    as _i6;
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart'
     as _i5;
 import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart'
@@ -14,7 +12,7 @@ import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart
 import 'package:lexi_core/features/dictionary/domain/repositories/dictionary_repository.dart'
     as _i2;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i7;
+import 'package:mockito/src/dummies.dart' as _i6;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -43,7 +41,6 @@ class MockDictionaryRepository extends _i1.Mock
   _i3.Future<_i4.LookupResult> lookup({
     required String? query,
     required _i5.Language? targetLanguage,
-    required _i6.AppContext? context,
     required bool? aiEnabled,
   }) =>
       (super.noSuchMethod(
@@ -53,12 +50,11 @@ class MockDictionaryRepository extends _i1.Mock
           {
             #query: query,
             #targetLanguage: targetLanguage,
-            #context: context,
             #aiEnabled: aiEnabled,
           },
         ),
         returnValue:
-            _i3.Future<_i4.LookupResult>.value(_i7.dummyValue<_i4.LookupResult>(
+            _i3.Future<_i4.LookupResult>.value(_i6.dummyValue<_i4.LookupResult>(
           this,
           Invocation.method(
             #lookup,
@@ -66,7 +62,6 @@ class MockDictionaryRepository extends _i1.Mock
             {
               #query: query,
               #targetLanguage: targetLanguage,
-              #context: context,
               #aiEnabled: aiEnabled,
             },
           ),

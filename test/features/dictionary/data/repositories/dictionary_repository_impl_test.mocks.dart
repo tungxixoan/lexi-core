@@ -6,11 +6,9 @@
 import 'dart:async' as _i3;
 
 import 'package:lexi_core/features/dictionary/data/sources/free_dictionary_source.dart'
-    as _i9;
+    as _i8;
 import 'package:lexi_core/features/dictionary/data/sources/gemini_dictionary_source.dart'
     as _i2;
-import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart'
-    as _i7;
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart'
     as _i5;
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart'
@@ -18,7 +16,7 @@ import 'package:lexi_core/features/dictionary/domain/entities/language.dart'
 import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart'
     as _i4;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i8;
+import 'package:mockito/src/dummies.dart' as _i7;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -48,7 +46,6 @@ class MockGeminiDictionarySource extends _i1.Mock
     required String? query,
     required _i5.InputType? inputType,
     required _i6.Language? targetLanguage,
-    required _i7.AppContext? context,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -58,11 +55,10 @@ class MockGeminiDictionarySource extends _i1.Mock
             #query: query,
             #inputType: inputType,
             #targetLanguage: targetLanguage,
-            #context: context,
           },
         ),
         returnValue:
-            _i3.Future<_i4.LookupResult>.value(_i8.dummyValue<_i4.LookupResult>(
+            _i3.Future<_i4.LookupResult>.value(_i7.dummyValue<_i4.LookupResult>(
           this,
           Invocation.method(
             #lookup,
@@ -71,35 +67,25 @@ class MockGeminiDictionarySource extends _i1.Mock
               #query: query,
               #inputType: inputType,
               #targetLanguage: targetLanguage,
-              #context: context,
             },
           ),
         )),
       ) as _i3.Future<_i4.LookupResult>);
 
   @override
-  _i3.Future<String> discoverWord({
-    required _i6.Language? targetLanguage,
-    required _i7.AppContext? context,
-  }) =>
+  _i3.Future<String> discoverWord({required _i6.Language? targetLanguage}) =>
       (super.noSuchMethod(
         Invocation.method(
           #discoverWord,
           [],
-          {
-            #targetLanguage: targetLanguage,
-            #context: context,
-          },
+          {#targetLanguage: targetLanguage},
         ),
-        returnValue: _i3.Future<String>.value(_i8.dummyValue<String>(
+        returnValue: _i3.Future<String>.value(_i7.dummyValue<String>(
           this,
           Invocation.method(
             #discoverWord,
             [],
-            {
-              #targetLanguage: targetLanguage,
-              #context: context,
-            },
+            {#targetLanguage: targetLanguage},
           ),
         )),
       ) as _i3.Future<String>);
@@ -109,7 +95,7 @@ class MockGeminiDictionarySource extends _i1.Mock
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockFreeDictionarySource extends _i1.Mock
-    implements _i9.FreeDictionarySource {
+    implements _i8.FreeDictionarySource {
   MockFreeDictionarySource() {
     _i1.throwOnMissingStub(this);
   }
@@ -121,7 +107,7 @@ class MockFreeDictionarySource extends _i1.Mock
           [word],
         ),
         returnValue: _i3.Future<_i4.WordPhraseResult>.value(
-            _i8.dummyValue<_i4.WordPhraseResult>(
+            _i7.dummyValue<_i4.WordPhraseResult>(
           this,
           Invocation.method(
             #lookup,
