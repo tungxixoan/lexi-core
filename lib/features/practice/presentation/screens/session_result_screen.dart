@@ -56,7 +56,16 @@ class _SessionResultScreenState extends ConsumerState<SessionResultScreen> {
     final total = widget.result.totalCount;
     final pct = total > 0 ? (correct / total * 100).round() : 0;
 
-    return BloomScaffold(
+    // A hardware/browser back from here would pop the nested route back to
+    // `/practice/session`, whose completed branch is a bare spinner that then
+    // re-navigates — a visible flash / loop. Intercept it and go straight to
+    // the practice hub instead.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go('/practice/vocab');
+      },
+      child: BloomScaffold(
       appBar: const BloomAppBar(title: 'Kết quả', automaticallyImplyLeading: false),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -135,6 +144,7 @@ class _SessionResultScreenState extends ConsumerState<SessionResultScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

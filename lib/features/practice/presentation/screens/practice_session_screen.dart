@@ -40,7 +40,15 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
   Widget build(BuildContext context) {
     final sessionAsync = ref.watch(practiceSessionNotifierProvider);
 
-    return sessionAsync.when(
+    // A hardware/browser back mid-session would pop the nested route with no
+    // clean teardown. Intercept it and abandon to the practice hub — same as
+    // the "Thoát" action.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go('/practice/vocab');
+      },
+      child: sessionAsync.when(
       loading: () => const BloomScaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => BloomScaffold(body: Center(child: Text('Lỗi: $e'))),
       data: (session) {
@@ -101,6 +109,7 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
           ),
         );
       },
+      ),
     );
   }
 

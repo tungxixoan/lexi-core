@@ -136,9 +136,29 @@ void main() {
     expect(find.byType(BloomResultRing), findsOneWidget);
     expect(find.text('50%'), findsOneWidget);
     expect(find.text('1 / 2 từ đúng'), findsOneWidget);
-    // The result screen is a nested GoRoute; guard that no dead-end back
-    // arrow appears (automaticallyImplyLeading: false).
+    // The result screen hides its app-bar back arrow
+    // (automaticallyImplyLeading: false) so no dead-end arrow appears.
     expect(find.byType(BackButton), findsNothing);
+  });
+
+  testWidgets('a system back does not loop to a spinner — it goes to the hub',
+      (tester) async {
+    await tester.pumpWidget(await buildScreen());
+    await tester.pumpAndSettle();
+
+    // Guarded by a PopScope that blocks the default pop and redirects.
+    final popScope = tester
+        .widgetList<PopScope<Object?>>(
+          find.byWidgetPredicate((w) => w is PopScope<Object?>),
+        )
+        .firstWhere((p) => p.canPop == false);
+    expect(popScope.canPop, isFalse);
+
+    popScope.onPopInvokedWithResult!(false, null);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Vocab practice'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 
   testWidgets('renders a Bloom card row per result with both headwords',
@@ -165,7 +185,8 @@ void main() {
     expect(find.text('Vocab practice'), findsOneWidget);
   });
 
-  testWidgets('_updateSm2 runs: compute called once per result, notifier rescheduled',
+  testWidgets(
+      '_updateSm2 runs: compute called once per result, notifier rescheduled',
       (tester) async {
     await tester.pumpWidget(await buildScreen());
     await tester.pumpAndSettle();
