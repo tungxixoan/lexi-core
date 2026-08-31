@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/widgets/filter_tile.dart';
 import '../../../../core/widgets/selection_sheets.dart';
 import '../../../../features/dictionary/presentation/providers/user_settings_provider.dart';
@@ -139,10 +140,13 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
   Widget build(BuildContext context) {
     final topicsAsync = ref.watch(topicsNotifierProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Từ vựng cách khoảng'),
-        leading: BackButton(onPressed: () => context.go('/practice')),
+    return BloomScaffold(
+      appBar: BloomAppBar(
+        title: 'Từ vựng cách khoảng',
+        leading: BloomIconButton(
+          icon: Icons.arrow_back,
+          onPressed: () => context.go('/practice'),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -162,8 +166,14 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
                   onTap: () => _pickTopic(topics),
                 );
               },
-              loading: () => const LinearProgressIndicator(),
-              error: (e, _) => Text(e.toString()),
+              loading: () => const SizedBox(
+                height: 48,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => Text(
+                e.toString(),
+                style: TextStyle(color: context.bloom.danger),
+              ),
             ),
             FilterTile(
               icon: Icons.school_outlined,
@@ -180,27 +190,23 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
 
             const Spacer(),
 
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _dueCount == 0 ? null : _startDueSession,
-                icon: const Icon(Icons.today_outlined),
-                label: Text(
-                  _dueCount == 0
-                      ? 'Hôm nay đã ôn xong ✓'
-                      : 'Ôn hôm nay ($_dueCount từ)',
-                ),
-              ),
+            BloomPillButton(
+              label: _dueCount == 0
+                  ? 'Hôm nay đã ôn xong ✓'
+                  : 'Ôn hôm nay ($_dueCount từ)',
+              variant: BloomButtonVariant.secondary,
+              block: true,
+              icon: Icons.today_outlined,
+              onPressed: _dueCount == 0 ? null : _startDueSession,
             ),
             const SizedBox(height: 8),
 
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _start,
-                icon: const Icon(Icons.play_arrow),
-                label: const Text('Bắt đầu luyện tập'),
-              ),
+            BloomPillButton(
+              label: 'Bắt đầu luyện tập',
+              variant: BloomButtonVariant.primary,
+              block: true,
+              icon: Icons.play_arrow,
+              onPressed: _start,
             ),
           ],
         ),
