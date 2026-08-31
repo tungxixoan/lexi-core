@@ -37,4 +37,13 @@ void main() {
     final txt = tester.widget<Text>(find.text('Xoá'));
     expect(txt.style?.color, BloomColors.light.danger);
   });
+
+  testWidgets('disabled: label text renders dimmed', (tester) async {
+    await tester.pumpWidget(_host(
+      const BloomPillButton(label: 'X', onPressed: null,
+          variant: BloomButtonVariant.link),
+    ));
+    final txt = tester.widget<Text>(find.text('X'));
+    expect(txt.style?.color, BloomColors.light.accent.withValues(alpha: 0.5));
+  });
 }
