@@ -26,4 +26,42 @@ void main() {
     final border = field.decoration!.enabledBorder as OutlineInputBorder;
     expect(border.borderRadius, BorderRadius.circular(999));
   });
+
+  testWidgets('forwards focusNode, keyboardType, textInputAction, readOnly',
+      (tester) async {
+    final node = FocusNode();
+    addTearDown(node.dispose);
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light,
+      home: Scaffold(
+        body: BloomTextField(
+          focusNode: node,
+          hintText: 'x',
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.search,
+          readOnly: true,
+        ),
+      ),
+    ));
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.focusNode, same(node));
+    expect(field.keyboardType, TextInputType.emailAddress);
+    expect(field.textInputAction, TextInputAction.search);
+    expect(field.readOnly, isTrue);
+  });
+
+  testWidgets('renders a prefix icon and a suffix widget', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light,
+      home: Scaffold(
+        body: BloomTextField(
+          hintText: 'x',
+          prefixIcon: Icons.search,
+          suffix: const Text('clear'),
+        ),
+      ),
+    ));
+    expect(find.byIcon(Icons.search), findsOneWidget);
+    expect(find.text('clear'), findsOneWidget);
+  });
 }
