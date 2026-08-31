@@ -1853,3 +1853,18 @@ Minor findings for final review:
 - IPA rendered with fontFamily: 'monospace' (generic alias) in word_result_widget.
 - vocab_bank FAB → context.go('/') (jumps to lookup tab to add a word).
 - delete-after-confirm pop path untested in vocab_detail smoke test.
+
+## Plan 2 final whole-branch review (opus) — Ready to merge: With fixes
+
+- IMPORTANT #1: word_result_widget.dart headword row uses Flexible+Spacer → headword capped at 50% width, wraps to 3 lines for a normal word on the primary screen. PLAN DEFECT (snippet was verbatim in the plan). vocab_detail_screen does the same row correctly with Expanded. Fix: Expanded headword + SizedBox gaps, drop Spacer.
+- Minor #2: BloomSectionHeader uppercases Vietnamese → HUMAN DESIGN CALL (ask user). test/.../vocab_detail_screen_test.dart:153 asserts find.text('NGHĨA') — update if changed.
+- Minor #3: vocab_bank clear-search suffix bare GestureDetector around 18px icon (was 48px IconButton) — wrap 36x36 + HitTestBehavior.opaque.
+- Minor #4: PronounceButton dropped the 'Pronounce word/example/sentence' tooltip → unlabeled to screen readers. Add optional tooltip default 'Phát âm'.
+- Minor #5: vocab_bank trailing text = record.inputType.name (raw English "word"/"phrase"/"sentence") on a Vietnamized screen. Add InputType.label ("từ"/"cụm từ"/"câu").
+- Minor #6: IPA fontFamily 'monospace' — no bloom mono token (Plan 6 cleanup).
+- Minor #7: vocab_bank FAB → context.go('/') (plan-sanctioned; leave).
+- Minor #9: vocab_detail delete test asserts dialog renders but not delete()+pop().
+- Minor #12: empty-state says "bấm Lưu" but no button is literally "Lưu".
+- CONFIRM WITH USER: reading_home_screen:257 + dictation_home_screen:255 have NO per-session context picker → Bilingual Reading + Dictation generation now permanently AppContext.general (was global setting). Matches web/C1, but real steering loss on 2 screens.
+
+Fix batch dispatched: #1 (Important) + #3 #4 #5 #9 #12 (cheap Minors). Deferred: #2 (ask user), #6 (Plan 6), #7 #8 #10 #11.
