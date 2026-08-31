@@ -1896,3 +1896,17 @@ Task 4 (Practice setup screen): complete (commit 565414c, review clean). All _* 
 Task 5 (Practice session screen): complete (commit e2a676f, review clean). FROZEN nav-on-complete + _buildExerciseWidget switch + AnimatedSwitcher byte-identical; progress moved into body as BloomProgressBar. +1 smoke test → 649, analyze 21. Minor for final: redundant SizedBox(width:8) after Thoát (BloomAppBar adds its own 12); automaticallyImplyLeading:false dropped (no BloomAppBar slot, harmless w/ go_router shell).
 Task 6 (flashcard widget Bloom): complete (commit b50896b, review clean, no issues). Flip AnimationController + _submit + gesture split byte-identical (diff confined to 3 view classes). Face → 22px Container + BloomShadows.warm; grade buttons → BloomPillButton danger/primary; added BloomCefrPill to front. 649 tests, analyze 21.
 Task 7 (MC/fill/translation widgets Bloom): complete (commit 1433922, review clean; implementer hit rate limit AFTER committing — commit is whole). Frozen _select/_submit/_reveal + Future.delayed(800/1200) byte-identical. MC → BloomMcOption, fill/translation → BloomTextField/BloomPillButton/success-danger tokens. +10 smoke tests → 659, analyze 21. Minor: task-7-report.md has stale Plan-2 content (cosmetic).
+Task 8 (session result screen Bloom): complete (commit 6e96a41, review clean). FROZEN _updateSm2 byte-identical (verified against live file). Score card → BloomResultRing, list → BloomCard rows. +4 smoke tests → 663, analyze 21.
+
+# PLAN 3 — all 8 tasks done. Range 2fa3cae..6e96a41. 663 tests, analyze 21. Next: final whole-branch review.
+
+Minor findings for final review:
+- BloomResultRing: `disc` param passed to _RingPainter but never drawn (center transparent, bloom.css .practice-result-circle draws an inner surface disc). Fix: draw it, or drop the dead param.
+- BloomMcOption: `content` Container always constructed even on the interactive path where it's discarded (dead alloc).
+- Expanded(child: BloomPillButton(block: true)) pattern in flashcard grade row + translation grade row + session screen — block already = SizedBox(width: infinity), so Expanded+block is slightly redundant (works fine).
+- flashcard/session/translation: several BloomPillButton grade rows. session_result_screen score Column not explicitly Centered (renders fine).
+- translation_exercise_widget revealed-answer Text dropped webScaled (was there before; brief-verbatim).
+- BloomMcState.selected branch in multiple_choice_widget is unreachable (feedback reveals synchronously). Harmless.
+- practice hub _HubCard title = bare TextStyle, no explicit c.ink.
+- Task 5: redundant SizedBox(width:8) after "Thoát" (BloomAppBar appends its own 12).
+- Deferred: automaticallyImplyLeading:false dropped on session appbar (no BloomAppBar slot; go_router shell = no back stack, harmless).
