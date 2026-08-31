@@ -1,0 +1,110 @@
+import 'package:flutter/material.dart';
+import '../bloom_tokens.dart';
+
+enum BloomMcState { neutral, selected, correct, wrong }
+
+/// A multiple-choice answer tile. `neutral` before answering; `selected`
+/// while chosen-but-unrevealed; `correct`/`wrong` after the answer is
+/// revealed. Pass `onTap: null` to disable (post-answer).
+class BloomMcOption extends StatelessWidget {
+  const BloomMcOption({
+    super.key,
+    required this.label,
+    required this.onTap,
+    this.state = BloomMcState.neutral,
+    this.leading,
+  });
+
+  final String label;
+  final VoidCallback? onTap;
+  final BloomMcState state;
+  final String? leading;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.bloom;
+    late final Color bg;
+    late final Color fg;
+    late final Color border;
+    switch (state) {
+      case BloomMcState.neutral:
+        bg = c.surface2;
+        fg = c.ink;
+        border = c.border;
+      case BloomMcState.selected:
+        bg = c.surface3;
+        fg = c.accent;
+        border = c.accent;
+      case BloomMcState.correct:
+        bg = c.successBg;
+        fg = c.success;
+        border = c.success;
+      case BloomMcState.wrong:
+        bg = c.dangerBg;
+        fg = c.danger;
+        border = c.danger;
+    }
+
+    final content = Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: bg,
+        border: Border.all(color: border),
+        borderRadius: BorderRadius.circular(BloomRadii.sm),
+      ),
+      child: Row(
+        children: [
+          if (leading != null) ...[
+            Text(leading!,
+                style: TextStyle(
+                    color: fg, fontWeight: FontWeight.w800, fontSize: 15)),
+            const SizedBox(width: 8),
+          ],
+          Expanded(
+            child: Text(label,
+                style: TextStyle(
+                    color: fg,
+                    fontWeight: state == BloomMcState.neutral
+                        ? FontWeight.w400
+                        : FontWeight.w700,
+                    fontSize: 15)),
+          ),
+        ],
+      ),
+    );
+
+    if (onTap == null) return content;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(BloomRadii.sm),
+      child: Ink(
+        decoration: BoxDecoration(
+          color: bg,
+          border: Border.all(color: border),
+          borderRadius: BorderRadius.circular(BloomRadii.sm),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              if (leading != null) ...[
+                Text(leading!,
+                    style: TextStyle(
+                        color: fg, fontWeight: FontWeight.w800, fontSize: 15)),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: Text(label,
+                    style: TextStyle(
+                        color: fg,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
