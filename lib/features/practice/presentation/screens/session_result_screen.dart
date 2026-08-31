@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/utils/web_text_scale.dart';
 import '../../domain/entities/exercise_result.dart';
 import '../providers/notification_notifier.dart';
@@ -55,30 +56,22 @@ class _SessionResultScreenState extends ConsumerState<SessionResultScreen> {
     final total = widget.result.totalCount;
     final pct = total > 0 ? (correct / total * 100).round() : 0;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Kết quả'), automaticallyImplyLeading: false),
+    return BloomScaffold(
+      appBar: const BloomAppBar(title: 'Kết quả'),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    Text(
-                      '$pct%',
-                      style: theme.textTheme.displaySmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: pct >= 70 ? Colors.green.shade700 : theme.colorScheme.error,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text('$correct / $total từ đúng', style: theme.textTheme.titleMedium),
-                  ],
+            Column(
+              children: [
+                BloomResultRing(percent: pct),
+                const SizedBox(height: 8),
+                Text(
+                  '$correct / $total từ đúng',
+                  style: TextStyle(color: context.bloom.inkSoft),
                 ),
-              ),
+              ],
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -90,29 +83,55 @@ class _SessionResultScreenState extends ConsumerState<SessionResultScreen> {
                     (w) => w.id == r.vocabRecordId,
                     orElse: () => widget.result.words[i],
                   );
-                  return ListTile(
-                    leading: Icon(
-                      r.isCorrect ? Icons.check_circle : Icons.cancel,
-                      color: r.isCorrect ? Colors.green : Colors.red,
-                    ),
-                    title: Text(
-                      word.headword,
-                      style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
-                    ),
-                    subtitle: Text(
-                      word.meaning,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: webScaled(theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)),
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: BloomCard(
+                      child: Row(
+                        children: [
+                          Icon(
+                            r.isCorrect
+                                ? Icons.check_circle_outline
+                                : Icons.cancel_outlined,
+                            color: r.isCorrect
+                                ? context.bloom.success
+                                : context.bloom.danger,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  word.headword,
+                                  style: webScaled(theme.textTheme.bodyLarge ??
+                                          const TextStyle(fontSize: 16))
+                                      .copyWith(fontWeight: FontWeight.w700),
+                                ),
+                                Text(
+                                  word.meaning,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: webScaled(theme.textTheme.bodyMedium ??
+                                          const TextStyle(fontSize: 14))
+                                      .copyWith(color: context.bloom.inkSoft),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
               ),
             ),
             const SizedBox(height: 16),
-            FilledButton(
+            BloomPillButton(
+              label: 'Luyện tập lại',
+              variant: BloomButtonVariant.primary,
+              block: true,
               onPressed: () => context.go('/practice/vocab'),
-              child: const Text('Luyện tập lại'),
             ),
           ],
         ),
