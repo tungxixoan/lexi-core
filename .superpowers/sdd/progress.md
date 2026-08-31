@@ -1777,3 +1777,49 @@ Base commit before Task 1: d55b2cd
 ## Progress
 
 Task 1: complete (commits d55b2cd..ddf3f91, review clean — 2 Minor noted: narrow literal coverage, context.bloom uses ! not assert)
+Task 2: complete (commits ddf3f91..0fbc213, review clean after controller fixed a deprecated-API regression from the plan text; Minor plan-mandated nits: weak pageBackground test name/assert, shadow blue channel 96 vs bloom.css 90, thin coverage)
+Task 3: complete (commit 58f32eb, review clean; Minor follow-up for final review: add assets/fonts/OFL.txt — reviewer rated non-blocking since TTF name-table carries OFL metadata; shallow pubspec substring test)
+Task 4: complete (commit 6161f90, review clean, zero ripple verified; Minor for final review: snackBar contentTextStyle bare TextStyle drops BeVietnamPro (inherited from plan), ColorScheme tertiary/surface-ramp left at M3 defaults)
+Task 5: complete (commit a7007ac, review clean; Minor: ThemeMode.values.byName unguarded on corrupt pref value — matches existing file convention, no realistic trigger)
+Task 6: complete (commit f859046, review clean; needed re-dispatch — added injectable routerConfig test seam to LexiCoreApp since appRouter lazy-inits FirebaseAuth. Minor: system-default test passes for wrong reason; consider @visibleForTesting on routerConfig)
+Task 7: complete (commit 5dc0ad4, review clean; Minor for final review: weak find.byType(DecoratedBox) assertion; BloomScaffold gradient DecoratedBox sizes to child not viewport — surface2 backgroundColor covers rest, consider SizedBox.expand)
+Task 8: complete (commit c8b19b1, review clean; Minor: BloomAppBar leadingWidth 44 vs BloomIconButton min 34 → ~6px debug overflow if icon-button used as leading (bump to 52 in a later task); BloomIconButton icon color fixed even when disabled; styling contract untested)
+Task 9: complete (commit 5ee0ba6, review clean; Minor: no test for elevated boxShadow branch / dark mode / null-onTap-no-InkWell; InkWell needs Material ancestor)
+Task 10: complete (commits 2cf0613..9e87a5e, 1 fix round — disabled label text was not dimming; fixed + regression test; review clean)
+Task 11: complete (commit ece8ba9, review clean; Minor: neutral/clear/onTap/trailing untested; BloomCefrPill white-on-sage contrast borderline — faithful to bloom.css .cefr-pill)
+Task 12: complete (commit 5c898db, review clean; Minor: no dark/zero-value test, no hairline-min-width for tiny values)
+Task 13: complete (commit e00d8b0, review clean; Minor: leaf borderRadius test does not assert the asymmetric 4-vs-999 teardrop geometry)
+Task 14: complete (commits 5097f42..66ec4f4, 1 fix round — first attempt over-engineered BloomTextField into a StatefulWidget with per-keystroke setState to pass a naive test; reverted to StatelessWidget per plan, fixed test assertion; review clean. Minor: obscureText+null-maxLines radius edge case)
+Task 15: complete (commits 286c3e8..3932888, 1 fix round — headword had no Flexible/ellipsis → RenderFlex overflow risk; fixed + 3 tests incl mutation-verified overflow test; review clean)
+Task 16: complete (commit 4c0bc0d, review clean; scope grew: made context.bloom null-safe (?? BloomColors.light) so 10 themeless test harnesses pass untouched — prevents this class of breakage in later screen-restyle tasks; AppTheme always attaches the ext so fallback never fires in-app. Minor for final review: InkWell ripple hidden behind opaque pill (Material wrapper dropped) — applies to BloomCard/BloomChip too, consider Material(type: transparency))
+Task 17: complete (commit 4871ad6, review clean, 0 other test files touched; Minor: link-variant "Bỏ chọn hết" button lighter + smaller hit target than old TextButton — intended Bloom look)
+Task 18: complete (commit 9052d4b, review clean; Minor for final review: BloomBottomNav cells use spaceAround not Expanded (5+ long labels could overflow — app uses 4, fine); tap target ~36px < 48dp; no Semantics(selected:) for screen readers on bottom-nav items)
+Task 19: complete (commit 3157ff1, review clean, no issues)
+Task 20: complete (commit ccc7ca0, review clean; shell chrome swapped to BloomScaffold/BloomBottomNav/BloomNavRail, nav labels Dictionary/Vocab Bank → Tra từ/Từ vựng, all nav/lifecycle logic byte-identical. Minor: _Dest.icon/selectedIcon/label now dead, sanctioned)
+Task 21: complete (commit 54d83b9, review clean; Minor: doc mentions Sáng/Tối/Hệ thống picker but the picker UI lands in a later plan — setting itself works)
+
+ALL 21 TASKS COMPLETE. Range d55b2cd..54d83b9. Next: final whole-branch review.
+
+## Final whole-branch review (opus) — 2 Critical, 3 Important, ~10 Minor
+
+- CRITICAL 1: BloomBottomNav overflows on phones <394dp (4 real labels = 393dp; spaceAround no Expanded; shell test pins Size(400,800) = narrowest passing width)
+- CRITICAL 2: BloomProgressBar fill has heightFactor:null → childless DecoratedBox collapses to zero height; renders nothing; test only checks width
+- IMPORTANT 3: BloomScaffold gradient DecoratedBox sizes to child not viewport
+- IMPORTANT 4: tap ripple invisible on BloomCard/BloomChip/FilterTile (InkWell over opaque Container, no Ink/Material layer)
+- IMPORTANT 5: app_shell.dart two parallel index-aligned lists (_destinations dead except .path, _navItems duplicate) — no length/order enforcement
+- MINOR 6: snackBarTheme.contentTextStyle + BloomNavRail label styles are bare TextStyle → lose BeVietnamPro (DefaultTextStyle replaces not merges)
+- MINOR 7: BloomAppBar leadingWidth 44 renders BloomIconButton at 28dp (no overflow — earlier "6px overflow" was wrong)
+- MINOR 8: BloomBottomNav no Semantics(selected:) — a11y regression vs NavigationBar (tap target is 49dp, fine)
+- MINOR 9: BloomShadows blue channel 96 vs bloom.css 90; warm spread -30 vs -28
+- MINOR 12: BloomLeafMark uses Radius.circular(999) x3 not BloomRadii.pill
+- MINOR 14: CLAUDE.md theme section implies a picker UI that lands later
+- DISMISSED by reviewer: ColorScheme gaps (all resolve to Bloom values via ?? getters), BloomCefrPill contrast (faithful to bloom.css — raise vs design not branch)
+- DEFERRED: #10 byName guard (matches file convention), #11 BloomSpacing unused (keep for Plan 2 adoption), #13 "Vocab Bank" screen titles (Plan 2)
+
+## Final-fixes re-review (sonnet) — Ready to push: YES
+
+All 8 in-scope findings resolved (Critical 1-2, Important 3-5, Minor 6-8/12/14), each new/changed assertion verified non-vacuous against a pre-fix worktree. 625 tests pass, analyze = 21 (unchanged). Deferred: #9 (sub-pixel shadow), #10 (byName guard, matches convention), #11 (BloomSpacing unused — keep for Plan 2), #13 ("Vocab Bank" screen titles — Plan 2).
+
+# PLAN 1 (Bloom Foundation) — COMPLETE
+Commits d55b2cd..HEAD (28 total: 21 task + 4 per-task fixes + 3 final-review fixes). On master, NOT pushed (user to review first). 625/625 tests, flutter analyze 21 (all pre-existing).
+Next: Plan 2 (Dictionary + Vocab Bank, incl. C1 activeContext removal) — to be written.
