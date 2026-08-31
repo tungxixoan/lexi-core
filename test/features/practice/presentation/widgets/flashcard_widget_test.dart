@@ -224,6 +224,42 @@ void main() {
     expect(captured!.isCorrect, isTrue);
   });
 
+  testWidgets(
+      'the card is the same height on the front and the back (no resize on flip)',
+      (tester) async {
+    await tester.pumpWidget(_buildCard((_) {}));
+
+    final faceFinder = find.byKey(const Key('flashcard-face'));
+    final frontHeight = tester.getSize(faceFinder).height;
+
+    await tester.tap(find.text('ephemeral'));
+    await tester.pumpAndSettle();
+
+    final backHeight = tester.getSize(faceFinder).height;
+    expect(backHeight, frontHeight);
+  });
+
+  testWidgets(
+      'a long meaning scrolls inside the card and the grade buttons stay visible',
+      (tester) async {
+    await tester
+        .pumpWidget(_buildScrollableCard(_recordWithMeaning(_longMeaning)));
+
+    await tester.tap(find.text('ephemeral'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Đã hiểu'), findsOneWidget);
+    expect(find.text('Chưa hiểu'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(FlashcardWidget),
+        matching: find.byType(Scrollable),
+      ),
+      findsWidgets,
+    );
+  });
+
   testWidgets('grading buttons still work after flipping back and forth',
       (tester) async {
     ExerciseResult? result;

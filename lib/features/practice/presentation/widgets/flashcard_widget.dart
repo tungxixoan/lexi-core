@@ -114,12 +114,15 @@ class _CardFace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // A fixed height so the front and back faces are identical in size — the
+    // card must not resize as it flips. Proportional to the viewport, clamped
+    // so it stays sensible on very small and very large screens.
+    final h = (MediaQuery.sizeOf(context).height * 0.56).clamp(380.0, 560.0);
+
     return Container(
+      key: const Key('flashcard-face'),
       width: double.infinity,
-      // No maxHeight: a long meaning must be able to grow the card rather than
-      // overflow it. The card is always hosted inside a scroll view, so an
-      // over-tall card simply scrolls with the page.
-      constraints: const BoxConstraints(minHeight: 280),
+      height: h,
       alignment: Alignment.center,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -233,32 +236,15 @@ class _BackContent extends StatelessWidget {
       ],
     );
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Bounded height (card hosted without a surrounding scroll view): let
-        // the meaning/example area scroll *inside* the card, grade buttons
-        // pinned below. Unbounded height (the normal case — hosted in a
-        // SingleChildScrollView): let the content grow the card naturally.
-        if (constraints.maxHeight.isFinite) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(child: SingleChildScrollView(child: meaningBlock)),
-              const SizedBox(height: 24),
-              gradeButtons,
-            ],
-          );
-        }
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            meaningBlock,
-            const SizedBox(height: 24),
-            gradeButtons,
-          ],
-        );
-      },
+    // The card always has a bounded, fixed height, so the meaning/example area
+    // scrolls *inside* the card when long while the grade buttons stay pinned
+    // at the bottom. Short content is vertically centred.
+    return Column(
+      children: [
+        Expanded(child: SingleChildScrollView(child: Center(child: meaningBlock))),
+        const SizedBox(height: 20),
+        gradeButtons,
+      ],
     );
   }
 }
