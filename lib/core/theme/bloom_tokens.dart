@@ -148,10 +148,13 @@ class BloomColors extends ThemeExtension<BloomColors> {
   }
 }
 
-/// Read Bloom colors from a `BuildContext`. Requires a `BloomColors`
-/// extension on the ambient `ThemeData` (wired by `AppTheme`).
+/// Read Bloom colors from a `BuildContext`. `AppTheme` always attaches a
+/// `BloomColors` extension to the ambient `ThemeData`; when it is absent
+/// (only in bare test harnesses that build a themeless `MaterialApp`) this
+/// falls back to `BloomColors.light` instead of throwing.
 extension BloomContext on BuildContext {
-  BloomColors get bloom => Theme.of(this).extension<BloomColors>()!;
+  BloomColors get bloom =>
+      Theme.of(this).extension<BloomColors>() ?? BloomColors.light;
 }
 
 /// Corner radii used across Bloom. Only these four values are allowed.

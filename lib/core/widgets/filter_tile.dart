@@ -1,9 +1,13 @@
 // lib/core/widgets/filter_tile.dart
 import 'package:flutter/material.dart';
+import '../theme/bloom_tokens.dart';
 
 /// A compact row that shows a label + current value and opens a picker
 /// (typically a bottom sheet) when tapped. Used to keep filter/option rows
 /// consistent across screens instead of native dropdowns or long chip rows.
+///
+/// Bloom look: a full-width pill with a `surface2` fill and a 1px `border`
+/// outline, tappable via [InkWell].
 class FilterTile extends StatelessWidget {
   const FilterTile({
     super.key,
@@ -20,38 +24,43 @@ class FilterTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final c = context.bloom;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Material(
-        color: theme.colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Icon(icon, size: 20, color: theme.colorScheme.onSurfaceVariant),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(label, style: theme.textTheme.bodyMedium),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(BloomRadii.pill),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: c.surface2,
+            border: Border.all(color: c.border),
+            borderRadius: BorderRadius.circular(BloomRadii.pill),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: c.inkFaint),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: c.inkSoft,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
                 ),
-                Flexible(
-                  child: Text(
-                    value,
-                    textAlign: TextAlign.right,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(color: theme.colorScheme.primary),
-                  ),
+              ),
+              const Spacer(),
+              Flexible(
+                child: Text(
+                  value,
+                  textAlign: TextAlign.right,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: c.ink),
                 ),
-                const SizedBox(width: 4),
-                Icon(Icons.keyboard_arrow_down,
-                    color: theme.colorScheme.onSurfaceVariant),
-              ],
-            ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right, size: 18, color: c.inkFaint),
+            ],
           ),
         ),
       ),

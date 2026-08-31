@@ -30,6 +30,18 @@ void main() {
     expect(seen.accent, BloomColors.light.accent);
   });
 
+  testWidgets('context.bloom falls back to light when no extension present',
+      (tester) async {
+    late BloomColors seen;
+    await tester.pumpWidget(MaterialApp(
+      home: Builder(builder: (context) {
+        seen = context.bloom;
+        return const SizedBox();
+      }),
+    ));
+    expect(seen.accent, BloomColors.light.accent);
+  });
+
   group('layout tokens', () {
     test('radii match the constrained set', () {
       expect(BloomRadii.sm, 10);
