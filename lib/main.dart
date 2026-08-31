@@ -20,16 +20,26 @@ void main() async {
   ));
 }
 
-class LexiCoreApp extends StatelessWidget {
-  const LexiCoreApp({super.key});
+class LexiCoreApp extends ConsumerWidget {
+  const LexiCoreApp({super.key, this.routerConfig});
+
+  /// Injectable in tests so a dummy router can stand in for the real
+  /// [appRouter], whose lazy top-level init touches FirebaseAuth. `null` in
+  /// production — `main()` constructs `const LexiCoreApp()` and the real
+  /// [appRouter] is used.
+  final RouterConfig<Object>? routerConfig;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(
+      userSettingsNotifierProvider.select((s) => s.themePreference),
+    );
     return MaterialApp.router(
       title: 'LexiCore',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      routerConfig: appRouter,
+      themeMode: themeMode,
+      routerConfig: routerConfig ?? appRouter,
       // SelectionArea needs an Overlay ancestor, but the router's own
       // Overlay (inside its Navigator) sits *below* this builder's child,
       // not above it — so we supply an explicit one here.
