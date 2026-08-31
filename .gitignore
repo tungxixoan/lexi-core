@@ -81,3 +81,6 @@ skills-lock.json
 # superpowers:brainstorming visual-companion mockups — throwaway HTML/CSS/JS
 # prototypes used to validate UX during design sessions, not app source.
 .superpowers/brainstorm/
+
+# CodeGraph local index (per-machine; rebuild with `codegraph init`)
+.codegraph/
