@@ -38,6 +38,7 @@ class SentenceResultWidget extends ConsumerWidget {
                 if (targetLanguage.ttsCloudCode != null) ...[
                   const SizedBox(width: 8),
                   PronounceButton(
+                    tooltip: 'Phát âm câu',
                     onPressed: () => tts.pronounce(result.original,
                         targetLanguage, tier: PronunciationTier.sentence),
                   ),

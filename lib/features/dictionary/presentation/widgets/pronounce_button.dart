@@ -3,10 +3,16 @@ import '../../../../core/theme/bloom_tokens.dart';
 
 /// A small round speaker button matching Bloom's `.pron-btn` (`bloom.css`).
 class PronounceButton extends StatelessWidget {
-  const PronounceButton({super.key, required this.onPressed, this.size = 26});
+  const PronounceButton({
+    super.key,
+    required this.onPressed,
+    this.size = 26,
+    this.tooltip = 'Phát âm',
+  });
 
   final VoidCallback onPressed;
   final double size;
+  final String tooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -16,6 +22,7 @@ class PronounceButton extends StatelessWidget {
       height: size,
       child: IconButton(
         onPressed: onPressed,
+        tooltip: tooltip,
         iconSize: size * 0.6,
         padding: EdgeInsets.zero,
         icon: const Icon(Icons.volume_up),

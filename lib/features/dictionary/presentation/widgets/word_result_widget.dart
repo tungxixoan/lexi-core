@@ -32,22 +32,25 @@ class WordResultWidget extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Flexible(
+                Expanded(
                   child: Text(
                     result.headword,
                     style: const TextStyle(
                         fontSize: 22, fontWeight: FontWeight.w800),
                   ),
                 ),
-                const SizedBox(width: 8),
-                if (canSpeak)
+                if (canSpeak) ...[
+                  const SizedBox(width: 8),
                   PronounceButton(
+                    tooltip: 'Phát âm từ',
                     onPressed: () => tts.pronounce(result.headword,
                         targetLanguage, tier: PronunciationTier.word),
                   ),
-                const Spacer(),
-                if (result.cefrLevel != null)
+                ],
+                if (result.cefrLevel != null) ...[
+                  const SizedBox(width: 8),
                   BloomCefrPill(result.cefrLevel!.label),
+                ],
               ],
             ),
             if (result.ipa.isNotEmpty) ...[
@@ -96,6 +99,7 @@ class WordResultWidget extends ConsumerWidget {
                         const SizedBox(width: 8),
                         PronounceButton(
                           size: 22,
+                          tooltip: 'Phát âm ví dụ',
                           onPressed: () => tts.pronounce(ex, targetLanguage,
                               tier: PronunciationTier.sentence),
                         ),
