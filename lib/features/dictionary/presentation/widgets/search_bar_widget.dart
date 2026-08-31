@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../providers/lookup_provider.dart';
 import '../providers/user_settings_provider.dart';
 
@@ -32,34 +33,39 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
     );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Column(
         children: [
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              decoration: const InputDecoration(
-                hintText: 'Word, phrase, or sentence...',
-                border: OutlineInputBorder(),
-                isDense: true,
+          Row(
+            children: [
+              Expanded(
+                child: BloomTextField(
+                  controller: _controller,
+                  hintText: 'Từ, cụm từ, hoặc câu…',
+                  prefixIcon: Icons.search,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (_) => _submit(),
+                ),
               ),
-              onSubmitted: (_) => _submit(),
-              textInputAction: TextInputAction.search,
-            ),
-          ),
-          const SizedBox(width: 8),
-          IconButton.filled(
-            icon: const Icon(Icons.search),
-            onPressed: _submit,
-            tooltip: 'Lookup',
+              const SizedBox(width: 8),
+              BloomIconButton(
+                icon: Icons.arrow_forward,
+                tooltip: 'Tra từ',
+                onPressed: _submit,
+              ),
+            ],
           ),
           if (aiEnabled) ...[
-            const SizedBox(width: 8),
-            IconButton.filledTonal(
-              icon: const Icon(Icons.auto_awesome),
-              onPressed: () =>
-                  ref.read(lookupNotifierProvider.notifier).discover(),
-              tooltip: 'Discover a new word',
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: BloomPillButton(
+                label: 'Khám phá',
+                icon: Icons.auto_awesome,
+                variant: BloomButtonVariant.sage,
+                onPressed: () =>
+                    ref.read(lookupNotifierProvider.notifier).discover(),
+              ),
             ),
           ],
         ],

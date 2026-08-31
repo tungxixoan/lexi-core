@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../domain/entities/lookup_result.dart';
 import '../providers/lookup_provider.dart';
 import '../widgets/search_bar_widget.dart';
@@ -12,24 +13,29 @@ class LookupScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lookupState = ref.watch(lookupNotifierProvider);
+    final c = context.bloom;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('LexiCore'),
-        centerTitle: false,
+    return BloomScaffold(
+      appBar: BloomAppBar(
+        title: 'LexiCore',
+        leading: const BloomLeafMark(size: 22),
       ),
       body: Column(
         children: [
           const SearchBarWidget(),
-          const Divider(height: 1),
+          Divider(height: 1, color: c.border),
           Expanded(
             child: lookupState.when(
               data: (result) {
                 if (result == null) {
-                  return const Center(
-                    child: Text(
-                      'Enter a word, phrase, or sentence to get started.',
-                      textAlign: TextAlign.center,
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        'Nhập một từ, cụm từ, hoặc câu để bắt đầu.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: c.inkSoft),
+                      ),
                     ),
                   );
                 }
@@ -48,9 +54,7 @@ class LookupScreen extends ConsumerWidget {
                   child: Text(
                     err.toString(),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+                    style: TextStyle(color: c.danger),
                   ),
                 ),
               ),
