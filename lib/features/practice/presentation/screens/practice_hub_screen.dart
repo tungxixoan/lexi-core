@@ -93,8 +93,10 @@ class _HubCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w700)),
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: c.ink)),
                 const SizedBox(height: 2),
                 Text(subtitle,
                     style: TextStyle(fontSize: 12.5, color: c.inkSoft)),

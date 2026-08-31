@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../bloom_tokens.dart';
 
 /// A percentage ring — `accent` arc over a `surface3` track, `label` centred
-/// on a `surface` disc. Flutter equivalent of bloom.css `.practice-result-circle`.
+/// in the middle. Flutter equivalent of bloom.css `.practice-result-circle`.
 class BloomResultRing extends StatelessWidget {
   const BloomResultRing({
     super.key,
@@ -28,7 +28,6 @@ class BloomResultRing extends StatelessWidget {
           fraction: clamped / 100,
           arc: c.accent,
           track: c.surface3,
-          disc: c.surface,
           stroke: size * 0.11,
         ),
         child: Center(
@@ -50,14 +49,12 @@ class _RingPainter extends CustomPainter {
     required this.fraction,
     required this.arc,
     required this.track,
-    required this.disc,
     required this.stroke,
   });
 
   final double fraction;
   final Color arc;
   final Color track;
-  final Color disc;
   final double stroke;
 
   @override

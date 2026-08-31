@@ -61,6 +61,11 @@ void main() {
     await tester.pump();
 
     expect(find.text('Đáp án: ${_exercise.answer}'), findsOneWidget);
+    // Revealed-answer text keeps a theme text base (real fontSize) + success color.
+    final answerText =
+        tester.widget<Text>(find.text('Đáp án: ${_exercise.answer}'));
+    expect(answerText.style?.fontSize, isNotNull);
+    expect(answerText.style?.color, isNotNull);
 
     await tester.tap(find.widgetWithText(BloomPillButton, 'Đúng rồi'));
     await tester.pump();

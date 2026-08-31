@@ -77,7 +77,9 @@ class _TranslationExerciseWidgetState extends State<TranslationExerciseWidget> {
             ),
             child: Text(
               'Đáp án: ${widget.exercise.answer}',
-              style: TextStyle(color: context.bloom.success),
+              style: webScaled(
+                  (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14))
+                      .copyWith(color: context.bloom.success)),
             ),
           ),
           const SizedBox(height: 12),
