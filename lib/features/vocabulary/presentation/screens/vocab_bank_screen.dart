@@ -111,11 +111,16 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
               suffix: _searchQuery.isEmpty
                   ? null
                   : GestureDetector(
+                      behavior: HitTestBehavior.opaque,
                       onTap: () {
                         _searchCtrl.clear();
                         setState(() => _searchQuery = '');
                       },
-                      child: Icon(Icons.clear, size: 18, color: c.inkFaint),
+                      child: SizedBox(
+                        width: 36,
+                        height: 36,
+                        child: Icon(Icons.clear, size: 18, color: c.inkFaint),
+                      ),
                     ),
               onChanged: (v) => setState(() => _searchQuery = v),
             ),
@@ -164,7 +169,7 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Tra một từ rồi bấm Lưu.',
+                            'Tra một từ rồi bấm Lưu từ.',
                             style: TextStyle(color: c.inkSoft),
                           ),
                         ],
@@ -197,7 +202,7 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
                           cefr: record.cefrLevel.label,
                           headword: record.headword,
                           meaning: record.meaning,
-                          trailingText: record.inputType.name,
+                          trailingText: record.inputType.label,
                           onTap: () => context.push('/vocab/${record.id}'),
                         ),
                       ],

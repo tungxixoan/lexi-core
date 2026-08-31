@@ -81,7 +81,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Chưa lưu từ nào.'), findsOneWidget);
-    expect(find.text('Tra một từ rồi bấm Lưu.'), findsOneWidget);
+    expect(find.text('Tra một từ rồi bấm Lưu từ.'), findsOneWidget);
   });
 
   testWidgets('a seeded record renders as a BloomListRow with its headword',
