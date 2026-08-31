@@ -153,3 +153,67 @@ class BloomColors extends ThemeExtension<BloomColors> {
 extension BloomContext on BuildContext {
   BloomColors get bloom => Theme.of(this).extension<BloomColors>()!;
 }
+
+/// Corner radii used across Bloom. Only these four values are allowed.
+abstract final class BloomRadii {
+  static const double sm = 10;
+  static const double md = 16;
+  static const double lg = 20;
+  static const double pill = 999;
+}
+
+/// Spacing scale derived from bloom.css padding values.
+abstract final class BloomSpacing {
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 22;
+  static const double xxl = 32;
+}
+
+/// Warm, soft shadows — used sparingly (Bloom leans on borders, not elevation).
+abstract final class BloomShadows {
+  static List<BoxShadow> warm(bool isDark) => [
+        BoxShadow(
+          color: isDark
+              ? const Color(0x8C000000)
+              : const Color(0x59784660), // rgba(120,70,90,.35)
+          blurRadius: 56,
+          spreadRadius: -30,
+          offset: const Offset(0, 24),
+        ),
+      ];
+
+  static List<BoxShadow> soft(bool isDark) => [
+        BoxShadow(
+          color: isDark ? const Color(0x73000000) : const Color(0x2E784660),
+          blurRadius: 14,
+          spreadRadius: -6,
+          offset: const Offset(0, 4),
+        ),
+      ];
+}
+
+/// Bloom gradients. Background mirrors `body { background: ... }` in bloom.css.
+abstract final class BloomGradients {
+  /// Two soft radial washes over the base surface. Flutter can't stack
+  /// multiple radial gradients in one `Gradient`, so this approximates the
+  /// dominant wash (top-left bgA -> transparent) over `surface2`; screens
+  /// paint `surface2` as the scaffold base and layer this on top.
+  static Gradient pageBackground(BloomColors c) => RadialGradient(
+        center: const Alignment(-0.9, -1.1),
+        radius: 1.4,
+        colors: [c.bgA, c.bgB.withOpacity(0.0)],
+        stops: const [0.0, 1.0],
+      );
+
+  static Gradient progressFill(BloomColors c) =>
+      LinearGradient(colors: [c.sage, c.accent]);
+
+  static Gradient leafMark(BloomColors c) => LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [c.accent, c.sage],
+      );
+}

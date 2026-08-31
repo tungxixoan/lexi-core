@@ -29,4 +29,29 @@ void main() {
     ));
     expect(seen.accent, BloomColors.light.accent);
   });
+
+  group('layout tokens', () {
+    test('radii match the constrained set', () {
+      expect(BloomRadii.sm, 10);
+      expect(BloomRadii.md, 16);
+      expect(BloomRadii.lg, 20);
+      expect(BloomRadii.pill, 999);
+    });
+
+    test('pageBackground is a sweep of two radial layers over surface', () {
+      final g = BloomGradients.pageBackground(BloomColors.light);
+      expect(g, isA<Gradient>());
+    });
+
+    test('progressFill runs sage -> accent', () {
+      final g = BloomGradients.progressFill(BloomColors.light) as LinearGradient;
+      expect(g.colors.first, BloomColors.light.sage);
+      expect(g.colors.last, BloomColors.light.accent);
+    });
+
+    test('warm shadow is darker in dark mode', () {
+      expect(BloomShadows.warm(true).first.color.opacity,
+          greaterThan(BloomShadows.warm(false).first.color.opacity));
+    });
+  });
 }
