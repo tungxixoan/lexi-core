@@ -1910,3 +1910,14 @@ Minor findings for final review:
 - practice hub _HubCard title = bare TextStyle, no explicit c.ink.
 - Task 5: redundant SizedBox(width:8) after "Thoát" (BloomAppBar appends its own 12).
 - Deferred: automaticallyImplyLeading:false dropped on session appbar (no BloomAppBar slot; go_router shell = no back stack, harmless).
+
+## Plan 3 final whole-branch review (opus) — Ready to merge: With fixes
+
+- CRITICAL #1: tappable Bloom surfaces (BloomCard(onTap:), BloomMcOption(onTap:)) put decoration on Ink → painted BEHIND BloomScaffold's DecoratedBox gradient → hub cards render borderless/bgless; selected:true affordance nearly invisible. MEASURED (RepaintBoundary.toImage: BloomCard(onTap:) interior faf2f5 not ffffff). Also affects Plan 1/2 BloomCard consumers. Plan 1's "ripple visible" fix was validated WITHOUT a BloomScaffold gradient. FIX: Container(decoration:) > Material(type: transparency) > InkWell(child: Padding).
+- CRITICAL #2: automaticallyImplyLeading:false dropped on session + result BloomAppBar (no BloomAppBar slot). /practice→session→result are NESTED GoRoutes → canPop true → back arrow appears. Popping result → session screen shows isComplete-branch bare spinner (dead end), and can re-fire _updateSm2 (double SM-2 + double recordPracticeSession). FIX: add automaticallyImplyLeading param to BloomAppBar, pass false on both screens. Audit vocab_detail_screen (relies on implied arrow — probably intended).
+- IMPORTANT #3: BloomMcOption hardcodes fontSize:15, MC options lost webScaled (24px→15px on web). Plan defect (global constraint says options keep webScaled; MC section contradicts). API gap for Reading Part5/6/7 + Listening. FIX: webScaled the label in BloomMcOption OR add labelStyle param.
+- IMPORTANT #4: translation_exercise_widget revealed-answer Text dropped webScaled + bodyMedium base. FIX: webScaled((bodyMedium??fontSize14).copyWith(color: success)).
+- IMPORTANT #5: flashcard maxHeight:360 can RenderFlex-overflow long back content on web. Plan defect (value prescribed verbatim). FIX: drop maxHeight or make _BackContent upper block Flexible+scrollable. [→ folded into the user's dedicated flashcard subagent]
+- Minor: BloomResultRing dead `disc` param; _HubCard title bare TextStyle; SizedBox(width:8) after Thoát redundant; BloomTextField has no textAlign (fill-in-blank lost center); bloom_mc_option_test selected-state title over-promises; practice_home due-count test loose; "Part 5/6"→"5/6/7" content edit in a restyle commit.
+
+Fix dispatch: Subagent B = Critical #1 + #2 + Important #3 + #4 + cheap minors (NOT flashcard). Subagent A (user request, independent) = flashcard flip glitch + card size + long-meaning overflow (covers Important #5).
