@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexi_core/core/theme/bloom/bloom.dart';
 import '../../../../core/utils/web_text_scale.dart';
 import '../../domain/entities/exercise.dart';
 import '../../domain/entities/exercise_result.dart';
@@ -44,35 +45,22 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
         const SizedBox(height: 24),
         ...widget.exercise.options.asMap().entries.map((entry) {
           final i = entry.key;
-          final option = entry.value;
-          Color? bgColor;
+          BloomMcState state = BloomMcState.neutral;
           if (_selected != null) {
             if (i == widget.exercise.correctIndex) {
-              bgColor = Colors.green.shade100;
+              state = BloomMcState.correct;
             } else if (i == _selected) {
-              bgColor = Colors.red.shade100;
+              state = BloomMcState.wrong;
             }
+          } else if (i == _selected) {
+            state = BloomMcState.selected;
           }
           return Padding(
             padding: const EdgeInsets.only(bottom: 10),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: bgColor != null
-                      ? (bgColor == Colors.green.shade100 ? Colors.green : Colors.red)
-                      : theme.colorScheme.outline,
-                ),
-              ),
-              child: ListTile(
-                title: Text(
-                  option,
-                  style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
-                ),
-                onTap: _selected == null ? () => _select(i) : null,
-              ),
+            child: BloomMcOption(
+              label: entry.value,
+              state: state,
+              onTap: _selected == null ? () => _select(i) : null,
             ),
           );
         }),

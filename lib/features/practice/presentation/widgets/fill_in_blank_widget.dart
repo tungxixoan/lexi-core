@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexi_core/core/theme/bloom/bloom.dart';
 import '../../../../core/utils/web_text_scale.dart';
 import '../../domain/entities/exercise.dart';
 import '../../domain/entities/exercise_result.dart';
@@ -48,7 +49,7 @@ class _FillInBlankWidgetState extends State<FillInBlankWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Điền vào chỗ trống:', style: theme.textTheme.labelLarge),
+        const BloomSectionHeader('Điền vào chỗ trống'),
         const SizedBox(height: 12),
         RichText(
           textAlign: TextAlign.center,
@@ -61,7 +62,7 @@ class _FillInBlankWidgetState extends State<FillInBlankWidget> {
                   width: 80,
                   height: 2,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
-                  color: theme.colorScheme.primary,
+                  color: context.bloom.accent,
                 ),
               ),
               if (parts.length > 1) TextSpan(text: parts.last),
@@ -69,22 +70,18 @@ class _FillInBlankWidgetState extends State<FillInBlankWidget> {
           ),
         ),
         const SizedBox(height: 24),
-        TextField(
+        BloomTextField(
           controller: _ctrl,
           enabled: !_submitted,
           autofocus: true,
-          textAlign: TextAlign.center,
-          decoration: InputDecoration(
-            hintText: 'Nhập từ cần điền...',
-            border: const OutlineInputBorder(),
-            suffixIcon: _submitted
-                ? Icon(
-                    _isCorrect! ? Icons.check_circle : Icons.cancel,
-                    color: _isCorrect! ? Colors.green : Colors.red,
-                  )
-                : null,
-          ),
+          hintText: 'Nhập từ cần điền…',
           onSubmitted: (_) => _submit(),
+          suffix: _submitted
+              ? Icon(
+                  _isCorrect! ? Icons.check_circle : Icons.cancel,
+                  color: _isCorrect! ? context.bloom.success : context.bloom.danger,
+                )
+              : null,
         ),
         if (_submitted && !_isCorrect!) ...[
           const SizedBox(height: 8),
@@ -92,13 +89,19 @@ class _FillInBlankWidgetState extends State<FillInBlankWidget> {
             'Đáp án: ${widget.exercise.answer}',
             style: webScaled(
               (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14))
-                  .copyWith(color: Colors.green.shade700),
+                  .copyWith(color: context.bloom.success),
             ),
             textAlign: TextAlign.center,
           ),
         ],
         const SizedBox(height: 16),
-        if (!_submitted) FilledButton(onPressed: _submit, child: const Text('Kiểm tra')),
+        if (!_submitted)
+          BloomPillButton(
+            label: 'Kiểm tra',
+            variant: BloomButtonVariant.primary,
+            block: true,
+            onPressed: _submit,
+          ),
       ],
     );
   }

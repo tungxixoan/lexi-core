@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexi_core/core/theme/bloom/bloom.dart';
 import '../../../../core/utils/web_text_scale.dart';
 import '../../domain/entities/exercise.dart';
 import '../../domain/entities/exercise_result.dart';
@@ -38,68 +39,65 @@ class _TranslationExerciseWidgetState extends State<TranslationExerciseWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Dịch sang tiếng Việt:', style: theme.textTheme.labelLarge),
+        const BloomSectionHeader('Dịch sang tiếng Việt'),
         const SizedBox(height: 12),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              widget.exercise.prompt
-                  .replaceAll("Translate to Vietnamese: ", "")
-                  .replaceAll("'", ""),
-              style: webScaled(theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16)),
-              textAlign: TextAlign.center,
-            ),
+        BloomCard(
+          child: Text(
+            widget.exercise.prompt
+                .replaceAll("Translate to Vietnamese: ", "")
+                .replaceAll("'", ""),
+            style: webScaled(theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16)),
+            textAlign: TextAlign.center,
           ),
         ),
         const SizedBox(height: 16),
-        TextField(
+        BloomTextField(
           controller: _ctrl,
           enabled: !_revealed,
           maxLines: 2,
-          decoration: const InputDecoration(
-            hintText: 'Nhập bản dịch của bạn...',
-            border: OutlineInputBorder(),
-          ),
+          minLines: 2,
+          hintText: 'Nhập bản dịch của bạn…',
         ),
         const SizedBox(height: 12),
         if (!_revealed)
-          FilledButton(
+          BloomPillButton(
+            label: 'Xem đáp án',
+            variant: BloomButtonVariant.primary,
+            block: true,
             onPressed: _ctrl.text.trim().isEmpty ? null : _reveal,
-            child: const Text('Xem đáp án'),
           ),
         if (_revealed) ...[
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.green.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.green.shade300),
+              color: context.bloom.successBg,
+              border: Border.all(color: context.bloom.success),
+              borderRadius: BorderRadius.circular(BloomRadii.sm),
             ),
             child: Text(
               'Đáp án: ${widget.exercise.answer}',
-              style: webScaled(
-                (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14))
-                    .copyWith(color: Colors.green.shade800),
-              ),
+              style: TextStyle(color: context.bloom.success),
             ),
           ),
           const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
+                child: BloomPillButton(
+                  label: 'Sai rồi',
+                  variant: BloomButtonVariant.danger,
+                  block: true,
                   onPressed: () => _submit(false),
-                  style: OutlinedButton.styleFrom(foregroundColor: theme.colorScheme.error),
-                  child: const Text('Sai rồi'),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: FilledButton(
+                child: BloomPillButton(
+                  label: 'Đúng rồi',
+                  variant: BloomButtonVariant.primary,
+                  block: true,
                   onPressed: () => _submit(true),
-                  child: const Text('Đúng rồi'),
                 ),
               ),
             ],
