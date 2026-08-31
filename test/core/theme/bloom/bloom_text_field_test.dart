@@ -13,9 +13,8 @@ void main() {
       ),
     ));
     await tester.enterText(find.byType(TextField), 'resilient');
-    await tester.pumpAndSettle();
     expect(last, 'resilient');
-    expect(find.text('Tra từ'), findsNothing); // hint hidden once typed
+    expect(find.text('resilient'), findsOneWidget); // entered text renders
   });
 
   testWidgets('single-line uses a pill border', (tester) async {

@@ -3,7 +3,7 @@ import '../bloom_tokens.dart';
 
 /// A `TextField` wrapped in Bloom styling: `surface2` ground, pill border
 /// for single-line, `sm` rounded for multi-line, accent focus ring.
-class BloomTextField extends StatefulWidget {
+class BloomTextField extends StatelessWidget {
   const BloomTextField({
     super.key,
     this.controller,
@@ -26,56 +26,24 @@ class BloomTextField extends StatefulWidget {
   final bool autofocus;
 
   @override
-  State<BloomTextField> createState() => _BloomTextFieldState();
-}
-
-class _BloomTextFieldState extends State<BloomTextField> {
-  late TextEditingController _controller;
-  bool _isEmpty = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = widget.controller ?? TextEditingController();
-    _isEmpty = _controller.text.isEmpty;
-    _controller.addListener(_onTextChanged);
-  }
-
-  void _onTextChanged() {
-    setState(() {
-      _isEmpty = _controller.text.isEmpty;
-    });
-  }
-
-  @override
-  void dispose() {
-    if (widget.controller == null) {
-      _controller.dispose();
-    } else {
-      _controller.removeListener(_onTextChanged);
-    }
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final c = context.bloom;
-    final radius = (widget.maxLines ?? 2) == 1 ? BloomRadii.pill : BloomRadii.sm;
+    final radius = (maxLines ?? 2) == 1 ? BloomRadii.pill : BloomRadii.sm;
     OutlineInputBorder border(Color color) => OutlineInputBorder(
           borderRadius: BorderRadius.circular(radius),
           borderSide: BorderSide(color: color),
         );
     return TextField(
-      controller: _controller,
-      onChanged: widget.onChanged,
-      onSubmitted: widget.onSubmitted,
-      obscureText: widget.obscureText,
-      maxLines: widget.obscureText ? 1 : widget.maxLines,
-      enabled: widget.enabled,
-      autofocus: widget.autofocus,
+      controller: controller,
+      onChanged: onChanged,
+      onSubmitted: onSubmitted,
+      obscureText: obscureText,
+      maxLines: obscureText ? 1 : maxLines,
+      enabled: enabled,
+      autofocus: autofocus,
       style: TextStyle(color: c.ink, fontSize: 16),
       decoration: InputDecoration(
-        hintText: _isEmpty ? widget.hintText : null,
+        hintText: hintText,
         hintStyle: TextStyle(color: c.inkFaint),
         filled: true,
         fillColor: c.surface2,
