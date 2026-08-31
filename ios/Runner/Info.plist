@@ -66,5 +66,24 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- Google Sign-In (iOS). Values are the iOS OAuth client from
+	     ios/Runner/GoogleService-Info.plist (CLIENT_ID / REVERSED_CLIENT_ID).
+	     iOS OAuth client IDs are not secrets — they ship in every app binary
+	     and the reversed ID is a public URL scheme — so they live here in the
+	     tracked Info.plist rather than the gitignored GoogleService-Info.plist,
+	     which keeps the app buildable on a fresh clone. -->
+	<key>GIDClientID</key>
+	<string>243190098866-0b5mvuuob6qkr7ot89anchme6hbb78sj.apps.googleusercontent.com</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.243190098866-0b5mvuuob6qkr7ot89anchme6hbb78sj</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
