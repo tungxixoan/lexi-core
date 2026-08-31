@@ -2,14 +2,12 @@
 import 'package:flutter/material.dart' show ThemeMode;
 import '../../../vocabulary/domain/entities/cefr_level.dart';
 import 'ai_provider.dart';
-import 'app_context.dart';
 import 'language.dart';
 import 'provider_config.dart';
 
 final class UserSettingsState {
   const UserSettingsState({
     required this.targetLanguage,
-    required this.activeContext,
     required this.aiEnabled,
     required this.activeProvider,
     required this.providerConfigs,
@@ -21,7 +19,6 @@ final class UserSettingsState {
   });
 
   final Language targetLanguage;
-  final AppContext activeContext;
   final bool aiEnabled;
   final AiProvider activeProvider;
   final Map<AiProvider, ProviderConfig> providerConfigs;
@@ -45,7 +42,6 @@ final class UserSettingsState {
 
   UserSettingsState copyWith({
     Language? targetLanguage,
-    AppContext? activeContext,
     bool? aiEnabled,
     AiProvider? activeProvider,
     Map<AiProvider, ProviderConfig>? providerConfigs,
@@ -57,7 +53,6 @@ final class UserSettingsState {
   }) =>
       UserSettingsState(
         targetLanguage: targetLanguage ?? this.targetLanguage,
-        activeContext: activeContext ?? this.activeContext,
         aiEnabled: aiEnabled ?? this.aiEnabled,
         activeProvider: activeProvider ?? this.activeProvider,
         providerConfigs: providerConfigs ?? this.providerConfigs,
@@ -72,7 +67,6 @@ final class UserSettingsState {
 
   static const defaults = UserSettingsState(
     targetLanguage: Language.english,
-    activeContext: AppContext.general,
     aiEnabled: false,
     activeProvider: AiProvider.gemini,
     providerConfigs: {

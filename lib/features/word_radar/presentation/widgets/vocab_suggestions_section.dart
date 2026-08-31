@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../../../dictionary/domain/entities/app_context.dart';
 import '../../../dictionary/domain/entities/lookup_result.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
 import '../../../dictionary/presentation/widgets/save_vocab_sheet.dart';
@@ -71,7 +72,7 @@ class _VocabSuggestionsSectionState extends ConsumerState<VocabSuggestionsSectio
         topicIds: topicIds,
         targetLanguage: settings.targetLanguage,
         cefrLevel: s.cefrLevel ?? CEFRLevel.b1,
-        activeContext: settings.activeContext,
+        activeContext: AppContext.general,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         definition: s.definition,

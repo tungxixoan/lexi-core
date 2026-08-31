@@ -6,7 +6,6 @@ import 'package:flutter/material.dart' show ThemeMode;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/ai_provider.dart';
-import '../../domain/entities/app_context.dart';
 import '../../domain/entities/language.dart';
 import '../../domain/entities/provider_config.dart';
 import '../../domain/entities/user_settings_state.dart';
@@ -115,8 +114,6 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
     return UserSettingsState(
       targetLanguage: Language.values.byName(
           prefs.getString('target_language') ?? Language.english.name),
-      activeContext: AppContext.values.byName(
-          prefs.getString('active_context') ?? AppContext.general.name),
       aiEnabled: prefs.getBool('ai_enabled') ?? false,
       activeProvider: activeProvider,
       providerConfigs: providerConfigs,
@@ -135,11 +132,6 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
     _prefs.setString('target_language', lang.name);
     state = state.copyWith(targetLanguage: lang);
     if (sync) _pushBestEffort();
-  }
-
-  void setActiveContext(AppContext context) {
-    _prefs.setString('active_context', context.name);
-    state = state.copyWith(activeContext: context);
   }
 
   void setAiEnabled({required bool enabled}) {

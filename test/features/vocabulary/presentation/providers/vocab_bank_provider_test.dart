@@ -23,7 +23,6 @@ class _FakeSettingsNotifier extends UserSettingsNotifier {
 
 UserSettingsState _settings(Language language) => UserSettingsState(
       targetLanguage: language,
-      activeContext: AppContext.general,
       aiEnabled: false,
       activeProvider: AiProvider.gemini,
       providerConfigs: const {},

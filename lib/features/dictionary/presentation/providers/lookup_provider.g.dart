@@ -6,7 +6,7 @@ part of 'lookup_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$lookupNotifierHash() => r'02c2be5fcec8b64d1aaf827127157ff20880d169';
+String _$lookupNotifierHash() => r'd5ff187351caaf0e9a5e5f126233f4071c5a2ae6';
 
 /// See also [LookupNotifier].
 @ProviderFor(LookupNotifier)

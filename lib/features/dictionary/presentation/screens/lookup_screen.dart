@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/lookup_result.dart';
 import '../providers/lookup_provider.dart';
-import '../widgets/context_selector_widget.dart';
 import '../widgets/search_bar_widget.dart';
 import '../widgets/sentence_result_widget.dart';
 import '../widgets/word_result_widget.dart';
@@ -21,7 +20,6 @@ class LookupScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          const ContextSelectorWidget(),
           const SearchBarWidget(),
           const Divider(height: 1),
           Expanded(

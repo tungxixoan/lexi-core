@@ -8,7 +8,6 @@ import 'package:lexi_core/core/services/ai_settings_sync_service.dart';
 import 'package:lexi_core/core/services/cloud_function_caller.dart';
 import 'package:lexi_core/core/services/encrypt_api_key.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
-import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/provider_config.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
@@ -81,7 +80,6 @@ void main() {
       addTearDown(container.dispose);
       final state = container.read(userSettingsNotifierProvider);
       expect(state.targetLanguage, Language.english);
-      expect(state.activeContext, AppContext.general);
       expect(state.aiEnabled, false);
       expect(state.activeProvider, AiProvider.gemini);
       expect(state.providerConfigs, isEmpty);
@@ -93,7 +91,6 @@ void main() {
     test('build() loads persisted provider and config from SharedPreferences', () async {
       final container = await makeContainer(initialValues: {
         'target_language': 'chinese',
-        'active_context': 'business',
         'ai_enabled': true,
         'ai_active_provider': 'groq',
         'ai_config_groq': jsonEncode({'apiKeyCiphertext': 'cipher_gsk_test', 'model': 'llama-3.3-70b-versatile'}),
@@ -102,7 +99,6 @@ void main() {
       addTearDown(container.dispose);
       final state = container.read(userSettingsNotifierProvider);
       expect(state.targetLanguage, Language.chinese);
-      expect(state.activeContext, AppContext.business);
       expect(state.aiEnabled, true);
       expect(state.activeProvider, AiProvider.groq);
       expect(state.activeConfig.apiKeyCiphertext, 'cipher_gsk_test');

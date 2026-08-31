@@ -27,7 +27,7 @@ class _Part5HomeScreenState extends ConsumerState<Part5HomeScreen> {
     super.initState();
     final settings = ref.read(userSettingsNotifierProvider);
     _language = settings.targetLanguage;
-    _context = settings.activeContext;
+    _context = AppContext.general;
   }
 
   Future<void> _pickLanguage() async {

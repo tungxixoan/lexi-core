@@ -5,6 +5,7 @@ import '../../../../core/di/app_providers.dart';
 import '../../../../core/widgets/ai_disabled_card.dart';
 import '../../../../core/widgets/filter_tile.dart';
 import '../../../../core/widgets/selection_sheets.dart';
+import '../../../../features/dictionary/domain/entities/app_context.dart';
 import '../../../../features/dictionary/domain/entities/language.dart';
 import '../../../../features/dictionary/presentation/providers/user_settings_provider.dart';
 import '../../../../features/vocabulary/domain/entities/cefr_level.dart';
@@ -253,7 +254,7 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
     await ref.read(readingPracticeNotifierProvider.notifier).generate(
           words: words,
           level: _level ?? settings.targetCefrLevel ?? CEFRLevel.b1,
-          context: settings.activeContext,
+          context: AppContext.general,
           targetLanguage: _language,
         );
 

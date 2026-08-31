@@ -5,6 +5,7 @@ import '../../../../core/di/app_providers.dart';
 import '../../../../core/widgets/ai_disabled_card.dart';
 import '../../../../core/widgets/filter_tile.dart';
 import '../../../../core/widgets/selection_sheets.dart';
+import '../../../dictionary/domain/entities/app_context.dart';
 import '../../../dictionary/domain/entities/language.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
 import '../../../vocabulary/domain/entities/cefr_level.dart';
@@ -251,7 +252,7 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
     await ref.read(dictationPracticeNotifierProvider.notifier).generate(
           words: words,
           level: _level ?? settings.targetCefrLevel ?? CEFRLevel.b1,
-          context: settings.activeContext,
+          context: AppContext.general,
           targetLanguage: _language,
           difficulty: _difficulty,
         );

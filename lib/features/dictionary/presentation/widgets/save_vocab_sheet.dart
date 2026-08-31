@@ -9,6 +9,7 @@ import '../../../../features/vocabulary/domain/entities/topic.dart';
 import '../../../../features/vocabulary/domain/entities/vocab_record.dart';
 import '../../../../features/vocabulary/presentation/providers/topics_provider.dart';
 import '../../../../features/vocabulary/presentation/providers/vocab_bank_provider.dart';
+import '../../domain/entities/app_context.dart';
 import '../../domain/entities/lookup_result.dart';
 import '../providers/user_settings_provider.dart';
 
@@ -93,7 +94,7 @@ class _SaveVocabSheetState extends ConsumerState<SaveVocabSheet> {
       topicIds: _selectedTopicIds,
       targetLanguage: settings.targetLanguage,
       cefrLevel: widget.result.cefrLevel ?? CEFRLevel.b1,
-      activeContext: settings.activeContext,
+      activeContext: AppContext.general,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
       definition: widget.result.definition,
