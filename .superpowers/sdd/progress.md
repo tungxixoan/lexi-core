@@ -1878,3 +1878,15 @@ Range 804e45b..e636967 on master, NOT pushed. 638 tests, analyze 21.
 OPEN for user: (1) BloomSectionHeader uppercases Vietnamese section labels — keep or add uppercase:false? (2) confirm C1 side effect: Bilingual Reading + Dictation AI generation now permanently AppContext.general (no picker on those 2 screens; Part5/6/7 + Comprehension keep pickers).
 Deferred to Plan 6: #6 bloom mono type token. Left as-is: #7 FAB→lookup, #8 ListView.separated, #10 no lookup_screen test, #11 PronounceButton lives under features/dictionary.
 Next: Plan 3 (Practice core) — to be written.
+
+---
+
+# Flutter Bloom Redesign — Plan 3 (Practice core)
+
+Plan: docs/superpowers/plans/2026-08-31-flutter-bloom-plan3-practice.md (commit 2fa3cae)
+Execution: subagent-driven, committed directly to master, push after review.
+Base commit before Task 1: 2fa3cae. Suite baseline: 638 pass, analyze 21.
+
+## Progress
+
+(none complete yet — starting Task 1)
