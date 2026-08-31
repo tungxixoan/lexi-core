@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../bloom_tokens.dart';
+import '../../utils/web_text_scale.dart';
 
 enum BloomMcState { neutral, selected, correct, wrong }
 
@@ -45,66 +46,55 @@ class BloomMcOption extends StatelessWidget {
         border = c.danger;
     }
 
-    final content = Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: bg,
-        border: Border.all(color: border),
-        borderRadius: BorderRadius.circular(BloomRadii.sm),
-      ),
-      child: Row(
-        children: [
-          if (leading != null) ...[
-            Text(leading!,
-                style: TextStyle(
-                    color: fg, fontWeight: FontWeight.w800, fontSize: 15)),
-            const SizedBox(width: 8),
-          ],
-          Expanded(
-            child: Text(label,
-                style: TextStyle(
-                    color: fg,
-                    fontWeight: state == BloomMcState.neutral
-                        ? FontWeight.w400
-                        : FontWeight.w700,
-                    fontSize: 15)),
-          ),
-        ],
-      ),
+    final decoration = BoxDecoration(
+      color: bg,
+      border: Border.all(color: border),
+      borderRadius: BorderRadius.circular(BloomRadii.sm),
     );
 
-    if (onTap == null) return content;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(BloomRadii.sm),
-      child: Ink(
-        decoration: BoxDecoration(
-          color: bg,
-          border: Border.all(color: border),
-          borderRadius: BorderRadius.circular(BloomRadii.sm),
+    final Widget inner = Row(
+      children: [
+        if (leading != null) ...[
+          Text(leading!,
+              style: webScaled(TextStyle(
+                  color: fg, fontWeight: FontWeight.w800, fontSize: 15))),
+          const SizedBox(width: 8),
+        ],
+        Expanded(
+          child: Text(label,
+              style: webScaled(TextStyle(
+                  color: fg,
+                  fontWeight: state == BloomMcState.neutral
+                      ? FontWeight.w400
+                      : FontWeight.w700,
+                  fontSize: 15))),
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              if (leading != null) ...[
-                Text(leading!,
-                    style: TextStyle(
-                        color: fg, fontWeight: FontWeight.w800, fontSize: 15)),
-                const SizedBox(width: 8),
-              ],
-              Expanded(
-                child: Text(label,
-                    style: TextStyle(
-                        color: fg,
-                        fontWeight: state == BloomMcState.neutral
-                            ? FontWeight.w400
-                            : FontWeight.w700,
-                        fontSize: 15)),
-              ),
-            ],
-          ),
+      ],
+    );
+
+    const padding = EdgeInsets.symmetric(horizontal: 14, vertical: 12);
+
+    if (onTap == null) {
+      return Container(
+        width: double.infinity,
+        padding: padding,
+        decoration: decoration,
+        child: inner,
+      );
+    }
+    // Interactive path: decoration in the widget layer (always visible), then
+    // a fresh transparent Material + InkWell above it for the ripple. On `Ink`
+    // the fill/border would sink into the ancestor Material below the page
+    // gradient (see BloomCard for the same fix).
+    return Container(
+      decoration: decoration,
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(BloomRadii.sm),
+          child: Padding(padding: padding, child: inner),
         ),
       ),
     );
