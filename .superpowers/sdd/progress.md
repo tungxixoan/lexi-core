@@ -1921,3 +1921,15 @@ Minor findings for final review:
 - Minor: BloomResultRing dead `disc` param; _HubCard title bare TextStyle; SizedBox(width:8) after Thoát redundant; BloomTextField has no textAlign (fill-in-blank lost center); bloom_mc_option_test selected-state title over-promises; practice_home due-count test loose; "Part 5/6"→"5/6/7" content edit in a restyle commit.
 
 Fix dispatch: Subagent B = Critical #1 + #2 + Important #3 + #4 + cheap minors (NOT flashcard). Subagent A (user request, independent) = flashcard flip glitch + card size + long-meaning overflow (covers Important #5).
+
+## Plan 3 fix-batch re-review (opus) — Ready to push: With fixes
+
+Both parallel fix agents' work verified: FIX 1 (Ink→widget-layer decoration on BloomCard/BloomMcOption), FIX 2 (BloomAppBar automaticallyImplyLeading param + false on session/result + removed redundant SizedBox), FIX 3/4 (webScaled on BloomMcOption label + translation answer), FIX A (flashcard reveal ramp + grow card) — all correctly implemented, regression tests empirically RED against pre-fix. 672 tests, analyze 21.
+
+Two MORE fixes needed before Plan 3 done:
+- CRITICAL: FilterTile (lib/core/widgets/filter_tile.dart) + BloomChip (lib/core/theme/bloom/bloom_chip.dart) have the IDENTICAL Ink-under-gradient bug FIX 1 fixed. FilterTile renders under BloomScaffold on practice_home_screen (3 tiles) + vocab_bank_screen (Plan 2). Apply the same Container(decoration) > Material(transparent) > InkWell pattern. BloomChip interactive path is latent (all call sites onTap:null) but fix it too.
+- IMPORTANT: flashcard grade buttons tappable at opacity 0 mid-flip → silent SM-2 grade (opus PROVED it: flip front, pump 260ms, tapAt projected button center → onResult fires; RenderOpacity doesn't block hit-test, Transform transformHitTests:true). FIX: `if (_flipCtrl.isAnimating) return;` at top of _submit (frozen-list → controller-authorized; behavior-preserving).
+- MINOR: hardware/browser back from result still pops to session's isComplete-branch spinner then post-frame re-navigates (flash loop, not hard dead-end). Add PopScope(canPop:false → context.go('/practice/vocab')) on session + result screens.
+- Note: FIX 3 (BloomMcOption webScaled) has no real regression test — webScaled is a no-op off-web so the guard passes pre-fix too. Code is correct; just uncovered.
+
+Fix dispatch: 1 agent — FilterTile+BloomChip Ink fix + flashcard _submit guard + session/result PopScope.
