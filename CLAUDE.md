@@ -17,6 +17,17 @@ This is one GitHub repo hosting two apps:
 
 Both classic Firebase Hosting (Flutter Web, `build/web`) and Firebase App Hosting (Next.js, `apps/web/`) are Firebase Hosting-family products deploying from this same repo/Firebase project, and coexist during the migration — see `docs/superpowers/specs/2026-08-11-react-web-redesign-design.md` §3.6 for the rollout plan. Firebase Web stays live until the Next.js app has been tested and the production domain is deliberately cut over; don't touch that cutover without explicit confirmation.
 
+## Theme (Flutter)
+
+Flutter UI uses the **Bloom** design system, ported from `apps/web/src/styles/bloom.css`:
+
+- **Tokens:** `lib/core/theme/bloom_tokens.dart` — `BloomColors` (a `ThemeExtension`, light + dark), `BloomRadii` (sm/md/lg/pill only), `BloomSpacing`, `BloomShadows`, `BloomGradients`. Read colors via `context.bloom`.
+- **Widgets:** `lib/core/theme/bloom/` — `BloomScaffold`, `BloomAppBar`, `BloomCard`, `BloomPillButton`, `BloomChip`, `BloomBottomNav`, etc. Import the barrel `lib/core/theme/bloom/bloom.dart`. Prefer these over raw Material widgets on feature screens.
+- **`AppTheme`** (`lib/core/theme/app_theme.dart`) keeps a Material `ThemeData` for low-level widgets (`Slider`, dialogs, `TextField` internals) but maps its `ColorScheme` onto Bloom tokens and attaches the `BloomColors` extension.
+- Color values in `bloom_tokens.dart` are copied verbatim from `bloom.css`. If you change a Bloom color, change it in **both** files.
+- Font: **Be Vietnam Pro**, bundled under `assets/fonts/` (family `BeVietnamPro`).
+- Light/dark follows `UserSettingsState.themePreference` (Sáng/Tối/Hệ thống), stored locally in SharedPreferences (`theme_preference`), not synced.
+
 ## Backend/data decisions (see the spec above for full reasoning)
 
 - **Everything lives in Firebase/Google Cloud** — one platform, not split across Firebase + Vercel. Database, hosting, and the AI-proxy backend are all Firebase/GCP products in the same project.
