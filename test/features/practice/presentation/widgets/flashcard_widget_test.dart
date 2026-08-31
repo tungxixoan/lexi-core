@@ -75,7 +75,8 @@ Widget _buildScrollableCard(VocabRecord record) => MaterialApp(
     );
 
 void main() {
-  testWidgets('starts showing the front (headword), not the meaning', (tester) async {
+  testWidgets('starts showing the front (headword), not the meaning',
+      (tester) async {
     await tester.pumpWidget(_buildCard((_) {}));
     expect(find.text('ephemeral'), findsOneWidget);
     expect(find.text('tồn tại trong thời gian ngắn'), findsNothing);
@@ -89,7 +90,8 @@ void main() {
     expect(find.text('ephemeral'), findsNothing);
   });
 
-  testWidgets('tapping the meaning area on the back flips back to the front', (tester) async {
+  testWidgets('tapping the meaning area on the back flips back to the front',
+      (tester) async {
     await tester.pumpWidget(_buildCard((_) {}));
     await tester.tap(find.text('ephemeral'));
     await tester.pumpAndSettle();
@@ -101,7 +103,8 @@ void main() {
     expect(find.text('tồn tại trong thời gian ngắn'), findsNothing);
   });
 
-  testWidgets('can flip back and forth multiple times before grading', (tester) async {
+  testWidgets('can flip back and forth multiple times before grading',
+      (tester) async {
     await tester.pumpWidget(_buildCard((_) {}));
     for (var i = 0; i < 3; i++) {
       await tester.tap(find.text('ephemeral'));
@@ -114,11 +117,14 @@ void main() {
     }
   });
 
-  testWidgets('tapping mid-animation is ignored until the current flip settles', (tester) async {
+  testWidgets('tapping mid-animation is ignored until the current flip settles',
+      (tester) async {
     await tester.pumpWidget(_buildCard((_) {}));
     await tester.tap(find.text('ephemeral'));
-    await tester.pump(const Duration(milliseconds: 50)); // still animating forward
-    await tester.tap(find.text('ephemeral')); // guarded no-op, must not reverse mid-flight
+    await tester
+        .pump(const Duration(milliseconds: 50)); // still animating forward
+    await tester.tap(
+        find.text('ephemeral')); // guarded no-op, must not reverse mid-flight
     await tester.pumpAndSettle();
     expect(find.text('tồn tại trong thời gian ngắn'), findsOneWidget);
   });
@@ -153,7 +159,8 @@ void main() {
 
   testWidgets('a very long meaning does not overflow the card', (tester) async {
     expect(_longMeaning.length, greaterThan(300));
-    await tester.pumpWidget(_buildScrollableCard(_recordWithMeaning(_longMeaning)));
+    await tester
+        .pumpWidget(_buildScrollableCard(_recordWithMeaning(_longMeaning)));
 
     await tester.tap(find.text('ephemeral'));
     await tester.pumpAndSettle();
@@ -162,7 +169,8 @@ void main() {
     expect(find.text(_longMeaning), findsOneWidget);
   });
 
-  testWidgets('face content is hidden mid-flip and fully revealed once settled', (tester) async {
+  testWidgets('face content is hidden mid-flip and fully revealed once settled',
+      (tester) async {
     await tester.pumpWidget(_buildCard((_) {}));
     await tester.tap(find.text('ephemeral'));
     await tester.pump(); // start the flip ticker
@@ -171,21 +179,53 @@ void main() {
     await tester.pump(const Duration(milliseconds: 225));
 
     final midOpacity = tester.widget<Opacity>(
-      find.ancestor(of: find.text('ephemeral'), matching: find.byType(Opacity)).first,
+      find
+          .ancestor(of: find.text('ephemeral'), matching: find.byType(Opacity))
+          .first,
     );
     expect(midOpacity.opacity, lessThan(0.05));
 
     await tester.pumpAndSettle();
     final settled = tester.widget<Opacity>(
-      find.ancestor(
-        of: find.text('tồn tại trong thời gian ngắn'),
-        matching: find.byType(Opacity),
-      ).first,
+      find
+          .ancestor(
+            of: find.text('tồn tại trong thời gian ngắn'),
+            matching: find.byType(Opacity),
+          )
+          .first,
     );
     expect(settled.opacity, moreOrLessEquals(1.0));
   });
 
-  testWidgets('grading buttons still work after flipping back and forth', (tester) async {
+  testWidgets(
+      'a grade tap while the card is mid-flip is ignored (no silent grade)',
+      (tester) async {
+    ExerciseResult? captured;
+    await tester.pumpWidget(_buildCard((r) => captured = r));
+    await tester.tap(find.text('ephemeral'));
+    await tester.pumpAndSettle(); // settled on the back face
+
+    // Start a flip-back by tapping the meaning/hint area, then DO NOT settle —
+    // the grade buttons are now in the opacity-ramped, still-hit-testable
+    // subtree.
+    await tester.tap(find.text('Chạm để xem lại từ vựng'));
+    await tester.pump(const Duration(milliseconds: 100)); // mid-flip
+    await tester.tap(find.text('Đã hiểu'), warnIfMissed: false);
+    await tester.pump();
+    expect(captured, isNull, reason: 'grade must not fire during the flip');
+
+    // The flip-back completes; a real grade tap after re-revealing still works.
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ephemeral'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Đã hiểu'));
+    await tester.pumpAndSettle();
+    expect(captured, isNotNull);
+    expect(captured!.isCorrect, isTrue);
+  });
+
+  testWidgets('grading buttons still work after flipping back and forth',
+      (tester) async {
     ExerciseResult? result;
     await tester.pumpWidget(_buildCard((r) => result = r));
     await tester.tap(find.text('ephemeral'));

@@ -42,6 +42,10 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
   }
 
   void _submit(bool understood) {
+    // Guard against a tap landing on an invisible grade button mid-flip: the
+    // buttons sit in an opacity-0 subtree during the ~450ms flip but stay
+    // hit-testable, so a stray double-tap could grade a word never seen.
+    if (_flipCtrl.isAnimating) return;
     widget.onResult(ExerciseResult(
       vocabRecordId: widget.exercise.vocabRecord.id,
       quality: understood ? 5 : 1,
