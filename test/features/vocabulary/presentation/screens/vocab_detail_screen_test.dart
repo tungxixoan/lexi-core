@@ -268,4 +268,29 @@ void main() {
     expect(
         find.text('"ephemeral" sẽ bị xoá. Không thể hoàn tác.'), findsOneWidget);
   });
+
+  testWidgets('confirming delete removes the record and pops the route',
+      (tester) async {
+    final bank = _FakeVocabBankNotifier([_record('v1', headword: 'ephemeral')]);
+    await tester.pumpWidget(await _buildScreen(
+      [_record('v1', headword: 'ephemeral')],
+      bank: bank,
+    ));
+    await tester.pumpAndSettle();
+
+    GoRouter.of(tester.element(find.text('home'))).push('/vocab/v1');
+    await tester.pumpAndSettle();
+
+    expect(find.byType(VocabDetailScreen), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(BloomPillButton, 'Xoá'));
+    await tester.pumpAndSettle();
+
+    expect(bank.deletedIds, contains('v1'));
+    expect(find.byType(VocabDetailScreen), findsNothing);
+    expect(find.text('home'), findsOneWidget);
+  });
 }
