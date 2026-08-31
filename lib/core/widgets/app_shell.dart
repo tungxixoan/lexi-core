@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../theme/bloom/bloom.dart';
 import '../../features/practice/presentation/providers/notification_notifier.dart';
 
 class _Dest {
@@ -51,13 +52,13 @@ class _AppShellState extends ConsumerState<AppShell>
       path: '/',
       icon: Icons.search_outlined,
       selectedIcon: Icons.search,
-      label: 'Dictionary',
+      label: 'Tra từ',
     ),
     _Dest(
       path: '/vocab',
       icon: Icons.library_books_outlined,
       selectedIcon: Icons.library_books,
-      label: 'Vocab Bank',
+      label: 'Từ vựng',
     ),
     _Dest(
       path: '/practice',
@@ -71,6 +72,13 @@ class _AppShellState extends ConsumerState<AppShell>
       selectedIcon: Icons.settings,
       label: 'Cài đặt',
     ),
+  ];
+
+  static const _navItems = <BloomNavItem>[
+    BloomNavItem(icon: Icons.search, label: 'Tra từ'),
+    BloomNavItem(icon: Icons.library_books, label: 'Từ vựng'),
+    BloomNavItem(icon: Icons.school, label: 'Luyện tập'),
+    BloomNavItem(icon: Icons.settings, label: 'Cài đặt'),
   ];
 
   int _selectedIndex(BuildContext context, List<_Dest> dests) {
@@ -94,44 +102,31 @@ class _AppShellState extends ConsumerState<AppShell>
         final selectedIndex = _selectedIndex(context, dests);
 
         if (constraints.maxWidth >= 600) {
-          return Scaffold(
+          return BloomScaffold(
             body: Row(
               children: [
-                NavigationRail(
-                  extended: constraints.maxWidth >= 1200,
+                BloomNavRail(
+                  items: _navItems,
                   selectedIndex: selectedIndex,
-                  onDestinationSelected: (i) =>
-                      _navigateTo(context, i, dests),
-                  destinations: dests
-                      .map(
-                        (d) => NavigationRailDestination(
-                          icon: Icon(d.icon),
-                          selectedIcon: Icon(d.selectedIcon),
-                          label: Text(d.label),
-                        ),
-                      )
-                      .toList(),
+                  onSelected: (i) => _navigateTo(context, i, dests),
+                  extended: constraints.maxWidth >= 1200,
                 ),
-                const VerticalDivider(width: 1, thickness: 1),
+                VerticalDivider(
+                  width: 1,
+                  thickness: 1,
+                  color: context.bloom.border,
+                ),
                 Expanded(child: widget.child),
               ],
             ),
           );
         }
-        return Scaffold(
+        return BloomScaffold(
           body: widget.child,
-          bottomNavigationBar: NavigationBar(
+          bottomNavigationBar: BloomBottomNav(
+            items: _navItems,
             selectedIndex: selectedIndex,
-            onDestinationSelected: (i) => _navigateTo(context, i, dests),
-            destinations: dests
-                .map(
-                  (d) => NavigationDestination(
-                    icon: Icon(d.icon),
-                    selectedIcon: Icon(d.selectedIcon),
-                    label: d.label,
-                  ),
-                )
-                .toList(),
+            onSelected: (i) => _navigateTo(context, i, dests),
           ),
         );
       },
