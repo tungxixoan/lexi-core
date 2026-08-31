@@ -209,7 +209,7 @@ void main() {
     await tester.tap(find.text('ubiquitous'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Save "ubiquitous"'), findsOneWidget);
+    expect(find.text('Lưu "ubiquitous"'), findsOneWidget);
   });
 
   testWidgets('tapping the dismiss icon removes a suggestion from the list',

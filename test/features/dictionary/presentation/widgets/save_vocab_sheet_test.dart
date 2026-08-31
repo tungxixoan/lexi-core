@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
+import 'package:lexi_core/core/theme/bloom/bloom.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart';
@@ -98,7 +99,8 @@ void main() {
     await tester.pumpWidget(await _buildSheet(result, repo));
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Save to Vocab Bank'));
+    await tester.tap(
+        find.widgetWithText(BloomPillButton, 'Lưu vào Ngân hàng từ'));
     await tester.pumpAndSettle();
 
     expect(repo.saved, isNotNull);
@@ -118,7 +120,8 @@ void main() {
     await tester.pumpWidget(await _buildSheet(result, repo));
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Save to Vocab Bank'));
+    await tester.tap(
+        find.widgetWithText(BloomPillButton, 'Lưu vào Ngân hàng từ'));
     await tester.pumpAndSettle();
 
     expect(repo.saved, isNotNull);

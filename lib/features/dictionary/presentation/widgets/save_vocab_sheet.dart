@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/widgets/filter_tile.dart';
 import '../../../../core/widgets/selection_sheets.dart';
 import '../../../../features/vocabulary/domain/entities/cefr_level.dart';
@@ -52,7 +53,7 @@ class _SaveVocabSheetState extends ConsumerState<SaveVocabSheet> {
   Future<void> _pickTopics(List<Topic> topics) async {
     final result = await showMultiSelectSheet<String>(
       context: context,
-      title: 'Topics',
+      title: 'Chủ đề',
       options: topics
           .map((t) => SelectOption(value: t.id, label: t.name, emoji: t.emoji))
           .toList(),
@@ -114,7 +115,7 @@ class _SaveVocabSheetState extends ConsumerState<SaveVocabSheet> {
   @override
   Widget build(BuildContext context) {
     final topicsAsync = ref.watch(topicsNotifierProvider);
-    final theme = Theme.of(context);
+    final c = context.bloom;
 
     // Own SelectionArea: the app-wide one (main.dart) and this modal's
     // content both sit under the same Navigator, but modal routes render in
@@ -138,12 +139,13 @@ class _SaveVocabSheetState extends ConsumerState<SaveVocabSheet> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Save "${widget.result.headword}"',
-                      style: theme.textTheme.titleLarge,
+                      'Lưu "${widget.result.headword}"',
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.w800),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
+                  BloomIconButton(
+                    icon: Icons.close,
                     onPressed: () => Navigator.of(context).pop(false),
                   ),
                 ],
@@ -157,57 +159,42 @@ class _SaveVocabSheetState extends ConsumerState<SaveVocabSheet> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   // Meaning
-                  Text('Meaning', style: theme.textTheme.labelLarge),
-                  const SizedBox(height: 4),
-                  TextField(
+                  const BloomSectionHeader('Nghĩa'),
+                  BloomTextField(
                     controller: _meaningCtrl,
-                    maxLines: 2,
-                    decoration:
-                        const InputDecoration(border: OutlineInputBorder()),
+                    maxLines: 3,
+                    minLines: 2,
                   ),
-                  const SizedBox(height: 16),
                   // Definition (English) — read-only
                   if (widget.result.definition.isNotEmpty) ...[
-                    Text('Definition', style: theme.textTheme.labelLarge),
-                    const SizedBox(height: 4),
+                    const BloomSectionHeader('Định nghĩa'),
                     Text(widget.result.definition,
-                        style: theme.textTheme.bodyMedium),
-                    const SizedBox(height: 16),
+                        style: TextStyle(color: c.inkSoft)),
                   ],
                   // Synonyms — read-only
                   if (widget.result.synonyms.isNotEmpty) ...[
-                    Text('Synonyms', style: theme.textTheme.labelLarge),
-                    const SizedBox(height: 4),
+                    const BloomSectionHeader('Từ đồng nghĩa'),
                     Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: widget.result.synonyms
-                          .map((s) => Chip(
-                                label: Text(s),
-                                visualDensity: VisualDensity.compact,
-                              ))
-                          .toList(),
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final s in widget.result.synonyms)
+                          BloomChip(label: s),
+                      ],
                     ),
-                    const SizedBox(height: 16),
                   ],
                   // Examples
-                  Text('Examples', style: theme.textTheme.labelLarge),
-                  const SizedBox(height: 4),
+                  const BloomSectionHeader('Ví dụ'),
                   ..._exampleCtrls.asMap().entries.map(
                         (e) => Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
                             children: [
                               Expanded(
-                                child: TextField(
-                                  controller: e.value,
-                                  decoration: const InputDecoration(
-                                      border: OutlineInputBorder(),
-                                      isDense: true),
-                                ),
+                                child: BloomTextField(controller: e.value),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.close, size: 18),
+                              BloomIconButton(
+                                icon: Icons.close,
                                 onPressed: () => setState(
                                     () => _exampleCtrls.removeAt(e.key)),
                               ),
@@ -215,16 +202,15 @@ class _SaveVocabSheetState extends ConsumerState<SaveVocabSheet> {
                           ),
                         ),
                       ),
-                  TextButton.icon(
-                    icon: const Icon(Icons.add, size: 16),
-                    label: const Text('Add example'),
+                  BloomPillButton(
+                    label: 'Thêm ví dụ',
+                    icon: Icons.add,
+                    variant: BloomButtonVariant.link,
                     onPressed: () => setState(
                         () => _exampleCtrls.add(TextEditingController())),
                   ),
-                  const SizedBox(height: 16),
                   // Topics
-                  Text('Topics', style: theme.textTheme.labelLarge),
-                  const SizedBox(height: 8),
+                  const BloomSectionHeader('Chủ đề'),
                   topicsAsync.when(
                     data: (topics) {
                       if (!_topicsPreselected) {
@@ -237,7 +223,7 @@ class _SaveVocabSheetState extends ConsumerState<SaveVocabSheet> {
                           .toList();
                       return FilterTile(
                         icon: Icons.sell_outlined,
-                        label: 'Topics (tối đa 2)',
+                        label: 'Chủ đề (tối đa 2)',
                         value: selectedTopics.isEmpty
                             ? 'Chưa chọn'
                             : selectedTopics
@@ -250,17 +236,13 @@ class _SaveVocabSheetState extends ConsumerState<SaveVocabSheet> {
                         const Center(child: CircularProgressIndicator()),
                     error: (e, _) => Text(e.toString()),
                   ),
-                  const SizedBox(height: 16),
                   // Personal notes
-                  Text('Personal notes', style: theme.textTheme.labelLarge),
-                  const SizedBox(height: 4),
-                  TextField(
+                  const BloomSectionHeader('Ghi chú cá nhân'),
+                  BloomTextField(
                     controller: _notesCtrl,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      hintText: 'Add a note to help you remember...',
-                      border: OutlineInputBorder(),
-                    ),
+                    maxLines: 4,
+                    minLines: 3,
+                    hintText: 'Thêm ghi chú để dễ nhớ…',
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -270,11 +252,10 @@ class _SaveVocabSheetState extends ConsumerState<SaveVocabSheet> {
             Padding(
               padding: EdgeInsets.fromLTRB(
                   16, 8, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
-              child: FilledButton(
+              child: BloomPillButton(
+                label: 'Lưu vào Ngân hàng từ',
+                block: true,
                 onPressed: _save,
-                style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48)),
-                child: const Text('Save to Vocab Bank'),
               ),
             ),
           ],
