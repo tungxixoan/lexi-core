@@ -1,6 +1,7 @@
 // test/features/dictionary/presentation/providers/user_settings_notifier_test.dart
 import 'dart:convert';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexi_core/core/services/ai_settings_sync_service.dart';
@@ -246,6 +247,36 @@ void main() {
       expect(container.read(userSettingsNotifierProvider).targetCefrLevel,
           CEFRLevel.b2);
       expect(prefs.getString('target_cefr_level'), 'b2');
+    });
+
+    group('theme preference', () {
+      test('themePreference defaults to ThemeMode.system', () async {
+        final container = await makeContainer();
+        addTearDown(container.dispose);
+        expect(container.read(userSettingsNotifierProvider).themePreference,
+            ThemeMode.system);
+      });
+
+      test('build() reads a persisted theme_preference', () async {
+        final container =
+            await makeContainer(initialValues: {'theme_preference': 'dark'});
+        addTearDown(container.dispose);
+        expect(container.read(userSettingsNotifierProvider).themePreference,
+            ThemeMode.dark);
+      });
+
+      test('setThemePreference persists and updates state', () async {
+        final container = await makeContainer();
+        addTearDown(container.dispose);
+        container
+            .read(userSettingsNotifierProvider.notifier)
+            .setThemePreference(ThemeMode.dark);
+        expect(container.read(userSettingsNotifierProvider).themePreference,
+            ThemeMode.dark);
+        expect((await SharedPreferences.getInstance())
+            .getString('theme_preference'),
+            'dark');
+      });
     });
 
     group('reminder settings', () {

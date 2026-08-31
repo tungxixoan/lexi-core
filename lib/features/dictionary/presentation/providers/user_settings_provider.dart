@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/ai_provider.dart';
@@ -122,6 +123,8 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
       targetCefrLevel: prefs.containsKey('target_cefr_level')
           ? CEFRLevel.values.byName(prefs.getString('target_cefr_level')!)
           : null,
+      themePreference: ThemeMode.values.byName(
+          prefs.getString('theme_preference') ?? ThemeMode.system.name),
       reminderEnabled: prefs.getBool('reminder_enabled') ?? false,
       reminderHour: prefs.getInt('reminder_hour') ?? 20,
       reminderMinute: prefs.getInt('reminder_minute') ?? 0,
@@ -184,6 +187,11 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
       _prefs.setString('target_cefr_level', level.name);
     }
     state = state.copyWith(targetCefrLevel: level);
+  }
+
+  void setThemePreference(ThemeMode mode) {
+    _prefs.setString('theme_preference', mode.name);
+    state = state.copyWith(themePreference: mode);
   }
 
   void setReminderEnabled({required bool enabled}) {

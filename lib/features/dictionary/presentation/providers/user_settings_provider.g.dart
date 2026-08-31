@@ -75,7 +75,7 @@ final aiSettingsSyncServiceProvider = Provider<AiSettingsSyncService>.internal(
 // ignore: unused_element
 typedef AiSettingsSyncServiceRef = ProviderRef<AiSettingsSyncService>;
 String _$userSettingsNotifierHash() =>
-    r'c4f622586c475d1d48d0706ce37af306a145e8ed';
+    r'cfff7f9ce2dc58fb7aa8916635fffb491524bd8d';
 
 /// See also [UserSettingsNotifier].
 @ProviderFor(UserSettingsNotifier)
