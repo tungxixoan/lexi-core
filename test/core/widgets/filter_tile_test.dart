@@ -2,7 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexi_core/core/theme/app_theme.dart';
 import 'package:lexi_core/core/theme/bloom_tokens.dart';
+import 'package:lexi_core/core/theme/bloom/bloom_scaffold.dart';
 import 'package:lexi_core/core/widgets/filter_tile.dart';
+
+Finder _decoratedContainer() => find.descendant(
+      of: find.byType(FilterTile),
+      matching: find.byWidgetPredicate(
+        (w) => w is Container && w.decoration is BoxDecoration,
+      ),
+    );
 
 void main() {
   testWidgets('shows label + value, taps, pill-shaped surface2 ground',
@@ -23,19 +31,21 @@ void main() {
     expect(find.text('🌐 General'), findsOneWidget);
     await tester.tap(find.text('Ngữ cảnh'));
     expect(taps, 1);
-    final box = tester.widget<Ink>(
-      find
-          .descendant(of: find.byType(FilterTile), matching: find.byType(Ink))
-          .first,
-    );
+
+    final box = tester.widget<Container>(_decoratedContainer().first);
     final deco = box.decoration as BoxDecoration;
     expect(deco.color, BloomColors.light.surface2);
     expect(deco.borderRadius, BorderRadius.circular(BloomRadii.pill));
 
-    // Ripple: an interactive tile paints its fill on an Ink layer inside the
-    // InkWell, so the splash is visible.
+    // Ripple: a fresh transparent Material + InkWell sits above the fill.
+    final material = tester.widget<Material>(
+      find.descendant(
+          of: _decoratedContainer(), matching: find.byType(Material)),
+    );
+    expect(material.color, Colors.transparent);
     expect(
-      find.descendant(of: find.byType(InkWell), matching: find.byType(Ink)),
+      find.descendant(
+          of: find.byType(Material), matching: find.byType(InkWell)),
       findsOneWidget,
     );
   });
@@ -55,5 +65,26 @@ void main() {
     ));
     expect(find.byIcon(Icons.chevron_right), findsOneWidget);
     expect(find.byIcon(Icons.keyboard_arrow_down), findsNothing);
+  });
+
+  testWidgets(
+      'regression: on a BloomScaffold the fill is the surface2 token, not '
+      'washed out by the page gradient (decoration in the widget layer)',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light,
+      home: BloomScaffold(
+        body: Center(
+          child: FilterTile(
+            icon: Icons.tune,
+            label: 'Ngữ cảnh',
+            value: 'General',
+            onTap: () {},
+          ),
+        ),
+      ),
+    ));
+    final box = tester.widget<Container>(_decoratedContainer().first);
+    expect((box.decoration as BoxDecoration).color, BloomColors.light.surface2);
   });
 }

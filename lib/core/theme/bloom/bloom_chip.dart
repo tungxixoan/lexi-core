@@ -68,12 +68,20 @@ class BloomChip extends StatelessWidget {
         child: row,
       );
     }
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(BloomRadii.pill),
-      child: Ink(
-        decoration: decoration,
-        child: Padding(padding: contentPadding, child: row),
+    // Interactive path: decoration in the widget layer (always visible), then
+    // a fresh transparent Material + InkWell above it for the ripple. On `Ink`
+    // the fill/border would sink into the ancestor Material below the page
+    // gradient (see bloom_card.dart for the same fix).
+    return Container(
+      decoration: decoration,
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(BloomRadii.pill),
+          child: Padding(padding: contentPadding, child: row),
+        ),
       ),
     );
   }
