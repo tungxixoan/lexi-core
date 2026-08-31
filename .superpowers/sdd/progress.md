@@ -1764,3 +1764,16 @@ Re-review (opus): all 7 findings confirmed correct, including independently veri
 Both tasks implemented and reviewed (Task 1 clean; Task 2 needed 2 fix rounds, the first of which corrected a fabricated implementer report — a first for this whole session), plus a final whole-branch review that needed 1 further fix round to close a genuine Critical provider-lifecycle bug invisible to any single task's own review (it only became visible by cross-referencing this branch's new stateful `AudioPlayer` against an existing `keepAlive` pattern elsewhere in the same file). All work committed directly to `master` — commits `2daf68a..f257465`. Nothing pushed to `origin/master` yet.
 
 **Cleanup backlog status**: items #1 (vocab_records per-language split) and #2 (Flutter AI-settings Firestore sync) shipped earlier; #3 (this plan) now done in code, not yet pushed/deployed. #4 (production domain cutover) remains.
+
+---
+
+# Flutter Bloom Redesign — Plan 1 (Foundation)
+
+Plan: `docs/superpowers/plans/2026-08-30-flutter-bloom-plan1-foundation.md` (commit d55b2cd)
+Spec: `docs/superpowers/specs/2026-08-30-flutter-bloom-redesign-design.md` (commit 4fc54b9)
+Execution: subagent-driven, committed directly to master (user consent 2026-08-30), not pushed until reviewed.
+Base commit before Task 1: d55b2cd
+
+## Progress
+
+Task 1: complete (commits d55b2cd..ddf3f91, review clean — 2 Minor noted: narrow literal coverage, context.bloom uses ! not assert)

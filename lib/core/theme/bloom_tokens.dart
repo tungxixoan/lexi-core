@@ -204,7 +204,7 @@ abstract final class BloomGradients {
   static Gradient pageBackground(BloomColors c) => RadialGradient(
         center: const Alignment(-0.9, -1.1),
         radius: 1.4,
-        colors: [c.bgA, c.bgB.withOpacity(0.0)],
+        colors: [c.bgA, c.bgB.withValues(alpha: 0.0)],
         stops: const [0.0, 1.0],
       );
 

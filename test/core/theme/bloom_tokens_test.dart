@@ -50,8 +50,8 @@ void main() {
     });
 
     test('warm shadow is darker in dark mode', () {
-      expect(BloomShadows.warm(true).first.color.opacity,
-          greaterThan(BloomShadows.warm(false).first.color.opacity));
+      expect(BloomShadows.warm(true).first.color.a,
+          greaterThan(BloomShadows.warm(false).first.color.a));
     });
   });
 }
