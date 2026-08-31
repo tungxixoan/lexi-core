@@ -98,7 +98,9 @@ class BloomMcOption extends StatelessWidget {
                 child: Text(label,
                     style: TextStyle(
                         color: fg,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: state == BloomMcState.neutral
+                            ? FontWeight.w400
+                            : FontWeight.w700,
                         fontSize: 15)),
               ),
             ],
