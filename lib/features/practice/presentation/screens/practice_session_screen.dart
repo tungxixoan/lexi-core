@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../domain/entities/exercise.dart';
 import '../../domain/entities/exercise_result.dart';
 import '../providers/practice_session_provider.dart';
@@ -40,8 +41,8 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
     final sessionAsync = ref.watch(practiceSessionNotifierProvider);
 
     return sessionAsync.when(
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('Lỗi: $e'))),
+      loading: () => const BloomScaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, _) => BloomScaffold(body: Center(child: Text('Lỗi: $e'))),
       data: (session) {
         if (session.isComplete && _started) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -50,47 +51,54 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
                   extra: SessionResult(results: session.results, words: session.words));
             }
           });
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const BloomScaffold(body: Center(child: CircularProgressIndicator()));
         }
 
         final total = session.words.length;
         final current = session.currentIndex;
         final exercise = session.currentExercise;
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text('${current + 1} / $total'),
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(4),
-              child: LinearProgressIndicator(value: total > 0 ? current / total : 0),
-            ),
-            automaticallyImplyLeading: false,
+        return BloomScaffold(
+          appBar: BloomAppBar(
+            title: '${current + 1} / $total',
             actions: [
-              TextButton(
+              BloomPillButton(
+                label: 'Thoát',
+                variant: BloomButtonVariant.link,
                 onPressed: () => context.go('/practice/vocab'),
-                child: const Text('Thoát'),
+              ),
+              const SizedBox(width: 8),
+            ],
+          ),
+          body: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                child: BloomProgressBar(value: total > 0 ? current / total : 0),
+              ),
+              Expanded(
+                child: exercise == null
+                    ? const Center(child: CircularProgressIndicator())
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          transitionBuilder: (child, animation) => FadeTransition(
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0, 0.08),
+                                end: Offset.zero,
+                              ).animate(animation),
+                              child: child,
+                            ),
+                          ),
+                          child: _buildExerciseWidget(exercise),
+                        ),
+                      ),
               ),
             ],
           ),
-          body: exercise == null
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    transitionBuilder: (child, animation) => FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0, 0.08),
-                          end: Offset.zero,
-                        ).animate(animation),
-                        child: child,
-                      ),
-                    ),
-                    child: _buildExerciseWidget(exercise),
-                  ),
-                ),
         );
       },
     );
