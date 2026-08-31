@@ -1890,3 +1890,4 @@ Base commit before Task 1: 2fa3cae. Suite baseline: 638 pass, analyze 21.
 ## Progress
 
 Task 1 (BloomMcOption): complete (commits 8d33935..4322242, review clean + 2 Minor cleanups: barrel order, neutral label weight). 643 tests, analyze 21.
+Task 2 (BloomResultRing): complete (commit 1199715, review clean). 646 tests, analyze 21. Minor for final review: `disc` param passed to _RingPainter but never drawn (center transparent, not a surface disc like bloom.css) — remove dead param or draw the inner disc.
