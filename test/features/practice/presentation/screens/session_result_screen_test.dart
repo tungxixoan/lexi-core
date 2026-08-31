@@ -136,6 +136,9 @@ void main() {
     expect(find.byType(BloomResultRing), findsOneWidget);
     expect(find.text('50%'), findsOneWidget);
     expect(find.text('1 / 2 từ đúng'), findsOneWidget);
+    // The result screen is a nested GoRoute; guard that no dead-end back
+    // arrow appears (automaticallyImplyLeading: false).
+    expect(find.byType(BackButton), findsNothing);
   });
 
   testWidgets('renders a Bloom card row per result with both headwords',

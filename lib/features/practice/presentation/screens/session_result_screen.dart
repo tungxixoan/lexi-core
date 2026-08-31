@@ -57,7 +57,7 @@ class _SessionResultScreenState extends ConsumerState<SessionResultScreen> {
     final pct = total > 0 ? (correct / total * 100).round() : 0;
 
     return BloomScaffold(
-      appBar: const BloomAppBar(title: 'Kết quả'),
+      appBar: const BloomAppBar(title: 'Kết quả', automaticallyImplyLeading: false),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

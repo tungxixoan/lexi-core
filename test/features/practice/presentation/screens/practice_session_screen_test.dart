@@ -75,5 +75,6 @@ void main() {
     expect(find.byType(BloomProgressBar), findsOneWidget);
     expect(find.text('1 / 1'), findsOneWidget);
     expect(find.byType(FlashcardWidget), findsOneWidget);
+    expect(find.byType(BackButton), findsNothing);
   });
 }

@@ -4,11 +4,18 @@ import '../bloom_tokens.dart';
 /// Bloom top bar: transparent over the scaffold gradient, no elevation,
 /// 800-weight title.
 class BloomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const BloomAppBar({super.key, required this.title, this.leading, this.actions});
+  const BloomAppBar({
+    super.key,
+    required this.title,
+    this.leading,
+    this.actions,
+    this.automaticallyImplyLeading = true,
+  });
 
   final String title;
   final Widget? leading;
   final List<Widget>? actions;
+  final bool automaticallyImplyLeading;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -17,6 +24,7 @@ class BloomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final c = context.bloom;
     return AppBar(
+      automaticallyImplyLeading: automaticallyImplyLeading,
       backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
       elevation: 0,

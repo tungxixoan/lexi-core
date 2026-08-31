@@ -14,6 +14,42 @@ void main() {
     expect(txt.style?.fontWeight, FontWeight.w800);
   });
 
+  testWidgets('default (automaticallyImplyLeading: true) shows a back button '
+      'when the route can pop', (tester) async {
+    final key = GlobalKey<NavigatorState>();
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light,
+      navigatorKey: key,
+      home: const Scaffold(body: Center(child: Text('home'))),
+    ));
+    key.currentState!.push(MaterialPageRoute(
+      builder: (_) => const Scaffold(
+        appBar: BloomAppBar(title: 'Detail'),
+        body: SizedBox(),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byType(BackButton), findsOneWidget);
+  });
+
+  testWidgets('automaticallyImplyLeading: false shows NO back button even when '
+      'the route can pop', (tester) async {
+    final key = GlobalKey<NavigatorState>();
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light,
+      navigatorKey: key,
+      home: const Scaffold(body: Center(child: Text('home'))),
+    ));
+    key.currentState!.push(MaterialPageRoute(
+      builder: (_) => const Scaffold(
+        appBar: BloomAppBar(title: 'Detail', automaticallyImplyLeading: false),
+        body: SizedBox(),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byType(BackButton), findsNothing);
+  });
+
   testWidgets('BloomIconButton fires onPressed', (tester) async {
     var taps = 0;
     await tester.pumpWidget(MaterialApp(

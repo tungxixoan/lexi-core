@@ -61,13 +61,13 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
         return BloomScaffold(
           appBar: BloomAppBar(
             title: '${current + 1} / $total',
+            automaticallyImplyLeading: false,
             actions: [
               BloomPillButton(
                 label: 'Thoát',
                 variant: BloomButtonVariant.link,
                 onPressed: () => context.go('/practice/vocab'),
               ),
-              const SizedBox(width: 8),
             ],
           ),
           body: Column(
