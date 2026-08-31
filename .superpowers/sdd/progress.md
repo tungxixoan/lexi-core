@@ -1933,3 +1933,13 @@ Two MORE fixes needed before Plan 3 done:
 - Note: FIX 3 (BloomMcOption webScaled) has no real regression test — webScaled is a no-op off-web so the guard passes pre-fix too. Code is correct; just uncovered.
 
 Fix dispatch: 1 agent — FilterTile+BloomChip Ink fix + flashcard _submit guard + session/result PopScope.
+
+## Plan 3 round-2 fixes re-review (sonnet) — Ready to push: YES
+
+3 fixes (FilterTile+BloomChip ink-under-gradient; flashcard _submit isAnimating guard; PopScope on session+result) — all minimal, mirror the bloom_card pattern, every new test RED-verified against base. 676 tests, analyze 21.
+
+# PLAN 3 (Practice core) — COMPLETE
+Range 2fa3cae..906e1ac on master, NOT pushed yet. 676 tests, analyze 21.
+Includes: 8 restyle tasks + BloomMcOption + BloomResultRing + the user's flashcard request (flip reveal ramp 350→450ms + grow card / long-meaning scroll) + 2 rounds of final-review fixes (Ink-under-BloomScaffold-gradient bug on BloomCard/BloomMcOption/FilterTile/BloomChip — a Plan-1-fix that only worked outside a gradient scaffold; back-arrow dead-end on nested practice routes → BloomAppBar.automaticallyImplyLeading + PopScope; 2 webScaled regressions).
+Uncovered (not a defect): BloomMcOption webScaled has no regression test (webScaled is a no-op off-web).
+Next: Plan 4 (Reading) — to be written.
