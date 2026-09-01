@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/widgets/ai_disabled_card.dart';
 import '../../../../core/widgets/filter_tile.dart';
 import '../../../../core/widgets/selection_sheets.dart';
@@ -72,24 +73,23 @@ class _Part5HomeScreenState extends ConsumerState<Part5HomeScreen> {
   Widget build(BuildContext context) {
     final settings = ref.watch(userSettingsNotifierProvider);
     final sessionAsync = ref.watch(part5PracticeNotifierProvider);
-    final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Part 5 — Điền câu'),
-        leading: BackButton(onPressed: () => context.go('/reading')),
+    return BloomScaffold(
+      appBar: BloomAppBar(
+        title: 'Part 5 — Điền câu',
+        leading: BloomIconButton(
+          icon: Icons.arrow_back_ios_new,
+          onPressed: () => context.go('/reading'),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                'AI tạo 15 câu điền từ/ngữ pháp kiểu TOEIC Part 5. Chọn đáp án đúng cho mỗi câu.',
-                style: theme.textTheme.bodyLarge,
-              ),
+            Text(
+              'AI tạo 15 câu điền từ/ngữ pháp kiểu TOEIC Part 5. Chọn đáp án đúng cho mỗi câu.',
+              style: TextStyle(fontSize: 14, color: context.bloom.inkSoft),
             ),
             const SizedBox(height: 16),
             FilterTile(
@@ -117,27 +117,36 @@ class _Part5HomeScreenState extends ConsumerState<Part5HomeScreen> {
               )
             else
               sessionAsync.when(
-                data: (_) => FilledButton.icon(
+                data: (_) => BloomPillButton(
+                  label: 'Tạo bài luyện',
+                  icon: Icons.auto_awesome,
+                  variant: BloomButtonVariant.primary,
+                  block: true,
                   onPressed: () => _generate(context, ref),
-                  icon: const Icon(Icons.auto_awesome),
-                  label: const Text('Tạo bài luyện'),
                 ),
-                loading: () => const Column(
+                loading: () => Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    LinearProgressIndicator(),
-                    SizedBox(height: 12),
-                    Text('Đang tạo bài...'),
+                    const LinearProgressIndicator(),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Đang tạo bài...',
+                      style: TextStyle(color: context.bloom.inkSoft),
+                    ),
                   ],
                 ),
                 error: (e, _) => Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Lỗi tạo bài: $e', style: TextStyle(color: theme.colorScheme.error)),
+                    Text(
+                      'Lỗi tạo bài: $e',
+                      style: TextStyle(color: context.bloom.danger),
+                    ),
                     const SizedBox(height: 8),
-                    OutlinedButton(
+                    BloomPillButton(
+                      label: 'Thử lại',
+                      variant: BloomButtonVariant.secondary,
                       onPressed: () => _generate(context, ref),
-                      child: const Text('Thử lại'),
                     ),
                   ],
                 ),
