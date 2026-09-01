@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/utils/web_text_scale.dart';
 import '../../domain/entities/part5_question.dart';
 import '../providers/part5_practice_provider.dart';
@@ -49,36 +50,50 @@ class _SessionScaffold extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(part5PracticeNotifierProvider.notifier);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Part 5 — Điền câu'), automaticallyImplyLeading: false),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    for (var i = 0; i < session.set.questions.length; i++) ...[
-                      if (i > 0) const SizedBox(height: 12),
-                      _QuestionCard(
-                        index: i,
-                        question: session.set.questions[i],
-                        selected: session.selectedAnswers[i],
-                        onSelected: (optionIndex) => notifier.selectAnswer(i, optionIndex),
-                      ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go('/reading/part5');
+      },
+      child: BloomScaffold(
+        appBar: BloomAppBar(
+          title: 'Part 5 — Điền câu',
+          automaticallyImplyLeading: false,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (var i = 0; i < session.set.questions.length; i++) ...[
+                        if (i > 0) const SizedBox(height: BloomSpacing.md),
+                        _QuestionCard(
+                          index: i,
+                          question: session.set.questions[i],
+                          selected: session.selectedAnswers[i],
+                          onSelected: (optionIndex) => notifier.selectAnswer(i, optionIndex),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            FilledButton(
-              onPressed: session.canSubmit ? notifier.submit : null,
-              child: const Text('Nộp bài'),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.only(top: BloomSpacing.sm),
+                child: BloomPillButton(
+                  label: 'Nộp bài',
+                  variant: BloomButtonVariant.primary,
+                  block: true,
+                  onPressed: session.canSubmit ? notifier.submit : null,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -100,36 +115,26 @@ class _QuestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                '${index + 1}. ${question.sentenceWithBlank}',
-                style: webScaled(theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14)),
-              ),
+    return BloomCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${index + 1}. ${question.sentenceWithBlank}',
+            style: webScaled(const TextStyle(fontSize: 14, fontWeight: FontWeight.w700))
+                .copyWith(color: context.bloom.ink),
+          ),
+          const SizedBox(height: BloomSpacing.md),
+          for (var i = 0; i < question.options.length; i++) ...[
+            if (i > 0) const SizedBox(height: BloomSpacing.sm),
+            BloomMcOption(
+              label: question.options[i],
+              leading: String.fromCharCode(65 + i),
+              onTap: () => onSelected(i),
+              state: selected == i ? BloomMcState.selected : BloomMcState.neutral,
             ),
-            ...question.options.asMap().entries.map(
-                  (entry) => RadioListTile<int>(
-                    value: entry.key,
-                    groupValue: selected,
-                    title: Text(
-                      entry.value,
-                      style: webScaled(theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)),
-                    ),
-                    dense: true,
-                    onChanged: (v) {
-                      if (v != null) onSelected(v);
-                    },
-                  ),
-                ),
           ],
-        ),
+        ],
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/reading/domain/entities/economy_volume.dart';
 import 'package:lexi_core/features/reading/domain/entities/part5_question.dart';
+import 'package:lexi_core/core/theme/bloom/bloom.dart';
 import 'package:lexi_core/features/reading/presentation/providers/part5_practice_provider.dart';
 import 'package:lexi_core/features/reading/presentation/screens/part5_session_screen.dart';
 
@@ -75,7 +76,7 @@ void main() {
   testWidgets('Nộp bài is disabled until all answers are selected', (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
-    final button = tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Nộp bài'));
+    final button = tester.widget<BloomPillButton>(find.byType(BloomPillButton));
     expect(button.onPressed, isNull);
   });
 
@@ -84,7 +85,7 @@ void main() {
       session: Part5SessionState(set: _testSet, selectedAnswers: const [0, 1, 2], isSubmitted: false),
     ));
     await tester.pumpAndSettle();
-    final button = tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Nộp bài'));
+    final button = tester.widget<BloomPillButton>(find.byType(BloomPillButton));
     expect(button.onPressed, isNotNull);
   });
 
@@ -93,8 +94,30 @@ void main() {
       session: Part5SessionState(set: _testSet, selectedAnswers: const [0, 1, 2], isSubmitted: false),
     ));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Nộp bài'));
+    await tester.tap(find.byType(BloomPillButton));
     await tester.pumpAndSettle();
     expect(find.text('Result screen'), findsOneWidget);
+  });
+
+  testWidgets('tapping an option writes only that question slot', (tester) async {
+    await tester.pumpWidget(_buildSession());
+    await tester.pumpAndSettle();
+
+    final optionB = find.descendant(
+      of: find.byType(BloomCard).at(1),
+      matching: find.text('b'),
+    );
+    expect(optionB, findsOneWidget);
+    await tester.tap(optionB);
+    await tester.pumpAndSettle();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(Part5SessionScreen)),
+      listen: false,
+    );
+    final selectedAnswers =
+        container.read(part5PracticeNotifierProvider).value!.selectedAnswers;
+    expect(selectedAnswers[1], 1);
+    expect(selectedAnswers[0], isNull);
   });
 }
