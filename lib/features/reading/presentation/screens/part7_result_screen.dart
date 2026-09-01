@@ -215,6 +215,7 @@ class _QuestionBreakdown extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 2),
               child: BloomMcOption(
                 label: entry.value,
+                leading: String.fromCharCode(65 + i),
                 onTap: null,
                 state: i == question.correctIndex
                     ? BloomMcState.correct

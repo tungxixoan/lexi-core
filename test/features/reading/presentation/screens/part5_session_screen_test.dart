@@ -104,10 +104,12 @@ void main() {
     await tester.pumpAndSettle();
 
     final optionB = find.descendant(
-      of: find.byType(BloomCard).at(1),
+      of: find.byType(BloomCard).at(2), // question index 2 — distinct from option index 1
       matching: find.text('b'),
     );
     expect(optionB, findsOneWidget);
+    await tester.ensureVisible(optionB);
+    await tester.pumpAndSettle();
     await tester.tap(optionB);
     await tester.pumpAndSettle();
 
@@ -117,7 +119,7 @@ void main() {
     );
     final selectedAnswers =
         container.read(part5PracticeNotifierProvider).value!.selectedAnswers;
-    expect(selectedAnswers[1], 1);
+    expect(selectedAnswers[2], 1);
     expect(selectedAnswers[0], isNull);
   });
 }

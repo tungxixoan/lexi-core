@@ -192,7 +192,10 @@ class _QuestionBreakdown extends StatelessWidget {
                 size: 18,
               ),
               const SizedBox(width: 8),
-              Text('Chỗ trống ($blankNumber)', style: theme.textTheme.titleSmall),
+              Text(
+                'Chỗ trống ($blankNumber)',
+                style: theme.textTheme.titleSmall?.copyWith(color: context.bloom.ink),
+              ),
             ],
           ),
           ...question.options.asMap().entries.map((entry) {
@@ -201,6 +204,7 @@ class _QuestionBreakdown extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 2),
               child: BloomMcOption(
                 label: entry.value,
+                leading: String.fromCharCode(65 + i),
                 onTap: null,
                 state: i == question.correctIndex
                     ? BloomMcState.correct

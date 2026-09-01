@@ -96,6 +96,7 @@ class _SessionScaffoldState extends ConsumerState<_SessionScaffold> {
                               for (var q = 0; q < passage.questions.length; q++) ...[
                                 if (q > 0) const SizedBox(height: BloomSpacing.sm),
                                 _BlankTile(
+                                  key: ValueKey('$_activePassage-$q'),
                                   question: passage.questions[q],
                                   questionIndex: q,
                                   selected: session.selectedAnswers[
@@ -112,7 +113,7 @@ class _SessionScaffoldState extends ConsumerState<_SessionScaffold> {
                   ),
                   BloomPassageSheet(
                     key: ValueKey(_activePassage),
-                    tabs: const ['Đoạn văn'],
+                    tabs: const ['Văn bản'],
                     passages: [passage.passageText],
                     initialChildSize: 0.16,
                     minChildSize: 0.12,
@@ -140,6 +141,7 @@ class _SessionScaffoldState extends ConsumerState<_SessionScaffold> {
 
 class _BlankTile extends StatelessWidget {
   const _BlankTile({
+    super.key,
     required this.question,
     required this.questionIndex,
     required this.selected,

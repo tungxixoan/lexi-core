@@ -105,6 +105,33 @@ void main() {
     expect(answers[Part6SessionState.flatIndex(0, 0)], isNull);
   });
 
+  testWidgets("answering a blank after switching to passage 2 writes that passage's flat slot", (tester) async {
+    await tester.pumpWidget(_buildSession());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Đoạn 2')); // passage index 1
+    await tester.pumpAndSettle();
+
+    // Blank 1 (q index 0) of passage 1 is initiallyExpanded on a fresh tile
+    // (keys give each passage switch a new BloomExpansionTile state), so its
+    // options are already visible — pick 'b' (option index 1) directly.
+    final bInBlank1 = find.descendant(
+      of: find.ancestor(
+          of: find.text('Chỗ trống (1)'), matching: find.byType(BloomExpansionTile)),
+      matching: find.text('b'),
+    );
+    await tester.ensureVisible(bInBlank1);
+    await tester.pumpAndSettle();
+    await tester.tap(bInBlank1);
+    await tester.pumpAndSettle();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(Part6SessionScreen)), listen: false);
+    final answers = container.read(part6PracticeNotifierProvider).value!.selectedAnswers;
+    expect(answers[Part6SessionState.flatIndex(1, 0)], 1);
+    expect(answers[Part6SessionState.flatIndex(0, 0)], isNull);
+  });
+
   testWidgets('Nộp bài is disabled until all 12 blanks are answered', (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
