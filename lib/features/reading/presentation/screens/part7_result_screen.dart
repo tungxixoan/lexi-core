@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/utils/web_text_scale.dart';
 import '../../../word_radar/presentation/widgets/result_suggestions_section.dart';
 import '../../domain/entities/part7_passage.dart';
@@ -42,56 +43,75 @@ class _Part7ResultScreenState extends ConsumerState<Part7ResultScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final total = _totalQuestions;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Kết quả'), automaticallyImplyLeading: false),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Text(
-                '${result.correctCount}/$total',
-                style: theme.textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: result.correctCount == total
-                      ? Colors.green.shade700
-                      : theme.colorScheme.primary,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go('/reading/part7');
+      },
+      child: BloomScaffold(
+        appBar: BloomAppBar(
+          title: 'Kết quả',
+          automaticallyImplyLeading: false,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Text(
+                  '${result.correctCount}/$total',
+                  style: TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.w800,
+                    color: result.correctCount == total
+                        ? context.bloom.success
+                        : context.bloom.accent,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (var g = 0; g < result.set.passageGroups.length; g++) ...[
-                      if (g > 0) const SizedBox(height: 16),
-                      _PassageGroupBreakdown(
-                        groupIndex: g,
-                        group: result.set.passageGroups[g],
-                        allGroups: result.set.passageGroups,
-                        selectedAnswers: result.selectedAnswers,
+              const SizedBox(height: 16),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (var g = 0; g < result.set.passageGroups.length; g++) ...[
+                        if (g > 0) const SizedBox(height: 16),
+                        _PassageGroupBreakdown(
+                          groupIndex: g,
+                          group: result.set.passageGroups[g],
+                          allGroups: result.set.passageGroups,
+                          selectedAnswers: result.selectedAnswers,
+                        ),
+                      ],
+                      ResultSuggestionsSection(
+                        text: _documentsText,
+                        targetLanguage: result.set.targetLanguage,
+                        targetCefrLevel: null,
                       ),
                     ],
-                    ResultSuggestionsSection(
-                      text: _documentsText,
-                      targetLanguage: result.set.targetLanguage,
-                      targetCefrLevel: null,
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            FilledButton(onPressed: () => _regenerate(context, ref), child: const Text('Bài khác')),
-            const SizedBox(height: 8),
-            OutlinedButton(onPressed: () => _goHome(context, ref), child: const Text('Về trang chính')),
-          ],
+              const SizedBox(height: 8),
+              BloomPillButton(
+                label: 'Bài khác',
+                variant: BloomButtonVariant.primary,
+                block: true,
+                onPressed: () => _regenerate(context, ref),
+              ),
+              const SizedBox(height: 8),
+              BloomPillButton(
+                label: 'Về trang chính',
+                variant: BloomButtonVariant.secondary,
+                block: true,
+                onPressed: () => _goHome(context, ref),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -123,35 +143,33 @@ class _PassageGroupBreakdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isDouble = group.documents.length == 2;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return BloomCard(
+      padding: const EdgeInsets.all(BloomSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isDouble ? 'Đoạn ${groupIndex + 1} (2 văn bản liên quan)' : 'Đoạn ${groupIndex + 1}',
+            style: TextStyle(fontWeight: FontWeight.w700, color: context.bloom.ink),
+          ),
+          const SizedBox(height: 8),
+          for (var d = 0; d < group.documents.length; d++) ...[
+            if (d > 0) const SizedBox(height: 12),
             Text(
-              isDouble ? 'Đoạn ${groupIndex + 1} (2 văn bản liên quan)' : 'Đoạn ${groupIndex + 1}',
-              style: theme.textTheme.titleMedium,
+              group.documents[d],
+              style: webScaled(const TextStyle(fontSize: 13.5))
+                  .copyWith(color: context.bloom.inkSoft),
             ),
-            const SizedBox(height: 8),
-            for (var d = 0; d < group.documents.length; d++) ...[
-              if (d > 0) const SizedBox(height: 12),
-              Text(
-                group.documents[d],
-                style: webScaled(theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)),
-              ),
-            ],
-            const SizedBox(height: 8),
-            for (var q = 0; q < group.questions.length; q++)
-              _QuestionBreakdown(
-                questionNumber: q + 1,
-                question: group.questions[q],
-                selected: selectedAnswers[Part7SessionState.flatIndex(allGroups, groupIndex, q)],
-              ),
           ],
-        ),
+          const SizedBox(height: 8),
+          for (var q = 0; q < group.questions.length; q++)
+            _QuestionBreakdown(
+              questionNumber: q + 1,
+              question: group.questions[q],
+              selected: selectedAnswers[Part7SessionState.flatIndex(allGroups, groupIndex, q)],
+            ),
+        ],
       ),
     );
   }
@@ -178,46 +196,39 @@ class _QuestionBreakdown extends StatelessWidget {
             children: [
               Icon(
                 isCorrect ? Icons.check_circle : Icons.cancel,
-                color: isCorrect ? Colors.green : theme.colorScheme.error,
+                color: isCorrect ? context.bloom.success : context.bloom.danger,
                 size: 18,
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   '$questionNumber. ${question.question}',
-                  style: webScaled(theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14)),
+                  style: webScaled(theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
+                      .copyWith(color: context.bloom.ink),
                 ),
               ),
             ],
           ),
           ...question.options.asMap().entries.map((entry) {
             final i = entry.key;
-            final isCorrectOption = i == question.correctIndex;
-            final isSelectedOption = i == selected;
-            Color? color;
-            if (isCorrectOption) {
-              color = Colors.green;
-            } else if (isSelectedOption) {
-              color = theme.colorScheme.error;
-            }
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Text(
-                entry.value,
-                style: webScaled(
-                  (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)).copyWith(
-                    color: color,
-                    fontWeight: (isCorrectOption || isSelectedOption) ? FontWeight.bold : null,
-                  ),
-                ),
+              child: BloomMcOption(
+                label: entry.value,
+                onTap: null,
+                state: i == question.correctIndex
+                    ? BloomMcState.correct
+                    : (i == selected ? BloomMcState.wrong : BloomMcState.neutral),
               ),
             );
           }),
           Text(
             'Giải thích: ${question.explanation}',
             style: webScaled(
-              (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-                  .copyWith(fontStyle: FontStyle.italic),
+              (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)).copyWith(
+                fontStyle: FontStyle.italic,
+                color: context.bloom.inkSoft,
+              ),
             ),
           ),
         ],

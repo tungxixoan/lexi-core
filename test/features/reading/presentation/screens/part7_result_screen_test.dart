@@ -107,6 +107,7 @@ void main() {
     expect(find.textContaining('Document 1-0'), findsOneWidget);
     expect(find.textContaining('Document 2-0'), findsOneWidget);
     expect(find.textContaining('Document 2-1'), findsOneWidget);
+    expect(find.text('Đoạn 3 (2 văn bản liên quan)'), findsOneWidget);
     expect(find.textContaining('Vì đáp án A đúng (0-0).'), findsOneWidget);
   });
 
