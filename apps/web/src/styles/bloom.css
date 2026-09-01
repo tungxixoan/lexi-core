@@ -966,11 +966,12 @@ button.btn-primary:disabled {
   justify-content: space-between;
 }
 
-/* While a grade is being recorded the card turns over blank — no headword,
-   no meaning, no buttons — until the flip settles and the next word's front
-   fades in (keyed remount of <FlashcardCard>). */
-.fc-card.is-grading .fc-face-front,
-.fc-card.is-grading .fc-face-back {
+/* While a grade is being recorded the card keeps its surface but turns over
+   with its CONTENT hidden — no headword, no meaning, no buttons — until the
+   flip settles and the next word's front fades in (keyed remount of
+   <FlashcardCard>). Only the faces' children fade; the card panel stays. */
+.fc-card.is-grading .fc-face-front > *,
+.fc-card.is-grading .fc-face-back > * {
   opacity: 0;
   transition: opacity 0.12s ease;
 }
