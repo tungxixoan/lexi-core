@@ -56,20 +56,26 @@ class _BloomPassageSheetState extends State<BloomPassageSheet> {
             boxShadow: BloomShadows.warm(isDark),
           ),
           clipBehavior: Clip.antiAlias,
-          child: Column(
+          child: ListView(
+            controller: scrollController,
+            padding: const EdgeInsets.fromLTRB(BloomSpacing.lg, BloomSpacing.sm,
+                BloomSpacing.lg, BloomSpacing.xl),
             children: [
-              const SizedBox(height: BloomSpacing.sm),
-              Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: c.inkFaint,
-                  borderRadius: BorderRadius.circular(BloomRadii.pill),
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: c.inkFaint,
+                    borderRadius: BorderRadius.circular(BloomRadii.pill),
+                  ),
                 ),
               ),
               const SizedBox(height: BloomSpacing.xs),
-              Text(widget.hint,
-                  style: TextStyle(fontSize: 12.5, color: c.inkFaint)),
+              Center(
+                child: Text(widget.hint,
+                    style: TextStyle(fontSize: 12.5, color: c.inkFaint)),
+              ),
               if (widget.tabs.length > 1) ...[
                 const SizedBox(height: BloomSpacing.sm),
                 Row(
@@ -89,24 +95,15 @@ class _BloomPassageSheetState extends State<BloomPassageSheet> {
                 ),
               ],
               const SizedBox(height: BloomSpacing.sm),
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.fromLTRB(
-                      BloomSpacing.lg, 0, BloomSpacing.lg, BloomSpacing.xl),
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.only(left: BloomSpacing.md),
-                      decoration: BoxDecoration(
-                        border: Border(
-                            left: BorderSide(color: c.accent, width: 3)),
-                      ),
-                      child: Text(
-                        widget.passages[_tab],
-                        style: webScaled(TextStyle(fontSize: 15, color: c.ink)),
-                      ),
-                    ),
-                  ],
+              Container(
+                padding: const EdgeInsets.only(left: BloomSpacing.md),
+                decoration: BoxDecoration(
+                  border:
+                      Border(left: BorderSide(color: c.accent, width: 3)),
+                ),
+                child: Text(
+                  widget.passages[_tab],
+                  style: webScaled(TextStyle(fontSize: 15, color: c.ink)),
                 ),
               ),
             ],

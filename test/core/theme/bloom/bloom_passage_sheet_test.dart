@@ -61,4 +61,16 @@ void main() {
       greaterThan(300),
     );
   });
+
+  testWidgets('collapsed to a tiny extent with a tab row does not overflow',
+      (tester) async {
+    await tester.pumpWidget(_host(BloomPassageSheet(
+      tabs: ['Văn bản 1', 'Văn bản 2'],
+      passages: ['FIRST DOC', 'SECOND DOC'],
+      initialChildSize: 0.12,
+    )));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Kéo lên để đọc đoạn văn'), findsOneWidget);
+  });
 }
