@@ -46,7 +46,6 @@ class _BloomPassageSheetState extends State<BloomPassageSheet> {
       minChildSize: widget.minChildSize,
       maxChildSize: widget.maxChildSize,
       snap: true,
-      expand: false,
       builder: (context, scrollController) {
         return Container(
           decoration: BoxDecoration(

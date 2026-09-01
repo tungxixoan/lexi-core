@@ -47,4 +47,18 @@ void main() {
     // The only tappable pill-like control would be a tab; there are none.
     expect(find.text('Văn bản'), findsNothing);
   });
+
+  testWidgets('bottom-anchors as a bare Stack overlay', (tester) async {
+    await tester.pumpWidget(_host(BloomPassageSheet(
+      tabs: ['Văn bản'],
+      passages: ['x'],
+      initialChildSize: 0.16,
+    )));
+    await tester.pumpAndSettle();
+    // Collapsed panel must sit at the bottom of the 600px viewport, not the top.
+    expect(
+      tester.getTopLeft(find.text('Kéo lên để đọc đoạn văn')).dy,
+      greaterThan(300),
+    );
+  });
 }
