@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/widgets/ai_disabled_card.dart';
 import '../../../../core/widgets/filter_tile.dart';
 import '../../../../core/widgets/selection_sheets.dart';
@@ -128,26 +129,25 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
     final settings = ref.watch(userSettingsNotifierProvider);
     final topicsAsync = ref.watch(topicsNotifierProvider);
     final sessionAsync = ref.watch(readingPracticeNotifierProvider);
-    final theme = Theme.of(context);
     final words = _matchingWords;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Luyện đọc & gõ'),
-        leading: BackButton(onPressed: () => context.go('/reading')),
+    return BloomScaffold(
+      appBar: BloomAppBar(
+        title: 'Luyện đọc & gõ',
+        leading: BloomIconButton(
+          icon: Icons.arrow_back_ios_new,
+          onPressed: () => context.go('/reading'),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                'AI tạo một đoạn văn song ngữ từ Vocab Bank của bạn. '
-                'Đọc đoạn văn bằng ngôn ngữ mục tiêu, sau đó gõ lại từng câu.',
-                style: theme.textTheme.bodyLarge,
-              ),
+            Text(
+              'AI tạo một đoạn văn song ngữ từ Vocab Bank của bạn. '
+              'Đọc đoạn văn bằng ngôn ngữ mục tiêu, sau đó gõ lại từng câu.',
+              style: TextStyle(fontSize: 14, color: context.bloom.inkSoft),
             ),
             const SizedBox(height: 16),
 
@@ -198,17 +198,22 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
               )
             else
               sessionAsync.when(
-                data: (_) => FilledButton.icon(
+                data: (_) => BloomPillButton(
+                  label: 'Tạo bài luyện',
+                  icon: Icons.auto_awesome,
+                  variant: BloomButtonVariant.primary,
+                  block: true,
                   onPressed: () => _generate(context, ref, words),
-                  icon: const Icon(Icons.auto_awesome),
-                  label: const Text('Tạo bài luyện'),
                 ),
-                loading: () => const Column(
+                loading: () => Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    LinearProgressIndicator(),
-                    SizedBox(height: 12),
-                    Text('Đang tạo bài...'),
+                    const LinearProgressIndicator(),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Đang tạo bài...',
+                      style: TextStyle(color: context.bloom.inkSoft),
+                    ),
                   ],
                 ),
                 error: (e, _) => Column(
@@ -216,12 +221,13 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
                   children: [
                     Text(
                       'Lỗi tạo bài: $e',
-                      style: TextStyle(color: theme.colorScheme.error),
+                      style: TextStyle(color: context.bloom.danger),
                     ),
                     const SizedBox(height: 8),
-                    OutlinedButton(
+                    BloomPillButton(
+                      label: 'Thử lại',
+                      variant: BloomButtonVariant.secondary,
                       onPressed: () => _generate(context, ref, words),
-                      child: const Text('Thử lại'),
                     ),
                   ],
                 ),
