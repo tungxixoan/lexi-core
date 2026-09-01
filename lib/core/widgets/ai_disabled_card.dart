@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
+import '../theme/bloom/bloom.dart';
 
-/// A Card in the theme's error colors, used across home screens to explain
-/// why a generate action is unavailable (AI disabled, not enough saved
-/// words, etc).
+/// A danger-tinted notice used across home screens to explain why a generate
+/// action is unavailable (AI not configured, not enough saved words, ...).
 class AiDisabledCard extends StatelessWidget {
   const AiDisabledCard({super.key, required this.message});
   final String message;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      color: theme.colorScheme.errorContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text(message, style: TextStyle(color: theme.colorScheme.onErrorContainer)),
+    final c = context.bloom;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(BloomSpacing.lg),
+      decoration: BoxDecoration(
+        color: c.dangerBg,
+        border: Border.all(color: c.danger),
+        borderRadius: BorderRadius.circular(BloomRadii.md),
       ),
+      child: Text(message, style: TextStyle(color: c.danger)),
     );
   }
 }
