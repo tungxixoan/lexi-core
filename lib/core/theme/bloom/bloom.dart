@@ -3,6 +3,7 @@ export 'bloom_app_bar.dart';
 export 'bloom_bottom_nav.dart';
 export 'bloom_card.dart';
 export 'bloom_chip.dart';
+export 'bloom_expansion_tile.dart';
 export 'bloom_labels.dart';
 export 'bloom_list_row.dart';
 export 'bloom_mc_option.dart';
