@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
-import '../../../../core/utils/web_text_scale.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../features/vocabulary/domain/entities/vocab_record.dart';
 import '../../../../features/vocabulary/presentation/providers/vocab_bank_provider.dart';
 import '../../../word_radar/presentation/widgets/result_suggestions_section.dart';
@@ -49,7 +49,6 @@ class _ReadingResultScreenState extends ConsumerState<ReadingResultScreen> {
       vocabListForLanguageProvider(result.passage.targetLanguage),
     );
     final vocabRecords = vocabAsync.valueOrNull ?? const <VocabRecord>[];
-    final theme = Theme.of(context);
 
     final accuracyPct = (result.overallAccuracy * 100).toStringAsFixed(1);
     final wpm = result.wpm.toStringAsFixed(0);
@@ -61,92 +60,116 @@ class _ReadingResultScreenState extends ConsumerState<ReadingResultScreen> {
         .whereType<VocabRecord>()
         .toList();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kết quả'),
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.copy),
-            tooltip: 'Sao chép đoạn văn',
-            onPressed: () => _copyPassage(context),
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Stats row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _StatCard(label: 'Độ chính xác', value: '$accuracyPct%'),
-                _StatCard(label: 'Tốc độ', value: '$wpm WPM'),
-                _StatCard(label: 'Thời gian', value: elapsed),
-                _StatCard(label: 'Điểm', value: '$scorePct%'),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (usedRecords.isNotEmpty) ...[
-                      Text('Từ vựng đã luyện', style: theme.textTheme.titleMedium),
-                      const SizedBox(height: 8),
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: usedRecords.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
-                        itemBuilder: (context, i) {
-                          final record = usedRecords[i];
-                          return ListTile(
-                            title: Text(
-                              record.headword,
-                              style: webScaled(
-                                theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16),
-                              ),
-                            ),
-                            subtitle: Text(
-                              record.meaning,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: webScaled(
-                                theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14),
-                              ),
-                            ),
-                            dense: true,
-                          );
-                        },
-                      ),
-                    ],
-                    ResultSuggestionsSection(
-                      text: result.passage.fullText,
-                      targetLanguage: result.passage.targetLanguage,
-                      targetCefrLevel: result.passage.level,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Action buttons
-            FilledButton(
-              onPressed: () => _regenerate(context, ref),
-              child: const Text('Sinh bài mới'),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              onPressed: () => _goHome(context, ref),
-              child: const Text('Về trang chính'),
+    // A hardware/browser back from this nested route would surface a spurious
+    // back arrow / pop to a transient screen — intercept it and go straight to
+    // the Đọc & gõ home instead (same pattern as SessionResultScreen).
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go('/reading/bilingual');
+      },
+      child: BloomScaffold(
+        appBar: BloomAppBar(
+          title: 'Kết quả',
+          automaticallyImplyLeading: false,
+          actions: [
+            BloomIconButton(
+              icon: Icons.copy,
+              tooltip: 'Sao chép đoạn văn',
+              onPressed: () => _copyPassage(context),
             ),
           ],
         ),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              BloomCard(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _stat('Độ chính xác', '$accuracyPct%'),
+                    _stat('Tốc độ', '$wpm WPM'),
+                    _stat('Thời gian', elapsed),
+                    _stat('Điểm', '$scorePct%'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (usedRecords.isNotEmpty) ...[
+                        Text(
+                          'Từ vựng đã luyện',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: context.bloom.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            for (final record in usedRecords)
+                              BloomListRow(
+                                cefr: record.cefrLevel.label,
+                                headword: record.headword,
+                                meaning: record.meaning,
+                              ),
+                          ],
+                        ),
+                      ],
+                      ResultSuggestionsSection(
+                        text: result.passage.fullText,
+                        targetLanguage: result.passage.targetLanguage,
+                        targetCefrLevel: result.passage.level,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              BloomPillButton(
+                label: 'Sinh bài mới',
+                variant: BloomButtonVariant.primary,
+                block: true,
+                onPressed: () => _regenerate(context, ref),
+              ),
+              const SizedBox(height: 8),
+              BloomPillButton(
+                label: 'Về trang chính',
+                variant: BloomButtonVariant.secondary,
+                block: true,
+                onPressed: () => _goHome(context, ref),
+              ),
+            ],
+          ),
+        ),
       ),
+    );
+  }
+
+  Widget _stat(String label, String value) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: context.bloom.accent,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(fontSize: 11.5, color: context.bloom.inkSoft),
+        ),
+      ],
     );
   }
 
@@ -172,26 +195,5 @@ class _ReadingResultScreenState extends ConsumerState<ReadingResultScreen> {
     final s = d.inSeconds % 60;
     if (m > 0) return '${m}m ${s}s';
     return '${s}s';
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  const _StatCard({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      children: [
-        Text(
-          value,
-          style: theme.textTheme.headlineSmall
-              ?.copyWith(color: theme.colorScheme.primary),
-        ),
-        Text(label, style: theme.textTheme.bodySmall),
-      ],
-    );
   }
 }
