@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
+import 'package:lexi_core/core/theme/bloom/bloom.dart';
 import 'package:lexi_core/features/reading/domain/entities/reading_passage.dart';
 import 'package:lexi_core/features/reading/presentation/providers/reading_practice_provider.dart';
 import 'package:lexi_core/features/reading/presentation/screens/reading_session_screen.dart';
@@ -90,5 +91,11 @@ void main() {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
     expect(find.byType(TextField), findsOneWidget);
+  });
+
+  testWidgets('shows a Bloom progress bar', (tester) async {
+    await tester.pumpWidget(_buildSession());
+    await tester.pumpAndSettle();
+    expect(find.byType(BloomProgressBar), findsOneWidget);
   });
 }

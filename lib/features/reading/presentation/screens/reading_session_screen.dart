@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/utils/web_text_scale.dart';
 import '../../../../features/vocabulary/domain/entities/vocab_record.dart';
 import '../../../../features/vocabulary/presentation/providers/vocab_bank_provider.dart';
@@ -127,54 +128,60 @@ class _SessionScaffold extends ConsumerWidget {
     );
     final vocabRecords = vocabAsync.valueOrNull ?? const <VocabRecord>[];
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Câu ${session.currentSentenceIndex + 1} / ${session.passage.sentences.length}',
-        ),
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.copy),
-            tooltip: 'Sao chép đoạn văn',
-            onPressed: () => _copyPassage(context, session),
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Row 1: passage with opacity
-            Expanded(
-              child: _PassageDisplay(
-                passage: session.passage,
-                currentIndex: session.currentSentenceIndex,
-                vocabRecords: vocabRecords,
-              ),
-            ),
-            const Divider(height: 24),
-            // Row 2: Vietnamese translation
-            _VietnameseRow(
-              sentence: session.currentSentence,
-            ),
-            const SizedBox(height: 16),
-            // Row 3: typing area
-            _TypingArea(
-              target: session.currentSentence.target,
-              typedText: session.typedText,
-              ctrl: ctrl,
-              focusNode: focusNode,
-              onTyped: (text) => onTyped(text, session),
-            ),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(
-              value: session.currentSentenceIndex /
-                  session.passage.sentences.length,
-              borderRadius: BorderRadius.circular(4),
+    // A hardware/browser back mid-session would pop the nested route with no
+    // clean teardown. Intercept it and return to the Đọc & gõ home.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go('/reading/bilingual');
+      },
+      child: BloomScaffold(
+        appBar: BloomAppBar(
+          title:
+              'Câu ${session.currentSentenceIndex + 1} / ${session.passage.sentences.length}',
+          automaticallyImplyLeading: false,
+          actions: [
+            BloomIconButton(
+              icon: Icons.copy,
+              tooltip: 'Sao chép đoạn văn',
+              onPressed: () => _copyPassage(context, session),
             ),
           ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Row 1: passage with opacity
+              Expanded(
+                child: _PassageDisplay(
+                  passage: session.passage,
+                  currentIndex: session.currentSentenceIndex,
+                  vocabRecords: vocabRecords,
+                ),
+              ),
+              const SizedBox(height: BloomSpacing.lg),
+              // Row 2: Vietnamese translation
+              _VietnameseRow(
+                sentence: session.currentSentence,
+              ),
+              const SizedBox(height: 16),
+              // Row 3: typing area
+              _TypingArea(
+                target: session.currentSentence.target,
+                typedText: session.typedText,
+                ctrl: ctrl,
+                focusNode: focusNode,
+                onTyped: (text) => onTyped(text, session),
+              ),
+              const SizedBox(height: 8),
+              BloomProgressBar(
+                value: session.currentSentenceIndex /
+                    session.passage.sentences.length,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -220,27 +227,31 @@ class _PassageDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: passage.sentences.asMap().entries.map((entry) {
-          final i = entry.key;
-          final sentence = entry.value;
-          final highlights = _getHighlightWords(sentence);
-          return AnimatedOpacity(
-            duration: const Duration(milliseconds: 300),
-            opacity: _opacity(i),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: _HighlightedText(
-                text: sentence.target,
-                highlights: highlights,
-                style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
+    return BloomCard(
+      padding: const EdgeInsets.all(16),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: passage.sentences.asMap().entries.map((entry) {
+            final i = entry.key;
+            final sentence = entry.value;
+            final highlights = _getHighlightWords(sentence);
+            return AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: _opacity(i),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: _HighlightedText(
+                  text: sentence.target,
+                  highlights: highlights,
+                  style: webScaled(
+                    TextStyle(fontSize: 15, color: context.bloom.ink),
+                  ),
+                ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -286,8 +297,9 @@ class _HighlightedText extends StatelessWidget {
         text: remaining.substring(
             earliestStart, earliestStart + earliestWord.length),
         style: (style ?? const TextStyle()).copyWith(
-          fontWeight: FontWeight.bold,
-          decoration: TextDecoration.underline,
+          fontWeight: FontWeight.w700,
+          color: context.bloom.sage,
+          backgroundColor: context.bloom.sageBg,
         ),
       ));
       remaining = remaining.substring(earliestStart + earliestWord.length);
@@ -311,14 +323,14 @@ class _VietnameseRow extends StatelessWidget {
         key: ValueKey(sentence.target),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(8),
+          color: context.bloom.surface3,
+          borderRadius: BorderRadius.circular(BloomRadii.md),
         ),
         child: Text(
           sentence.vietnamese,
           style: webScaled(
             (theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14))
-                .copyWith(color: theme.colorScheme.onSurface),
+                .copyWith(color: context.bloom.inkSoft),
           ),
         ),
       ),
@@ -342,7 +354,7 @@ class _TypingArea extends StatelessWidget {
   final ValueChanged<String> onTyped;
 
   List<TextSpan> _buildSpans(BuildContext context, TextStyle baseStyle) {
-    final theme = Theme.of(context);
+    final c = context.bloom;
     final spans = <TextSpan>[];
     for (int i = 0; i < target.length; i++) {
       if (i < typedText.length) {
@@ -350,18 +362,14 @@ class _TypingArea extends StatelessWidget {
         spans.add(TextSpan(
           text: typedText[i],
           style: baseStyle.copyWith(
-            color: correct
-                ? Colors.green
-                : theme.colorScheme.error,
-            backgroundColor: correct
-                ? null
-                : theme.colorScheme.error.withValues(alpha: 0.1),
+            color: correct ? c.success : c.danger,
+            backgroundColor: correct ? null : c.dangerBg,
           ),
         ));
       } else {
         spans.add(TextSpan(
           text: target[i],
-          style: baseStyle.copyWith(color: theme.colorScheme.outline),
+          style: baseStyle.copyWith(color: c.inkFaint),
         ));
       }
     }
@@ -380,8 +388,8 @@ class _TypingArea extends StatelessWidget {
     return Container(
       constraints: BoxConstraints(minHeight: kIsWeb ? 200 : 80),
       decoration: BoxDecoration(
-        border: Border.all(color: theme.colorScheme.outline),
-        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.bloom.border),
+        borderRadius: BorderRadius.circular(BloomRadii.md),
       ),
       padding: const EdgeInsets.all(12),
       child: Stack(
@@ -402,7 +410,7 @@ class _TypingArea extends StatelessWidget {
             autofocus: true,
             style: baseStyle.copyWith(color: Colors.transparent),
             strutStyle: strutStyle,
-            cursorColor: theme.colorScheme.primary,
+            cursorColor: context.bloom.accent,
             decoration: const InputDecoration.collapsed(hintText: ''),
             onChanged: onTyped,
           ),
