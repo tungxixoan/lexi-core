@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/utils/web_text_scale.dart';
 import '../../domain/entities/part7_passage.dart';
 import '../providers/part7_practice_provider.dart';
@@ -42,98 +43,104 @@ class Part7SessionScreen extends ConsumerWidget {
   }
 }
 
-class _SessionScaffold extends ConsumerWidget {
+class _SessionScaffold extends ConsumerStatefulWidget {
   const _SessionScaffold({required this.session});
   final Part7SessionState session;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(part7PracticeNotifierProvider.notifier);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Part 7 — Đọc hiểu'), automaticallyImplyLeading: false),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    for (var g = 0; g < session.set.passageGroups.length; g++) ...[
-                      if (g > 0) const SizedBox(height: 16),
-                      _PassageGroupCard(
-                        groupIndex: g,
-                        group: session.set.passageGroups[g],
-                        allGroups: session.set.passageGroups,
-                        selectedAnswers: session.selectedAnswers,
-                        onSelected: (questionIndex, optionIndex) =>
-                            notifier.selectAnswer(g, questionIndex, optionIndex),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            FilledButton(
-              onPressed: session.canSubmit ? notifier.submit : null,
-              child: const Text('Nộp bài'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  ConsumerState<_SessionScaffold> createState() => _SessionScaffoldState();
 }
 
-class _PassageGroupCard extends StatelessWidget {
-  const _PassageGroupCard({
-    required this.groupIndex,
-    required this.group,
-    required this.allGroups,
-    required this.selectedAnswers,
-    required this.onSelected,
-  });
-
-  final int groupIndex;
-  final Part7PassageGroup group;
-  final List<Part7PassageGroup> allGroups;
-  final List<int?> selectedAnswers;
-  final void Function(int questionIndex, int optionIndex) onSelected;
+class _SessionScaffoldState extends ConsumerState<_SessionScaffold> {
+  int _activeGroup = 0;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDouble = group.documents.length == 2;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final session = widget.session;
+    final notifier = ref.read(part7PracticeNotifierProvider.notifier);
+    final group = session.set.passageGroups[_activeGroup];
+    final peek = MediaQuery.sizeOf(context).height * 0.20;
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go('/reading/part7');
+      },
+      child: BloomScaffold(
+        appBar: BloomAppBar(
+          title: 'Part 7 — Đọc hiểu',
+          automaticallyImplyLeading: false,
+        ),
+        body: Column(
           children: [
-            Text(
-              isDouble ? 'Đoạn ${groupIndex + 1} (2 văn bản liên quan)' : 'Đoạn ${groupIndex + 1}',
-              style: theme.textTheme.titleSmall,
+            Expanded(
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        BloomGroupChips(
+                          labels: [
+                            for (var g = 0; g < session.set.passageGroups.length; g++)
+                              'Đoạn ${g + 1}',
+                          ],
+                          activeIndex: _activeGroup,
+                          onChanged: (i) => setState(() => _activeGroup = i),
+                        ),
+                        const SizedBox(height: BloomSpacing.md),
+                        Expanded(
+                          // A plain scroll view (not a lazy ListView): every
+                          // question in the group stays laid out while it sits
+                          // behind the peeking passage sheet, so reaching the
+                          // last question of a long group is only a scroll.
+                          child: SingleChildScrollView(
+                            padding: EdgeInsets.only(bottom: peek + BloomSpacing.md),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                for (var q = 0; q < group.questions.length; q++) ...[
+                                  if (q > 0) const SizedBox(height: BloomSpacing.sm),
+                                  _QuestionCard(
+                                    question: group.questions[q],
+                                    questionIndex: q,
+                                    selected: session.selectedAnswers[
+                                        Part7SessionState.flatIndex(
+                                            session.set.passageGroups, _activeGroup, q)],
+                                    onSelected: (o) => notifier.selectAnswer(_activeGroup, q, o),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  BloomPassageSheet(
+                    key: ValueKey(_activeGroup),
+                    tabs: group.documents.length == 2
+                        ? const ['Văn bản 1', 'Văn bản 2']
+                        : const ['Văn bản'],
+                    passages: group.documents,
+                    initialChildSize: 0.20,
+                    minChildSize: 0.12,
+                    maxChildSize: 0.9,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
-            for (var d = 0; d < group.documents.length; d++) ...[
-              if (d > 0) const SizedBox(height: 12),
-              Text(
-                group.documents[d],
-                style: webScaled(theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  16, BloomSpacing.sm, 16, BloomSpacing.md),
+              child: BloomPillButton(
+                label: 'Nộp bài',
+                variant: BloomButtonVariant.primary,
+                block: true,
+                onPressed: session.canSubmit ? notifier.submit : null,
               ),
-            ],
-            const SizedBox(height: 8),
-            for (var q = 0; q < group.questions.length; q++) ...[
-              if (q > 0) const Divider(height: 1),
-              _QuestionGroup(
-                questionNumber: q + 1,
-                question: group.questions[q],
-                selected: selectedAnswers[Part7SessionState.flatIndex(allGroups, groupIndex, q)],
-                onSelected: (optionIndex) => onSelected(q, optionIndex),
-              ),
-            ],
+            ),
           ],
         ),
       ),
@@ -141,47 +148,41 @@ class _PassageGroupCard extends StatelessWidget {
   }
 }
 
-class _QuestionGroup extends StatelessWidget {
-  const _QuestionGroup({
-    required this.questionNumber,
+class _QuestionCard extends StatelessWidget {
+  const _QuestionCard({
     required this.question,
+    required this.questionIndex,
     required this.selected,
     required this.onSelected,
   });
 
-  final int questionNumber;
   final Part7Question question;
+  final int questionIndex;
   final int? selected;
   final ValueChanged<int> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-          child: Text(
-            '$questionNumber. ${question.question}',
-            style: webScaled(theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)),
+    return BloomCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${questionIndex + 1}. ${question.question}',
+            style: webScaled(const TextStyle(fontSize: 14, fontWeight: FontWeight.w700))
+                .copyWith(color: context.bloom.ink),
           ),
-        ),
-        ...question.options.asMap().entries.map(
-              (entry) => RadioListTile<int>(
-                value: entry.key,
-                groupValue: selected,
-                title: Text(
-                  entry.value,
-                  style: webScaled(theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)),
-                ),
-                dense: true,
-                onChanged: (v) {
-                  if (v != null) onSelected(v);
-                },
-              ),
+          for (var o = 0; o < question.options.length; o++) ...[
+            const SizedBox(height: BloomSpacing.sm),
+            BloomMcOption(
+              label: question.options[o],
+              leading: String.fromCharCode(65 + o),
+              onTap: () => onSelected(o),
+              state: selected == o ? BloomMcState.selected : BloomMcState.neutral,
             ),
-      ],
+          ],
+        ],
+      ),
     );
   }
 }

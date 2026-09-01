@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lexi_core/core/theme/bloom/bloom.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/reading/domain/entities/economy_volume.dart';
 import 'package:lexi_core/features/reading/domain/entities/part7_passage.dart';
 import 'package:lexi_core/features/reading/presentation/providers/part7_practice_provider.dart';
 import 'package:lexi_core/features/reading/presentation/screens/part7_session_screen.dart';
+
+const _group0Doc = 'Document 0';
 
 Part7PassageGroup _singleGroup(int i, int questionCount) => Part7PassageGroup(
       documents: ['Document $i'],
@@ -81,122 +84,90 @@ Widget _buildSession({Part7SessionState? session}) {
   );
 }
 
-/// Locates the `Column` built by `_QuestionGroup` for the question whose
-/// rendered text contains [questionTextSubstring] (e.g. `'Q1-2?'`), so a
-/// specific option tile can be searched for within that scope only.
-Finder _questionColumn(String questionTextSubstring) {
-  final questionFinder = find.textContaining(questionTextSubstring);
-  return find
-      .ancestor(of: questionFinder, matching: find.byWidgetPredicate((w) => w is Column))
-      .first;
-}
-
-/// Locates the `RadioListTile<int>` within [questionScope] whose title text
-/// equals [optionText] (e.g. `'a'`..`'d'`).
-Finder _optionTile(Finder questionScope, String optionText) {
-  return find.descendant(
-    of: questionScope,
-    matching: find.byWidgetPredicate(
-      (w) => w is RadioListTile<int> && (w.title as Text?)?.data == optionText,
-    ),
-  );
-}
-
 void main() {
-  testWidgets('shows all 3 groups\' documents, including both documents of the double-passage group',
-      (tester) async {
+  testWidgets('group 1 questions first; chips switch groups; double group shows two doc tabs', (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
-    expect(find.textContaining('Document 0'), findsOneWidget);
-    expect(find.textContaining('Document 1'), findsOneWidget);
-    expect(find.textContaining('Document A'), findsOneWidget);
-    expect(find.textContaining('Document B'), findsOneWidget);
+    expect(find.byType(BloomGroupChips), findsOneWidget);
+    expect(find.textContaining('Q0-0?'), findsOneWidget);
+    expect(find.textContaining(_group0Doc), findsOneWidget);
+    // group 1's questions are not shown yet
+    expect(find.textContaining('Q1-0?'), findsNothing);
+
+    await tester.tap(find.text('Đoạn 3')); // the double-passage group
+    await tester.pumpAndSettle();
+    expect(find.text('Văn bản 1'), findsOneWidget);
+    expect(find.text('Văn bản 2'), findsOneWidget);
+    expect(find.textContaining('DQ0?'), findsOneWidget);
+    expect(find.textContaining('Q0-0?'), findsNothing);
   });
 
-  testWidgets('Nộp bài is disabled until all 12 answers are selected', (tester) async {
+  testWidgets('answering group 3 / question 1 writes flatIndex(groups, 2, 0)', (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
-    final button = tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Nộp bài'));
-    expect(button.onPressed, isNull);
+    await tester.tap(find.text('Đoạn 3'));
+    await tester.pumpAndSettle();
+
+    final firstCardOptionB = find.descendant(
+      of: find.byType(BloomCard).first,
+      matching: find.text('b'),
+    );
+    await tester.ensureVisible(firstCardOptionB);
+    await tester.tap(firstCardOptionB);
+    await tester.pumpAndSettle();
+
+    final groups = _testSet.passageGroups;
+    final container = ProviderScope.containerOf(
+        tester.element(find.byType(Part7SessionScreen)), listen: false);
+    final answers = container.read(part7PracticeNotifierProvider).value!.selectedAnswers;
+    expect(answers[Part7SessionState.flatIndex(groups, 2, 0)], 1); // 3+4+0 = 7
+    expect(answers[Part7SessionState.flatIndex(groups, 0, 0)], isNull);
+  });
+
+  testWidgets('Nộp bài is disabled until every question is answered', (tester) async {
+    await tester.pumpWidget(_buildSession());
+    await tester.pumpAndSettle();
+    expect(tester.widget<BloomPillButton>(find.byType(BloomPillButton)).onPressed, isNull);
   });
 
   testWidgets('Nộp bài is enabled once all 12 answers are selected', (tester) async {
-    await tester.pumpWidget(_buildSession(
-      session: Part7SessionState(set: _testSet, selectedAnswers: List<int?>.filled(12, 0), isSubmitted: false),
-    ));
+    await tester.pumpWidget(_buildSession(session: Part7SessionState(
+        set: _testSet, selectedAnswers: List<int?>.filled(12, 0), isSubmitted: false)));
     await tester.pumpAndSettle();
-    final button = tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Nộp bài'));
-    expect(button.onPressed, isNotNull);
+    expect(tester.widget<BloomPillButton>(find.byType(BloomPillButton)).onPressed, isNotNull);
   });
 
   testWidgets('submitting navigates to the result screen', (tester) async {
-    await tester.pumpWidget(_buildSession(
-      session: Part7SessionState(set: _testSet, selectedAnswers: List<int?>.filled(12, 0), isSubmitted: false),
-    ));
+    await tester.pumpWidget(_buildSession(session: Part7SessionState(
+        set: _testSet, selectedAnswers: List<int?>.filled(12, 0), isSubmitted: false)));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Nộp bài'));
+    await tester.tap(find.byType(BloomPillButton));
     await tester.pumpAndSettle();
     expect(find.text('Result screen'), findsOneWidget);
   });
 
-  testWidgets(
-      'tapping an option threads the correct group/question index end-to-end '
-      'and Nộp bài only enables once every question across all 3 groups is answered',
-      (tester) async {
+  testWidgets('answering group-by-group across all 3 groups enables Nộp bài only after the last question', (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
+    bool enabled() => tester.widget<BloomPillButton>(find.byType(BloomPillButton)).onPressed != null;
+    expect(enabled(), isFalse);
 
-    FilledButton submitButton() =>
-        tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Nộp bài'));
-    bool submitEnabled() => submitButton().onPressed != null;
-
-    expect(submitEnabled(), isFalse);
-
-    // Group 1 (the second single-passage group, 4 questions), question index 2
-    // (0-based) — a non-first group/question where a swapped or miscaptured
-    // groupIndex/questionIndex would visibly select the wrong tile.
-    final targetQuestion = _questionColumn('Q1-2?');
-    final targetOptionC = _optionTile(targetQuestion, 'c');
-    await tester.ensureVisible(targetOptionC);
-    await tester.tap(targetOptionC);
-    await tester.pumpAndSettle();
-
-    // The tapped question now shows option 'c' (index 2) as selected...
-    final tappedTile = tester.widget<RadioListTile<int>>(_optionTile(targetQuestion, 'c'));
-    expect(tappedTile.groupValue, 2);
-
-    // ...while a sibling question in the SAME group remains untouched...
-    final siblingTile =
-        tester.widget<RadioListTile<int>>(_optionTile(_questionColumn('Q1-0?'), 'a'));
-    expect(siblingTile.groupValue, isNull);
-
-    // ...and a question in the double-passage group (a different groupIndex)
-    // is also untouched.
-    final otherGroupTile =
-        tester.widget<RadioListTile<int>>(_optionTile(_questionColumn('DQ0?'), 'a'));
-    expect(otherGroupTile.groupValue, isNull);
-
-    expect(submitEnabled(), isFalse);
-
-    // Now answer every remaining question, in flat (group-major) order, and
-    // confirm the submit button flips to enabled only after the very last
-    // one — proving the dynamic total-question count (3 + 4 + 5 = 12) and
-    // per-group indexing work end-to-end, not just at the notifier level.
-    const questionsInFlatOrder = [
-      'Q0-0?', 'Q0-1?', 'Q0-2?', // group 0 (3 questions)
-      'Q1-0?', 'Q1-1?', 'Q1-2?', 'Q1-3?', // group 1 (4 questions)
-      'DQ0?', 'DQ1?', 'DQ2?', 'DQ3?', 'DQ4?', // group 2, double-passage (5 questions)
-    ];
-    const options = ['a', 'b', 'c', 'd'];
-
-    for (var i = 0; i < questionsInFlatOrder.length; i++) {
-      final scope = _questionColumn(questionsInFlatOrder[i]);
-      final tile = _optionTile(scope, options[i % options.length]);
-      await tester.ensureVisible(tile);
-      await tester.tap(tile);
-      await tester.pumpAndSettle();
-      final isLast = i == questionsInFlatOrder.length - 1;
-      expect(submitEnabled(), isLast, reason: 'after tapping "${questionsInFlatOrder[i]}"');
+    // group 0: 3 questions; group 1: 4; group 2: 5. Answer option 'a' for each.
+    const perGroup = [3, 4, 5];
+    var answeredTotal = 0;
+    for (var g = 0; g < 3; g++) {
+      if (g > 0) {
+        await tester.tap(find.text('Đoạn ${g + 1}'));
+        await tester.pumpAndSettle();
+      }
+      for (var q = 0; q < perGroup[g]; q++) {
+        final opt = find.descendant(of: find.byType(BloomCard).at(q), matching: find.text('a'));
+        await tester.ensureVisible(opt);
+        await tester.tap(opt);
+        await tester.pumpAndSettle();
+        answeredTotal++;
+        expect(enabled(), answeredTotal == 12, reason: 'after group $g question $q');
+      }
     }
   });
 }
