@@ -1943,3 +1943,51 @@ Range 2fa3cae..906e1ac on master, NOT pushed yet. 676 tests, analyze 21.
 Includes: 8 restyle tasks + BloomMcOption + BloomResultRing + the user's flashcard request (flip reveal ramp 350→450ms + grow card / long-meaning scroll) + 2 rounds of final-review fixes (Ink-under-BloomScaffold-gradient bug on BloomCard/BloomMcOption/FilterTile/BloomChip — a Plan-1-fix that only worked outside a gradient scaffold; back-arrow dead-end on nested practice routes → BloomAppBar.automaticallyImplyLeading + PopScope; 2 webScaled regressions).
 Uncovered (not a defect): BloomMcOption webScaled has no regression test (webScaled is a no-op off-web).
 Next: Plan 4 (Reading) — to be written.
+
+---
+
+# PLAN 4 (Reading) — IN PROGRESS
+Plan: docs/superpowers/plans/2026-08-31-flutter-bloom-plan4-reading.md
+Base: 4b6a01e (master). Baseline 678 tests, flutter analyze 21.
+Execution: subagent-driven, started 2026-09-01.
+
+Preflight scan: no task-vs-task or task-vs-constraint contradictions. Notes carried to final review:
+- Plan deliberately keeps raw `LinearProgressIndicator` in loading branches (BloomProgressBar has no indeterminate mode) — Plan 3 precedent, justified in plan.
+- Task 1 brief's example test carries an awkward `BloomColorsAccess` helper; plan already says to prefer `BloomColors.light.sage` directly — implementer should.
+- analyze count may DROP below 21 (RadioListTile→BloomMcOption removes deprecation infos) — allowed by plan; must never rise.
+
+Task 1 (BloomExpansionTile): complete (commits 4b6a01e..f2ac6e4, review clean). 682 tests, analyze clean.
+  Minor for final review: AnimatedSize collapse unmounts child subtree → child-local state dropped on collapse. Plan-mandated structure; Part 6 use lifts answer state to parent, so harmless there.
+Task 2 (BloomGroupChips): complete (commits f2ac6e4..3004026, review clean). 685 tests, analyze clean.
+Task 3 (BloomPassageSheet): complete (commits 3004026..f6e18c2, review clean). 688 tests, analyze clean.
+  Minor for final review: `const` constructor can never be invoked const anywhere (assert(list.length==list.length) not const-evaluable); harmless, plan mandated the const ctor.
+Task 4 (AiDisabledCard tokens + Reading hub): complete (commits f6e18c2..3ba4e01, review clean). 688 tests, analyze 21. Also fixed test/core/widgets/ai_disabled_card_test.dart (Card→AiDisabledCard finder).
+Task 5 (Đọc & gõ home): complete (commits 3ba4e01..32ba2ef, review clean). 688 tests, analyze 21.
+Task 6 (Đọc & gõ session): complete (commits 32ba2ef..8f77119, incl. font-regression fix, re-review clean). 690 tests, analyze 21.
+  Minor for final review: 2 pre-existing raw SizedBox(16/8) in _SessionScaffold left untokenized; new test import out of sorted order.
+Task 7 (Đọc & gõ result): complete (commits 8f77119..037e264, review clean). 690 tests, analyze 21.
+  Minor for final review: BloomListRow drops web-only webScaled on the vocab list (plan-sanctioned, matches Plan 2); stats Row inside BloomCard+page padding on ~360px worth a visual check.
+Task 8 (Part 5 home + result): complete (commits 037e264..77cd016, review clean). 690 tests, analyze 21.
+  Minor for final review: part5_result_screen.dart:139 EdgeInsets.all(12) → BloomSpacing.md; :167 symmetric(vertical:2) non-token (pre-existing).
+Task 9 (Part 5 session): complete (commits 77cd016..a5c12f1, review clean). 691 tests, analyze 19 (RadioListTile removed).
+  Minor for final review: part5_session_screen_test new selectAnswer test taps (q1,opt1) so cannot catch an arg-order swap; use card index 2 for a real guard.
+Task 10 (Part 6 home + result): complete (commits a5c12f1..9b47b1f, review clean). 691 tests, analyze 19.
+Task 11 (Part 6 session REDESIGN): complete (commits 9b47b1f..e4bf51f — 0da6047 BloomPassageSheet expand:false→true fix + e4bf51f screen, review clean). 692 tests, analyze 17. Layout: submit below sheet, sheet peeks 0.16 drag-up. Test 2 uses authorized ensureVisible.
+  Minor for final review: no Part 6 session test picks an option AFTER switching chips (per-slot write test only exercises passage 0).
+Task 12 (Part 7 home + result): complete (commits e4bf51f..d1b56b9, review clean). 692 tests, analyze 17. Added a double-passage label assertion (new coverage of a frozen branch).
+Task 13 (Part 7 session REDESIGN): complete (commits d1b56b9..cc0913e, review clean). 693 tests, analyze 12. Sound deviation: SingleChildScrollView+Column (matches old Part 7 pattern; ListView would offstage cards).
+
+# PLAN 4 (Reading) — ALL 13 TASKS COMPLETE. Range 7760040..cc0913e on master (Plan 4 doc at 4b6a01e). 693 tests (was 678), flutter analyze 12 (was 21 — 9 RadioListTile deprecation infos removed across Part 5/6/7 sessions). Final whole-branch review next.
+
+## Plan 4 final whole-branch review (sonnet; opus attempt rate-limited) — Ready to merge: With fixes
+Frozen surface verified intact; PopScope/appbar uniform; 3 new widgets idiomatic; flatIndex arg order correct everywhere; redesign tests drive real behavior; analyze 21→12 all from RadioListTile removal. 693 tests.
+- IMPORTANT I-1: BloomPassageSheet non-scrolling header (~80px w/ tab row) overflows Expanded when Part 7 double-passage sheet drags to minChildSize 0.12 (panel ~75-90px). clipBehavior masks in release, debug asserts, font-scale makes it deterministic. Part 6 (no tab row) safe. FIX: move handle/hint/tabs INTO the scrollable area.
+- Minor fixes to apply: M-1 Part 6 _BlankTile needs key: ValueKey('$_activePassage-$q'); M-2 part5_result EdgeInsets.all(12)→BloomSpacing.md + part6_result 'Chỗ trống' header titleSmall→context.bloom.ink; M-3 tab wording 'Đoạn văn' vs 'Văn bản' — align; M-7 add leading A/B/C/D to result-screen BloomMcOption; M-8 add Part 6 test answering after chip switch + strengthen part5 wiring test to distinct indices.
+- Left as-is (documented): M-4 Bài khác/Sinh bài mới (pre-existing, not introduced), M-5 BloomListRow one-line meaning (plan-sanctioned), M-6 Part6/7 scroll container divergence (defensible), M-9/M-10 (harmless), nits.
+Fix dispatch: 1 agent — I-1 + M-1,2,3,7,8.
+Plan 4 final-review fixes: 0bf7614 (I-1 BloomPassageSheet header→scrollable, RED "overflowed by 13px"→GREEN) + bd55675 (M-1 tile keys, M-2 token sweep, M-3 tab wording, M-7 result option letters, M-8 test gaps). 695 tests, analyze 12. Re-review pending.
+Plan 4 fix-wave re-review (sonnet): Ready: YES. All 7 findings (I-1 + M-1/2/3/7/8x2) correct & minimal; frozen surface untouched; sheet tests still assert real behavior; new cross-passage + transposition test coverage. 2 non-blocking minors noted.
+
+# PLAN 4 (Reading) — COMPLETE. Range 4b6a01e..bd55675 on master, NOT pushed (origin at 28477f0, 18 commits behind). flutter analyze 12 (all pre-existing Radio deprecations in settings/comprehension/selection_sheets — none in Reading). Full-suite verify in progress.
+Deferred to later plans / documented minors: M-4 (Bài khác vs Sinh bài mới — pre-existing), M-5 (BloomListRow one-line meaning — plan-sanctioned, matches Plan 2), M-6 (Part6 Expanded(ListView) vs Part7 SingleChildScrollView — defensible), M-9/M-10 (BloomExpansionTile AnimatedSize unmount / BloomPassageSheet non-const-invocable const ctor — both harmless), Nits (Border.all 4-sided, _stat implicit context, static hint text), plan-4-fixes-rereview 2 minors (overflow test could also assert passage renders; redundant padding on centered handle/hint).
+Next: Plan 5 (Listening + Word Radar + Progress) — to be written.
