@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/utils/web_text_scale.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../domain/entities/part6_passage.dart';
 import '../providers/part6_practice_provider.dart';
 
@@ -42,88 +42,95 @@ class Part6SessionScreen extends ConsumerWidget {
   }
 }
 
-class _SessionScaffold extends ConsumerWidget {
+class _SessionScaffold extends ConsumerStatefulWidget {
   const _SessionScaffold({required this.session});
   final Part6SessionState session;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(part6PracticeNotifierProvider.notifier);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Part 6 — Điền đoạn văn'), automaticallyImplyLeading: false),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    for (var p = 0; p < session.set.passages.length; p++) ...[
-                      if (p > 0) const SizedBox(height: 16),
-                      _PassageCard(
-                        passageIndex: p,
-                        passage: session.set.passages[p],
-                        selectedAnswers: session.selectedAnswers,
-                        onSelected: (questionIndex, optionIndex) =>
-                            notifier.selectAnswer(p, questionIndex, optionIndex),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            FilledButton(
-              onPressed: session.canSubmit ? notifier.submit : null,
-              child: const Text('Nộp bài'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  ConsumerState<_SessionScaffold> createState() => _SessionScaffoldState();
 }
 
-class _PassageCard extends StatelessWidget {
-  const _PassageCard({
-    required this.passageIndex,
-    required this.passage,
-    required this.selectedAnswers,
-    required this.onSelected,
-  });
-
-  final int passageIndex;
-  final Part6Passage passage;
-  final List<int?> selectedAnswers;
-  final void Function(int questionIndex, int optionIndex) onSelected;
+class _SessionScaffoldState extends ConsumerState<_SessionScaffold> {
+  int _activePassage = 0;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final session = widget.session;
+    final notifier = ref.read(part6PracticeNotifierProvider.notifier);
+    final passage = session.set.passages[_activePassage];
+    final peek = MediaQuery.sizeOf(context).height * 0.16;
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go('/reading/part6');
+      },
+      child: BloomScaffold(
+        appBar: BloomAppBar(
+          title: 'Part 6 — Điền đoạn văn',
+          automaticallyImplyLeading: false,
+        ),
+        body: Column(
           children: [
-            Text('Đoạn ${passageIndex + 1}', style: theme.textTheme.titleSmall),
-            const SizedBox(height: 8),
-            Text(
-              passage.passageText,
-              style: webScaled(theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)),
-            ),
-            const SizedBox(height: 8),
-            for (var q = 0; q < passage.questions.length; q++) ...[
-              if (q > 0) const Divider(height: 1),
-              _QuestionGroup(
-                blankNumber: q + 1,
-                question: passage.questions[q],
-                selected: selectedAnswers[Part6SessionState.flatIndex(passageIndex, q)],
-                onSelected: (optionIndex) => onSelected(q, optionIndex),
+            Expanded(
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        BloomGroupChips(
+                          labels: [
+                            for (var p = 0; p < session.set.passages.length; p++)
+                              'Đoạn ${p + 1}',
+                          ],
+                          activeIndex: _activePassage,
+                          onChanged: (i) => setState(() => _activePassage = i),
+                        ),
+                        const SizedBox(height: BloomSpacing.md),
+                        Expanded(
+                          child: ListView(
+                            padding: EdgeInsets.only(bottom: peek + BloomSpacing.md),
+                            children: [
+                              for (var q = 0; q < passage.questions.length; q++) ...[
+                                if (q > 0) const SizedBox(height: BloomSpacing.sm),
+                                _BlankTile(
+                                  question: passage.questions[q],
+                                  questionIndex: q,
+                                  selected: session.selectedAnswers[
+                                      Part6SessionState.flatIndex(_activePassage, q)],
+                                  onSelected: (o) =>
+                                      notifier.selectAnswer(_activePassage, q, o),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  BloomPassageSheet(
+                    key: ValueKey(_activePassage),
+                    tabs: const ['Đoạn văn'],
+                    passages: [passage.passageText],
+                    initialChildSize: 0.16,
+                    minChildSize: 0.12,
+                    maxChildSize: 0.9,
+                  ),
+                ],
               ),
-            ],
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  16, BloomSpacing.sm, 16, BloomSpacing.md),
+              child: BloomPillButton(
+                label: 'Nộp bài',
+                variant: BloomButtonVariant.primary,
+                block: true,
+                onPressed: session.canSubmit ? notifier.submit : null,
+              ),
+            ),
           ],
         ),
       ),
@@ -131,44 +138,42 @@ class _PassageCard extends StatelessWidget {
   }
 }
 
-class _QuestionGroup extends StatelessWidget {
-  const _QuestionGroup({
-    required this.blankNumber,
+class _BlankTile extends StatelessWidget {
+  const _BlankTile({
     required this.question,
+    required this.questionIndex,
     required this.selected,
     required this.onSelected,
   });
 
-  final int blankNumber;
   final Part6Question question;
+  final int questionIndex;
   final int? selected;
   final ValueChanged<int> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-          child: Text('Chỗ trống ($blankNumber)', style: theme.textTheme.labelMedium),
-        ),
-        ...question.options.asMap().entries.map(
-              (entry) => RadioListTile<int>(
-                value: entry.key,
-                groupValue: selected,
-                title: Text(
-                  entry.value,
-                  style: webScaled(theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)),
-                ),
-                dense: true,
-                onChanged: (v) {
-                  if (v != null) onSelected(v);
-                },
-              ),
+    final q = questionIndex;
+    return BloomExpansionTile(
+      title: 'Chỗ trống (${q + 1})',
+      answered: selected != null,
+      summary: selected == null
+          ? 'Chưa trả lời'
+          : 'Đã chọn: ${question.options[selected!]}',
+      initiallyExpanded: selected == null && q == 0,
+      child: Column(
+        children: [
+          for (var o = 0; o < question.options.length; o++) ...[
+            if (o > 0) const SizedBox(height: BloomSpacing.sm),
+            BloomMcOption(
+              label: question.options[o],
+              leading: String.fromCharCode(65 + o),
+              onTap: () => onSelected(o),
+              state: selected == o ? BloomMcState.selected : BloomMcState.neutral,
             ),
-      ],
+          ],
+        ],
+      ),
     );
   }
 }

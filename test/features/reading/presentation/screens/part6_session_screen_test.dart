@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lexi_core/core/theme/bloom/bloom.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/reading/domain/entities/economy_volume.dart';
@@ -68,88 +69,61 @@ Widget _buildSession({Part6SessionState? session}) {
 }
 
 void main() {
-  testWidgets('shows all 3 passage texts', (tester) async {
+  testWidgets('shows passage 1 questions first; chips switch passages', (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
+    expect(find.text('Chỗ trống (1)'), findsOneWidget);
+    expect(find.byType(BloomGroupChips), findsOneWidget);
     expect(find.textContaining('Passage 0'), findsOneWidget);
+
+    await tester.tap(find.text('Đoạn 2'));
+    await tester.pumpAndSettle();
     expect(find.textContaining('Passage 1'), findsOneWidget);
-    expect(find.textContaining('Passage 2'), findsOneWidget);
+    expect(find.textContaining('Passage 0'), findsNothing);
   });
 
-  testWidgets('Nộp bài is disabled until all 12 answers are selected', (tester) async {
-    await tester.pumpWidget(_buildSession());
-    await tester.pumpAndSettle();
-    final button = tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Nộp bài'));
-    expect(button.onPressed, isNull);
-  });
-
-  testWidgets('Nộp bài is enabled once all 12 answers are selected', (tester) async {
-    await tester.pumpWidget(_buildSession(
-      session: Part6SessionState(
-        set: _testSet,
-        selectedAnswers: List<int?>.filled(12, 0),
-        isSubmitted: false,
-      ),
-    ));
-    await tester.pumpAndSettle();
-    final button = tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Nộp bài'));
-    expect(button.onPressed, isNotNull);
-  });
-
-  testWidgets('submitting navigates to the result screen', (tester) async {
-    await tester.pumpWidget(_buildSession(
-      session: Part6SessionState(
-        set: _testSet,
-        selectedAnswers: List<int?>.filled(12, 0),
-        isSubmitted: false,
-      ),
-    ));
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Nộp bài'));
-    await tester.pumpAndSettle();
-    expect(find.text('Result screen'), findsOneWidget);
-  });
-
-  testWidgets(
-      'tapping the option for passage 1 / question 2 writes only that flat slot',
-      (tester) async {
+  testWidgets('expanding a blank and picking an option writes only that flat slot', (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
 
-    // RadioListTiles are rendered passage-major, then question-major, then
-    // option-major: 4 questions x 4 options = 16 tiles per passage.
-    // Passage 1 (index 1), question 2 (index 2), option 1 ("b") sits at:
-    const passageIndex = 1;
-    const questionIndex = 2;
-    const optionIndex = 1;
-    const tileIndex = passageIndex * 16 + questionIndex * 4 + optionIndex;
-
-    final tiles = find.byType(RadioListTile<int>);
-    expect(tiles, findsNWidgets(48));
-    await tester.ensureVisible(tiles.at(tileIndex));
+    await tester.ensureVisible(find.text('Chỗ trống (3)'));
     await tester.pumpAndSettle();
-    await tester.tap(tiles.at(tileIndex));
+    await tester.tap(find.text('Chỗ trống (3)')); // q index 2 — distinct from option index, catches an arg-order swap
+    await tester.pumpAndSettle();
+    final bInTile3 = find.descendant(
+      of: find.ancestor(of: find.text('Chỗ trống (3)'), matching: find.byType(BloomExpansionTile)),
+      matching: find.text('b'),
+    );
+    await tester.ensureVisible(bInTile3);
+    await tester.tap(bInTile3);
     await tester.pumpAndSettle();
 
     final container = ProviderScope.containerOf(
-      tester.element(find.byType(Part6SessionScreen)),
-      listen: false,
-    );
-    final selectedAnswers =
-        container.read(part6PracticeNotifierProvider).value!.selectedAnswers;
+      tester.element(find.byType(Part6SessionScreen)), listen: false);
+    final answers = container.read(part6PracticeNotifierProvider).value!.selectedAnswers;
+    expect(answers[Part6SessionState.flatIndex(0, 2)], 1);
+    expect(answers[Part6SessionState.flatIndex(0, 0)], isNull);
+  });
 
-    // The tapped slot got the tapped option...
-    expect(
-      selectedAnswers[Part6SessionState.flatIndex(passageIndex, questionIndex)],
-      optionIndex,
-    );
-    // ...and an untouched slot (passage 0 / question 0) is unaffected. If the
-    // (passageIndex, questionIndex) arguments to selectAnswer were ever
-    // swapped, or flatIndex broken, this pair of assertions would fail
-    // because every slot would no longer be independently addressable.
-    expect(
-      selectedAnswers[Part6SessionState.flatIndex(0, 0)],
-      isNull,
-    );
+  testWidgets('Nộp bài is disabled until all 12 blanks are answered', (tester) async {
+    await tester.pumpWidget(_buildSession());
+    await tester.pumpAndSettle();
+    expect(tester.widget<BloomPillButton>(find.byType(BloomPillButton)).onPressed, isNull);
+  });
+
+  testWidgets('Nộp bài is enabled once all 12 blanks are answered', (tester) async {
+    await tester.pumpWidget(_buildSession(session: Part6SessionState(
+      set: _testSet, selectedAnswers: List<int?>.filled(12, 0), isSubmitted: false)));
+    await tester.pumpAndSettle();
+    expect(tester.widget<BloomPillButton>(find.byType(BloomPillButton)).onPressed, isNotNull);
+  });
+
+  testWidgets('submitting navigates to the result screen', (tester) async {
+    await tester.pumpWidget(_buildSession(session: Part6SessionState(
+      set: _testSet, selectedAnswers: List<int?>.filled(12, 0), isSubmitted: false)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(BloomPillButton));
+    await tester.pumpAndSettle();
+    expect(find.text('Result screen'), findsOneWidget);
   });
 }
