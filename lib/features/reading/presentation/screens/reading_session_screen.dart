@@ -245,7 +245,11 @@ class _PassageDisplay extends StatelessWidget {
                   text: sentence.target,
                   highlights: highlights,
                   style: webScaled(
-                    TextStyle(fontSize: 15, color: context.bloom.ink),
+                    TextStyle(
+                      fontSize: 15,
+                      fontFamily: 'BeVietnamPro',
+                      color: context.bloom.ink,
+                    ),
                   ),
                 ),
               ),
