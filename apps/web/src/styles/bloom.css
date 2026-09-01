@@ -966,6 +966,23 @@ button.btn-primary:disabled {
   justify-content: space-between;
 }
 
+/* While a grade is being recorded the card turns over blank — no headword,
+   no meaning, no buttons — until the flip settles and the next word's front
+   fades in (keyed remount of <FlashcardCard>). */
+.fc-card.is-grading .fc-face-front,
+.fc-card.is-grading .fc-face-back {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.fc-pron {
+  margin-top: 14px;
+}
+
+.fc-pron + .fc-hint {
+  margin-top: 18px;
+}
+
 .fc-back-scroll {
   flex: 1 1 auto;
   min-height: 0;

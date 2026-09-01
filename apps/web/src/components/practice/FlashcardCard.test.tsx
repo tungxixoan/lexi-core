@@ -1,7 +1,17 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { FlashcardCard } from "./FlashcardCard";
 import type { VocabRecord } from "@/lib/vocabRecords";
+
+vi.mock("@/lib/pronunciation", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/pronunciation")>("@/lib/pronunciation");
+  return { ...actual, getPronunciationUrl: vi.fn() };
+});
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  window.HTMLMediaElement.prototype.play = vi.fn().mockResolvedValue(undefined);
+});
 
 const RECORD: VocabRecord = {
   id: "1",
@@ -35,6 +45,30 @@ describe("FlashcardCard", () => {
     expect(screen.queryByText('"Second example."')).not.toBeInTheDocument();
   });
 
+  it("shows a pronunciation button for the headword on the front", () => {
+    render(<FlashcardCard record={RECORD} onGrade={vi.fn()} />);
+    expect(
+      screen.getByRole("button", { name: "Nghe phát âm: meticulous" })
+    ).toBeInTheDocument();
+  });
+
+  it("tapping the pronunciation button plays audio without flipping the card", () => {
+    render(<FlashcardCard record={RECORD} onGrade={vi.fn()} />);
+    const card = screen.getByTestId("flashcard-card");
+    fireEvent.click(screen.getByRole("button", { name: "Nghe phát âm: meticulous" }));
+    expect(card).toHaveStyle({ transform: "rotate3d(1,1,0,0deg)" });
+  });
+
+  it("hides the pronunciation button when the target language has no TTS voice", () => {
+    render(
+      <FlashcardCard
+        record={{ ...RECORD, targetLanguage: "japanese" }}
+        onGrade={vi.fn()}
+      />
+    );
+    expect(screen.queryByRole("button", { name: /Nghe phát âm/ })).not.toBeInTheDocument();
+  });
+
   it("rotates by 180 degrees when the card is clicked", () => {
     render(<FlashcardCard record={RECORD} onGrade={vi.fn()} />);
     const card = screen.getByTestId("flashcard-card");
@@ -53,16 +87,17 @@ describe("FlashcardCard", () => {
     expect(onGrade).not.toHaveBeenCalled();
   });
 
-  it("flips the graded card to its own front, then reports the grade once the flip settles", async () => {
+  it("on grade: the card turns over blank (is-grading) and reports the grade once the flip settles", async () => {
     const onGrade = vi.fn();
     render(<FlashcardCard record={RECORD} onGrade={onGrade} />);
     const card = screen.getByTestId("flashcard-card");
     fireEvent.click(card); // front -> back (180)
     fireEvent.click(screen.getByRole("button", { name: "Đã hiểu" }));
 
-    // Immediately: the card spins to its OWN front (360), and the grade is not
-    // reported yet — the next word must not be pulled in mid-rotation.
+    // Immediately: one more half-turn (360), every face hidden via .is-grading,
+    // and the grade is not reported until that flip finishes.
     expect(card).toHaveStyle({ transform: "rotate3d(1,1,0,360deg)" });
+    expect(card).toHaveClass("is-grading");
     expect(onGrade).not.toHaveBeenCalled();
 
     await waitFor(() => expect(onGrade).toHaveBeenCalledWith(5));
