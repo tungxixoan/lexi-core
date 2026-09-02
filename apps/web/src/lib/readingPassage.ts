@@ -1,4 +1,5 @@
 import { LANGUAGE_LABELS, type TargetLanguage } from "./languages";
+import { normalizeTypography } from "./normalizeTypography";
 import type { VocabRecord } from "./vocabRecords";
 
 type CefrLevel = VocabRecord["cefrLevel"];
@@ -96,8 +97,8 @@ export function parseReadingPassage(
   const headwordToId = new Map(vocabRecords.map((r) => [r.headword.toLowerCase(), r.id]));
 
   const sentences: BilingualSentence[] = rawSentences.map((raw) => ({
-    target: typeof raw.target === "string" ? raw.target : "",
-    vietnamese: typeof raw.vietnamese === "string" ? raw.vietnamese : "",
+    target: normalizeTypography(typeof raw.target === "string" ? raw.target : ""),
+    vietnamese: normalizeTypography(typeof raw.vietnamese === "string" ? raw.vietnamese : ""),
     vocabWords: Array.isArray(raw.vocabWords) ? raw.vocabWords.map(String) : [],
   }));
 

@@ -132,6 +132,15 @@ describe("parseReadingPassage", () => {
     );
     expect(result.sentences).toEqual([{ target: "Hello.", vietnamese: "", vocabWords: [] }]);
   });
+
+  it("normalizes smart typography in target and vietnamese", () => {
+    const passage = parseReadingPassage(
+      { sentences: [{ target: "It\u2019s \u201Cok\u201D.", vietnamese: "\u201CT\u1ed1t\u201D\u2026", vocabWords: [] }] },
+      []
+    );
+    expect(passage.sentences[0].target).toBe('It\'s "ok".');
+    expect(passage.sentences[0].vietnamese).toBe('"Tốt"...');
+  });
 });
 
 describe("highlightVocabWords", () => {
