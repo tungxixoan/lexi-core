@@ -242,7 +242,7 @@ function BilingualReadingPageContent() {
     const newPeakMistakes = Math.max(peakMistakes, countMismatches(target, value));
     setPeakMistakes(newPeakMistakes);
 
-    if (value !== target) return;
+    if (value.length < target.length) return;
 
     const durationMs = Date.now() - sentenceStartedAt;
     const stats = computeSentenceStats(target, value, newDeletedChars, newPeakMistakes, durationMs);

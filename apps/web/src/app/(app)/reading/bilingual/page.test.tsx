@@ -385,6 +385,31 @@ describe("BilingualReadingPage (typing session)", () => {
     await waitFor(() => expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument());
   });
 
+  it("advances to the next sentence once the typed text reaches full length, even with wrong characters", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => makeRecord({ id: `w${i}`, headword: `word${i}` }))
+    );
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        sentences: [
+          { target: "Hello world.", vietnamese: "Xin chào thế giới.", vocabWords: [] },
+          { target: "Bye.", vietnamese: "Tạm biệt.", vocabWords: [] },
+        ],
+      }),
+    });
+
+    render(<BilingualReadingPage />);
+    await screen.findByText("Câu 1 / 2");
+
+    const input = screen.getByTestId("reading-type-input");
+    // one wrong char in the middle, typed to the exact target length
+    fireEvent.change(input, { target: { value: "Hello worlx." } });
+
+    expect(await screen.findByText(/Câu 2 \//)).toBeInTheDocument();
+  });
+
   it("does not advance while the typed value only partially matches the target", async () => {
     mockSignedIn();
     vi.mocked(getVocabRecords).mockResolvedValue(
@@ -557,7 +582,7 @@ describe("BilingualReadingPage (result phase)", () => {
     vi.mocked(getTopics).mockResolvedValue([]);
     vi.mocked(generateContent).mockResolvedValue({
       text: JSON.stringify({
-        sentences: [{ target: "Hi.", vietnamese: "Chào.", vocabWords: [] }],
+        sentences: [{ target: "Hello world.", vietnamese: "Chào.", vocabWords: [] }],
       }),
     });
 
@@ -565,15 +590,17 @@ describe("BilingualReadingPage (result phase)", () => {
     await screen.findByText("Câu 1 / 1");
 
     const input = screen.getByTestId("reading-type-input");
-    // Type "Hx." (mismatch at index 1), then correct it to "Hi." without ever
-    // deleting — mistakeChars should still capture the wrong keystroke that
-    // was overwritten in place (length stayed the same, so deletedChars is 0).
-    fireEvent.change(input, { target: { value: "Hx." } });
-    fireEvent.change(input, { target: { value: "Hi." } });
+    // Type a mid-word typo ("Hxllo", mismatch at index 1), correct it in place
+    // to "Hello" (same length, so deletedChars stays 0), then finish the
+    // sentence — mistakeChars must still capture the wrong keystroke that was
+    // overwritten in place, even though the final typed value is fully correct.
+    fireEvent.change(input, { target: { value: "Hxllo" } });
+    fireEvent.change(input, { target: { value: "Hello" } });
+    fireEvent.change(input, { target: { value: "Hello world." } });
     await waitFor(() => expect(screen.queryByTestId("reading-type-input")).not.toBeInTheDocument());
 
-    // 1 mistakeChar out of 3 totalChars -> 1 - 1/3 = 67% (rounded), not 100%.
-    expect(screen.getByText("67%")).toBeInTheDocument();
+    // 1 mistakeChar out of 12 totalChars -> 1 - 1/12 = 92% (rounded), not 100%.
+    expect(screen.getByText("92%")).toBeInTheDocument();
   });
 
   it('"Sinh bài mới" replays AI-generation directly (no return to setup) for a "generated" session', async () => {

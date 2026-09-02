@@ -65,6 +65,18 @@ describe("TypingSentence", () => {
     expect(onTypedChange).toHaveBeenCalledWith("The ");
   });
 
+  it("caps the input at the target sentence length", () => {
+    render(
+      <TypingSentence
+        completedSentences={[]}
+        currentSentence={{ target: "Hi there.", vietnamese: "Chào.", vocabWords: [] }}
+        typed=""
+        onTypedChange={() => {}}
+      />
+    );
+    expect(screen.getByTestId("reading-type-input")).toHaveAttribute("maxLength", "9");
+  });
+
   it("does not reveal any sentence after the current one", () => {
     render(
       <TypingSentence

@@ -44,6 +44,7 @@ export function TypingSentence({
         onChange={(e) => onTypedChange(e.target.value)}
         placeholder="Gõ câu tiếng Anh ở đây…"
         autoComplete="off"
+        maxLength={target.length}
         data-testid="reading-type-input"
       />
     </div>
