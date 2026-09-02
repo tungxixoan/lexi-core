@@ -57,9 +57,11 @@ export function buildListeningPassagePrompt(
     `learning ${languageLabel}, at ${levelLabel} level, in a ${contextLabel} ` +
     `register/setting. ` +
     `Randomly choose ONE of these two formats: ` +
-    `(1) a CONVERSATION between exactly two speakers labeled "A" and "B" only ` +
-    `(e.g. at an office, store, or while traveling), with 3 to 6 turns alternating ` +
-    `between "A" and "B"; or ` +
+    `(1) a CONVERSATION between exactly two speakers. In the JSON, label them "A" and "B" ` +
+    `(these are internal labels for voice selection only). The letters "A" and "B" must NEVER ` +
+    `appear in any turn's spoken text or in any question — the speakers address each other by ` +
+    `first name or by pronoun, never as "A" or "B". Use 3 to 6 turns alternating between the two speakers ` +
+    `(e.g. at an office, store, or while traveling); or ` +
     `(2) a TALK by a single speaker (e.g. an announcement, advertisement, or set of ` +
     `instructions), split into 2 to 4 turns, each with speaker set to null. ` +
     `For every turn, also declare "gender" as "male" or "female" for that turn's ` +
@@ -71,6 +73,11 @@ export function buildListeningPassagePrompt(
     `the passage, each with exactly 4 answer options in ${languageLabel}, ` +
     `testing the main idea, a specific detail, or an implied meaning — never a ` +
     `fill-in-the-blank question. ` +
+    `In the questions, refer to a speaker as follows and never as "A" or "B": ` +
+    `if the two speakers are one male and one female, call them "người đàn ông" and "người phụ nữ"; ` +
+    `if the two speakers are the same gender, refer to them by their role in the situation when there is ` +
+    `a clear one ("khách hàng", "nhân viên", "quản lý", "lễ tân", ...), otherwise by the first name used ` +
+    `in the dialogue; for a talk with one speaker, call them "người nói". ` +
     `Respond with JSON only (no markdown, no code fences): ` +
     `{"kind": "conversation" or "talk", ` +
     `"turns": [{"speaker": "A" or "B" or null, "gender": "male" or "female", "text": "..."}], ` +

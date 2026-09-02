@@ -26,6 +26,20 @@ describe("buildListeningPassagePrompt", () => {
     expect(prompt).toContain("3 multiple-choice questions");
     expect(prompt).toContain("4 answer options");
   });
+
+  it("keeps A/B as structural speaker labels but forbids them in the dialogue and questions", () => {
+    const prompt = buildListeningPassagePrompt("b1", "general", "english");
+    // still asks for the structural label in the JSON shape
+    expect(prompt).toContain('"speaker": "A" or "B" or null');
+    // dialogue rule
+    expect(prompt).toMatch(
+      /never appear .*in any turn|must not use the letters "A"\/"B"|address each other by name/i
+    );
+    // question-reference rules: gender, then role, then first name
+    expect(prompt).toMatch(/người đàn ông.*người phụ nữ/i);
+    expect(prompt).toMatch(/role in the situation|khách hàng|nhân viên/i);
+    expect(prompt).toContain("người nói");
+  });
 });
 
 describe("parseListeningPassage", () => {

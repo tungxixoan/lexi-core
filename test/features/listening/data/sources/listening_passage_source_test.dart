@@ -11,8 +11,15 @@ class FakeGenerativeModelClient implements GenerativeModelClient {
   FakeGenerativeModelClient(this._responseText);
   final String _responseText;
 
+  String? capturedPrompt;
+
   @override
   Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) async {
+    capturedPrompt = prompt
+        .expand((c) => c.parts)
+        .whereType<TextPart>()
+        .map((p) => p.text)
+        .join();
     return GenerateContentResponse(
       [Candidate(Content.text(_responseText), null, null, null, null)],
       null,
@@ -69,6 +76,33 @@ void main() {
     expect(passage.level, CEFRLevel.b1);
     expect(passage.targetLanguage, Language.english);
     expect(passage.id, isNotEmpty);
+  });
+
+  test(
+      'prompt keeps A/B as internal speaker labels but forbids them in the dialogue and questions',
+      () async {
+    final fake = FakeGenerativeModelClient(conversationJson);
+    final source = ListeningPassageSource.withModel(fake);
+    await source.generate(
+      level: CEFRLevel.b1,
+      context: AppContext.general,
+      targetLanguage: Language.english,
+    );
+    final prompt = fake.capturedPrompt!;
+
+    // still asks for the structural label in the JSON shape
+    expect(prompt, contains('"speaker": "A" or "B" or null'));
+    // dialogue rule: the bare letters must not appear in any turn text
+    expect(prompt, contains('The letters "A" and "B" must NEVER'));
+    expect(prompt, contains('never as "A" or "B"'));
+    // question-reference rules: gender, then role, then first name
+    expect(prompt, contains('người đàn ông'));
+    expect(prompt, contains('người phụ nữ'));
+    expect(
+      prompt,
+      anyOf(contains('khách hàng'), contains('role in the situation')),
+    );
+    expect(prompt, contains('người nói'));
   });
 
   test('parses a talk response (null speaker) into a ListeningPassage', () async {
