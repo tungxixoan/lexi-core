@@ -4,11 +4,11 @@
 // keyboard produces the ASCII forms — so the raw smart characters are
 // un-typable. Normalize them to ASCII before the text is ever shown.
 const REPLACEMENTS: readonly [RegExp, string][] = [
-  [/[''‚‛′]/g, "'"],
-  [/[""„‟«»″]/g, '"'],
-  [/…/g, "..."],
-  [/[–—‒―]/g, "-"],
-  [/[   ]/g, " "],
+  [/[\u2018\u2019\u201A\u201B\u2032]/g, "'"],
+  [/[\u201C\u201D\u201E\u201F\u00AB\u00BB\u2033]/g, '"'],
+  [/\u2026/g, "..."],
+  [/[\u2013\u2014\u2012\u2015]/g, "-"],
+  [/[\u00A0\u2009\u202F]/g, " "],
 ];
 
 export function normalizeTypography(s: string): string {
