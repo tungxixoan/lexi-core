@@ -19,6 +19,8 @@ import {
 } from "@/lib/vocabRecords";
 import { EditVocabModal } from "@/components/vocab-bank/EditVocabModal";
 import { HighlightedText } from "./HighlightedText";
+import { PronunciationButton } from "./PronunciationButton";
+import { ttsLanguageCode } from "@/lib/pronunciation";
 import type { Topic } from "@/lib/topics";
 import type { WordPhraseResult } from "@/lib/lookup";
 
@@ -135,6 +137,7 @@ export function VocabSuggestionsSection({
 
   const visible = (suggestions ?? []).filter((s) => !dismissedHeadwords.has(s.headword));
   const hasUnsaved = visible.some((s) => !savedHeadwords.has(s.headword));
+  const ttsLang = settings ? ttsLanguageCode(settings.targetLanguage) : null;
 
   return (
     <div className="suggestions-section">
@@ -195,6 +198,7 @@ export function VocabSuggestionsSection({
                   </span>
                   {s.cefrLevel && <span className="cefr-pill">{s.cefrLevel.toUpperCase()}</span>}
                 </button>
+                <PronunciationButton text={s.headword} language={ttsLang} tier="word" />
                 {isSaved ? (
                   <span className="suggestion-saved-mark">✔</span>
                 ) : (

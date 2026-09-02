@@ -89,6 +89,9 @@ describe("VocabSuggestionsSection", () => {
 
     expect(await screen.findByText("meticulous")).toBeInTheDocument();
     expect(screen.getByText("tỉ mỉ")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Nghe phát âm: meticulous" })
+    ).toBeInTheDocument();
   });
 
   it("shows a 'no suggestions' message when the AI returns an empty list", async () => {

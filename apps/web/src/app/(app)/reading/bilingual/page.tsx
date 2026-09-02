@@ -32,6 +32,8 @@ import {
   type BilingualFilters,
 } from "@/lib/savedReadingExercises";
 import { VocabSuggestionsSection } from "@/components/shared/VocabSuggestionsSection";
+import { PronunciationButton } from "@/components/shared/PronunciationButton";
+import { ttsLanguageCode } from "@/lib/pronunciation";
 
 type CefrLevel = VocabRecord["cefrLevel"];
 const MIN_VOCAB_WORDS = 5;
@@ -377,9 +379,16 @@ function BilingualReadingPageContent() {
             <div className="reading-used-words">
               <h3>Từ vựng dùng trong bài</h3>
               {usedRecords.map((r) => (
-                <p className="reading-used-word-item" key={r.id}>
-                  {r.headword} — {r.meaning}
-                </p>
+                <div className="reading-used-word-item" key={r.id}>
+                  <span>
+                    {r.headword} — {r.meaning}
+                  </span>
+                  <PronunciationButton
+                    text={r.headword}
+                    language={ttsLanguageCode(r.targetLanguage)}
+                    tier="word"
+                  />
+                </div>
               ))}
             </div>
           )}

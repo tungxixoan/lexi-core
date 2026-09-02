@@ -468,6 +468,9 @@ describe("BilingualReadingPage (result phase)", () => {
     expect(screen.getAllByText("100%")).toHaveLength(2); // accuracy AND score, both 100%
 
     expect(screen.getByText(/word0/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Nghe phát âm: word0" })
+    ).toBeInTheDocument();
 
     const suggestions = screen.getByTestId("vocab-suggestions");
     expect(suggestions).toHaveAttribute("data-text", "Hi there. Bye now.");

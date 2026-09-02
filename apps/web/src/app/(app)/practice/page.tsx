@@ -12,6 +12,8 @@ import { TopicFilterPopover } from "@/components/vocab-bank/TopicFilterPopover";
 import { SimpleDropdown, type SimpleDropdownOption } from "@/components/shared/SimpleDropdown";
 import { selectSessionWords, type SessionWordFilters } from "@/lib/practiceSession";
 import { FlashcardCard } from "@/components/practice/FlashcardCard";
+import { PronunciationButton } from "@/components/shared/PronunciationButton";
+import { ttsLanguageCode } from "@/lib/pronunciation";
 import { computeSm2, type Sm2Fields } from "@/lib/sm2";
 
 type CefrLevel = VocabRecord["cefrLevel"];
@@ -242,6 +244,11 @@ function PracticePageContent() {
               <span>{result.quality === 5 ? "✔" : "✘"}</span>
               <span className="practice-result-headword">{record.headword}</span>
               <span className="practice-result-meaning">{record.meaning}</span>
+              <PronunciationButton
+                text={record.headword}
+                language={ttsLanguageCode(record.targetLanguage)}
+                tier="word"
+              />
             </li>
           );
         })}

@@ -1673,9 +1673,20 @@ button.btn-secondary {
 }
 
 .reading-used-word-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 17px;
   color: var(--ink-soft);
   margin: 0 0 4px;
+}
+
+.reading-used-word-item > span {
+  flex: 1;
+}
+
+.practice-result-list li .pron-btn {
+  margin-left: auto;
 }
 
 .reading-result-actions {

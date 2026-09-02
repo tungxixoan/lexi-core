@@ -233,6 +233,9 @@ describe("PracticePage (result phase)", () => {
     expect(await screen.findByText("100%")).toBeInTheDocument();
     expect(screen.getByText("Đúng 1 / 1 từ")).toBeInTheDocument();
     expect(screen.getByText("nghĩa 1")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Nghe phát âm: first" })
+    ).toBeInTheDocument();
 
     await waitFor(() =>
       expect(updateVocabRecordSm2).toHaveBeenCalledWith(
