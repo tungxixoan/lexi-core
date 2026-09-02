@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { computeMasteryPercent, formatDueLabel, resolveTopicNames } from "./vocabDisplay";
+import {
+  capitalizeHeadword,
+  computeMasteryPercent,
+  formatDueLabel,
+  resolveTopicNames,
+} from "./vocabDisplay";
 import type { Topic } from "./topics";
 
 describe("computeMasteryPercent", () => {
@@ -50,5 +55,19 @@ describe("resolveTopicNames", () => {
 
   it("falls back to the raw id for an unknown topic", () => {
     expect(resolveTopicNames(["ghost-id"], topics)).toEqual(["ghost-id"]);
+  });
+});
+
+describe("capitalizeHeadword", () => {
+  it.each([
+    ["follow up", "Follow up"],
+    ["Follow up", "Follow up"],
+    ["TOEIC", "TOEIC"],
+    ["iPhone", "IPhone"],
+    ["3D printing", "3D printing"],
+    ["đẹp", "Đẹp"], // "đẹp" -> "Đẹp"
+    ["", ""],
+  ])("capitalizeHeadword(%j) === %j", (input, expected) => {
+    expect(capitalizeHeadword(input)).toBe(expected);
   });
 });
