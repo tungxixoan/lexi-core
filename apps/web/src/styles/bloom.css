@@ -1209,6 +1209,28 @@ button.btn-secondary {
   cursor: pointer;
 }
 
+button.btn-google {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 10px 20px 10px 16px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+button.btn-google:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+button.btn-google svg {
+  flex-shrink: 0;
+}
+
 .pron-btn {
   display: inline-flex;
   align-items: center;

@@ -23,7 +23,10 @@ describe("SignInButton", () => {
   it("shows a sign-in button and calls signInWithGoogle when signed out", () => {
     vi.mocked(useAuthUser).mockReturnValue({ user: null, loading: false });
     render(<SignInButton />);
-    fireEvent.click(screen.getByRole("button", { name: "Đăng nhập với Google" }));
+    const btn = screen.getByRole("button", { name: "Đăng nhập với Google" });
+    expect(btn).toHaveClass("btn-google");
+    expect(btn.querySelector("svg")).not.toBeNull();
+    fireEvent.click(btn);
     expect(signInWithGoogle).toHaveBeenCalledOnce();
   });
 
