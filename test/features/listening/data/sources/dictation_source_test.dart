@@ -11,9 +11,11 @@ import 'package:lexi_core/features/listening/data/sources/dictation_source.dart'
 class FakeGenerativeModelClient implements GenerativeModelClient {
   FakeGenerativeModelClient(this._responseText);
   final String _responseText;
+  String? lastPrompt;
 
   @override
   Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) async {
+    lastPrompt = (prompt.first.parts.first as TextPart).text;
     return GenerateContentResponse(
       [Candidate(Content.text(_responseText), null, null, null, null)],
       null,
@@ -67,6 +69,37 @@ void main() {
     expect(item.context, AppContext.general);
     expect(item.targetLanguage, Language.english);
     expect(item.id, isNotEmpty);
+  });
+
+  test('resolves a vocabId when the AI returns a differently-cased word', () async {
+    final record = _makeRecord('rid1', 'Report');
+    final casedJson = jsonEncode({
+      'target': 'He sent the report today.',
+      'vietnamese': 'Anh ay da gui bao cao hom nay.',
+      'vocabWords': ['report'],
+    });
+    final source = DictationSource.withModel(
+      FakeGenerativeModelClient(casedJson),
+    );
+    final item = await source.generate(
+      words: [record],
+      level: CEFRLevel.b1,
+      context: AppContext.general,
+      targetLanguage: Language.english,
+    );
+    expect(item.vocabIds, [record.id]);
+  });
+
+  test('keeps the original headword casing in the prompt word list', () async {
+    final fake = FakeGenerativeModelClient(fakeJson);
+    final source = DictationSource.withModel(fake);
+    await source.generate(
+      words: [_makeRecord('rid1', 'Report')],
+      level: CEFRLevel.b1,
+      context: AppContext.general,
+      targetLanguage: Language.english,
+    );
+    expect(fake.lastPrompt, contains('Report'));
   });
 
   test('vocabIds is empty when AI returns no vocabWords', () async {

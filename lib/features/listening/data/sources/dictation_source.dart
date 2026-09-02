@@ -27,9 +27,9 @@ class DictationSource {
     required AppContext context,
     required Language targetLanguage,
   }) async {
-    final wordMap = {for (final w in words) w.headword: w.id};
+    final wordMap = {for (final w in words) w.headword.toLowerCase(): w.id};
     final prompt = _buildPrompt(
-      headwords: wordMap.keys.toList(),
+      headwords: words.map((w) => w.headword).toList(),
       level: level,
       context: context,
       targetLanguage: targetLanguage,
@@ -71,8 +71,10 @@ class DictationSource {
     Language targetLanguage,
   ) {
     final vocabWords = List<String>.from(json['vocabWords'] as List? ?? []);
-    final vocabIds =
-        vocabWords.map((w) => wordMap[w]).whereType<String>().toList();
+    final vocabIds = vocabWords
+        .map((w) => wordMap[w.toLowerCase()])
+        .whereType<String>()
+        .toList();
 
     return DictationItem(
       id: _uuid.v4(),

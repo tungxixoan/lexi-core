@@ -546,6 +546,36 @@ describe("DictationPage (result phase)", () => {
     await waitFor(() => expect(recordDailyActivity).toHaveBeenCalledWith("u1", 2));
   });
 
+  it("resolves vocabIds case-insensitively so capitalized stored headwords still count", async () => {
+    // Post-capitalization-migration the stored headwords are "Report"/"Deadline";
+    // the AI echoes their lowercase mid-sentence forms. Fails at ee596f4 (the
+    // exact-match wordMap misses -> vocabIds empty -> recordDailyActivity("u1", 0)).
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue([
+      makeRecord({ id: "v1", headword: "Report" }),
+      makeRecord({ id: "v2", headword: "Deadline" }),
+    ]);
+    setSearchParams({ difficulty: "hard", action: "generate" });
+    vi.mocked(generateContent).mockResolvedValue({
+      text: JSON.stringify({
+        target: "Report the deadline.",
+        vietnamese: "V.",
+        vocabWords: ["report", "deadline"],
+      }),
+    });
+    render(<DictationPage />);
+    await screen.findByRole("button", { name: "▶ Phát" });
+    fireEvent.click(screen.getByRole("button", { name: "▶ Phát" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "▶ Nghe lại (0)" })).toBeInTheDocument());
+    fireEvent.change(screen.getByPlaceholderText("Gõ lại những gì bạn nghe được..."), {
+      target: { value: "Report the deadline." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Nộp bài" }));
+    await screen.findByText("100%");
+
+    await waitFor(() => expect(recordDailyActivity).toHaveBeenCalledWith("u1", 2));
+  });
+
   it('shows "Lưu bài" for a generated session and saves with type "dictation"', async () => {
     mockSignedIn();
     vi.mocked(saveListeningExercise).mockResolvedValue("new-id");

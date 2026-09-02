@@ -38,9 +38,15 @@ export function buildDictationPrompt(headwords: string[], targetLanguage: Target
   );
 }
 
+// `wordMap` is keyed by lowercased headword (see the caller in
+// listening/dictation/page.tsx). The AI echoes vocab words with whatever
+// casing they take mid-sentence ("report" for a stored "Report"), so the
+// lookup lowercases too — mirrors parseReadingPassage's headwordToId map.
 export function parseDictationItem(json: Record<string, unknown>, wordMap: Record<string, string>): DictationItem {
   const vocabWords = Array.isArray(json.vocabWords) ? json.vocabWords.map(String) : [];
-  const vocabIds = vocabWords.map((w) => wordMap[w]).filter((id): id is string => id !== undefined);
+  const vocabIds = vocabWords
+    .map((w) => wordMap[w.toLowerCase()])
+    .filter((id): id is string => id !== undefined);
   return {
     target: typeof json.target === "string" ? json.target : "",
     vietnamese: typeof json.vietnamese === "string" ? json.vietnamese : "",

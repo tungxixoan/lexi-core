@@ -52,6 +52,15 @@ describe("parseDictationItem", () => {
     const json = { target: "T", vietnamese: "V", vocabWords: ["apple", "unknown"] };
     expect(parseDictationItem(json, { apple: "id-1" }).vocabIds).toEqual(["id-1"]);
   });
+
+  it("resolves a vocabId when the AI echoes a differently-cased headword", () => {
+    // After the vocab-headword capitalization migration the stored headword
+    // is "Report" and the caller keys the map lowercase ("report"); a
+    // sentence-initial occurrence makes the AI echo "Report" — the lookup
+    // must lowercase both sides. Fails at ee596f4 (exact-match miss -> empty).
+    const json = { target: "Report the incident.", vietnamese: "V.", vocabWords: ["Report"] };
+    expect(parseDictationItem(json, { report: "id-1" }).vocabIds).toEqual(["id-1"]);
+  });
 });
 
 describe("selectDictationBlanks", () => {

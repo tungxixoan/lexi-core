@@ -130,7 +130,7 @@ function DictationPageContent() {
     setGenerateError(null);
     try {
       const wordMap: Record<string, string> = {};
-      for (const w of words) wordMap[w.headword] = w.id;
+      for (const w of words) wordMap[w.headword.toLowerCase()] = w.id;
       const prompt = buildDictationPrompt(words.map((w) => w.headword), "english");
       const response = await generateContent({
         provider: settings.activeProvider,
