@@ -173,6 +173,21 @@ void main() {
     expect(fake.lastPrompt, contains('Report'));
   });
 
+  test('prompt instructs natural sentence-position capitalization', () async {
+    final fake = FakeGenerativeModelClient(fakeJson);
+    final source = ReadingPassageSource.withModel(fake);
+    await source.generate(
+      words: [_makeRecord('rid1', 'Report'), _makeRecord('rid2', 'Follow up')],
+      level: CEFRLevel.b1,
+      context: AppContext.general,
+      targetLanguage: Language.english,
+    );
+    expect(fake.lastPrompt!.toLowerCase(), contains('natural'));
+    expect(fake.lastPrompt!.toLowerCase(), contains('capitaliz'));
+    expect(fake.lastPrompt, isNot(contains('exactly as given')));
+    expect(fake.lastPrompt, contains('matched case-insensitively'));
+  });
+
   group('prompt scales with the number of vocabulary words', () {
     test('asks for about 6 sentences for a 5-word selection', () async {
       final fake = FakeGenerativeModelClient(fakeJson);

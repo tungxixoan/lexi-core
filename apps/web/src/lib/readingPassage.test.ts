@@ -56,6 +56,12 @@ describe("buildReadingPassagePrompt", () => {
     const prompt = buildReadingPassagePrompt(["word"], "english", null);
     expect(prompt).not.toContain("CEFR level");
   });
+
+  it("prompt tells the model to use natural sentence-position capitalization", () => {
+    const prompt = buildReadingPassagePrompt(["Report", "Follow up"], "english", null);
+    expect(prompt).toMatch(/natural .*capitali[sz]ation/i);
+    expect(prompt).not.toMatch(/exactly as given/);
+  });
 });
 
 describe("parseReadingPassage", () => {

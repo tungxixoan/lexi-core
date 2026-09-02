@@ -38,12 +38,14 @@ export function buildReadingPassagePrompt(
     `You are a language learning assistant helping a Vietnamese speaker learn ${languageLabel}. ` +
     `Write one coherent short story in ${languageLabel} of about ${sentenceCount} sentences, ` +
     `using as many of these words as possible, naturally: ${headwords.join(", ")}. ` +
+    `Use natural ${languageLabel} capitalization for each word based on its position in the sentence — ` +
+    `lowercase mid-sentence unless it is a proper noun; do not copy the capitalization of the word list. ` +
     `${levelClause}` +
     `Add a few other natural words if needed to make it flow. ` +
     `Respond with JSON only (no markdown, no code fences): ` +
     `{"sentences":[{"target":"sentence in ${languageLabel}",` +
     `"vietnamese":"Vietnamese translation of that sentence",` +
-    `"vocabWords":["which of the given words appear in this sentence, exactly as given"]}]} ` +
+    `"vocabWords":["which of the given words appear in this sentence (matched case-insensitively)"]}]} ` +
     `Every "vietnamese" field must use only Vietnamese script — ` +
     `never Chinese, Japanese, or other non-Vietnamese characters.`
   );

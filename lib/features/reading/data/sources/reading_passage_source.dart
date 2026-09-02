@@ -63,16 +63,18 @@ class ReadingPassageSource {
         'not a list of unrelated example sentences. '
         'Context/register: ${context.label}. '
         'Naturally use as many of these vocabulary words as possible: $wordList. '
+        'Use natural ${targetLanguage.label} capitalization for each word based on its position in the sentence — '
+        'lowercase mid-sentence unless it is a proper noun; do not copy the capitalization of the word list. '
         'Also naturally include a few other ${level.label}-appropriate ${targetLanguage.label} '
         'vocabulary words beyond this list, to add variety and context. '
         'For each sentence, provide its Vietnamese translation and list which vocabulary words '
-        'from the input list appear in that sentence (only words from the input list, not the extra ones). '
+        'from the input list appear in that sentence, matched case-insensitively (only words from the input list, not the extra ones). '
         'Every Vietnamese translation must use only Vietnamese script — '
         'never Chinese, Japanese, or other non-Vietnamese characters. '
         'Respond with JSON only (no markdown, no code fences): '
         '{"sentences": [{"target": "sentence in ${targetLanguage.label}", '
         '"vietnamese": "Vietnamese translation", '
-        '"vocabWords": ["only words from the provided list that appear in this sentence"]}]}';
+        '"vocabWords": ["words from the provided list that appear in this sentence (matched case-insensitively)"]}]}';
   }
 
   ReadingPassage _parse(
