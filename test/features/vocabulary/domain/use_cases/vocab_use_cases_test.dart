@@ -24,10 +24,11 @@ void main() {
   VocabRecord makeRecord({
     List<String> topicIds = const ['daily-life'],
     InputType type = InputType.word,
+    String headword = 'allow',
   }) =>
       VocabRecord(
         id: 'abc-123',
-        headword: 'allow',
+        headword: headword,
         inputType: type,
         ipa: '/əˈlaʊ/',
         meaning: 'cho phép',
@@ -97,6 +98,14 @@ void main() {
     test('allows exactly 2 topic ids', () async {
       await SaveVocabUseCase(mockRepo).execute(makeRecord(topicIds: ['a', 'b']));
       verify(() => mockRepo.save(any())).called(1);
+    });
+
+    test('capitalizes the headword before checking for duplicates and saving', () async {
+      await SaveVocabUseCase(mockRepo).execute(makeRecord(headword: 'follow up'));
+      final saved =
+          verify(() => mockRepo.save(captureAny())).captured.single as VocabRecord;
+      expect(saved.headword, 'Follow up');
+      verify(() => mockRepo.existsByHeadword('Follow up', Language.english)).called(1);
     });
 
     test('throws VocabException when headword already exists', () async {

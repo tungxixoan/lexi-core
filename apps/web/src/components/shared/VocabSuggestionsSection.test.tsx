@@ -119,7 +119,7 @@ describe("VocabSuggestionsSection", () => {
     render(<VocabSuggestionsSection text="text" existingRecords={[]} topics={[]} />);
     fireEvent.click(await screen.findByText("meticulous"));
 
-    expect(screen.getByRole("dialog", { name: /Lưu từ meticulous/ })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: /Lưu từ Meticulous/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Lưu" }));
 
     await waitFor(() => expect(saveVocabRecord).toHaveBeenCalledWith("u1", expect.any(Object)));
@@ -135,9 +135,12 @@ describe("VocabSuggestionsSection", () => {
         ],
       }),
     });
+    // The draft the section builds capitalizes the headword before the
+    // duplicate lookup (matches the new-save behavior), so the stored record
+    // it collides with is "Ephemeral".
     vi.mocked(getVocabRecordByHeadword).mockImplementation(async (_uid, headword) =>
-      headword === "ephemeral"
-        ? makeRecord({ id: "existing-1", headword: "ephemeral" })
+      headword === "Ephemeral"
+        ? makeRecord({ id: "existing-1", headword: "Ephemeral" })
         : null
     );
     vi.mocked(saveVocabRecord).mockResolvedValue("new-id");
@@ -150,7 +153,7 @@ describe("VocabSuggestionsSection", () => {
     await waitFor(() => expect(saveVocabRecord).toHaveBeenCalledTimes(1));
     expect(saveVocabRecord).toHaveBeenCalledWith(
       "u1",
-      expect.objectContaining({ headword: "meticulous" })
+      expect.objectContaining({ headword: "Meticulous" })
     );
     expect(await screen.findByText("Đã lưu 1/2 từ.")).toBeInTheDocument();
   });

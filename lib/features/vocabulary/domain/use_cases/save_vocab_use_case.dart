@@ -1,5 +1,6 @@
 import '../../../dictionary/domain/entities/input_type.dart';
 import '../entities/vocab_record.dart';
+import '../headword_casing.dart';
 import '../repositories/vocab_repository.dart';
 
 class SaveVocabUseCase {
@@ -7,16 +8,17 @@ class SaveVocabUseCase {
   final VocabRepository _repo;
 
   Future<void> execute(VocabRecord record) async {
-    if (record.inputType == InputType.sentence) {
+    final normalized = record.copyWith(headword: capitalizeHeadword(record.headword));
+    if (normalized.inputType == InputType.sentence) {
       throw const VocabException('Sentences cannot be saved to Vocabulary Bank.');
     }
-    if (record.topicIds.length > 2) {
+    if (normalized.topicIds.length > 2) {
       throw const VocabException('A word can have at most 2 topic tags.');
     }
-    final exists = await _repo.existsByHeadword(record.headword, record.targetLanguage);
+    final exists = await _repo.existsByHeadword(normalized.headword, normalized.targetLanguage);
     if (exists) {
-      throw VocabException('"${record.headword}" is already in your Vocabulary Bank.');
+      throw VocabException('"${normalized.headword}" is already in your Vocabulary Bank.');
     }
-    return _repo.save(record);
+    return _repo.save(normalized);
   }
 }

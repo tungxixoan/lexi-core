@@ -63,7 +63,7 @@ describe("buildVocabRecordDraft", () => {
     const draft = buildVocabRecordDraft(RESULT, TOPICS, "english");
 
     expect(draft.id).toBe("");
-    expect(draft.headword).toBe("meticulous");
+    expect(draft.headword).toBe("Meticulous");
     expect(draft.meaning).toBe("tỉ mỉ");
     expect(draft.examples).toEqual(["She is meticulous."]);
     expect(draft.topicIds).toEqual(["biz-1"]);
@@ -82,5 +82,14 @@ describe("buildVocabRecordDraft", () => {
   it("defaults cefrLevel to b1 when the AI result has none", () => {
     const draft = buildVocabRecordDraft({ ...RESULT, cefrLevel: null }, TOPICS, "english");
     expect(draft.cefrLevel).toBe("b1");
+  });
+
+  it("capitalizes the first letter of the headword", () => {
+    const draft = buildVocabRecordDraft(
+      { ...RESULT, headword: "follow up" },
+      [],
+      "english"
+    );
+    expect(draft.headword).toBe("Follow up");
   });
 });

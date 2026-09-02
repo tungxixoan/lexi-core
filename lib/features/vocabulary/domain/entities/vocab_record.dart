@@ -48,6 +48,7 @@ final class VocabRecord {
   final int sm2Interval;
 
   VocabRecord copyWith({
+    String? headword,
     String? meaning,
     List<String>? examples,
     String? personalNotes,
@@ -62,7 +63,7 @@ final class VocabRecord {
   }) =>
       VocabRecord(
         id: id,
-        headword: headword,
+        headword: headword ?? this.headword,
         inputType: inputType,
         ipa: ipa,
         meaning: meaning ?? this.meaning,

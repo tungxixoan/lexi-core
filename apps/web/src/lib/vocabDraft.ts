@@ -2,6 +2,7 @@ import type { Topic } from "./topics";
 import type { WordPhraseResult } from "./lookup";
 import type { VocabRecord } from "./vocabRecords";
 import type { TargetLanguage } from "./languages";
+import { capitalizeHeadword } from "./vocabDisplay";
 
 const MAX_PRESELECTED_TOPICS = 2;
 
@@ -44,7 +45,7 @@ export function buildVocabRecordDraft(
   const now = new Date().toISOString();
   return {
     id: "",
-    headword: result.headword,
+    headword: capitalizeHeadword(result.headword),
     inputType: result.inputType,
     ipa: result.ipa,
     meaning: result.meaning,

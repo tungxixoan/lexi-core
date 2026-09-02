@@ -227,7 +227,7 @@ describe("LookupPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tra từ" }));
     fireEvent.click(await screen.findByRole("button", { name: /Lưu vào Ngân hàng từ vựng/ }));
 
-    expect(screen.getByRole("dialog", { name: /Lưu từ meticulous/ })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: /Lưu từ Meticulous/ })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Lưu" }));
 
@@ -235,7 +235,7 @@ describe("LookupPage", () => {
       expect(saveVocabRecord).toHaveBeenCalledWith(
         "u1",
         expect.objectContaining({
-          headword: "meticulous",
+          headword: "Meticulous",
           ipa: "/məˈtɪkjələs/",
           meaning: "tỉ mỉ, cẩn thận",
           examples: ["She is meticulous."],
