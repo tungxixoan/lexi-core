@@ -46,6 +46,28 @@ describe("PronunciationButton", () => {
     expect(getPronunciationUrl).toHaveBeenCalledTimes(1);
   });
 
+  it("re-fetches for the new text when the same instance is pointed at a different word", async () => {
+    vi.mocked(getPronunciationUrl)
+      .mockResolvedValueOnce("https://example.com/collaboration.wav")
+      .mockResolvedValueOnce("https://example.com/quantify.wav");
+    const { rerender } = render(
+      <PronunciationButton text="collaboration" language="en" tier="word" />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Nghe phát âm/ }));
+    await waitFor(() => expect(getPronunciationUrl).toHaveBeenCalledTimes(1));
+
+    rerender(<PronunciationButton text="quantify" language="en" tier="word" />);
+    fireEvent.click(screen.getByRole("button", { name: /Nghe phát âm/ }));
+
+    await waitFor(() => expect(getPronunciationUrl).toHaveBeenCalledTimes(2));
+    expect(getPronunciationUrl).toHaveBeenLastCalledWith({
+      text: "quantify",
+      language: "en",
+      tier: "word",
+    });
+  });
+
   it("shows a warning icon after a failed fetch, and stays clickable to retry", async () => {
     vi.mocked(getPronunciationUrl).mockRejectedValueOnce(new Error("network"));
     render(<PronunciationButton text="hello" language="en" tier="word" />);

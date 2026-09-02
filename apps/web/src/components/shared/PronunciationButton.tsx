@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getPronunciationUrl, type TtsLanguage } from "@/lib/pronunciation";
 
 interface PronunciationButtonProps {
@@ -13,6 +13,15 @@ export function PronunciationButton({ text, language, tier }: PronunciationButto
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [cachedUrl, setCachedUrl] = useState<string | null>(null);
+
+  // The component instance is reused when the surrounding list swaps which
+  // word it points at (e.g. the Vocab Bank drawer switching records), so a
+  // URL cached for the previous text would otherwise keep playing. Drop it
+  // whenever the audio it identifies changes.
+  useEffect(() => {
+    setCachedUrl(null);
+    setError(false);
+  }, [text, language, tier]);
 
   async function handlePlay(lang: TtsLanguage) {
     setError(false);
