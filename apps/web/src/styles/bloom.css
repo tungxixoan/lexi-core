@@ -70,6 +70,13 @@
   box-sizing: border-box;
 }
 
+/* Buttons don't inherit text color by default — without this, an
+   unstyled <button> renders its label in the UA's near-black
+   `ButtonText`, which is unreadable on dark-theme surfaces. */
+button {
+  color: inherit;
+}
+
 body {
   margin: 0;
   padding: 0;
