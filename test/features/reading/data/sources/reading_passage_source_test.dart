@@ -161,6 +161,18 @@ void main() {
     expect(passage.sentences.single.vocabIds, [record.id]);
   });
 
+  test('keeps the original headword casing in the prompt word list', () async {
+    final fake = FakeGenerativeModelClient(fakeJson);
+    final source = ReadingPassageSource.withModel(fake);
+    await source.generate(
+      words: [_makeRecord('rid1', 'Report')],
+      level: CEFRLevel.b1,
+      context: AppContext.general,
+      targetLanguage: Language.english,
+    );
+    expect(fake.lastPrompt, contains('Report'));
+  });
+
   group('prompt scales with the number of vocabulary words', () {
     test('asks for about 6 sentences for a 5-word selection', () async {
       final fake = FakeGenerativeModelClient(fakeJson);

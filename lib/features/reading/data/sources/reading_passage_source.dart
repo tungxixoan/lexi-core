@@ -32,7 +32,7 @@ class ReadingPassageSource {
   }) async {
     final wordMap = {for (final w in words) w.headword.toLowerCase(): w.id};
     final prompt = _buildPrompt(
-      headwords: wordMap.keys.toList(),
+      headwords: words.map((w) => w.headword).toList(),
       level: level,
       context: context,
       targetLanguage: targetLanguage,
