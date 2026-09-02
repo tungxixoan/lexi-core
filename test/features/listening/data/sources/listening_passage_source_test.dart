@@ -95,14 +95,16 @@ void main() {
     // dialogue rule: the bare letters must not appear in any turn text
     expect(prompt, contains('The letters "A" and "B" must NEVER'));
     expect(prompt, contains('never as "A" or "B"'));
-    // question-reference rules: gender, then role, then first name
-    expect(prompt, contains('người đàn ông'));
-    expect(prompt, contains('người phụ nữ'));
+    // question-reference rules: gender, then role, then first name / speaker.
+    // Expressed semantically — the questions are written in the target
+    // language, never Vietnamese — so the model doesn't splice Vietnamese
+    // speaker nouns into target-language question text.
+    expect(prompt, matches(RegExp('the man.*the woman')));
     expect(
       prompt,
-      anyOf(contains('khách hàng'), contains('role in the situation')),
+      anyOf(contains('the customer'), contains('role in the situation')),
     );
-    expect(prompt, contains('người nói'));
+    expect(prompt, contains('the speaker'));
   });
 
   test('parses a talk response (null speaker) into a ListeningPassage', () async {

@@ -35,10 +35,13 @@ describe("buildListeningPassagePrompt", () => {
     expect(prompt).toMatch(
       /never appear .*in any turn|must not use the letters "A"\/"B"|address each other by name/i
     );
-    // question-reference rules: gender, then role, then first name
-    expect(prompt).toMatch(/người đàn ông.*người phụ nữ/i);
-    expect(prompt).toMatch(/role in the situation|khách hàng|nhân viên/i);
-    expect(prompt).toContain("người nói");
+    // question-reference rules: gender, then role, then first name / speaker.
+    // These are expressed semantically (the questions are written in the
+    // target language, never Vietnamese) so the model produces target-language
+    // question text rather than splicing in Vietnamese speaker nouns.
+    expect(prompt).toMatch(/the man.*the woman/i);
+    expect(prompt).toMatch(/role in the situation|the customer|the clerk/i);
+    expect(prompt).toContain("the speaker");
   });
 });
 
