@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -174,6 +175,17 @@ void main() {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
     expect(find.byType(BloomProgressBar), findsOneWidget);
+  });
+
+  testWidgets('caps typing at the current target length via an input formatter',
+      (tester) async {
+    await tester.pumpWidget(_buildSession());
+    await tester.pumpAndSettle();
+    final field = tester.widget<TextField>(find.byType(TextField));
+    final limiter = field.inputFormatters!
+        .whereType<LengthLimitingTextInputFormatter>()
+        .single;
+    expect(limiter.maxLength, 'Hello.'.length);
   });
 
   testWidgets(

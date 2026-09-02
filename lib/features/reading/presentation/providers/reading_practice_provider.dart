@@ -158,7 +158,7 @@ class ReadingPracticeNotifier extends _$ReadingPracticeNotifier {
         ? current.currentDeletedChars +
             (current.typedText.length - text.length)
         : current.currentDeletedChars;
-    if (text == current.currentSentence.target) {
+    if (text.length >= current.currentSentence.target.length) {
       _advance(current.copyWith(currentDeletedChars: deletedChars), text);
     } else {
       state = AsyncData(current.copyWith(

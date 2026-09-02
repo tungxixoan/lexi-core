@@ -416,6 +416,7 @@ class _TypingArea extends StatelessWidget {
             strutStyle: strutStyle,
             cursorColor: context.bloom.accent,
             decoration: const InputDecoration.collapsed(hintText: ''),
+            inputFormatters: [LengthLimitingTextInputFormatter(target.length)],
             onChanged: onTyped,
           ),
         ],

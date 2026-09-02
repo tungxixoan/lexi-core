@@ -3,6 +3,7 @@ import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
 import 'package:uuid/uuid.dart';
 import '../../../../core/services/ai_client_factory.dart';
 import '../../../../core/utils/ai_json_parser.dart';
+import '../../../../core/utils/normalize_typography.dart';
 import '../../../../features/dictionary/domain/entities/app_context.dart';
 import '../../../../features/dictionary/domain/entities/language.dart';
 import '../../../../features/dictionary/domain/entities/user_settings_state.dart';
@@ -29,7 +30,7 @@ class ReadingPassageSource {
     required AppContext context,
     required Language targetLanguage,
   }) async {
-    final wordMap = {for (final w in words) w.headword: w.id};
+    final wordMap = {for (final w in words) w.headword.toLowerCase(): w.id};
     final prompt = _buildPrompt(
       headwords: wordMap.keys.toList(),
       level: level,
@@ -84,11 +85,13 @@ class ReadingPassageSource {
     final sentences = (json['sentences'] as List? ?? []).map((s) {
       final sm = s as Map<String, dynamic>;
       final vocabWords = List<String>.from(sm['vocabWords'] as List? ?? []);
-      final vocabIds =
-          vocabWords.map((w) => wordMap[w]).whereType<String>().toList();
+      final vocabIds = vocabWords
+          .map((w) => wordMap[w.toLowerCase()])
+          .whereType<String>()
+          .toList();
       return BilingualSentence(
-        target: sm['target'] as String,
-        vietnamese: sm['vietnamese'] as String,
+        target: normalizeTypography(sm['target'] as String),
+        vietnamese: normalizeTypography(sm['vietnamese'] as String),
         vocabIds: vocabIds,
       );
     }).toList();

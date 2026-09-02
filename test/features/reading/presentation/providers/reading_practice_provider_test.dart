@@ -164,8 +164,14 @@ void main() {
       fixedPassage = ReadingPassage(
         id: 'p1',
         sentences: const [
-          BilingualSentence(target: 'Hi.', vietnamese: 'Chào.', vocabIds: []),
-          BilingualSentence(target: 'Bye.', vietnamese: 'Tạm biệt.', vocabIds: []),
+          BilingualSentence(
+              target: 'Hello there friend.',
+              vietnamese: 'Chào bạn.',
+              vocabIds: []),
+          BilingualSentence(
+              target: 'Goodbye for now.',
+              vietnamese: 'Tạm biệt.',
+              vocabIds: []),
         ],
         vocabIds: const [],
         level: CEFRLevel.b1,
@@ -216,9 +222,10 @@ void main() {
       final notifier = c.read(readingPracticeNotifierProvider.notifier);
       await generateSession(notifier);
 
-      notifier.updateTypedText('Hix'); // typo
-      notifier.updateTypedText('Hi'); // deletes 1 char
-      notifier.updateTypedText('H'); // deletes 1 char
+      // Stay well under the 19-char target so nothing advances mid-edit.
+      notifier.updateTypedText('Hellx'); // typo
+      notifier.updateTypedText('Hell'); // deletes 1 char
+      notifier.updateTypedText('Hel'); // deletes 1 char
 
       final state = c.read(readingPracticeNotifierProvider).value!;
       expect(state.currentDeletedChars, 2);
@@ -230,11 +237,41 @@ void main() {
       final notifier = c.read(readingPracticeNotifierProvider.notifier);
       await generateSession(notifier);
 
-      notifier.updateTypedText('Hixxxx'); // typo
-      notifier.updateTypedText('H'); // deletes 5 chars in one go (e.g. select + delete)
+      notifier.updateTypedText('Helloxxxx'); // typo (9 chars, under the 19-char target)
+      notifier.updateTypedText('Hell'); // deletes 5 chars in one go (e.g. select + delete)
 
       final state = c.read(readingPracticeNotifierProvider).value!;
       expect(state.currentDeletedChars, 5);
+    });
+
+    test('advances to the next sentence when typed length reaches the target, '
+        'recording a SentenceResult with correctChars < totalChars for a wrong char',
+        () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(readingPracticeNotifierProvider.notifier);
+      await generateSession(notifier);
+
+      // First target is 'Hello there friend.' (19 chars). Type to full length
+      // with one wrong char ('x' where 'd' should be).
+      notifier.updateTypedText('Hello there frienx.');
+
+      final state = c.read(readingPracticeNotifierProvider).value!;
+      expect(state.currentSentenceIndex, 1);
+      expect(state.completedSentences.single.correctChars,
+          lessThan(state.completedSentences.single.totalChars));
+    });
+
+    test('advances even when the typed text overshoots the target length', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(readingPracticeNotifierProvider.notifier);
+      await generateSession(notifier);
+
+      notifier.updateTypedText('Hello there friend. and then some');
+
+      final state = c.read(readingPracticeNotifierProvider).value!;
+      expect(state.currentSentenceIndex, 1);
     });
 
     test('completing a sentence records its deletedChars and resets the counter for the next one',
@@ -244,23 +281,25 @@ void main() {
       final notifier = c.read(readingPracticeNotifierProvider.notifier);
       await generateSession(notifier);
 
-      notifier.updateTypedText('Hix');
-      notifier.updateTypedText('Hi'); // deletes 1 char: 'Hix' (3) -> 'Hi' (2)
-      notifier.updateTypedText('Hi.'); // retype the period to match the target
+      // Sentence 1 target: 'Hello there friend.' (19 chars).
+      notifier.updateTypedText('Hello therx'); // typo (11 chars)
+      notifier.updateTypedText('Hello the'); // deletes 2 chars
+      notifier.updateTypedText('Hello there friend.'); // reaches full length -> advance
 
       var state = c.read(readingPracticeNotifierProvider).value!;
       expect(state.completedSentences.length, 1);
-      expect(state.completedSentences.first.deletedChars, 1);
+      expect(state.completedSentences.first.deletedChars, 2);
       expect(state.currentDeletedChars, 0); // reset for sentence 2
       expect(state.currentSentenceIndex, 1);
 
-      notifier.updateTypedText('Byex');
-      notifier.updateTypedText('Bye');
-      notifier.updateTypedText('Bye.');
+      // Sentence 2 target: 'Goodbye for now.' (16 chars).
+      notifier.updateTypedText('Goodbye for nox'); // typo (15 chars)
+      notifier.updateTypedText('Goodbye for n'); // deletes 2 chars
+      notifier.updateTypedText('Goodbye for now.'); // reaches full length -> advance
 
       state = c.read(readingPracticeNotifierProvider).value!;
       expect(state.completedSentences.length, 2);
-      expect(state.completedSentences.last.deletedChars, 1);
+      expect(state.completedSentences.last.deletedChars, 2);
       expect(state.isComplete, true);
     });
   });

@@ -113,6 +113,54 @@ void main() {
     expect(passage.vocabIds, isEmpty);
   });
 
+  test('normalizes smart quotes and ellipsis in target and vietnamese', () async {
+    // Curly punctuation as \u escapes so the fixture survives tool pipelines:
+    // \u2019 apostrophe, \u201C / \u201D double quotes, \u2026 ellipsis.
+    final smartJson = jsonEncode({
+      'sentences': [
+        {
+          'target': 'It\u2019s \u201Cok\u201D.',
+          'vietnamese': '\u201CTot\u201D\u2026',
+          'vocabWords': <String>[],
+        },
+      ],
+    });
+    final source = ReadingPassageSource.withModel(
+      FakeGenerativeModelClient(smartJson),
+    );
+    final passage = await source.generate(
+      words: const [],
+      level: CEFRLevel.b1,
+      context: AppContext.general,
+      targetLanguage: Language.english,
+    );
+    expect(passage.sentences.single.target, 'It\'s "ok".');
+    expect(passage.sentences.single.vietnamese, '"Tot"...');
+  });
+
+  test('resolves a vocabId when the AI returns a differently-cased word', () async {
+    final record = _makeRecord('rid1', 'Report');
+    final casedJson = jsonEncode({
+      'sentences': [
+        {
+          'target': 'He sent the report.',
+          'vietnamese': 'Anh ay da gui bao cao.',
+          'vocabWords': ['report'],
+        },
+      ],
+    });
+    final source = ReadingPassageSource.withModel(
+      FakeGenerativeModelClient(casedJson),
+    );
+    final passage = await source.generate(
+      words: [record],
+      level: CEFRLevel.b1,
+      context: AppContext.general,
+      targetLanguage: Language.english,
+    );
+    expect(passage.sentences.single.vocabIds, [record.id]);
+  });
+
   group('prompt scales with the number of vocabulary words', () {
     test('asks for about 6 sentences for a 5-word selection', () async {
       final fake = FakeGenerativeModelClient(fakeJson);
