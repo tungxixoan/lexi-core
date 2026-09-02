@@ -124,9 +124,23 @@ describe("getVocabRecordByHeadword", () => {
 
     const result = await getVocabRecordByHeadword("user-123", "meticulous", "english");
 
-    expect(where).toHaveBeenCalledWith("headword", "==", "meticulous");
+    // stored headwords are capitalized (save-time + migration), so the raw
+    // lowercase lookup term is normalized to match.
+    expect(where).toHaveBeenCalledWith("headword", "==", "Meticulous");
     expect(query).toHaveBeenCalledWith("mock-collection-ref", "mock-where");
     expect(result).toBeNull();
+  });
+
+  it("normalizes a raw lowercase, untrimmed lookup term to the stored capitalized headword", async () => {
+    vi.mocked(getDocs).mockResolvedValue({
+      empty: false,
+      docs: [{ id: "real-doc-id", data: () => RECORD }],
+    } as never);
+
+    const result = await getVocabRecordByHeadword("user-123", "  meticulous  ", "english");
+
+    expect(where).toHaveBeenCalledWith("headword", "==", "Meticulous");
+    expect(result?.id).toBe("real-doc-id");
   });
 
   it("returns the first matching record with its real Firestore document id", async () => {

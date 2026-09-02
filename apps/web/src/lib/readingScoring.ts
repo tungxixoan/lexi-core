@@ -22,10 +22,11 @@ export function countMismatches(target: string, typed: string): number {
 // keystroke of one sentence: deletedChars increments whenever the typed
 // value's length shrinks (a backspace or a select-all-and-retype);
 // mistakeChars is the running max of countMismatches(target, typed) seen at
-// any point while typing. Both matter because typed always equals target by
-// the time this is called (that's what ends a sentence), so correctChars
-// always equals totalChars here — mistakeChars is what actually captures
-// wrong keystrokes the user corrected along the way.
+// any point while typing. A sentence now ends when `typed` reaches the
+// target's length (not on an exact match), so at completion `typed` may
+// still contain wrong characters — correctChars can be < totalChars, and
+// the resulting accuracy < 1, legitimately. mistakeChars additionally
+// captures wrong keystrokes the user did correct along the way.
 export function computeSentenceStats(
   target: string,
   typed: string,
@@ -58,11 +59,12 @@ export function aggregateSentenceStats(stats: SentenceStats[]): ReadingResultSta
   const totalDurationMs = stats.reduce((sum, s) => sum + s.durationMs, 0);
 
   const overallAccuracy = totalChars === 0 ? 0 : totalCorrect / totalChars;
-  // Every completed sentence matches the target exactly by construction, so
-  // overallAccuracy is always 1 — it's kept only because finalScore is
-  // defined in terms of it. typingAccuracy is the real "how many mistakes
-  // did you make along the way" signal, derived from the live peak-mismatch
-  // tracking above; it's what the result screen's "Độ chính xác" card shows.
+  // A sentence completes on reaching the target length, not on an exact
+  // match, so a completed sentence can still contain mistakes: overallAccuracy
+  // — and therefore finalScore — can be < 1. typingAccuracy is a separate
+  // signal ("how many mistakes did you make along the way"), derived from the
+  // live peak-mismatch tracking above; it's what the result screen's "Độ
+  // chính xác" card shows.
   const typingAccuracy = totalChars === 0 ? 0 : Math.max(0, 1 - totalMistakes / totalChars);
   const deletionRatio = totalChars === 0 ? 0 : totalDeleted / totalChars;
   const finalScore = Math.min(1, Math.max(0, overallAccuracy - DELETION_PENALTY_WEIGHT * deletionRatio));

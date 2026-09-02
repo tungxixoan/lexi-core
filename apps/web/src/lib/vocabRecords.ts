@@ -1,5 +1,6 @@
 import { collection, deleteDoc, doc, getDocs, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { getFirebaseDb } from "./firebase";
+import { capitalizeHeadword } from "./vocabDisplay";
 import type { Sm2Fields } from "./sm2";
 
 export interface VocabRecord {
@@ -71,7 +72,15 @@ export async function getVocabRecordByHeadword(
   headword: string,
   targetLanguage: TargetLanguage
 ): Promise<VocabRecord | null> {
-  const q = query(vocabRecordsCol(uid, targetLanguage), where("headword", "==", headword));
+  // Stored headwords are capitalized (capitalizeHeadword on every save, plus
+  // the one-off migration), so normalize the query term the same way — the
+  // lookup cache is called with the raw user query / raw AI output, which is
+  // usually lowercase. Idempotent for the save-time callers that already pass
+  // a capitalized, trimmed draft.headword.
+  const q = query(
+    vocabRecordsCol(uid, targetLanguage),
+    where("headword", "==", capitalizeHeadword(headword.trim()))
+  );
   const snapshot = await getDocs(q);
   if (snapshot.empty) return null;
   const d = snapshot.docs[0];
