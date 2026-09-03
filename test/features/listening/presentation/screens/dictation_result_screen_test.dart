@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
 import 'package:lexi_core/core/services/stats_service.dart';
+import 'package:lexi_core/core/theme/bloom/bloom.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
@@ -241,6 +242,7 @@ void main() {
     await tester.pumpWidget(_buildResult(_perfectResult, repo));
     await tester.pumpAndSettle();
     expect(find.textContaining('100'), findsWidgets); // 100% score
+    expect(find.byType(BloomStatCard), findsNWidgets(4));
   });
 
   testWidgets('shows the target sentence and Vietnamese translation', (tester) async {
@@ -369,7 +371,8 @@ void main() {
     );
     await tester.pumpWidget(_buildResult(result, repo));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Số lần tua'), findsOneWidget);
+    // BloomStatCard renders its label uppercased.
+    expect(find.textContaining('SỐ LẦN TUA'), findsOneWidget);
     expect(find.textContaining('2 (−3%)'), findsOneWidget);
   });
 
@@ -377,7 +380,7 @@ void main() {
     final repo = _CapturingVocabRepository([_record('id1'), _record('id2')]);
     await tester.pumpWidget(_buildResult(_perfectResult, repo));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Số lần tua'), findsOneWidget);
+    expect(find.textContaining('SỐ LẦN TUA'), findsOneWidget);
     expect(find.textContaining('0 (−0%)'), findsOneWidget);
   });
 

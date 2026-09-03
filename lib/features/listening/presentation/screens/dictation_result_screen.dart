@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/utils/web_text_scale.dart';
 import '../../domain/entities/dictation_difficulty.dart';
 import '../providers/dictation_practice_provider.dart';
@@ -72,61 +73,106 @@ class _DictationResultScreenState extends ConsumerState<DictationResultScreen> {
     final seekPenaltyPct = (result.seekPenaltyTotal * 100).toStringAsFixed(0);
     final elapsed = _formatDuration(result.duration);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Kết quả'), automaticallyImplyLeading: false),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    final headerStyle = TextStyle(
+      fontWeight: FontWeight.w700,
+      color: context.bloom.ink,
+    );
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go('/listening/dictation');
+      },
+      child: BloomScaffold(
+        appBar: const BloomAppBar(
+          title: 'Kết quả',
+          automaticallyImplyLeading: false,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _StatCard(label: 'Điểm', value: '$scorePct%'),
-                _StatCard(label: 'Nghe lại', value: '${result.replayCount}'),
-                _StatCard(
-                  label: 'Số lần tua',
-                  value: '${result.seekCount} (−$seekPenaltyPct%)',
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: BloomStatCard(label: 'Điểm', value: '$scorePct%'),
+                    ),
+                    const SizedBox(width: BloomSpacing.md),
+                    Expanded(
+                      child: BloomStatCard(
+                        label: 'Nghe lại',
+                        value: '${result.replayCount}',
+                      ),
+                    ),
+                  ],
                 ),
-                _StatCard(label: 'Thời gian', value: elapsed),
+              ),
+              const SizedBox(height: BloomSpacing.md),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: BloomStatCard(
+                        label: 'Số lần tua',
+                        value: '${result.seekCount} (−$seekPenaltyPct%)',
+                      ),
+                    ),
+                    const SizedBox(width: BloomSpacing.md),
+                    Expanded(
+                      child: BloomStatCard(label: 'Thời gian', value: elapsed),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text('Bạn đã gõ', style: headerStyle),
+              const SizedBox(height: 8),
+              BloomCard(
+                child: result.difficulty == DictationDifficulty.hard
+                    ? _DiffText(
+                        typed: result.typed,
+                        target: result.item.target,
+                        style: webScaled(theme.textTheme.bodyLarge ??
+                            const TextStyle(fontSize: 16)),
+                      )
+                    : _ClozeResult(result: result),
+              ),
+              const SizedBox(height: 16),
+              Text('Câu đúng', style: headerStyle),
+              const SizedBox(height: 8),
+              Text(
+                result.item.target,
+                style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
+              ),
+              const SizedBox(height: 16),
+              Text('Nghĩa', style: headerStyle),
+              const SizedBox(height: 8),
+              Text(
+                result.item.vietnamese,
+                style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
+              ),
+              const SizedBox(height: 24),
+              BloomPillButton(
+                label: 'Câu khác',
+                variant: BloomButtonVariant.primary,
+                block: true,
+                onPressed: () => _regenerate(context, ref),
+              ),
+              const SizedBox(height: 8),
+              BloomPillButton(
+                label: 'Về trang chính',
+                variant: BloomButtonVariant.secondary,
+                block: true,
+                onPressed: () => _goHome(context, ref),
+              ),
               ],
             ),
-            const SizedBox(height: 24),
-            Text('Bạn đã gõ', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            if (result.difficulty == DictationDifficulty.hard)
-              _DiffText(
-                typed: result.typed,
-                target: result.item.target,
-                style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
-              )
-            else
-              _ClozeResult(result: result),
-            const SizedBox(height: 16),
-            Text('Câu đúng', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(
-              result.item.target,
-              style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
-            ),
-            const SizedBox(height: 16),
-            Text('Nghĩa', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(
-              result.item.vietnamese,
-              style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
-            ),
-            const Spacer(),
-            FilledButton(
-              onPressed: () => _regenerate(context, ref),
-              child: const Text('Câu khác'),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              onPressed: () => _goHome(context, ref),
-              child: const Text('Về trang chính'),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -158,16 +204,15 @@ class _DiffText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final c = context.bloom;
     final spans = <TextSpan>[];
     for (int i = 0; i < typed.length; i++) {
       final correct = i < target.length && typed[i] == target[i];
       spans.add(TextSpan(
         text: typed[i],
         style: (style ?? const TextStyle()).copyWith(
-          color: correct ? Colors.green : theme.colorScheme.error,
-          backgroundColor:
-              correct ? null : theme.colorScheme.error.withValues(alpha: 0.1),
+          color: correct ? c.success : c.danger,
+          backgroundColor: correct ? null : c.dangerBg,
         ),
       ));
     }
@@ -182,6 +227,7 @@ class _ClozeResult extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final c = context.bloom;
     final baseStyle = webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16));
     final words = result.item.target
         .split(RegExp(r'\s+'))
@@ -201,7 +247,8 @@ class _ClozeResult extends StatelessWidget {
       spans.add(TextSpan(
         text: answer.isEmpty ? '___' : answer,
         style: baseStyle.copyWith(
-          color: isCorrect ? Colors.green : theme.colorScheme.error,
+          color: isCorrect ? c.success : c.danger,
+          backgroundColor: isCorrect ? null : c.dangerBg,
           fontWeight: FontWeight.bold,
           decoration: TextDecoration.underline,
         ),
@@ -210,7 +257,7 @@ class _ClozeResult extends StatelessWidget {
         spans.add(TextSpan(
           text: ' (đúng: ${result.targetTextFor(blank)})',
           style: baseStyle.copyWith(
-            color: theme.colorScheme.error,
+            color: c.inkSoft,
             fontStyle: FontStyle.italic,
           ),
         ));
@@ -223,26 +270,5 @@ class _ClozeResult extends StatelessWidget {
     }
 
     return Text.rich(TextSpan(children: spans));
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  const _StatCard({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      children: [
-        Text(
-          value,
-          style: theme.textTheme.headlineSmall
-              ?.copyWith(color: theme.colorScheme.primary),
-        ),
-        Text(label, style: theme.textTheme.bodySmall),
-      ],
-    );
   }
 }
