@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lexi_core/core/widgets/ai_key_missing_card.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/provider_config.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/listening/presentation/screens/comprehension_home_screen.dart';
@@ -15,6 +18,18 @@ class _FakeSettingsNotifier extends UserSettingsNotifier {
   UserSettingsState build() => _state;
 }
 
+UserSettingsState _settings(
+        {bool aiAvailable = true, Language? targetLanguage}) =>
+    UserSettingsState.defaults.copyWith(
+      targetLanguage: targetLanguage,
+      providerConfigs: {
+        AiProvider.gemini: ProviderConfig(
+          apiKeyCiphertext: aiAvailable ? 'ck' : null,
+          model: 'gemini-2.5-flash',
+        ),
+      },
+    );
+
 Widget _buildHome({required UserSettingsState settings}) {
   SharedPreferences.setMockInitialValues({});
   final router = GoRouter(
@@ -23,11 +38,16 @@ Widget _buildHome({required UserSettingsState settings}) {
         path: '/',
         builder: (ctx, state) => const ComprehensionHomeScreen(),
       ),
+      GoRoute(
+        path: '/settings',
+        builder: (ctx, state) => const Scaffold(body: Text('Settings stub')),
+      ),
     ],
   );
   return ProviderScope(
     overrides: [
-      userSettingsNotifierProvider.overrideWith(() => _FakeSettingsNotifier(settings)),
+      userSettingsNotifierProvider
+          .overrideWith(() => _FakeSettingsNotifier(settings)),
     ],
     child: MaterialApp.router(routerConfig: router),
   );
@@ -36,18 +56,22 @@ Widget _buildHome({required UserSettingsState settings}) {
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  testWidgets('shows AI disabled message when aiEnabled is false', (tester) async {
+  testWidgets('shows the missing-API-key card when no key is set',
+      (tester) async {
     await tester.pumpWidget(_buildHome(
-      settings: UserSettingsState.defaults.copyWith(aiEnabled: false),
+      settings: _settings(aiAvailable: false),
     ));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Tính năng này yêu cầu AI'), findsOneWidget);
+    expect(find.byType(AiKeyMissingCard), findsOneWidget);
+    expect(find.textContaining('Chưa có API key cho nhà cung cấp AI'),
+        findsOneWidget);
     expect(find.text('Tạo bài luyện'), findsNothing);
   });
 
-  testWidgets('shows generate button when AI is enabled (no vocab gate)', (tester) async {
+  testWidgets('shows generate button when AI is enabled (no vocab gate)',
+      (tester) async {
     await tester.pumpWidget(_buildHome(
-      settings: UserSettingsState.defaults.copyWith(aiEnabled: true),
+      settings: _settings(),
     ));
     await tester.pumpAndSettle();
     expect(find.text('Tạo bài luyện'), findsOneWidget);
@@ -55,7 +79,7 @@ void main() {
 
   testWidgets('shows language, context and level pickers', (tester) async {
     await tester.pumpWidget(_buildHome(
-      settings: UserSettingsState.defaults.copyWith(aiEnabled: true),
+      settings: _settings(),
     ));
     await tester.pumpAndSettle();
     expect(find.text('Ngôn ngữ'), findsOneWidget);
@@ -63,10 +87,11 @@ void main() {
     expect(find.text('Cấp độ'), findsOneWidget);
   });
 
-  testWidgets('shows unsupported-language message when target language has no Piper voice', (tester) async {
+  testWidgets(
+      'shows unsupported-language message when target language has no Piper voice',
+      (tester) async {
     await tester.pumpWidget(_buildHome(
-      settings: UserSettingsState.defaults
-          .copyWith(aiEnabled: true, targetLanguage: Language.japanese),
+      settings: _settings(targetLanguage: Language.japanese),
     ));
     await tester.pumpAndSettle();
     expect(find.textContaining('chưa hỗ trợ'), findsOneWidget);

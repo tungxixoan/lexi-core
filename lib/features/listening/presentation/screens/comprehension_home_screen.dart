@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/bloom/bloom.dart';
-import '../../../../core/widgets/ai_disabled_card.dart';
+import '../../../../core/widgets/ai_key_missing_card.dart';
 import '../../../../core/widgets/filter_tile.dart';
+import '../../../../core/widgets/home_notice_card.dart';
 import '../../../../core/widgets/selection_sheets.dart';
 import '../../../dictionary/domain/entities/app_context.dart';
 import '../../../dictionary/domain/entities/language.dart';
@@ -111,13 +112,10 @@ class _ComprehensionHomeScreenState
               onTap: _pickLevel,
             ),
             const SizedBox(height: 16),
-            if (!settings.aiEnabled)
-              AiDisabledCard(
-                message:
-                    'Tính năng này yêu cầu AI. Bật AI trong Cài đặt để dùng.',
-              )
+            if (!settings.aiAvailable)
+              const AiKeyMissingCard()
             else if (_language.ttsCloudCode == null)
-              AiDisabledCard(
+              HomeNoticeCard(
                 message: 'Tính năng này chưa hỗ trợ ${_language.label}. '
                     'Hãy chọn Tiếng Việt hoặc English.',
               )

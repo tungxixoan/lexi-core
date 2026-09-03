@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../theme/bloom/bloom.dart';
 
-/// A danger-tinted notice used across home screens to explain why a generate
-/// action is unavailable (AI not configured, not enough saved words, ...).
-class AiDisabledCard extends StatelessWidget {
-  const AiDisabledCard({super.key, required this.message});
+/// A danger-tinted notice for home screens — not-enough-words,
+/// unsupported-language, and similar reasons a generate action is unavailable.
+class HomeNoticeCard extends StatelessWidget {
+  const HomeNoticeCard({super.key, required this.message});
   final String message;
 
   @override

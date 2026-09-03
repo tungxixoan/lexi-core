@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lexi_core/core/widgets/ai_key_missing_card.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/provider_config.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/reading/presentation/screens/part6_home_screen.dart';
@@ -14,16 +17,31 @@ class _FakeSettingsNotifier extends UserSettingsNotifier {
   UserSettingsState build() => _state;
 }
 
+UserSettingsState _settings({bool aiAvailable = true}) =>
+    UserSettingsState.defaults.copyWith(
+      providerConfigs: {
+        AiProvider.gemini: ProviderConfig(
+          apiKeyCiphertext: aiAvailable ? 'ck' : null,
+          model: 'gemini-2.5-flash',
+        ),
+      },
+    );
+
 Widget _buildHome({required UserSettingsState settings}) {
   SharedPreferences.setMockInitialValues({});
   final router = GoRouter(
     routes: [
       GoRoute(path: '/', builder: (ctx, state) => const Part6HomeScreen()),
+      GoRoute(
+        path: '/settings',
+        builder: (ctx, state) => const Scaffold(body: Text('Settings stub')),
+      ),
     ],
   );
   return ProviderScope(
     overrides: [
-      userSettingsNotifierProvider.overrideWith(() => _FakeSettingsNotifier(settings)),
+      userSettingsNotifierProvider
+          .overrideWith(() => _FakeSettingsNotifier(settings)),
     ],
     child: MaterialApp.router(routerConfig: router),
   );
@@ -32,18 +50,22 @@ Widget _buildHome({required UserSettingsState settings}) {
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  testWidgets('shows AI disabled message when aiEnabled is false', (tester) async {
+  testWidgets('shows the missing-API-key card when no key is set',
+      (tester) async {
     await tester.pumpWidget(_buildHome(
-      settings: UserSettingsState.defaults.copyWith(aiEnabled: false),
+      settings: _settings(aiAvailable: false),
     ));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Tính năng này yêu cầu AI'), findsOneWidget);
+    expect(find.byType(AiKeyMissingCard), findsOneWidget);
+    expect(find.textContaining('Chưa có API key cho nhà cung cấp AI'),
+        findsOneWidget);
     expect(find.text('Tạo bài luyện'), findsNothing);
   });
 
-  testWidgets('shows generate button when AI is enabled (no vocab gate)', (tester) async {
+  testWidgets('shows generate button when AI is enabled (no vocab gate)',
+      (tester) async {
     await tester.pumpWidget(_buildHome(
-      settings: UserSettingsState.defaults.copyWith(aiEnabled: true),
+      settings: _settings(),
     ));
     await tester.pumpAndSettle();
     expect(find.text('Tạo bài luyện'), findsOneWidget);
@@ -51,7 +73,7 @@ void main() {
 
   testWidgets('shows language, context and difficulty pickers', (tester) async {
     await tester.pumpWidget(_buildHome(
-      settings: UserSettingsState.defaults.copyWith(aiEnabled: true),
+      settings: _settings(),
     ));
     await tester.pumpAndSettle();
     expect(find.text('Ngôn ngữ'), findsOneWidget);

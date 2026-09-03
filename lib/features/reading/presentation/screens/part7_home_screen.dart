@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/bloom/bloom.dart';
-import '../../../../core/widgets/ai_disabled_card.dart';
+import '../../../../core/widgets/ai_key_missing_card.dart';
 import '../../../../core/widgets/filter_tile.dart';
 import '../../../../core/widgets/selection_sheets.dart';
 import '../../../dictionary/domain/entities/app_context.dart';
@@ -35,7 +35,9 @@ class _Part7HomeScreenState extends ConsumerState<Part7HomeScreen> {
     final result = await showSingleSelectSheet<Language>(
       context: context,
       title: 'Ngôn ngữ',
-      options: Language.values.map((l) => SelectOption(value: l, label: l.label)).toList(),
+      options: Language.values
+          .map((l) => SelectOption(value: l, label: l.label))
+          .toList(),
       selected: _language,
     );
     if (result != null) setState(() => _language = result.value);
@@ -57,7 +59,9 @@ class _Part7HomeScreenState extends ConsumerState<Part7HomeScreen> {
     final result = await showMultiSelectSheet<EconomyVolume>(
       context: context,
       title: 'Độ khó',
-      options: EconomyVolume.values.map((v) => SelectOption(value: v, label: v.label)).toList(),
+      options: EconomyVolume.values
+          .map((v) => SelectOption(value: v, label: v.label))
+          .toList(),
       initialSelected: _volumes,
     );
     if (result != null) {
@@ -112,10 +116,8 @@ class _Part7HomeScreenState extends ConsumerState<Part7HomeScreen> {
               onTap: _pickVolumes,
             ),
             const SizedBox(height: 16),
-            if (!settings.aiEnabled)
-              AiDisabledCard(
-                message: 'Tính năng này yêu cầu AI. Bật AI trong Cài đặt để dùng.',
-              )
+            if (!settings.aiAvailable)
+              const AiKeyMissingCard()
             else
               sessionAsync.when(
                 data: (_) => BloomPillButton(

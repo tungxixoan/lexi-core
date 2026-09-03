@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
+import 'package:lexi_core/core/widgets/ai_key_missing_card.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/provider_config.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/reading/presentation/screens/reading_home_screen.dart';
@@ -55,7 +58,8 @@ class _FakeVocabRepository implements VocabRepository {
   Future<void> save(VocabRecord record) async {}
 
   @override
-  Future<VocabRecord?> getById(String id, {required Language language}) async => null;
+  Future<VocabRecord?> getById(String id, {required Language language}) async =>
+      null;
 
   @override
   Future<void> update(VocabRecord record) async {}
@@ -68,7 +72,8 @@ class _FakeVocabRepository implements VocabRepository {
       false;
 
   @override
-  Future<VocabRecord?> getByHeadword(String headword, Language language) async =>
+  Future<VocabRecord?> getByHeadword(
+          String headword, Language language) async =>
       null;
 
   @override
@@ -77,6 +82,16 @@ class _FakeVocabRepository implements VocabRepository {
   @override
   Future<void> deleteTopic(String id) async {}
 }
+
+UserSettingsState _settings({bool aiAvailable = true}) =>
+    UserSettingsState.defaults.copyWith(
+      providerConfigs: {
+        AiProvider.gemini: ProviderConfig(
+          apiKeyCiphertext: aiAvailable ? 'ck' : null,
+          model: 'gemini-2.5-flash',
+        ),
+      },
+    );
 
 Widget _buildHome({
   required UserSettingsState settings,
@@ -89,12 +104,18 @@ Widget _buildHome({
         path: '/',
         builder: (ctx, state) => const ReadingHomeScreen(),
       ),
+      GoRoute(
+        path: '/settings',
+        builder: (ctx, state) => const Scaffold(body: Text('Settings stub')),
+      ),
     ],
   );
   return ProviderScope(
     overrides: [
-      userSettingsNotifierProvider.overrideWith(() => _FakeSettingsNotifier(settings)),
-      vocabRepositoryProvider.overrideWithValue(_FakeVocabRepository(vocabItems)),
+      userSettingsNotifierProvider
+          .overrideWith(() => _FakeSettingsNotifier(settings)),
+      vocabRepositoryProvider
+          .overrideWithValue(_FakeVocabRepository(vocabItems)),
     ],
     child: MaterialApp.router(routerConfig: router),
   );
@@ -110,19 +131,23 @@ class _FakeSettingsNotifier extends UserSettingsNotifier {
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  testWidgets('shows AI disabled message when aiEnabled is false', (tester) async {
+  testWidgets('shows the missing-API-key card when no key is set',
+      (tester) async {
     await tester.pumpWidget(_buildHome(
-      settings: UserSettingsState.defaults.copyWith(aiEnabled: false),
+      settings: _settings(aiAvailable: false),
       vocabItems: List.generate(10, _record),
     ));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Tính năng này yêu cầu AI'), findsOneWidget);
+    expect(find.byType(AiKeyMissingCard), findsOneWidget);
+    expect(find.textContaining('Chưa có API key cho nhà cung cấp AI'),
+        findsOneWidget);
     expect(find.text('Tạo bài luyện'), findsNothing);
   });
 
-  testWidgets('shows low vocab message when fewer than 5 words', (tester) async {
+  testWidgets('shows low vocab message when fewer than 5 words',
+      (tester) async {
     await tester.pumpWidget(_buildHome(
-      settings: UserSettingsState.defaults.copyWith(aiEnabled: true),
+      settings: _settings(),
       vocabItems: List.generate(3, _record),
     ));
     await tester.pumpAndSettle();
@@ -130,18 +155,20 @@ void main() {
     expect(find.text('Tạo bài luyện'), findsNothing);
   });
 
-  testWidgets('shows generate button when AI enabled and >= 5 vocab words', (tester) async {
+  testWidgets('shows generate button when AI enabled and >= 5 vocab words',
+      (tester) async {
     await tester.pumpWidget(_buildHome(
-      settings: UserSettingsState.defaults.copyWith(aiEnabled: true),
+      settings: _settings(),
       vocabItems: List.generate(5, _record),
     ));
     await tester.pumpAndSettle();
     expect(find.text('Tạo bài luyện'), findsOneWidget);
   });
 
-  testWidgets('shows language, topic, level and word-count pickers', (tester) async {
+  testWidgets('shows language, topic, level and word-count pickers',
+      (tester) async {
     await tester.pumpWidget(_buildHome(
-      settings: UserSettingsState.defaults.copyWith(aiEnabled: true),
+      settings: _settings(),
       vocabItems: List.generate(5, _record),
     ));
     await tester.pumpAndSettle();

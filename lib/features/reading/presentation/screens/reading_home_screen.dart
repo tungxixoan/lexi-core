@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../../../core/theme/bloom/bloom.dart';
-import '../../../../core/widgets/ai_disabled_card.dart';
+import '../../../../core/widgets/ai_key_missing_card.dart';
 import '../../../../core/widgets/filter_tile.dart';
+import '../../../../core/widgets/home_notice_card.dart';
 import '../../../../core/widgets/selection_sheets.dart';
 import '../../../../features/dictionary/domain/entities/app_context.dart';
 import '../../../../features/dictionary/domain/entities/language.dart';
@@ -150,7 +151,6 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
               style: TextStyle(fontSize: 14, color: context.bloom.inkSoft),
             ),
             const SizedBox(height: 16),
-
             FilterTile(
               icon: Icons.language_outlined,
               label: 'Ngôn ngữ',
@@ -182,16 +182,12 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
               onTap: _pickWordCount,
             ),
             const SizedBox(height: 16),
-
-            if (!settings.aiEnabled)
-              AiDisabledCard(
-                message:
-                    'Tính năng này yêu cầu AI. Bật AI trong Cài đặt để dùng.',
-              )
+            if (!settings.aiAvailable)
+              const AiKeyMissingCard()
             else if (words == null)
               const Center(child: CircularProgressIndicator())
             else if (words.length < _minVocabWords)
-              AiDisabledCard(
+              HomeNoticeCard(
                 message:
                     'Hãy lưu ít nhất 5 từ khớp với bộ lọc trên vào Vocab Bank. '
                     'Hiện có ${words.length} từ.',
@@ -251,11 +247,10 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
     final dueWords = vocabItems.where(isDue).toList()..shuffle();
     final notDueWords = vocabItems.where((r) => !isDue(r)).toList()..shuffle();
     final prioritized = [...dueWords, ...notDueWords];
-    final words = (_wordCount == null
-            ? prioritized
-            : prioritized.take(_wordCount!))
-        .toList()
-        .cast<VocabRecord>();
+    final words =
+        (_wordCount == null ? prioritized : prioritized.take(_wordCount!))
+            .toList()
+            .cast<VocabRecord>();
 
     await ref.read(readingPracticeNotifierProvider.notifier).generate(
           words: words,
@@ -272,4 +267,3 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
     }
   }
 }
-

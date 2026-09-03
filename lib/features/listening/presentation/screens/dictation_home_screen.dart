@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../../../core/theme/bloom/bloom.dart';
-import '../../../../core/widgets/ai_disabled_card.dart';
+import '../../../../core/widgets/ai_key_missing_card.dart';
 import '../../../../core/widgets/filter_tile.dart';
+import '../../../../core/widgets/home_notice_card.dart';
 import '../../../../core/widgets/selection_sheets.dart';
 import '../../../dictionary/domain/entities/app_context.dart';
 import '../../../dictionary/domain/entities/language.dart';
@@ -144,7 +145,6 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
               style: TextStyle(fontSize: 14, color: context.bloom.inkSoft),
             ),
             const SizedBox(height: 16),
-
             FilterTile(
               icon: Icons.language_outlined,
               label: 'Ngôn ngữ',
@@ -176,21 +176,17 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
               onTap: _pickDifficulty,
             ),
             const SizedBox(height: 16),
-
-            if (!settings.aiEnabled)
-              AiDisabledCard(
-                message:
-                    'Tính năng này yêu cầu AI. Bật AI trong Cài đặt để dùng.',
-              )
+            if (!settings.aiAvailable)
+              const AiKeyMissingCard()
             else if (_language.ttsCloudCode == null)
-              AiDisabledCard(
+              HomeNoticeCard(
                 message: 'Tính năng này chưa hỗ trợ ${_language.label}. '
                     'Hãy chọn Tiếng Việt hoặc English.',
               )
             else if (words == null)
               const Center(child: CircularProgressIndicator())
             else if (words.length < _minVocabWords)
-              AiDisabledCard(
+              HomeNoticeCard(
                 message:
                     'Hãy lưu ít nhất 2 từ khớp với bộ lọc trên vào Vocab Bank. '
                     'Hiện có ${words.length} từ.',
@@ -248,7 +244,8 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
     bool isDue(VocabRecord r) =>
         r.nextReviewAt == null || r.nextReviewAt!.isBefore(now);
     final dueWords = eligibleWords.where(isDue).toList()..shuffle();
-    final notDueWords = eligibleWords.where((r) => !isDue(r)).toList()..shuffle();
+    final notDueWords = eligibleWords.where((r) => !isDue(r)).toList()
+      ..shuffle();
     final prioritized = [...dueWords, ...notDueWords];
     final words = prioritized.take(2).toList();
 
@@ -268,4 +265,3 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
     }
   }
 }
-
