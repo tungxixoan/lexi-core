@@ -13,4 +13,5 @@ export 'bloom_pill_button.dart';
 export 'bloom_progress_bar.dart';
 export 'bloom_result_ring.dart';
 export 'bloom_scaffold.dart';
+export 'bloom_stat_card.dart';
 export 'bloom_text_field.dart';
