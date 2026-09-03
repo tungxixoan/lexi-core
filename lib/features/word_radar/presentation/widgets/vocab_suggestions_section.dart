@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../dictionary/domain/entities/app_context.dart';
 import '../../../dictionary/domain/entities/lookup_result.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
@@ -23,7 +24,8 @@ class VocabSuggestionsSection extends ConsumerStatefulWidget {
       _VocabSuggestionsSectionState();
 }
 
-class _VocabSuggestionsSectionState extends ConsumerState<VocabSuggestionsSection> {
+class _VocabSuggestionsSectionState
+    extends ConsumerState<VocabSuggestionsSection> {
   final Set<String> _savedHeadwords = {};
   final Set<String> _dismissedHeadwords = {};
 
@@ -55,8 +57,8 @@ class _VocabSuggestionsSectionState extends ConsumerState<VocabSuggestionsSectio
     for (final s in toSave) {
       final topicIds = <String>[];
       for (final suggestedTopic in s.suggestedTopics) {
-        final match =
-            topics.where((t) => t.name.toLowerCase() == suggestedTopic.toLowerCase());
+        final match = topics
+            .where((t) => t.name.toLowerCase() == suggestedTopic.toLowerCase());
         if (match.isNotEmpty && topicIds.length < 2) {
           topicIds.add(match.first.id);
         }
@@ -95,7 +97,7 @@ class _VocabSuggestionsSectionState extends ConsumerState<VocabSuggestionsSectio
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final c = context.bloom;
     final visibleSuggestions = widget.suggestions
         .where((s) => !_dismissedHeadwords.contains(s.headword))
         .toList();
@@ -106,13 +108,20 @@ class _VocabSuggestionsSectionState extends ConsumerState<VocabSuggestionsSectio
       children: [
         Row(
           children: [
-            Text('Gợi ý từ mới', style: theme.textTheme.labelLarge),
+            Text(
+              'Gợi ý từ mới',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+                color: c.ink,
+              ),
+            ),
             const Spacer(),
             if (hasUnsaved)
-              TextButton.icon(
+              BloomPillButton(
+                label: 'Lưu tất cả',
+                variant: BloomButtonVariant.link,
                 onPressed: () => _saveAll(visibleSuggestions),
-                icon: const Icon(Icons.done_all, size: 18),
-                label: const Text('Lưu tất cả'),
               ),
           ],
         ),
@@ -123,34 +132,54 @@ class _VocabSuggestionsSectionState extends ConsumerState<VocabSuggestionsSectio
           Column(
             children: visibleSuggestions.map((s) {
               final isSaved = _savedHeadwords.contains(s.headword);
-              return Card(
-                child: ListTile(
+              final secondaryLine =
+                  s.ipa.isNotEmpty ? '${s.ipa} • ${s.meaning}' : s.meaning;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: BloomCard(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   onTap: isSaved ? null : () => _openSaveSheet(s),
-                  title: Text(s.headword),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
+                  child: Row(
                     children: [
-                      Text('${s.ipa}  •  ${s.meaning}'),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              s.headword,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                                color: c.ink,
+                              ),
+                            ),
+                            if (secondaryLine.isNotEmpty)
+                              Text(
+                                secondaryLine,
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  color: c.inkSoft,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                       if (s.cefrLevel != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Chip(
-                            label: Text(s.cefrLevel!.label),
-                            visualDensity: VisualDensity.compact,
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
+                        BloomCefrPill(s.cefrLevel!.label),
+                      const SizedBox(width: 8),
+                      if (isSaved)
+                        Icon(Icons.check_circle, color: c.success)
+                      else
+                        IconButton(
+                          icon: Icon(Icons.close, size: 18, color: c.inkFaint),
+                          tooltip: 'Bỏ qua gợi ý này',
+                          onPressed: () => setState(
+                              () => _dismissedHeadwords.add(s.headword)),
                         ),
                     ],
                   ),
-                  trailing: isSaved
-                      ? const Icon(Icons.check_circle, color: Colors.green)
-                      : IconButton(
-                          icon: const Icon(Icons.close),
-                          tooltip: 'Bỏ qua gợi ý này',
-                          onPressed: () =>
-                              setState(() => _dismissedHeadwords.add(s.headword)),
-                        ),
                 ),
               );
             }).toList(),

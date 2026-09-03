@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../dictionary/domain/entities/language.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
 import '../../../vocabulary/domain/entities/cefr_level.dart';
@@ -24,10 +25,12 @@ class ResultSuggestionsSection extends ConsumerStatefulWidget {
   final CEFRLevel? targetCefrLevel;
 
   @override
-  ConsumerState<ResultSuggestionsSection> createState() => _ResultSuggestionsSectionState();
+  ConsumerState<ResultSuggestionsSection> createState() =>
+      _ResultSuggestionsSectionState();
 }
 
-class _ResultSuggestionsSectionState extends ConsumerState<ResultSuggestionsSection> {
+class _ResultSuggestionsSectionState
+    extends ConsumerState<ResultSuggestionsSection> {
   AsyncValue<WordRadarAiResult>? _suggestions;
 
   @override
@@ -63,8 +66,15 @@ class _ResultSuggestionsSectionState extends ConsumerState<ResultSuggestionsSect
         error: (e, _) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Không tải được gợi ý từ mới: $e'),
-            TextButton(onPressed: _load, child: const Text('Thử lại')),
+            Text(
+              'Không tải được gợi ý từ mới: $e',
+              style: TextStyle(color: context.bloom.danger),
+            ),
+            BloomPillButton(
+              label: 'Thử lại',
+              variant: BloomButtonVariant.secondary,
+              onPressed: _load,
+            ),
           ],
         ),
         data: (r) => VocabSuggestionsSection(suggestions: r.suggestions),
