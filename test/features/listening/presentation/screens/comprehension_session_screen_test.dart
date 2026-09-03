@@ -213,9 +213,9 @@ void main() {
     testWidgets('defaults to the 1x segment selected', (tester) async {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
-      final segmented = tester.widget<SegmentedButton<double>>(
-          find.byType(SegmentedButton<double>));
-      expect(segmented.selected, {1.0});
+      final segmented = tester
+          .widget<BloomSegmented<double>>(find.byType(BloomSegmented<double>));
+      expect(segmented.selected, 1.0);
     });
 
     testWidgets(
@@ -227,9 +227,9 @@ void main() {
       await tester.tap(find.text('1.25x'));
       await tester.pumpAndSettle();
 
-      final segmented = tester.widget<SegmentedButton<double>>(
-          find.byType(SegmentedButton<double>));
-      expect(segmented.selected, {1.25});
+      final segmented = tester
+          .widget<BloomSegmented<double>>(find.byType(BloomSegmented<double>));
+      expect(segmented.selected, 1.25);
     });
   });
 }

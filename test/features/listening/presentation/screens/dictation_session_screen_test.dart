@@ -18,10 +18,12 @@ class _FakeTtsService implements TtsService {
   int synthesizeCount = 0;
 
   @override
-  Future<void> pronounce(String text, Language language, {required PronunciationTier tier}) async {}
+  Future<void> pronounce(String text, Language language,
+      {required PronunciationTier tier}) async {}
 
   @override
-  Future<void> synthesize(String text, Language language, {String? voice, double? rate}) async {
+  Future<void> synthesize(String text, Language language,
+      {String? voice, double? rate}) async {
     synthesizeCount++;
   }
 
@@ -204,7 +206,8 @@ void main() {
       BlankSpan(startWordIndex: 1, wordCount: 1),
     ];
 
-    testWidgets('shows one input per blank instead of the hard-mode single TextField',
+    testWidgets(
+        'shows one input per blank instead of the hard-mode single TextField',
         (tester) async {
       await tester.pumpWidget(_buildSession(_session(
         difficulty: DictationDifficulty.easy,
@@ -217,7 +220,8 @@ void main() {
       expect(find.byKey(const ValueKey('blank-1')), findsOneWidget);
     });
 
-    testWidgets('Nộp bài is disabled until every blank is filled', (tester) async {
+    testWidgets('Nộp bài is disabled until every blank is filled',
+        (tester) async {
       await tester.pumpWidget(_buildSession(_session(
         difficulty: DictationDifficulty.easy,
         blanks: clozeBlanks,
@@ -356,13 +360,15 @@ void main() {
   });
 
   group('seek slider', () {
-    testWidgets('shows a seek slider once the item has more than 1 word', (tester) async {
+    testWidgets('shows a seek slider once the item has more than 1 word',
+        (tester) async {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
       expect(find.byType(Slider), findsOneWidget);
     });
 
-    testWidgets('shows a word-position label while dragging, before releasing', (tester) async {
+    testWidgets('shows a word-position label while dragging, before releasing',
+        (tester) async {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
 
@@ -386,7 +392,8 @@ void main() {
       expect(find.text('Nghe lại (0)'), findsOneWidget);
     });
 
-    testWidgets('submitting after seeking includes seekCount and seekPenaltyTotal in the result',
+    testWidgets(
+        'submitting after seeking includes seekCount and seekPenaltyTotal in the result',
         (tester) async {
       Object? capturedExtra;
       await tester.pumpWidget(
@@ -418,12 +425,13 @@ void main() {
     testWidgets('defaults to the 1x segment selected', (tester) async {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
-      final segmented =
-          tester.widget<SegmentedButton<double>>(find.byType(SegmentedButton<double>));
-      expect(segmented.selected, {1.0});
+      final segmented = tester
+          .widget<BloomSegmented<double>>(find.byType(BloomSegmented<double>));
+      expect(segmented.selected, 1.0);
     });
 
-    testWidgets('tapping 0.75x calls setSpeed(0.75) and updates the selected segment',
+    testWidgets(
+        'tapping 0.75x calls setSpeed(0.75) and updates the selected segment',
         (tester) async {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
@@ -431,9 +439,9 @@ void main() {
       await tester.tap(find.text('0.75x'));
       await tester.pumpAndSettle();
 
-      final segmented =
-          tester.widget<SegmentedButton<double>>(find.byType(SegmentedButton<double>));
-      expect(segmented.selected, {0.75});
+      final segmented = tester
+          .widget<BloomSegmented<double>>(find.byType(BloomSegmented<double>));
+      expect(segmented.selected, 0.75);
     });
   });
 }

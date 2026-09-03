@@ -264,14 +264,14 @@ class _SpeedSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SegmentedButton<double>(
+    return BloomSegmented<double>(
       segments: const [
-        ButtonSegment(value: 0.75, label: Text('0.75x')),
-        ButtonSegment(value: 1.0, label: Text('1x')),
-        ButtonSegment(value: 1.25, label: Text('1.25x')),
+        BloomSegment(value: 0.75, label: '0.75x'),
+        BloomSegment(value: 1.0, label: '1x'),
+        BloomSegment(value: 1.25, label: '1.25x'),
       ],
-      selected: {speed},
-      onSelectionChanged: (selected) => onChanged(selected.first),
+      selected: speed,
+      onChanged: onChanged,
     );
   }
 }
