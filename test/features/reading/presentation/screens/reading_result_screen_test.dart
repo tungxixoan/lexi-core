@@ -6,11 +6,13 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
 import 'package:lexi_core/core/services/stats_service.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart'
     show WordPhraseResult;
+import 'package:lexi_core/features/dictionary/domain/entities/provider_config.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
@@ -97,7 +99,8 @@ Future<Widget> _buildResultWithBackspaces() async {
     routes: [
       GoRoute(
         path: '/',
-        builder: (ctx, state) => ReadingResultScreen(result: _testResultWithBackspaces),
+        builder: (ctx, state) =>
+            ReadingResultScreen(result: _testResultWithBackspaces),
       ),
       GoRoute(
         path: '/reading/bilingual',
@@ -111,7 +114,12 @@ Future<Widget> _buildResultWithBackspaces() async {
           .overrideWith((ref) => const []),
       sharedPreferencesProvider.overrideWithValue(prefs),
       userSettingsNotifierProvider.overrideWith(
-        () => _FakeSettingsNotifier(UserSettingsState.defaults.copyWith(aiEnabled: true)),
+        () => _FakeSettingsNotifier(UserSettingsState.defaults.copyWith(
+          providerConfigs: {
+            AiProvider.gemini: const ProviderConfig(
+                apiKeyCiphertext: 'ck', model: 'gemini-2.5-flash'),
+          },
+        )),
       ),
     ],
     child: MaterialApp.router(routerConfig: router),
@@ -128,12 +136,12 @@ Future<Widget> _buildResult({
     routes: [
       GoRoute(
         path: '/',
-        builder: (ctx, state) => ReadingResultScreen(result: result ?? _testResult),
+        builder: (ctx, state) =>
+            ReadingResultScreen(result: result ?? _testResult),
       ),
       GoRoute(
         path: '/reading/bilingual',
-        builder: (ctx, state) =>
-            const Scaffold(body: Text('Home')),
+        builder: (ctx, state) => const Scaffold(body: Text('Home')),
       ),
     ],
   );
@@ -143,7 +151,12 @@ Future<Widget> _buildResult({
           .overrideWith((ref) => const []),
       sharedPreferencesProvider.overrideWithValue(prefs),
       userSettingsNotifierProvider.overrideWith(
-        () => _FakeSettingsNotifier(UserSettingsState.defaults.copyWith(aiEnabled: true)),
+        () => _FakeSettingsNotifier(UserSettingsState.defaults.copyWith(
+          providerConfigs: {
+            AiProvider.gemini: const ProviderConfig(
+                apiKeyCiphertext: 'ck', model: 'gemini-2.5-flash'),
+          },
+        )),
       ),
       ...extraOverrides,
     ],
@@ -176,14 +189,16 @@ void main() {
     expect(find.text('Điểm'), findsOneWidget);
   });
 
-  testWidgets('score reflects the deletion penalty subtracted from accuracy', (tester) async {
+  testWidgets('score reflects the deletion penalty subtracted from accuracy',
+      (tester) async {
     await tester.pumpWidget(await _buildResultWithBackspaces());
     await tester.pumpAndSettle();
     // deletionRatio = 6/12 = 0.5; penalty = 0.5 * 0.5 = 0.25; 100% - 25% = 75.0%
     expect(find.text('75.0%'), findsOneWidget);
   });
 
-  testWidgets('records a practice session (for the streak) with the passage vocab count',
+  testWidgets(
+      'records a practice session (for the streak) with the passage vocab count',
       (tester) async {
     final mockStats = MockStatsService();
     when(() => mockStats.recordPracticeSession(any())).thenAnswer((_) async {});
@@ -248,7 +263,8 @@ void main() {
 
     await tester.pumpWidget(await _buildResult(
       extraOverrides: [
-        getVocabSuggestionsForTextUseCaseProvider.overrideWithValue(mockSuggestions),
+        getVocabSuggestionsForTextUseCaseProvider
+            .overrideWithValue(mockSuggestions),
       ],
     ));
     await tester.pumpAndSettle();
@@ -272,7 +288,8 @@ void main() {
 
     await tester.pumpWidget(await _buildResult(
       extraOverrides: [
-        getVocabSuggestionsForTextUseCaseProvider.overrideWithValue(mockSuggestions),
+        getVocabSuggestionsForTextUseCaseProvider
+            .overrideWithValue(mockSuggestions),
       ],
     ));
     await tester.pumpAndSettle();
@@ -281,15 +298,17 @@ void main() {
     expect(find.textContaining('Không tải được gợi ý'), findsOneWidget);
   });
 
-  testWidgets('does not load suggestions when AI is disabled in settings', (tester) async {
+  testWidgets('does not load suggestions when AI is disabled in settings',
+      (tester) async {
     final mockSuggestions = MockGetVocabSuggestionsForTextUseCase();
 
     await tester.pumpWidget(await _buildResult(
       extraOverrides: [
         userSettingsNotifierProvider.overrideWith(
-          () => _FakeSettingsNotifier(UserSettingsState.defaults.copyWith(aiEnabled: false)),
+          () => _FakeSettingsNotifier(UserSettingsState.defaults),
         ),
-        getVocabSuggestionsForTextUseCaseProvider.overrideWithValue(mockSuggestions),
+        getVocabSuggestionsForTextUseCaseProvider
+            .overrideWithValue(mockSuggestions),
       ],
     ));
     await tester.pumpAndSettle();

@@ -6,10 +6,12 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
 import 'package:lexi_core/core/services/stats_service.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/provider_config.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/reading/domain/entities/economy_volume.dart';
@@ -65,15 +67,24 @@ Future<Widget> _buildResult({List<Override> extraOverrides = const []}) async {
   final prefs = await SharedPreferences.getInstance();
   final router = GoRouter(
     routes: [
-      GoRoute(path: '/', builder: (ctx, state) => Part6ResultScreen(result: _testResult)),
-      GoRoute(path: '/reading/part6', builder: (ctx, state) => const Scaffold(body: Text('Part6 home'))),
+      GoRoute(
+          path: '/',
+          builder: (ctx, state) => Part6ResultScreen(result: _testResult)),
+      GoRoute(
+          path: '/reading/part6',
+          builder: (ctx, state) => const Scaffold(body: Text('Part6 home'))),
     ],
   );
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       userSettingsNotifierProvider.overrideWith(
-        () => _FakeSettingsNotifier(UserSettingsState.defaults.copyWith(aiEnabled: true)),
+        () => _FakeSettingsNotifier(UserSettingsState.defaults.copyWith(
+          providerConfigs: {
+            AiProvider.gemini: const ProviderConfig(
+                apiKeyCiphertext: 'ck', model: 'gemini-2.5-flash'),
+          },
+        )),
       ),
       ...extraOverrides,
     ],
@@ -109,7 +120,8 @@ void main() {
     expect(find.text('Về trang chính'), findsOneWidget);
   });
 
-  testWidgets('records a practice session with the total question count', (tester) async {
+  testWidgets('records a practice session with the total question count',
+      (tester) async {
     final mockStats = MockStatsService();
     when(() => mockStats.recordPracticeSession(any())).thenAnswer((_) async {});
 
@@ -121,7 +133,8 @@ void main() {
     verify(() => mockStats.recordPracticeSession(12)).called(1);
   });
 
-  testWidgets('loads new-word suggestions for the concatenated passage texts with a null CEFR level',
+  testWidgets(
+      'loads new-word suggestions for the concatenated passage texts with a null CEFR level',
       (tester) async {
     final mockSuggestions = MockGetVocabSuggestionsForTextUseCase();
     when(() => mockSuggestions.execute(
@@ -143,7 +156,10 @@ void main() {
         ));
 
     await tester.pumpWidget(await _buildResult(
-      extraOverrides: [getVocabSuggestionsForTextUseCaseProvider.overrideWithValue(mockSuggestions)],
+      extraOverrides: [
+        getVocabSuggestionsForTextUseCaseProvider
+            .overrideWithValue(mockSuggestions)
+      ],
     ));
     await tester.pumpAndSettle();
 

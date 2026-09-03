@@ -6,10 +6,12 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
 import 'package:lexi_core/core/services/stats_service.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/provider_config.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/reading/domain/entities/economy_volume.dart';
@@ -35,9 +37,21 @@ class _FakeSettingsNotifier extends UserSettingsNotifier {
 final _testSet = Part5Set(
   id: 'p1',
   questions: const [
-    Part5Question(sentenceWithBlank: 'A ___.', options: ['a', 'b', 'c', 'd'], correctIndex: 0, explanation: 'Vì A đúng.'),
-    Part5Question(sentenceWithBlank: 'B ___.', options: ['a', 'b', 'c', 'd'], correctIndex: 1, explanation: 'Vì B đúng.'),
-    Part5Question(sentenceWithBlank: 'C ___.', options: ['a', 'b', 'c', 'd'], correctIndex: 2, explanation: 'Vì C đúng.'),
+    Part5Question(
+        sentenceWithBlank: 'A ___.',
+        options: ['a', 'b', 'c', 'd'],
+        correctIndex: 0,
+        explanation: 'Vì A đúng.'),
+    Part5Question(
+        sentenceWithBlank: 'B ___.',
+        options: ['a', 'b', 'c', 'd'],
+        correctIndex: 1,
+        explanation: 'Vì B đúng.'),
+    Part5Question(
+        sentenceWithBlank: 'C ___.',
+        options: ['a', 'b', 'c', 'd'],
+        correctIndex: 2,
+        explanation: 'Vì C đúng.'),
   ],
   volumes: const {EconomyVolume.vol3},
   context: AppContext.general,
@@ -46,22 +60,32 @@ final _testSet = Part5Set(
 );
 
 // selectedAnswers: [0 (correct), 0 (wrong, correct is 1), 2 (correct)] -> 2/3
-final _testResult = Part5SessionResult(set: _testSet, selectedAnswers: const [0, 0, 2]);
+final _testResult =
+    Part5SessionResult(set: _testSet, selectedAnswers: const [0, 0, 2]);
 
 Future<Widget> _buildResult({List<Override> extraOverrides = const []}) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   final router = GoRouter(
     routes: [
-      GoRoute(path: '/', builder: (ctx, state) => Part5ResultScreen(result: _testResult)),
-      GoRoute(path: '/reading/part5', builder: (ctx, state) => const Scaffold(body: Text('Part5 home'))),
+      GoRoute(
+          path: '/',
+          builder: (ctx, state) => Part5ResultScreen(result: _testResult)),
+      GoRoute(
+          path: '/reading/part5',
+          builder: (ctx, state) => const Scaffold(body: Text('Part5 home'))),
     ],
   );
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       userSettingsNotifierProvider.overrideWith(
-        () => _FakeSettingsNotifier(UserSettingsState.defaults.copyWith(aiEnabled: true)),
+        () => _FakeSettingsNotifier(UserSettingsState.defaults.copyWith(
+          providerConfigs: {
+            AiProvider.gemini: const ProviderConfig(
+                apiKeyCiphertext: 'ck', model: 'gemini-2.5-flash'),
+          },
+        )),
       ),
       ...extraOverrides,
     ],
@@ -81,7 +105,8 @@ void main() {
     expect(find.text('2/3'), findsOneWidget);
   });
 
-  testWidgets('shows all question sentences, explanations, and correct/incorrect icons',
+  testWidgets(
+      'shows all question sentences, explanations, and correct/incorrect icons',
       (tester) async {
     await tester.pumpWidget(await _buildResult());
     await tester.pumpAndSettle();
@@ -102,7 +127,8 @@ void main() {
     expect(find.text('Về trang chính'), findsOneWidget);
   });
 
-  testWidgets('records a practice session with the question count', (tester) async {
+  testWidgets('records a practice session with the question count',
+      (tester) async {
     final mockStats = MockStatsService();
     when(() => mockStats.recordPracticeSession(any())).thenAnswer((_) async {});
 
@@ -114,7 +140,8 @@ void main() {
     verify(() => mockStats.recordPracticeSession(3)).called(1);
   });
 
-  testWidgets('loads new-word suggestions for the concatenated question text with a null CEFR level',
+  testWidgets(
+      'loads new-word suggestions for the concatenated question text with a null CEFR level',
       (tester) async {
     final mockSuggestions = MockGetVocabSuggestionsForTextUseCase();
     when(() => mockSuggestions.execute(
@@ -136,7 +163,10 @@ void main() {
         ));
 
     await tester.pumpWidget(await _buildResult(
-      extraOverrides: [getVocabSuggestionsForTextUseCaseProvider.overrideWithValue(mockSuggestions)],
+      extraOverrides: [
+        getVocabSuggestionsForTextUseCaseProvider
+            .overrideWithValue(mockSuggestions)
+      ],
     ));
     await tester.pumpAndSettle();
 

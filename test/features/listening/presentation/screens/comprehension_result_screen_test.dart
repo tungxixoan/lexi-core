@@ -7,10 +7,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
 import 'package:lexi_core/core/theme/bloom/bloom.dart';
 import 'package:lexi_core/core/services/stats_service.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/provider_config.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
@@ -86,7 +88,13 @@ Future<Widget> _buildResult({List<Override> extraOverrides = const []}) async {
       sharedPreferencesProvider.overrideWithValue(prefs),
       userSettingsNotifierProvider.overrideWith(
         () => _FakeSettingsNotifier(
-            UserSettingsState.defaults.copyWith(aiEnabled: true)),
+          UserSettingsState.defaults.copyWith(
+            providerConfigs: {
+              AiProvider.gemini: const ProviderConfig(
+                  apiKeyCiphertext: 'ck', model: 'gemini-2.5-flash'),
+            },
+          ),
+        ),
       ),
       ...extraOverrides,
     ],
@@ -201,8 +209,7 @@ void main() {
     await tester.pumpWidget(await _buildResult(
       extraOverrides: [
         userSettingsNotifierProvider.overrideWith(
-          () => _FakeSettingsNotifier(
-              UserSettingsState.defaults.copyWith(aiEnabled: false)),
+          () => _FakeSettingsNotifier(UserSettingsState.defaults),
         ),
         getVocabSuggestionsForTextUseCaseProvider
             .overrideWithValue(mockSuggestions),
