@@ -16,5 +16,6 @@ export 'bloom_progress_bar.dart';
 export 'bloom_result_ring.dart';
 export 'bloom_scaffold.dart';
 export 'bloom_stat_card.dart';
+export 'bloom_switch.dart';
 export 'bloom_text_field.dart';
 export 'bloom_word_seek_bar.dart';
