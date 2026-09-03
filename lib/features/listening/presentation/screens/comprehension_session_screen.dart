@@ -89,11 +89,19 @@ class _SessionScaffold extends ConsumerWidget {
               BloomCard(
                 child: Column(
                   children: [
+                    Text(
+                      'Lượt ${session.currentTurnIndex + 1}/${session.passage.turns.length}'
+                      '${session.currentTurn.speaker != null ? ' — Người nói ${session.currentTurn.speaker}' : ''}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: context.bloom.inkSoft,
+                      ),
+                    ),
+                    const SizedBox(height: BloomSpacing.sm),
                     _SeekSlider(
                       passage: session.passage,
                       onSeek: notifier.seekToWord,
-                      label: 'Lượt ${session.currentTurnIndex + 1}'
-                          '/${session.passage.turns.length}',
                     ),
                     const SizedBox(height: BloomSpacing.sm),
                     BloomAudioControls.transport(
@@ -192,14 +200,9 @@ class _QuestionCard extends StatelessWidget {
 }
 
 class _SeekSlider extends StatefulWidget {
-  const _SeekSlider({
-    required this.passage,
-    required this.onSeek,
-    required this.label,
-  });
+  const _SeekSlider({required this.passage, required this.onSeek});
   final ListeningPassage passage;
   final ValueChanged<int> onSeek;
-  final String label;
 
   @override
   State<_SeekSlider> createState() => _SeekSliderState();
@@ -221,7 +224,7 @@ class _SeekSliderState extends State<_SeekSlider> {
         BloomWordSeekBar(
           value: value,
           max: (total - 1).toDouble(),
-          label: widget.label,
+          label: 'Tua theo từ',
           onChanged: (v) => setState(() {
             _isDragging = true;
             _restWordIndex = v.round();
