@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/widgets/ai_disabled_card.dart';
 import '../../../../core/widgets/filter_tile.dart';
 import '../../../../core/widgets/selection_sheets.dart';
@@ -125,12 +126,11 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
     final settings = ref.watch(userSettingsNotifierProvider);
     final topicsAsync = ref.watch(topicsNotifierProvider);
     final sessionAsync = ref.watch(dictationPracticeNotifierProvider);
-    final theme = Theme.of(context);
     final words = _matchingWords;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Nghe chép'),
+    return BloomScaffold(
+      appBar: const BloomAppBar(
+        title: 'Nghe chép',
         automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
@@ -138,13 +138,10 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                'AI tạo một câu từ Vocab Bank của bạn. Nghe và gõ lại chính xác '
-                'những gì bạn nghe được — nghe lại càng nhiều lần, điểm càng thấp.',
-                style: theme.textTheme.bodyLarge,
-              ),
+            Text(
+              'AI tạo một câu từ Vocab Bank của bạn. Nghe và gõ lại chính xác '
+              'những gì bạn nghe được — nghe lại càng nhiều lần, điểm càng thấp.',
+              style: TextStyle(fontSize: 14, color: context.bloom.inkSoft),
             ),
             const SizedBox(height: 16),
 
@@ -200,17 +197,22 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
               )
             else
               sessionAsync.when(
-                data: (_) => FilledButton.icon(
+                data: (_) => BloomPillButton(
+                  label: 'Tạo bài luyện',
+                  icon: Icons.auto_awesome,
+                  variant: BloomButtonVariant.primary,
+                  block: true,
                   onPressed: () => _generate(context, ref, words),
-                  icon: const Icon(Icons.auto_awesome),
-                  label: const Text('Tạo bài luyện'),
                 ),
-                loading: () => const Column(
+                loading: () => Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    LinearProgressIndicator(),
-                    SizedBox(height: 12),
-                    Text('Đang tạo bài...'),
+                    const LinearProgressIndicator(),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Đang tạo bài...',
+                      style: TextStyle(color: context.bloom.inkSoft),
+                    ),
                   ],
                 ),
                 error: (e, _) => Column(
@@ -218,12 +220,13 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
                   children: [
                     Text(
                       'Lỗi tạo bài: $e',
-                      style: TextStyle(color: theme.colorScheme.error),
+                      style: TextStyle(color: context.bloom.danger),
                     ),
                     const SizedBox(height: 8),
-                    OutlinedButton(
+                    BloomPillButton(
+                      label: 'Thử lại',
+                      variant: BloomButtonVariant.secondary,
                       onPressed: () => _generate(context, ref, words),
-                      child: const Text('Thử lại'),
                     ),
                   ],
                 ),
