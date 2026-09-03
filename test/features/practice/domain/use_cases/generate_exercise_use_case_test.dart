@@ -9,7 +9,8 @@ import 'package:lexi_core/features/practice/domain/use_cases/generate_exercise_u
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/vocab_record.dart';
 
-class MockExerciseGeneratorSource extends Mock implements ExerciseGeneratorSource {}
+class MockExerciseGeneratorSource extends Mock
+    implements ExerciseGeneratorSource {}
 
 void main() {
   late MockExerciseGeneratorSource mockSource;
@@ -55,13 +56,7 @@ void main() {
   });
 
   group('GenerateExerciseUseCase', () {
-    test('returns FlashcardExercise immediately when aiEnabled=false', () async {
-      final result = await useCase.execute(testRecord, aiEnabled: false);
-      expect(result, isA<FlashcardExercise>());
-      verifyNever(() => mockSource.generate(any()));
-    });
-
-    test('calls source.generate() when aiEnabled=true', () async {
+    test('calls source.generate()', () async {
       final expected = MultipleChoiceExercise(
         vocabRecord: testRecord,
         question: 'What does ephemeral mean?',
@@ -70,15 +65,16 @@ void main() {
       );
       when(() => mockSource.generate(any())).thenAnswer((_) async => expected);
 
-      final result = await useCase.execute(testRecord, aiEnabled: true);
+      final result = await useCase.execute(testRecord);
       expect(result, isA<MultipleChoiceExercise>());
       verify(() => mockSource.generate(any())).called(1);
     });
 
     test('falls back to FlashcardExercise if source throws', () async {
-      when(() => mockSource.generate(any())).thenThrow(Exception('network error'));
+      when(() => mockSource.generate(any()))
+          .thenThrow(Exception('network error'));
 
-      final result = await useCase.execute(testRecord, aiEnabled: true);
+      final result = await useCase.execute(testRecord);
       expect(result, isA<FlashcardExercise>());
       expect((result as FlashcardExercise).vocabRecord.headword, 'ephemeral');
     });

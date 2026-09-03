@@ -78,8 +78,8 @@ class PracticeSessionNotifier extends _$PracticeSessionNotifier {
   Future<void> _generateAt(int index, List<VocabRecord> words) async {
     if (index >= words.length) return;
     final word = words[index];
-    final aiEnabled = ref.read(userSettingsNotifierProvider).aiEnabled;
-    final exercise = await _pickExercise(word, aiEnabled);
+    final aiAvailable = ref.read(userSettingsNotifierProvider).aiAvailable;
+    final exercise = await _pickExercise(word, aiAvailable);
 
     final current = state.valueOrNull;
     if (current == null) return;
@@ -88,16 +88,14 @@ class PracticeSessionNotifier extends _$PracticeSessionNotifier {
     state = AsyncValue.data(current.copyWith(exercises: updated));
   }
 
-  Future<Exercise> _pickExercise(VocabRecord word, bool aiEnabled) async {
-    if (word.sm2Repetitions == 0 || !aiEnabled) {
+  Future<Exercise> _pickExercise(VocabRecord word, bool aiAvailable) async {
+    if (word.sm2Repetitions == 0 || !aiAvailable) {
       return FlashcardExercise(vocabRecord: word);
     }
     if (_random.nextDouble() < 0.30) {
       return FlashcardExercise(vocabRecord: word);
     }
-    return ref
-        .read(generateExerciseUseCaseProvider)
-        .execute(word, aiEnabled: aiEnabled);
+    return ref.read(generateExerciseUseCaseProvider).execute(word);
   }
 
   Future<void> recordAndAdvance(ExerciseResult result) async {

@@ -6,8 +6,7 @@ class GenerateExerciseUseCase {
   const GenerateExerciseUseCase(this._source);
   final ExerciseGeneratorSource _source;
 
-  Future<Exercise> execute(VocabRecord record, {required bool aiEnabled}) async {
-    if (!aiEnabled) return FlashcardExercise(vocabRecord: record);
+  Future<Exercise> execute(VocabRecord record) async {
     try {
       return await _source.generate(record);
     } catch (_) {
