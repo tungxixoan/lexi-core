@@ -23,19 +23,24 @@ void main() {
     }
   });
 
-  testWidgets('shows the value above each non-zero bar, hides it for zero', (tester) async {
+  testWidgets('shows the value above each non-zero bar, hides it for zero',
+      (tester) async {
     await tester.pumpWidget(_host(const BloomBarChart(bars: _bars)));
     expect(find.text('10'), findsOneWidget);
     expect(find.text('4'), findsOneWidget);
     expect(find.text('6'), findsOneWidget);
     // '0' days show no number
     expect(find.text('0'), findsNothing);
+    // caption style pins line-height so it can't clip in the tight slot
+    expect(tester.widget<Text>(find.text('10')).style!.height, 1.0);
   });
 
   testWidgets('the highlighted day label is drawn in accent', (tester) async {
     await tester.pumpWidget(_host(const BloomBarChart(bars: _bars)));
-    expect(tester.widget<Text>(find.text('CN')).style!.color, BloomColors.light.accent);
-    expect(tester.widget<Text>(find.text('T2')).style!.color, BloomColors.light.inkFaint);
+    expect(tester.widget<Text>(find.text('CN')).style!.color,
+        BloomColors.light.accent);
+    expect(tester.widget<Text>(find.text('T2')).style!.color,
+        BloomColors.light.inkFaint);
   });
 
   testWidgets('renders with an all-zero week without throwing', (tester) async {

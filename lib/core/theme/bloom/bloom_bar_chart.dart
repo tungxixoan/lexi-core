@@ -2,6 +2,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../bloom_tokens.dart';
 
+// chart-internal geometry (px), not on the BloomSpacing scale
+const _captionSlotHeight = 14.0;
+const _labelGap = 6.0;
+
 /// One column of a [BloomBarChart].
 class BloomBarChartBar {
   const BloomBarChartBar({
@@ -37,13 +41,16 @@ class BloomBarChart extends StatelessWidget {
               child: Column(
                 children: [
                   SizedBox(
-                    height: 14,
+                    height: _captionSlotHeight,
                     child: bar.value > 0
-                        ? Text('${bar.value}',
-                            style: TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w700,
-                                color: c.inkSoft))
+                        ? Center(
+                            child: Text('${bar.value}',
+                                style: TextStyle(
+                                    fontSize: 10.5,
+                                    height: 1.0,
+                                    fontWeight: FontWeight.w700,
+                                    color: c.inkSoft)),
+                          )
                         : null,
                   ),
                   Expanded(
@@ -62,7 +69,7 @@ class BloomBarChart extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: _labelGap),
                   Text(
                     bar.label,
                     style: TextStyle(

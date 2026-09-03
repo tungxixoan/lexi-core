@@ -231,6 +231,10 @@ void main() {
 
   testWidgets('tapping the dismiss icon removes a suggestion from the list',
       (tester) async {
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     final source = WordRadarSource.withModel(
       _FakeGenerativeModelClient(jsonEncode({
         'suggestions': [
@@ -391,7 +395,7 @@ void main() {
     await tester.tap(find.text('Quét'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Bản dịch'), findsOneWidget);
+    expect(find.text('BẢN DỊCH'), findsOneWidget);
     expect(find.textContaining('Con mèo ngồi trên tấm thảm.'), findsOneWidget);
   });
 
@@ -416,6 +420,6 @@ void main() {
     await tester.tap(find.text('Quét'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Bản dịch'), findsNothing);
+    expect(find.text('BẢN DỊCH'), findsNothing);
   });
 }

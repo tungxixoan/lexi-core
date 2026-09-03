@@ -74,12 +74,15 @@ Future<SelectOption<T>?> showSingleSelectSheet<T>({
             child: ListView(
               shrinkWrap: true,
               children: options
-                  .map((o) => RadioListTile<T>(
-                        value: o.value,
-                        groupValue: selected,
-                        activeColor: ctx.bloom.accent,
+                  .map((o) => ListTile(
+                        leading: Icon(
+                          o.value == selected
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_off,
+                          color: ctx.bloom.accent,
+                        ),
                         title: Text(o.display),
-                        onChanged: (_) => Navigator.pop(ctx, o),
+                        onTap: () => Navigator.pop(ctx, o),
                       ))
                   .toList(),
             ),
@@ -144,8 +147,9 @@ class _MultiSelectSheetState<T> extends State<_MultiSelectSheet<T>> {
                 BloomPillButton(
                   variant: BloomButtonVariant.link,
                   label: 'Bỏ chọn hết',
-                  onPressed:
-                      _selected.isEmpty ? null : () => setState(_selected.clear),
+                  onPressed: _selected.isEmpty
+                      ? null
+                      : () => setState(_selected.clear),
                 ),
               ],
             ),

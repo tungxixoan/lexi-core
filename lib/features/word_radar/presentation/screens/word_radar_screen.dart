@@ -108,7 +108,7 @@ class _WordRadarScreenState extends ConsumerState<WordRadarScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Văn bản', style: theme.textTheme.labelLarge),
+                  const BloomSectionHeader('Văn bản'),
                   const SizedBox(height: 8),
                   _HighlightedText(
                     text: _controller.text,
@@ -191,7 +191,7 @@ class _WordRadarScreenState extends ConsumerState<WordRadarScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Bản dịch', style: theme.textTheme.labelLarge),
+                const BloomSectionHeader('Bản dịch'),
                 const SizedBox(height: 8),
                 _HighlightedText(
                   text: result.translation,
