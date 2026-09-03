@@ -10,6 +10,7 @@ export 'bloom_group_chips.dart';
 export 'bloom_labels.dart';
 export 'bloom_list_row.dart';
 export 'bloom_mc_option.dart';
+export 'bloom_nav_card.dart';
 export 'bloom_passage_sheet.dart';
 export 'bloom_pill_button.dart';
 export 'bloom_progress_bar.dart';
