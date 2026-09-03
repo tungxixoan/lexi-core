@@ -2073,3 +2073,10 @@ Fix dispatch: 1 agent — I1 + I2 + 2 nits, all in 2 files.
 Final-review fix wave: baef691 (I1 dictation isPlaying:false + I2 FittedBox transport + 2 nits). bloom_audio_controls 5/5, dictation_session 18/18, comprehension_session 11/11, analyze 10. Re-review: Ready YES, no regressions.
 
 # FLUTTER BLOOM PLAN 5 — COMPLETE. Range b3403e9..baef691 on master (16 commits). Flutter 743 tests (was 721), analyze 10 (was 12). All 14 tasks + final-review fix wave done, all reviews clean. NOT pushed (origin at bfb7052... actually check).
+
+---
+
+# FLUTTER BLOOM PLAN 6 (Settings + Sign-in + C2 + theme picker + cleanup) — IN PROGRESS
+Plan: docs/superpowers/plans/2026-09-03-flutter-bloom-plan6-settings-signin-cleanup.md (commit ece08c5)
+Baseline: master at af5cef9 (plan doc ece08c5). Flutter 743 tests, analyze 10. 13 tasks. Target: analyze 0.
+Execution: subagent-driven. Working on master (user consent, same as Plans 1-5).
