@@ -27,6 +27,7 @@ class BloomSwitch extends StatelessWidget {
         border: Border.all(color: c.border),
         borderRadius: BorderRadius.circular(BloomRadii.md),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
