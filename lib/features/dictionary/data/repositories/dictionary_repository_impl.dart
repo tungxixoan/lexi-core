@@ -19,11 +19,11 @@ class DictionaryRepositoryImpl implements DictionaryRepository {
   Future<LookupResult> lookup({
     required String query,
     required Language targetLanguage,
-    required bool aiEnabled,
+    required bool aiAvailable,
   }) async {
     final inputType = InputDetector.detect(query);
 
-    if (aiEnabled) {
+    if (aiAvailable) {
       return geminiSource.lookup(
         query: query,
         inputType: inputType,

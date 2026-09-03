@@ -33,19 +33,19 @@ void main() {
     when(mockRepo.lookup(
       query: anyNamed('query'),
       targetLanguage: anyNamed('targetLanguage'),
-      aiEnabled: anyNamed('aiEnabled'),
+      aiAvailable: anyNamed('aiAvailable'),
     )).thenAnswer((_) async => fakeResult);
 
     await useCase.execute(
       query: '  follow  ',
       targetLanguage: Language.english,
-      aiEnabled: true,
+      aiAvailable: true,
     );
 
     verify(mockRepo.lookup(
       query: 'follow',
       targetLanguage: Language.english,
-      aiEnabled: true,
+      aiAvailable: true,
     )).called(1);
   });
 
@@ -54,7 +54,7 @@ void main() {
       () => useCase.execute(
         query: '   ',
         targetLanguage: Language.english,
-        aiEnabled: true,
+        aiAvailable: true,
       ),
       throwsA(
         isA<DictionaryException>().having(
@@ -67,7 +67,7 @@ void main() {
     verifyNever(mockRepo.lookup(
       query: anyNamed('query'),
       targetLanguage: anyNamed('targetLanguage'),
-      aiEnabled: anyNamed('aiEnabled'),
+      aiAvailable: anyNamed('aiAvailable'),
     ));
   });
 }

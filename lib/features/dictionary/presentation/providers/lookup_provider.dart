@@ -44,7 +44,7 @@ class LookupNotifier extends _$LookupNotifier {
       state = await AsyncValue.guard(() => useCase.execute(
             query: query,
             targetLanguage: settings.targetLanguage,
-            aiEnabled: settings.aiEnabled,
+            aiAvailable: settings.aiAvailable,
           ));
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -53,7 +53,7 @@ class LookupNotifier extends _$LookupNotifier {
 
   Future<void> discover() async {
     final settings = ref.read(userSettingsNotifierProvider);
-    if (!settings.aiEnabled) return;
+    if (!settings.aiAvailable) return;
 
     state = const AsyncValue.loading();
     final gemini = ref.read(geminiDictionarySourceProvider);
@@ -66,7 +66,7 @@ class LookupNotifier extends _$LookupNotifier {
       return useCase.execute(
         query: word,
         targetLanguage: settings.targetLanguage,
-        aiEnabled: true,
+        aiAvailable: true,
       );
     });
   }

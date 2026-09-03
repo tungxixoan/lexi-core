@@ -7,7 +7,7 @@ part of 'reading_practice_provider.dart';
 // **************************************************************************
 
 String _$readingPracticeNotifierHash() =>
-    r'0ab95baaf7eeac5b12fd615f3e0132d7f2c98451';
+    r'9a547b246ad2121c3380446c4ac61f740620e713';
 
 /// See also [ReadingPracticeNotifier].
 @ProviderFor(ReadingPracticeNotifier)

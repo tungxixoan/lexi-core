@@ -50,7 +50,7 @@ class MockLookupUseCase extends _i1.Mock implements _i2.LookupUseCase {
   _i3.Future<_i4.LookupResult> execute({
     required String? query,
     required _i5.Language? targetLanguage,
-    required bool? aiEnabled,
+    required bool? aiAvailable,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -59,7 +59,7 @@ class MockLookupUseCase extends _i1.Mock implements _i2.LookupUseCase {
           {
             #query: query,
             #targetLanguage: targetLanguage,
-            #aiEnabled: aiEnabled,
+            #aiAvailable: aiAvailable,
           },
         ),
         returnValue:
@@ -71,7 +71,7 @@ class MockLookupUseCase extends _i1.Mock implements _i2.LookupUseCase {
             {
               #query: query,
               #targetLanguage: targetLanguage,
-              #aiEnabled: aiEnabled,
+              #aiAvailable: aiAvailable,
             },
           ),
         )),

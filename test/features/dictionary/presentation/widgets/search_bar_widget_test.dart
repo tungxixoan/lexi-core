@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,8 +8,14 @@ import 'package:lexi_core/core/theme/app_theme.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/dictionary/presentation/widgets/search_bar_widget.dart';
 
-Future<Widget> _buildBar({required bool aiEnabled}) async {
-  SharedPreferences.setMockInitialValues({'ai_enabled': aiEnabled});
+Future<Widget> _buildBar({required bool aiAvailable}) async {
+  SharedPreferences.setMockInitialValues({
+    'ai_active_provider': 'gemini',
+    'ai_config_gemini': jsonEncode({
+      'apiKeyCiphertext': aiAvailable ? 'ck' : null,
+      'model': 'gemini-2.5-flash',
+    }),
+  });
   final prefs = await SharedPreferences.getInstance();
   return ProviderScope(
     overrides: [
@@ -23,14 +31,14 @@ Future<Widget> _buildBar({required bool aiEnabled}) async {
 void main() {
   testWidgets('renders the search field and the Khám phá button when AI is on',
       (tester) async {
-    await tester.pumpWidget(await _buildBar(aiEnabled: true));
+    await tester.pumpWidget(await _buildBar(aiAvailable: true));
 
     expect(find.byType(TextField), findsOneWidget);
     expect(find.text('Khám phá'), findsOneWidget);
   });
 
   testWidgets('hides the Khám phá button when AI is off', (tester) async {
-    await tester.pumpWidget(await _buildBar(aiEnabled: false));
+    await tester.pumpWidget(await _buildBar(aiAvailable: false));
 
     expect(find.byType(TextField), findsOneWidget);
     expect(find.text('Khám phá'), findsNothing);

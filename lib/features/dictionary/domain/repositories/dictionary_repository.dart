@@ -14,6 +14,6 @@ abstract interface class DictionaryRepository {
   Future<LookupResult> lookup({
     required String query,
     required Language targetLanguage,
-    required bool aiEnabled,
+    required bool aiAvailable,
   });
 }

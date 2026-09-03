@@ -41,7 +41,7 @@ class MockDictionaryRepository extends _i1.Mock
   _i3.Future<_i4.LookupResult> lookup({
     required String? query,
     required _i5.Language? targetLanguage,
-    required bool? aiEnabled,
+    required bool? aiAvailable,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -50,7 +50,7 @@ class MockDictionaryRepository extends _i1.Mock
           {
             #query: query,
             #targetLanguage: targetLanguage,
-            #aiEnabled: aiEnabled,
+            #aiAvailable: aiAvailable,
           },
         ),
         returnValue:
@@ -62,7 +62,7 @@ class MockDictionaryRepository extends _i1.Mock
             {
               #query: query,
               #targetLanguage: targetLanguage,
-              #aiEnabled: aiEnabled,
+              #aiAvailable: aiAvailable,
             },
           ),
         )),

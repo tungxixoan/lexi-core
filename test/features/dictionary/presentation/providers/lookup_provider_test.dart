@@ -35,11 +35,10 @@ void main() {
     when(mockUseCase.execute(
       query: anyNamed('query'),
       targetLanguage: anyNamed('targetLanguage'),
-      aiEnabled: anyNamed('aiEnabled'),
+      aiAvailable: anyNamed('aiAvailable'),
     )).thenAnswer((_) async => fakeResult);
     // VocabBank always misses in these tests — force API path
-    when(mockVocabRepo.getByHeadword(any, any))
-        .thenAnswer((_) async => null);
+    when(mockVocabRepo.getByHeadword(any, any)).thenAnswer((_) async => null);
   });
 
   Future<ProviderContainer> makeContainer() async {
@@ -69,7 +68,8 @@ void main() {
     final notifier = c.read(lookupNotifierProvider.notifier);
     final future = notifier.lookup('follow');
 
-    expect(c.read(lookupNotifierProvider), const AsyncValue<LookupResult?>.loading());
+    expect(c.read(lookupNotifierProvider),
+        const AsyncValue<LookupResult?>.loading());
     await future;
 
     final state = c.read(lookupNotifierProvider);

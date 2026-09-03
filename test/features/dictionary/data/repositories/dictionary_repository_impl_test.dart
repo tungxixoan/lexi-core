@@ -61,7 +61,7 @@ void main() {
     await repo.lookup(
       query: 'follow',
       targetLanguage: Language.english,
-      aiEnabled: true,
+      aiAvailable: true,
     );
 
     verify(mockGemini.lookup(
@@ -78,7 +78,7 @@ void main() {
     await repo.lookup(
       query: 'follow',
       targetLanguage: Language.english,
-      aiEnabled: false,
+      aiAvailable: false,
     );
 
     verify(mockFree.lookup('follow')).called(1);
@@ -94,7 +94,7 @@ void main() {
       () => repo.lookup(
         query: 'follow',
         targetLanguage: Language.korean,
-        aiEnabled: false,
+        aiAvailable: false,
       ),
       throwsA(
         isA<DictionaryException>().having(
@@ -111,7 +111,7 @@ void main() {
       () => repo.lookup(
         query: 'Can you follow up with me today',
         targetLanguage: Language.english,
-        aiEnabled: false,
+        aiAvailable: false,
       ),
       throwsA(isA<DictionaryException>()),
     );

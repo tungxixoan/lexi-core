@@ -10,7 +10,7 @@ class LookupUseCase {
   Future<LookupResult> execute({
     required String query,
     required Language targetLanguage,
-    required bool aiEnabled,
+    required bool aiAvailable,
   }) {
     final trimmed = query.trim();
     if (trimmed.isEmpty) {
@@ -19,7 +19,7 @@ class LookupUseCase {
     return _repository.lookup(
       query: trimmed,
       targetLanguage: targetLanguage,
-      aiEnabled: aiEnabled,
+      aiAvailable: aiAvailable,
     );
   }
 }

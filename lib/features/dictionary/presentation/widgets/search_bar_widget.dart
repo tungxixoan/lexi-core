@@ -28,8 +28,8 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final aiEnabled = ref.watch(
-      userSettingsNotifierProvider.select((s) => s.aiEnabled),
+    final aiAvailable = ref.watch(
+      userSettingsNotifierProvider.select((s) => s.aiAvailable),
     );
 
     return Padding(
@@ -55,7 +55,7 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
               ),
             ],
           ),
-          if (aiEnabled) ...[
+          if (aiAvailable) ...[
             const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerLeft,
