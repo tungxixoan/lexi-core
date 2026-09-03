@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/services/hive_migration_service.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
 import '../providers/auth_notifier.dart';
 
@@ -78,43 +79,63 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     final loading = _step != _Step.idle;
-    return Scaffold(
+    return BloomScaffold(
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'LexiCore',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const BloomLeafMark(size: 40),
+                  const SizedBox(width: 12),
+                  Text(
+                    'LexiCore',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: context.bloom.ink,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               Text(
                 _step == _Step.migrating
                     ? 'Đang chuyển dữ liệu từ vựng cũ…'
                     : 'Đăng nhập để tiếp tục',
+                style: TextStyle(color: context.bloom.inkSoft),
               ),
               const SizedBox(height: 24),
               if (loading)
                 const CircularProgressIndicator()
               else
-                FilledButton.icon(
+                BloomPillButton(
+                  label: 'Đăng nhập với Google',
+                  icon: Icons.login,
+                  variant: BloomButtonVariant.primary,
                   onPressed: _signIn,
-                  icon: const Icon(Icons.login),
-                  label: const Text('Đăng nhập với Google'),
                 ),
               if (_signInError != null) ...[
                 const SizedBox(height: 12),
-                Text(_signInError!, style: const TextStyle(color: Colors.red)),
+                Text(
+                  _signInError!,
+                  style: TextStyle(color: context.bloom.danger),
+                ),
               ],
               if (_migrationError != null) ...[
                 const SizedBox(height: 12),
-                Text(_migrationError!, style: const TextStyle(color: Colors.red)),
+                Text(
+                  _migrationError!,
+                  style: TextStyle(color: context.bloom.danger),
+                ),
                 const SizedBox(height: 8),
-                OutlinedButton(
+                BloomPillButton(
+                  label: 'Thử lại',
+                  variant: BloomButtonVariant.secondary,
                   onPressed: _signIn,
-                  child: const Text('Thử lại'),
                 ),
               ],
             ],
