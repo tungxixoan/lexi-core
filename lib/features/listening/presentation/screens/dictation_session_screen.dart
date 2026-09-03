@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/utils/web_text_scale.dart';
 import '../../domain/entities/blank_span.dart';
 import '../providers/dictation_practice_provider.dart';
@@ -79,12 +80,12 @@ class _DictationSessionScreenState extends ConsumerState<DictationSessionScreen>
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) context.go('/listening/dictation');
           });
-          return const Scaffold(body: SizedBox.shrink());
+          return const BloomScaffold(body: SizedBox.shrink());
         }
         // Safety guard: navigation to the result route is already scheduled
         // via ref.listen above once isComplete flips to true.
         if (session.isComplete) {
-          return const Scaffold(body: SizedBox.shrink());
+          return const BloomScaffold(body: SizedBox.shrink());
         }
         return _SessionScaffold(
           session: session,
@@ -93,8 +94,12 @@ class _DictationSessionScreenState extends ConsumerState<DictationSessionScreen>
         );
       },
       loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('Lỗi: $e'))),
+          const BloomScaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, _) => BloomScaffold(
+        body: Center(
+          child: Text('Lỗi: $e', style: TextStyle(color: context.bloom.danger)),
+        ),
+      ),
     );
   }
 }
@@ -123,60 +128,98 @@ class _SessionScaffold extends ConsumerWidget {
         .where((w) => w.isNotEmpty)
         .length;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Nghe chép'), automaticallyImplyLeading: false),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Spacer(),
-            _SeekSlider(totalWords: wordCount, onSeek: notifier.seekTo),
-            Center(
-              child: FilledButton.icon(
-                onPressed: notifier.play,
-                icon: Icon(session.hasPlayedOnce ? Icons.replay : Icons.play_arrow),
-                label: Text(
-                  session.hasPlayedOnce
-                      ? 'Nghe lại (${session.replayCount})'
-                      : 'Phát',
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go('/listening/dictation');
+      },
+      child: BloomScaffold(
+        appBar: BloomAppBar(
+          title: 'Nghe chép',
+          automaticallyImplyLeading: false,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Spacer(),
+              BloomCard(
+                child: Column(
+                  children: [
+                    BloomAudioControls.playOnly(
+                      isPlaying: session.isSpeaking,
+                      onPlayPause: notifier.play,
+                      playLabel: session.hasPlayedOnce
+                          ? 'Nghe lại (${session.replayCount})'
+                          : 'Phát',
+                    ),
+                    const SizedBox(height: BloomSpacing.md),
+                    Center(
+                      child: _SpeedSelector(
+                        speed: session.speedMultiplier,
+                        onChanged: notifier.setSpeed,
+                      ),
+                    ),
+                    const SizedBox(height: BloomSpacing.md),
+                    _SeekSlider(totalWords: wordCount, onSeek: notifier.seekTo),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Center(
-              child: _SpeedSelector(
-                speed: session.speedMultiplier,
-                onChanged: notifier.setSpeed,
-              ),
-            ),
-            const SizedBox(height: 32),
-            if (session.isClozeMode)
-              _ClozeInput(
-                target: session.item.target,
-                blanks: session.blanks,
-                controllers: blankCtrls,
-                onBlankChanged: notifier.updateBlankAnswer,
-              )
-            else
-              TextField(
-                controller: ctrl,
-                maxLines: null,
-                style: webScaled(
-                  Theme.of(context).textTheme.bodyLarge ?? const TextStyle(fontSize: 16),
+              const SizedBox(height: BloomSpacing.xxl),
+              if (session.isClozeMode)
+                _ClozeInput(
+                  target: session.item.target,
+                  blanks: session.blanks,
+                  controllers: blankCtrls,
+                  onBlankChanged: notifier.updateBlankAnswer,
+                )
+              else
+                TextField(
+                  controller: ctrl,
+                  maxLines: null,
+                  cursorColor: context.bloom.accent,
+                  style: webScaled(
+                    TextStyle(
+                      fontFamilyFallback: const [
+                        'ui-monospace',
+                        'SF Mono',
+                        'Menlo',
+                        'monospace',
+                      ],
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                      fontSize: 18,
+                      color: context.bloom.ink,
+                    ),
+                  ),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: context.bloom.surface2,
+                    hintText: 'Gõ lại những gì bạn nghe được...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(BloomRadii.md),
+                      borderSide: BorderSide(color: context.bloom.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(BloomRadii.md),
+                      borderSide: BorderSide(color: context.bloom.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(BloomRadii.md),
+                      borderSide: BorderSide(color: context.bloom.accent),
+                    ),
+                  ),
+                  onChanged: notifier.updateTypedText,
                 ),
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Gõ lại những gì bạn nghe được...',
-                ),
-                onChanged: notifier.updateTypedText,
+              const Spacer(),
+              BloomPillButton(
+                label: 'Nộp bài',
+                variant: BloomButtonVariant.primary,
+                block: true,
+                onPressed: canSubmit ? notifier.submit : null,
               ),
-            const Spacer(),
-            FilledButton(
-              onPressed: canSubmit ? notifier.submit : null,
-              child: const Text('Nộp bài'),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -204,6 +247,11 @@ class _ClozeInput extends StatelessWidget {
     final words = target.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
     final theme = Theme.of(context);
     final baseStyle = webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16));
+    final fieldStyle = baseStyle.copyWith(
+      fontFamilyFallback: const ['ui-monospace', 'SF Mono', 'Menlo', 'monospace'],
+      fontFeatures: const [FontFeature.tabularFigures()],
+      color: context.bloom.ink,
+    );
 
     final children = <Widget>[];
     var wordIndex = 0;
@@ -218,12 +266,26 @@ class _ClozeInput extends StatelessWidget {
           child: TextField(
             key: ValueKey('blank-$blankIdx'),
             controller: controllers[blankIdx],
-            style: baseStyle,
+            style: fieldStyle,
             textAlign: TextAlign.center,
-            decoration: const InputDecoration(
+            cursorColor: context.bloom.accent,
+            decoration: InputDecoration(
               isDense: true,
-              border: UnderlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 4),
+              filled: true,
+              fillColor: context.bloom.surface2,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(BloomRadii.sm),
+                borderSide: BorderSide(color: context.bloom.border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(BloomRadii.sm),
+                borderSide: BorderSide(color: context.bloom.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(BloomRadii.sm),
+                borderSide: BorderSide(color: context.bloom.accent),
+              ),
             ),
             onChanged: (text) => onBlankChanged(blankIdx, text),
           ),
@@ -264,11 +326,10 @@ class _SeekSliderState extends State<_SeekSlider> {
       children: [
         if (_isDragging && _restWordIndex != null)
           Text('Từ ${_restWordIndex! + 1}/${widget.totalWords}'),
-        Slider(
+        BloomWordSeekBar(
           value: value,
-          min: 0,
           max: (widget.totalWords - 1).toDouble(),
-          divisions: widget.totalWords - 1,
+          label: 'Tua theo từ',
           onChanged: (v) => setState(() {
             _isDragging = true;
             _restWordIndex = v.round();

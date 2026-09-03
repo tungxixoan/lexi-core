@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
+import 'package:lexi_core/core/theme/bloom/bloom.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
@@ -105,6 +106,7 @@ void main() {
     await tester.pumpWidget(_buildSession(_session()));
     await tester.pumpAndSettle();
     expect(find.text('Phát'), findsOneWidget);
+    expect(find.byType(BloomAudioControls), findsOneWidget);
   });
 
   testWidgets('shows a TextField for typing', (tester) async {
@@ -116,8 +118,8 @@ void main() {
   testWidgets('Nộp bài is disabled before the first play', (tester) async {
     await tester.pumpWidget(_buildSession(_session(typedText: 'Hello')));
     await tester.pumpAndSettle();
-    final button = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Nộp bài'),
+    final button = tester.widget<BloomPillButton>(
+      find.widgetWithText(BloomPillButton, 'Nộp bài'),
     );
     expect(button.onPressed, isNull);
   });
@@ -128,8 +130,8 @@ void main() {
       _buildSession(_session(typedText: 'Hello', hasPlayedOnce: true)),
     );
     await tester.pumpAndSettle();
-    final button = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Nộp bài'),
+    final button = tester.widget<BloomPillButton>(
+      find.widgetWithText(BloomPillButton, 'Nộp bài'),
     );
     expect(button.onPressed, isNotNull);
   });
@@ -179,12 +181,12 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Hello world.');
     await tester.pumpAndSettle();
 
-    final submitButton = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Nộp bài'),
+    final submitButton = tester.widget<BloomPillButton>(
+      find.widgetWithText(BloomPillButton, 'Nộp bài'),
     );
     expect(submitButton.onPressed, isNotNull);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Nộp bài'));
+    await tester.tap(find.widgetWithText(BloomPillButton, 'Nộp bài'));
     await tester.pumpAndSettle();
 
     expect(find.text('Result screen'), findsOneWidget);
@@ -223,8 +225,8 @@ void main() {
         hasPlayedOnce: true,
       )));
       await tester.pumpAndSettle();
-      final button = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Nộp bài'),
+      final button = tester.widget<BloomPillButton>(
+        find.widgetWithText(BloomPillButton, 'Nộp bài'),
       );
       expect(button.onPressed, isNull);
     });
@@ -249,12 +251,12 @@ void main() {
       await tester.enterText(find.byKey(const ValueKey('blank-1')), 'world.');
       await tester.pumpAndSettle();
 
-      final button = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Nộp bài'),
+      final button = tester.widget<BloomPillButton>(
+        find.widgetWithText(BloomPillButton, 'Nộp bài'),
       );
       expect(button.onPressed, isNotNull);
 
-      await tester.tap(find.widgetWithText(FilledButton, 'Nộp bài'));
+      await tester.tap(find.widgetWithText(BloomPillButton, 'Nộp bài'));
       await tester.pumpAndSettle();
 
       expect(capturedExtra, isA<DictationSessionResult>());
@@ -338,12 +340,12 @@ void main() {
           find.byKey(const ValueKey('blank-0')), 'brown fox jumps');
       await tester.pumpAndSettle();
 
-      final button = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Nộp bài'),
+      final button = tester.widget<BloomPillButton>(
+        find.widgetWithText(BloomPillButton, 'Nộp bài'),
       );
       expect(button.onPressed, isNotNull);
 
-      await tester.tap(find.widgetWithText(FilledButton, 'Nộp bài'));
+      await tester.tap(find.widgetWithText(BloomPillButton, 'Nộp bài'));
       await tester.pumpAndSettle();
 
       expect(capturedExtra, isA<DictationSessionResult>());
@@ -403,7 +405,7 @@ void main() {
       await tester.enterText(find.byType(TextField), 'Hello world.');
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(FilledButton, 'Nộp bài'));
+      await tester.tap(find.widgetWithText(BloomPillButton, 'Nộp bài'));
       await tester.pumpAndSettle();
 
       final result = capturedExtra! as DictationSessionResult;
