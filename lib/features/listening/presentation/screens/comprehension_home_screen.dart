@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/widgets/ai_disabled_card.dart';
 import '../../../../core/widgets/filter_tile.dart';
 import '../../../../core/widgets/selection_sheets.dart';
@@ -74,11 +75,10 @@ class _ComprehensionHomeScreenState
   Widget build(BuildContext context) {
     final settings = ref.watch(userSettingsNotifierProvider);
     final sessionAsync = ref.watch(listeningComprehensionNotifierProvider);
-    final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Nghe hiểu'),
+    return BloomScaffold(
+      appBar: const BloomAppBar(
+        title: 'Nghe hiểu',
         automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
@@ -86,16 +86,12 @@ class _ComprehensionHomeScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                'AI tạo một đoạn hội thoại hoặc bài nói ngắn. Nghe và trả lời '
-                '3 câu hỏi trắc nghiệm về nội dung — giống phần nghe TOEIC.',
-                style: theme.textTheme.bodyLarge,
-              ),
+            Text(
+              'AI tạo một đoạn hội thoại hoặc bài nói ngắn. Nghe và trả lời '
+              '3 câu hỏi trắc nghiệm về nội dung — giống phần nghe TOEIC.',
+              style: TextStyle(fontSize: 14, color: context.bloom.inkSoft),
             ),
             const SizedBox(height: 16),
-
             FilterTile(
               icon: Icons.language_outlined,
               label: 'Ngôn ngữ',
@@ -115,7 +111,6 @@ class _ComprehensionHomeScreenState
               onTap: _pickLevel,
             ),
             const SizedBox(height: 16),
-
             if (!settings.aiEnabled)
               AiDisabledCard(
                 message:
@@ -128,17 +123,22 @@ class _ComprehensionHomeScreenState
               )
             else
               sessionAsync.when(
-                data: (_) => FilledButton.icon(
+                data: (_) => BloomPillButton(
+                  label: 'Tạo bài luyện',
+                  icon: Icons.auto_awesome,
+                  variant: BloomButtonVariant.primary,
+                  block: true,
                   onPressed: () => _generate(context, ref),
-                  icon: const Icon(Icons.auto_awesome),
-                  label: const Text('Tạo bài luyện'),
                 ),
-                loading: () => const Column(
+                loading: () => Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    LinearProgressIndicator(),
-                    SizedBox(height: 12),
-                    Text('Đang tạo bài...'),
+                    const LinearProgressIndicator(),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Đang tạo bài...',
+                      style: TextStyle(color: context.bloom.inkSoft),
+                    ),
                   ],
                 ),
                 error: (e, _) => Column(
@@ -146,12 +146,13 @@ class _ComprehensionHomeScreenState
                   children: [
                     Text(
                       'Lỗi tạo bài: $e',
-                      style: TextStyle(color: theme.colorScheme.error),
+                      style: TextStyle(color: context.bloom.danger),
                     ),
                     const SizedBox(height: 8),
-                    OutlinedButton(
+                    BloomPillButton(
+                      label: 'Thử lại',
+                      variant: BloomButtonVariant.secondary,
                       onPressed: () => _generate(context, ref),
-                      child: const Text('Thử lại'),
                     ),
                   ],
                 ),
@@ -178,4 +179,3 @@ class _ComprehensionHomeScreenState
     }
   }
 }
-
