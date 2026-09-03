@@ -31,7 +31,7 @@
   - **Multiple Choice** (A1/A2)
   - **Fill in the Blank** (B1/B2)
   - **Translation** (C1/C2)
-  - **Flashcard** (fallback khi AI tắt hoặc lỗi)
+  - **Flashcard** (fallback khi AI lỗi hoặc chưa có key)
 - Phiên luyện tập có điểm số và tổng kết kết quả
 - Bộ lọc luyện tập theo cấp độ CEFR mục tiêu
 
@@ -125,6 +125,9 @@ Hỗ trợ 3 nhà cung cấp LLM, có thể chuyển đổi trong Cài đặt:
 - Thông báo hàng ngày khi có từ đến hạn ôn
 - Cài đặt giờ nhắc cố định
 
+### Giao diện
+- **Chủ đề Sáng / Tối / Hệ thống** — Cài đặt → Giao diện, lưu cục bộ (không đồng bộ)
+
 ---
 
 ## Ngăn xếp công nghệ
@@ -159,7 +162,7 @@ lib/
 │   │   ├── sync_service.dart        # Hive ↔ Firestore bidirectional sync
 │   │   ├── stats_service.dart       # Tính toán tiến độ học tập
 │   │   └── notification_service.dart
-│   ├── theme/               # AppTheme (light + dark)
+│   ├── theme/               # Bloom design system (bloom_tokens + bloom/), ported from apps/web
 │   ├── utils/               # InputDetector (word/phrase/sentence)
 │   └── widgets/             # AppShell (adaptive navigation)
 │
@@ -346,12 +349,11 @@ flutter run -d chrome --web-port 5000
 
 Vào **Cài đặt → AI** trong ứng dụng:
 
-1. **Bật AI** toggle
-2. Chọn **Provider**: Gemini / Groq / OpenRouter
-3. Chọn **Model** từ danh sách preset hoặc nhập tên tùy ý
-4. Nhập **API Key**
+1. Chọn **Provider**: Gemini / Groq / OpenRouter
+2. Chọn **Model** từ danh sách preset hoặc nhập tên tùy ý
+3. Nhập **API Key**
 
-Ứng dụng nhớ model và key riêng cho từng provider — chuyển đổi qua lại không mất cấu hình.
+Ứng dụng nhớ model và key riêng cho từng provider — chuyển đổi qua lại không mất cấu hình. AI tự bật khi provider đang chọn đã có API key.
 
 ### Lấy API Key
 
@@ -381,7 +383,7 @@ Vào **Cài đặt → AI** trong ứng dụng:
 | 日本語 (Japanese) | — | ✅ | — |
 | Tiếng Việt | — | ✅ | ✅ |
 
-> Tiếng Anh dùng Free Dictionary API, không cần AI key. Các ngôn ngữ khác yêu cầu AI bật.
+> Tiếng Anh dùng Free Dictionary API, không cần AI key. Các ngôn ngữ khác cần một API key AI.
 > TTS (phát âm từ điển, Nghe chép, Nghe hiểu) chỉ hoạt động với English và Tiếng Việt — backend Piper tự host chưa có giọng cho Trung/Hàn/Nhật.
 
 ---
@@ -409,7 +411,7 @@ flutter test test/features/dictionary/presentation/providers/user_settings_notif
 flutter test --reporter expanded
 ```
 
-Hiện tại: **474 tests** — domain entities, use cases, sources, providers, UI widgets, services.
+Hiện tại: **764 tests** — domain entities, use cases, sources, providers, UI widgets, services.
 
 ### Phân tích code
 
@@ -459,7 +461,7 @@ firebase hosting:channel:deploy preview
 ## Bảo mật
 
 - **API key AI không bao giờ được ghi lên Firestore** — lưu hoàn toàn trong SharedPreferences
-- Chỉ các trường sau được đồng bộ lên Firestore: `targetLanguage`, `activeContext`, `aiEnabled`, `targetCefrLevel`
+- Chỉ các trường sau được đồng bộ lên Firestore: `targetLanguage`, `targetCefrLevel`
 - Dữ liệu từ vựng (`vocab_records`, `topics`) đồng bộ có mã hóa Firestore
 - Firebase Security Rules giới hạn đọc/ghi theo UID người dùng
 
@@ -496,7 +498,6 @@ users/
       user/
         targetLanguage: string
         activeContext: string
-        aiEnabled: boolean
         targetCefrLevel: string | null
 ```
 
