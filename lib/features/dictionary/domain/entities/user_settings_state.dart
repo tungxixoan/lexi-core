@@ -8,7 +8,6 @@ import 'provider_config.dart';
 final class UserSettingsState {
   const UserSettingsState({
     required this.targetLanguage,
-    required this.aiEnabled,
     required this.activeProvider,
     required this.providerConfigs,
     this.targetCefrLevel,
@@ -19,7 +18,6 @@ final class UserSettingsState {
   });
 
   final Language targetLanguage;
-  final bool aiEnabled;
   final AiProvider activeProvider;
   final Map<AiProvider, ProviderConfig> providerConfigs;
   final CEFRLevel? targetCefrLevel;
@@ -33,16 +31,13 @@ final class UserSettingsState {
       providerConfigs[activeProvider] ?? ProviderConfig.empty(activeProvider);
 
   /// AI is usable iff the active provider has a stored key ciphertext —
-  /// mirrors how the web app infers "AI enabled". (The explicit `aiEnabled`
-  /// toggle is being retired in a later plan; new call sites should read
-  /// this instead.)
+  /// mirrors how the web app infers AI availability.
   bool get aiAvailable => activeConfig.apiKeyCiphertext?.isNotEmpty ?? false;
 
   static const _absent = Object();
 
   UserSettingsState copyWith({
     Language? targetLanguage,
-    bool? aiEnabled,
     AiProvider? activeProvider,
     Map<AiProvider, ProviderConfig>? providerConfigs,
     Object? targetCefrLevel = _absent,
@@ -53,7 +48,6 @@ final class UserSettingsState {
   }) =>
       UserSettingsState(
         targetLanguage: targetLanguage ?? this.targetLanguage,
-        aiEnabled: aiEnabled ?? this.aiEnabled,
         activeProvider: activeProvider ?? this.activeProvider,
         providerConfigs: providerConfigs ?? this.providerConfigs,
         targetCefrLevel: identical(targetCefrLevel, _absent)
@@ -67,10 +61,10 @@ final class UserSettingsState {
 
   static const defaults = UserSettingsState(
     targetLanguage: Language.english,
-    aiEnabled: false,
     activeProvider: AiProvider.gemini,
     providerConfigs: {
-      AiProvider.gemini: ProviderConfig(apiKeyCiphertext: null, model: 'gemini-2.5-flash'),
+      AiProvider.gemini:
+          ProviderConfig(apiKeyCiphertext: null, model: 'gemini-2.5-flash'),
     },
     targetCefrLevel: null,
     themePreference: ThemeMode.system,

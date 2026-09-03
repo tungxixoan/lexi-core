@@ -18,7 +18,7 @@ void main() {
   test('copyWith leaves themePreference unchanged when omitted', () {
     final start =
         UserSettingsState.defaults.copyWith(themePreference: ThemeMode.light);
-    final next = start.copyWith(aiEnabled: true);
+    final next = start.copyWith(reminderEnabled: true);
     expect(next.themePreference, ThemeMode.light);
   });
 

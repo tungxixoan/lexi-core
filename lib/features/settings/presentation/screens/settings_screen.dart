@@ -39,65 +39,56 @@ class SettingsScreen extends ConsumerWidget {
                         ref.read(authNotifierProvider.notifier).signOut(),
                   ),
             loading: () => const LinearProgressIndicator(),
-            error: (_, __) =>
-                const ListTile(title: Text('Lỗi xác thực')),
+            error: (_, __) => const ListTile(title: Text('Lỗi xác thực')),
           ),
 
           // ── AI ────────────────────────────────────────────────
           _SectionHeader('AI'),
-          SwitchListTile(
-            title: const Text('Bật AI'),
-            subtitle: const Text('Tạo bài tập và nội dung tự động'),
-            value: settings.aiEnabled,
-            onChanged: (v) => notifier.setAiEnabled(enabled: v),
+          // Provider picker
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Provider',
+                    style: theme.textTheme.labelMedium
+                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                const SizedBox(height: 8),
+                SegmentedButton<AiProvider>(
+                  segments: AiProvider.values
+                      .map((p) => ButtonSegment<AiProvider>(
+                            value: p,
+                            label: Text(p.label),
+                          ))
+                      .toList(),
+                  selected: {settings.activeProvider},
+                  onSelectionChanged: (s) {
+                    if (s.isNotEmpty) notifier.setActiveProvider(s.first);
+                  },
+                ),
+              ],
+            ),
           ),
-          if (settings.aiEnabled) ...[
-            // Provider picker
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Provider',
-                      style: theme.textTheme.labelMedium
-                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                  const SizedBox(height: 8),
-                  SegmentedButton<AiProvider>(
-                    segments: AiProvider.values
-                        .map((p) => ButtonSegment<AiProvider>(
-                              value: p,
-                              label: Text(p.label),
-                            ))
-                        .toList(),
-                    selected: {settings.activeProvider},
-                    onSelectionChanged: (s) {
-                      if (s.isNotEmpty) notifier.setActiveProvider(s.first);
-                    },
-                  ),
-                ],
-              ),
+          // Model picker
+          _ModelTile(
+            settings: settings,
+            onModelChanged: notifier.setModelForActiveProvider,
+          ),
+          // API Key
+          ListTile(
+            title: const Text('API Key'),
+            subtitle: Text(
+              (settings.activeConfig.apiKeyCiphertext?.isNotEmpty ?? false)
+                  ? 'Đã cài đặt'
+                  : 'Chưa cài đặt',
             ),
-            // Model picker
-            _ModelTile(
-              settings: settings,
-              onModelChanged: notifier.setModelForActiveProvider,
+            trailing: const Icon(Icons.edit_outlined),
+            onTap: () => _showApiKeyDialog(
+              context,
+              ref,
+              settings.activeConfig.apiKeyCiphertext?.isNotEmpty ?? false,
             ),
-            // API Key
-            ListTile(
-              title: const Text('API Key'),
-              subtitle: Text(
-                (settings.activeConfig.apiKeyCiphertext?.isNotEmpty ?? false)
-                    ? 'Đã cài đặt'
-                    : 'Chưa cài đặt',
-              ),
-              trailing: const Icon(Icons.edit_outlined),
-              onTap: () => _showApiKeyDialog(
-                context,
-                ref,
-                settings.activeConfig.apiKeyCiphertext?.isNotEmpty ?? false,
-              ),
-            ),
-          ],
+          ),
 
           // ── Học tập ───────────────────────────────────────────
           _SectionHeader('Học tập'),
@@ -119,8 +110,8 @@ class SettingsScreen extends ConsumerWidget {
                   ?.copyWith(color: theme.colorScheme.primary),
             ),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => _showCefrPicker(
-                context, ref, settings.targetCefrLevel),
+            onTap: () =>
+                _showCefrPicker(context, ref, settings.targetCefrLevel),
           ),
           // ── Thông báo ─────────────────────────────────────────
           _SectionHeader('Thông báo'),
@@ -170,7 +161,9 @@ class SettingsScreen extends ConsumerWidget {
       selected: current,
     );
     if (result != null) {
-      ref.read(userSettingsNotifierProvider.notifier).setTargetLanguage(result.value);
+      ref
+          .read(userSettingsNotifierProvider.notifier)
+          .setTargetLanguage(result.value);
     }
   }
 
@@ -333,9 +326,8 @@ class _SignedInSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: CircleAvatar(
-        backgroundImage: user.photoURL != null
-            ? NetworkImage(user.photoURL!)
-            : null,
+        backgroundImage:
+            user.photoURL != null ? NetworkImage(user.photoURL!) : null,
         child: user.photoURL == null
             ? Text(
                 (user.displayName?.isNotEmpty ?? false)
@@ -481,8 +473,7 @@ class _CustomModelDialogState extends State<_CustomModelDialog> {
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Huỷ')),
+            onPressed: () => Navigator.pop(context), child: const Text('Huỷ')),
         FilledButton(
           onPressed: () {
             final model = _ctrl.text.trim();

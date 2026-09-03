@@ -23,12 +23,12 @@ class _FakeSettingsNotifier extends UserSettingsNotifier {
 
 UserSettingsState _settings(Language language) => UserSettingsState(
       targetLanguage: language,
-      aiEnabled: false,
       activeProvider: AiProvider.gemini,
       providerConfigs: const {},
     );
 
-VocabRecord _record(String id, {Language language = Language.english}) => VocabRecord(
+VocabRecord _record(String id, {Language language = Language.english}) =>
+    VocabRecord(
       id: id,
       headword: id,
       inputType: InputType.word,
@@ -95,7 +95,9 @@ class _FakeVocabRepository implements VocabRepository {
   Future<VocabRecord?> getByHeadword(String headword, Language language) async {
     final lc = headword.toLowerCase();
     for (final r in records) {
-      if (r.targetLanguage == language && r.headword.toLowerCase() == lc) return r;
+      if (r.targetLanguage == language && r.headword.toLowerCase() == lc) {
+        return r;
+      }
     }
     return null;
   }
@@ -118,8 +120,8 @@ void main() {
     final repo = _FakeVocabRepository([_record('v1')]);
     final container = ProviderContainer(overrides: [
       vocabRepositoryProvider.overrideWithValue(repo),
-      userSettingsNotifierProvider
-          .overrideWith(() => _FakeSettingsNotifier(_settings(Language.english))),
+      userSettingsNotifierProvider.overrideWith(
+          () => _FakeSettingsNotifier(_settings(Language.english))),
     ]);
     addTearDown(container.dispose);
 
@@ -127,18 +129,20 @@ void main() {
     // (autoDispose alone — without also depending on the invalidation
     // signal — would only refetch once GC'd between reads, which wouldn't
     // prove this provider actually reacts to a save/update/delete).
-    final sub =
-        container.listen(vocabListForLanguageProvider(Language.english), (_, __) {});
+    final sub = container.listen(
+        vocabListForLanguageProvider(Language.english), (_, __) {});
     addTearDown(sub.close);
 
-    final before =
-        await container.read(vocabListForLanguageProvider(Language.english).future);
+    final before = await container
+        .read(vocabListForLanguageProvider(Language.english).future);
     expect(before.map((r) => r.id), ['v1']);
 
-    await container.read(vocabBankNotifierProvider.notifier).save(_record('v2'));
+    await container
+        .read(vocabBankNotifierProvider.notifier)
+        .save(_record('v2'));
 
-    final after =
-        await container.read(vocabListForLanguageProvider(Language.english).future);
+    final after = await container
+        .read(vocabListForLanguageProvider(Language.english).future);
     expect(after.map((r) => r.id).toSet(), {'v1', 'v2'});
   });
 }

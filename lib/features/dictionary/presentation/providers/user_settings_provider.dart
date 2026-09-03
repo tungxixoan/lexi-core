@@ -57,8 +57,8 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
     if (uid == null) return;
     unawaited(
       _syncService
-          .pushProviderSettings(uid, state.activeProvider, state.providerConfigs,
-              state.targetLanguage)
+          .pushProviderSettings(uid, state.activeProvider,
+              state.providerConfigs, state.targetLanguage)
           .catchError((Object _) {}),
     );
   }
@@ -112,16 +112,15 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
     }
 
     return UserSettingsState(
-      targetLanguage: Language.values.byName(
-          prefs.getString('target_language') ?? Language.english.name),
-      aiEnabled: prefs.getBool('ai_enabled') ?? false,
+      targetLanguage: Language.values
+          .byName(prefs.getString('target_language') ?? Language.english.name),
       activeProvider: activeProvider,
       providerConfigs: providerConfigs,
       targetCefrLevel: prefs.containsKey('target_cefr_level')
           ? CEFRLevel.values.byName(prefs.getString('target_cefr_level')!)
           : null,
-      themePreference: ThemeMode.values.byName(
-          prefs.getString('theme_preference') ?? ThemeMode.system.name),
+      themePreference: ThemeMode.values
+          .byName(prefs.getString('theme_preference') ?? ThemeMode.system.name),
       reminderEnabled: prefs.getBool('reminder_enabled') ?? false,
       reminderHour: prefs.getInt('reminder_hour') ?? 20,
       reminderMinute: prefs.getInt('reminder_minute') ?? 0,
@@ -134,18 +133,14 @@ class UserSettingsNotifier extends _$UserSettingsNotifier {
     if (sync) _pushBestEffort();
   }
 
-  void setAiEnabled({required bool enabled}) {
-    _prefs.setBool('ai_enabled', enabled);
-    state = state.copyWith(aiEnabled: enabled);
-  }
-
   void setActiveProvider(AiProvider provider, {bool sync = true}) {
     _prefs.setString('ai_active_provider', provider.name);
     state = state.copyWith(activeProvider: provider);
     if (sync) _pushBestEffort();
   }
 
-  void setProviderConfig(AiProvider provider, ProviderConfig config, {bool sync = true}) {
+  void setProviderConfig(AiProvider provider, ProviderConfig config,
+      {bool sync = true}) {
     _prefs.setString(
       'ai_config_${provider.name}',
       jsonEncode(config.toJson()),
