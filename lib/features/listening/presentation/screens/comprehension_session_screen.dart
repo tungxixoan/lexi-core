@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/utils/web_text_scale.dart';
 import '../../domain/entities/listening_passage.dart';
 import '../providers/listening_comprehension_provider.dart';
@@ -23,7 +24,8 @@ class ComprehensionSessionScreen extends ConsumerWidget {
           );
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
-              context.go('/listening/comprehension/session/result', extra: result);
+              context.go('/listening/comprehension/session/result',
+                  extra: result);
             }
           });
         }
@@ -38,18 +40,22 @@ class ComprehensionSessionScreen extends ConsumerWidget {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) context.go('/listening/comprehension');
           });
-          return const Scaffold(body: SizedBox.shrink());
+          return const BloomScaffold(body: SizedBox.shrink());
         }
         // Safety guard: navigation to the result route is already scheduled
         // via ref.listen above once isSubmitted flips to true.
         if (session.isSubmitted) {
-          return const Scaffold(body: SizedBox.shrink());
+          return const BloomScaffold(body: SizedBox.shrink());
         }
         return _SessionScaffold(session: session);
       },
       loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('Lỗi: $e'))),
+          const BloomScaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, _) => BloomScaffold(
+        body: Center(
+          child: Text('Lỗi: $e', style: TextStyle(color: context.bloom.danger)),
+        ),
+      ),
     );
   }
 }
@@ -61,57 +67,45 @@ class _SessionScaffold extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(listeningComprehensionNotifierProvider.notifier);
-    final turn = session.currentTurn;
     final isFirstTurn = session.currentTurnIndex == 0;
-    final isLastTurn = session.currentTurnIndex == session.passage.turns.length - 1;
-    final theme = Theme.of(context);
+    final isLastTurn =
+        session.currentTurnIndex == session.passage.turns.length - 1;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Nghe hiểu'), automaticallyImplyLeading: false),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go('/listening/comprehension');
+      },
+      child: BloomScaffold(
+        appBar: BloomAppBar(
+          title: 'Nghe hiểu',
+          automaticallyImplyLeading: false,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              BloomCard(
                 child: Column(
                   children: [
-                    Text(
-                      'Lượt ${session.currentTurnIndex + 1}/${session.passage.turns.length}'
-                      '${turn.speaker != null ? ' — Người nói ${turn.speaker}' : ''}',
-                      style: theme.textTheme.titleMedium,
+                    _SeekSlider(
+                      passage: session.passage,
+                      onSeek: notifier.seekToWord,
+                      label: 'Lượt ${session.currentTurnIndex + 1}'
+                          '/${session.passage.turns.length}',
                     ),
-                    const SizedBox(height: 12),
-                    _SeekSlider(passage: session.passage, onSeek: notifier.seekToWord),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.skip_previous),
-                          onPressed: isFirstTurn ? null : notifier.previousTurn,
-                        ),
-                        IconButton(
-                          iconSize: 40,
-                          icon: Icon(
-                            session.isSpeaking ? Icons.stop_circle : Icons.play_circle,
-                          ),
-                          onPressed: session.isSpeaking
-                              ? notifier.stopPlayback
-                              : notifier.playCurrentTurn,
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.skip_next),
-                          onPressed: isLastTurn ? null : notifier.nextTurn,
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.replay),
-                          onPressed: notifier.replayFromStart,
-                        ),
-                      ],
+                    const SizedBox(height: BloomSpacing.sm),
+                    BloomAudioControls.transport(
+                      isPlaying: session.isSpeaking,
+                      onPlayPause: session.isSpeaking
+                          ? notifier.stopPlayback
+                          : notifier.playCurrentTurn,
+                      onPrevious: isFirstTurn ? null : notifier.previousTurn,
+                      onNext: isLastTurn ? null : notifier.nextTurn,
+                      onReplay: notifier.replayFromStart,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: BloomSpacing.md),
                     _SpeedSelector(
                       speed: session.speedMultiplier,
                       onChanged: notifier.setSpeed,
@@ -119,31 +113,36 @@ class _SessionScaffold extends ConsumerWidget {
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    for (var i = 0; i < session.passage.questions.length; i++) ...[
-                      if (i > 0) const SizedBox(height: 16),
-                      _QuestionCard(
-                        index: i,
-                        question: session.passage.questions[i],
-                        selected: session.selectedAnswers[i],
-                        onSelected: (optionIndex) => notifier.selectAnswer(i, optionIndex),
-                      ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      for (var i = 0;
+                          i < session.passage.questions.length;
+                          i++) ...[
+                        if (i > 0) const SizedBox(height: 16),
+                        _QuestionCard(
+                          index: i,
+                          question: session.passage.questions[i],
+                          selected: session.selectedAnswers[i],
+                          onSelected: (optionIndex) =>
+                              notifier.selectAnswer(i, optionIndex),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            FilledButton(
-              onPressed: session.canSubmit ? notifier.submit : null,
-              child: const Text('Nộp bài'),
-            ),
-          ],
+              const SizedBox(height: 8),
+              BloomPillButton(
+                label: 'Nộp bài',
+                variant: BloomButtonVariant.primary,
+                block: true,
+                onPressed: session.canSubmit ? notifier.submit : null,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -165,45 +164,42 @@ class _QuestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                '${index + 1}. ${question.question}',
-                style: webScaled(theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14)),
-              ),
+    return BloomCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${index + 1}. ${question.question}',
+            style: webScaled(
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w700))
+                .copyWith(color: context.bloom.ink),
+          ),
+          const SizedBox(height: BloomSpacing.md),
+          for (var o = 0; o < question.options.length; o++) ...[
+            if (o > 0) const SizedBox(height: BloomSpacing.sm),
+            BloomMcOption(
+              label: question.options[o],
+              leading: String.fromCharCode(65 + o),
+              onTap: () => onSelected(o),
+              state:
+                  selected == o ? BloomMcState.selected : BloomMcState.neutral,
             ),
-            ...question.options.asMap().entries.map(
-                  (entry) => RadioListTile<int>(
-                    value: entry.key,
-                    groupValue: selected,
-                    title: Text(
-                      entry.value,
-                      style: webScaled(theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14)),
-                    ),
-                    dense: true,
-                    onChanged: (v) {
-                      if (v != null) onSelected(v);
-                    },
-                  ),
-                ),
           ],
-        ),
+        ],
       ),
     );
   }
 }
 
 class _SeekSlider extends StatefulWidget {
-  const _SeekSlider({required this.passage, required this.onSeek});
+  const _SeekSlider({
+    required this.passage,
+    required this.onSeek,
+    required this.label,
+  });
   final ListeningPassage passage;
   final ValueChanged<int> onSeek;
+  final String label;
 
   @override
   State<_SeekSlider> createState() => _SeekSliderState();
@@ -220,12 +216,12 @@ class _SeekSliderState extends State<_SeekSlider> {
     final value = (_restWordIndex ?? 0).toDouble();
     return Column(
       children: [
-        if (_isDragging && _restWordIndex != null) Text(_previewLabel(_restWordIndex!)),
-        Slider(
+        if (_isDragging && _restWordIndex != null)
+          Text(_previewLabel(_restWordIndex!)),
+        BloomWordSeekBar(
           value: value,
-          min: 0,
           max: (total - 1).toDouble(),
-          divisions: total - 1,
+          label: widget.label,
           onChanged: (v) => setState(() {
             _isDragging = true;
             _restWordIndex = v.round();

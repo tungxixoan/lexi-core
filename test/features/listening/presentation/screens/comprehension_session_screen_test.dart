@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
+import 'package:lexi_core/core/theme/bloom/bloom.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
@@ -13,9 +14,11 @@ import 'package:lexi_core/services/tts_service.dart';
 
 class _FakeTtsService implements TtsService {
   @override
-  Future<void> pronounce(String text, Language language, {required PronunciationTier tier}) async {}
+  Future<void> pronounce(String text, Language language,
+      {required PronunciationTier tier}) async {}
   @override
-  Future<void> synthesize(String text, Language language, {String? voice, double? rate}) async {}
+  Future<void> synthesize(String text, Language language,
+      {String? voice, double? rate}) async {}
   @override
   Future<void> stop() async {}
 
@@ -32,9 +35,12 @@ final _testPassage = ListeningPassage(
     ListeningTurn(speaker: 'A', text: 'This way, please.'),
   ],
   questions: const [
-    ListeningQuestion(question: 'Q1?', options: ['a', 'b', 'c', 'd'], correctIndex: 0),
-    ListeningQuestion(question: 'Q2?', options: ['a', 'b', 'c', 'd'], correctIndex: 1),
-    ListeningQuestion(question: 'Q3?', options: ['a', 'b', 'c', 'd'], correctIndex: 2),
+    ListeningQuestion(
+        question: 'Q1?', options: ['a', 'b', 'c', 'd'], correctIndex: 0),
+    ListeningQuestion(
+        question: 'Q2?', options: ['a', 'b', 'c', 'd'], correctIndex: 1),
+    ListeningQuestion(
+        question: 'Q3?', options: ['a', 'b', 'c', 'd'], correctIndex: 2),
   ],
   level: CEFRLevel.b1,
   context: AppContext.general,
@@ -98,6 +104,7 @@ void main() {
     await tester.pumpWidget(_buildSession(_session()));
     await tester.pumpAndSettle();
     expect(find.textContaining('Lượt 1/3'), findsOneWidget);
+    expect(find.byType(BloomAudioControls), findsOneWidget);
   });
 
   testWidgets('shows all 3 questions with 4 options each', (tester) async {
@@ -106,42 +113,49 @@ void main() {
     expect(find.textContaining('Q1?'), findsOneWidget);
     expect(find.textContaining('Q2?'), findsOneWidget);
     expect(find.textContaining('Q3?'), findsOneWidget);
-    expect(find.byType(RadioListTile<int>), findsNWidgets(12)); // 3 questions x 4 options
+    expect(find.byType(BloomMcOption),
+        findsNWidgets(12)); // 3 questions x 4 options
   });
 
-  testWidgets('Nộp bài is disabled until all 3 questions are answered', (tester) async {
-    await tester.pumpWidget(_buildSession(_session(selectedAnswers: [0, 1, null])));
+  testWidgets('Nộp bài is disabled until all 3 questions are answered',
+      (tester) async {
+    await tester
+        .pumpWidget(_buildSession(_session(selectedAnswers: [0, 1, null])));
     await tester.pumpAndSettle();
-    final button = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Nộp bài'),
+    final button = tester.widget<BloomPillButton>(
+      find.widgetWithText(BloomPillButton, 'Nộp bài'),
     );
     expect(button.onPressed, isNull);
   });
 
-  testWidgets('Nộp bài is enabled once all 3 are answered and navigates with the right result',
+  testWidgets(
+      'Nộp bài is enabled once all 3 are answered and navigates with the right result',
       (tester) async {
-    await tester.pumpWidget(_buildSession(_session(selectedAnswers: [0, 0, 2])));
+    await tester
+        .pumpWidget(_buildSession(_session(selectedAnswers: [0, 0, 2])));
     await tester.pumpAndSettle();
-    final button = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Nộp bài'),
+    final button = tester.widget<BloomPillButton>(
+      find.widgetWithText(BloomPillButton, 'Nộp bài'),
     );
     expect(button.onPressed, isNotNull);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Nộp bài'));
+    await tester.tap(find.widgetWithText(BloomPillButton, 'Nộp bài'));
     await tester.pumpAndSettle();
 
     expect(find.text('Result screen'), findsOneWidget);
     expect(capturedResult, isNotNull);
     expect(capturedResult!.passage, same(_testPassage));
     expect(capturedResult!.selectedAnswers, [0, 0, 2]);
-    expect(capturedResult!.correctCount, 2); // correctIndex 0,1,2 vs selected 0,0,2
+    expect(capturedResult!.correctCount,
+        2); // correctIndex 0,1,2 vs selected 0,0,2
   });
 
-  testWidgets('⏮ is disabled on the first turn, ⏭ advances the indicator', (tester) async {
+  testWidgets('⏮ is disabled on the first turn, ⏭ advances the indicator',
+      (tester) async {
     await tester.pumpWidget(_buildSession(_session()));
     await tester.pumpAndSettle();
-    final prevButton = tester.widget<IconButton>(
-      find.widgetWithIcon(IconButton, Icons.skip_previous),
+    final prevButton = tester.widget<BloomIconButton>(
+      find.widgetWithIcon(BloomIconButton, Icons.skip_previous),
     );
     expect(prevButton.onPressed, isNull);
 
@@ -153,14 +167,15 @@ void main() {
   testWidgets('⏭ is disabled on the last turn', (tester) async {
     await tester.pumpWidget(_buildSession(_session(currentTurnIndex: 2)));
     await tester.pumpAndSettle();
-    final nextButton = tester.widget<IconButton>(
-      find.widgetWithIcon(IconButton, Icons.skip_next),
+    final nextButton = tester.widget<BloomIconButton>(
+      find.widgetWithIcon(BloomIconButton, Icons.skip_next),
     );
     expect(nextButton.onPressed, isNull);
   });
 
   group('seek slider', () {
-    testWidgets('shows a seek slider spanning the whole passage', (tester) async {
+    testWidgets('shows a seek slider spanning the whole passage',
+        (tester) async {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
       expect(find.byType(Slider), findsOneWidget);
@@ -179,7 +194,8 @@ void main() {
       expect(find.text('Lượt 1/3 · Từ 2/4'), findsOneWidget);
     });
 
-    testWidgets('releasing the slider past the first turn switches to the resolved turn',
+    testWidgets(
+        'releasing the slider past the first turn switches to the resolved turn',
         (tester) async {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
@@ -197,12 +213,13 @@ void main() {
     testWidgets('defaults to the 1x segment selected', (tester) async {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
-      final segmented =
-          tester.widget<SegmentedButton<double>>(find.byType(SegmentedButton<double>));
+      final segmented = tester.widget<SegmentedButton<double>>(
+          find.byType(SegmentedButton<double>));
       expect(segmented.selected, {1.0});
     });
 
-    testWidgets('tapping 1.25x calls setSpeed(1.25) and updates the selected segment',
+    testWidgets(
+        'tapping 1.25x calls setSpeed(1.25) and updates the selected segment',
         (tester) async {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
@@ -210,8 +227,8 @@ void main() {
       await tester.tap(find.text('1.25x'));
       await tester.pumpAndSettle();
 
-      final segmented =
-          tester.widget<SegmentedButton<double>>(find.byType(SegmentedButton<double>));
+      final segmented = tester.widget<SegmentedButton<double>>(
+          find.byType(SegmentedButton<double>));
       expect(segmented.selected, {1.25});
     });
   });
