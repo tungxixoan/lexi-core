@@ -1,5 +1,6 @@
 export '../bloom_tokens.dart';
 export 'bloom_app_bar.dart';
+export 'bloom_bar_chart.dart';
 export 'bloom_bottom_nav.dart';
 export 'bloom_card.dart';
 export 'bloom_chip.dart';
