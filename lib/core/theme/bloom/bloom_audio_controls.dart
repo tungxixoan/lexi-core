@@ -5,7 +5,8 @@ import 'bloom_app_bar.dart'; // BloomIconButton
 
 /// The audio transport for the listening session screens. [BloomAudioControls.playOnly]
 /// is the single Play/Nghe-lại pill (Nghe chép); [BloomAudioControls.transport] adds
-/// ⏮ ⏭ ↺ around it (Nghe hiểu). Ports web's `.dictation-controls`.
+/// previous / next / replay-from-start buttons around it (Nghe hiểu). Ports web's
+/// `.dictation-controls`.
 class BloomAudioControls extends StatelessWidget {
   const BloomAudioControls.playOnly({
     super.key,
@@ -37,37 +38,39 @@ class BloomAudioControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (_transport) ...[
-          BloomIconButton(
-              icon: Icons.skip_previous,
-              onPressed: onPrevious,
-              tooltip: 'Lượt trước'),
-          const SizedBox(width: BloomSpacing.md),
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (_transport) ...[
+            BloomIconButton(
+                icon: Icons.skip_previous,
+                onPressed: onPrevious,
+                tooltip: 'Lượt trước'),
+            const SizedBox(width: BloomSpacing.md),
+          ],
+          _PlayPill(isPlaying: isPlaying, label: playLabel, onTap: onPlayPause),
+          if (_transport) ...[
+            const SizedBox(width: BloomSpacing.md),
+            BloomIconButton(
+                icon: Icons.skip_next, onPressed: onNext, tooltip: 'Lượt sau'),
+            const SizedBox(width: BloomSpacing.md),
+            BloomIconButton(
+                icon: Icons.replay,
+                onPressed: onReplay,
+                tooltip: 'Nghe lại từ đầu'),
+          ],
         ],
-        _PlayPill(
-            isPlaying: isPlaying, label: playLabel, onTap: onPlayPause),
-        if (_transport) ...[
-          const SizedBox(width: BloomSpacing.md),
-          BloomIconButton(
-              icon: Icons.skip_next,
-              onPressed: onNext,
-              tooltip: 'Lượt sau'),
-          const SizedBox(width: BloomSpacing.md),
-          BloomIconButton(
-              icon: Icons.replay,
-              onPressed: onReplay,
-              tooltip: 'Nghe lại từ đầu'),
-        ],
-      ],
+      ),
     );
   }
 }
 
 class _PlayPill extends StatelessWidget {
-  const _PlayPill({required this.isPlaying, required this.label, required this.onTap});
+  const _PlayPill(
+      {required this.isPlaying, required this.label, required this.onTap});
   final bool isPlaying;
   final String label;
   final VoidCallback? onTap;
@@ -95,7 +98,7 @@ class _PlayPill extends StatelessWidget {
                 children: [
                   Icon(isPlaying ? Icons.stop : Icons.play_arrow,
                       size: 20, color: c.accentInk),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: BloomSpacing.sm),
                   Text(isPlaying ? 'Dừng' : label,
                       style: TextStyle(
                           fontSize: 15,

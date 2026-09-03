@@ -14,7 +14,8 @@ class DictationSessionScreen extends ConsumerStatefulWidget {
       _DictationSessionScreenState();
 }
 
-class _DictationSessionScreenState extends ConsumerState<DictationSessionScreen> {
+class _DictationSessionScreenState
+    extends ConsumerState<DictationSessionScreen> {
   late final TextEditingController _ctrl;
   List<TextEditingController>? _blankCtrls;
 
@@ -35,7 +36,8 @@ class _DictationSessionScreenState extends ConsumerState<DictationSessionScreen>
   /// blanks never change after generation, so these stay stable across
   /// rebuilds (unlike constructing a fresh controller in build(), which
   /// would reset the user's cursor/focus on every keystroke).
-  List<TextEditingController> _blankControllersFor(DictationSessionState session) {
+  List<TextEditingController> _blankControllersFor(
+      DictationSessionState session) {
     _blankCtrls ??= List.generate(
       session.blanks.length,
       (i) => TextEditingController(text: session.blankAnswers[i]),
@@ -90,7 +92,8 @@ class _DictationSessionScreenState extends ConsumerState<DictationSessionScreen>
         return _SessionScaffold(
           session: session,
           ctrl: _ctrl,
-          blankCtrls: session.isClozeMode ? _blankControllersFor(session) : const [],
+          blankCtrls:
+              session.isClozeMode ? _blankControllersFor(session) : const [],
         );
       },
       loading: () =>
@@ -148,7 +151,7 @@ class _SessionScaffold extends ConsumerWidget {
                 child: Column(
                   children: [
                     BloomAudioControls.playOnly(
-                      isPlaying: session.isSpeaking,
+                      isPlaying: false,
                       onPlayPause: notifier.play,
                       playLabel: session.hasPlayedOnce
                           ? 'Nghe lại (${session.replayCount})'
@@ -244,11 +247,18 @@ class _ClozeInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final words = target.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    final words =
+        target.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
     final theme = Theme.of(context);
-    final baseStyle = webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16));
+    final baseStyle =
+        webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16));
     final fieldStyle = baseStyle.copyWith(
-      fontFamilyFallback: const ['ui-monospace', 'SF Mono', 'Menlo', 'monospace'],
+      fontFamilyFallback: const [
+        'ui-monospace',
+        'SF Mono',
+        'Menlo',
+        'monospace'
+      ],
       fontFeatures: const [FontFeature.tabularFigures()],
       color: context.bloom.ink,
     );
@@ -258,7 +268,8 @@ class _ClozeInput extends StatelessWidget {
     for (var blankIdx = 0; blankIdx < blanks.length; blankIdx++) {
       final blank = blanks[blankIdx];
       if (blank.startWordIndex > wordIndex) {
-        final visible = words.sublist(wordIndex, blank.startWordIndex).join(' ');
+        final visible =
+            words.sublist(wordIndex, blank.startWordIndex).join(' ');
         children.add(Text('$visible ', style: baseStyle));
       }
       children.add(
@@ -273,7 +284,8 @@ class _ClozeInput extends StatelessWidget {
               isDense: true,
               filled: true,
               fillColor: context.bloom.surface2,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(BloomRadii.sm),
                 borderSide: BorderSide(color: context.bloom.border),
