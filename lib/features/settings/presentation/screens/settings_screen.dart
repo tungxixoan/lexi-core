@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/encrypt_api_key.dart';
+import '../../../../core/theme/bloom/bloom.dart';
+import '../../../../core/widgets/filter_tile.dart';
 import '../../../../core/widgets/selection_sheets.dart';
 import '../../../../features/dictionary/domain/entities/ai_provider.dart';
 import '../../../../features/dictionary/domain/entities/language.dart';
@@ -19,118 +21,158 @@ class SettingsScreen extends ConsumerWidget {
     final settings = ref.watch(userSettingsNotifierProvider);
     final authAsync = ref.watch(authNotifierProvider);
     final notifier = ref.read(userSettingsNotifierProvider.notifier);
-    final theme = Theme.of(context);
+    final c = context.bloom;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Cài đặt'),
+    final subLabelStyle = TextStyle(
+      fontSize: 13.5,
+      fontWeight: FontWeight.w600,
+      color: c.inkSoft,
+    );
+
+    return BloomScaffold(
+      appBar: const BloomAppBar(
+        title: 'Cài đặt',
         automaticallyImplyLeading: false,
       ),
       body: ListView(
+        padding: const EdgeInsets.all(16),
         children: [
           // ── Tài khoản ─────────────────────────────────────────
-          _SectionHeader('Tài khoản'),
-          authAsync.when(
-            data: (user) => user == null
-                ? const SizedBox.shrink()
-                : _SignedInSection(
-                    user: user,
-                    onSignOut: () =>
-                        ref.read(authNotifierProvider.notifier).signOut(),
-                  ),
-            loading: () => const LinearProgressIndicator(),
-            error: (_, __) => const ListTile(title: Text('Lỗi xác thực')),
-          ),
-
-          // ── AI ────────────────────────────────────────────────
-          _SectionHeader('AI'),
-          // Provider picker
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          BloomCard(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Provider',
-                    style: theme.textTheme.labelMedium
-                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                const SizedBox(height: 8),
-                SegmentedButton<AiProvider>(
-                  segments: AiProvider.values
-                      .map((p) => ButtonSegment<AiProvider>(
-                            value: p,
-                            label: Text(p.label),
-                          ))
-                      .toList(),
-                  selected: {settings.activeProvider},
-                  onSelectionChanged: (s) {
-                    if (s.isNotEmpty) notifier.setActiveProvider(s.first);
-                  },
+                const BloomSectionHeader('Tài khoản'),
+                authAsync.when(
+                  data: (user) => user == null
+                      ? const SizedBox.shrink()
+                      : _SignedInSection(
+                          user: user,
+                          onSignOut: () =>
+                              ref.read(authNotifierProvider.notifier).signOut(),
+                        ),
+                  loading: () => const LinearProgressIndicator(),
+                  error: (_, __) => Text(
+                    'Lỗi xác thực',
+                    style: TextStyle(color: c.danger),
+                  ),
                 ),
               ],
             ),
           ),
-          // Model picker
-          _ModelTile(
-            settings: settings,
-            onModelChanged: notifier.setModelForActiveProvider,
-          ),
-          // API Key
-          ListTile(
-            title: const Text('API Key'),
-            subtitle: Text(
-              (settings.activeConfig.apiKeyCiphertext?.isNotEmpty ?? false)
-                  ? 'Đã cài đặt'
-                  : 'Chưa cài đặt',
+          const SizedBox(height: 12),
+
+          // ── AI ────────────────────────────────────────────────
+          BloomCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const BloomSectionHeader('AI'),
+                Text('Provider', style: subLabelStyle),
+                const SizedBox(height: BloomSpacing.sm),
+                BloomSegmented<AiProvider>(
+                  segments: AiProvider.values
+                      .map((p) => BloomSegment(value: p, label: p.label))
+                      .toList(),
+                  selected: settings.activeProvider,
+                  onChanged: notifier.setActiveProvider,
+                ),
+                const SizedBox(height: BloomSpacing.sm),
+                _ModelTile(
+                  settings: settings,
+                  onModelChanged: notifier.setModelForActiveProvider,
+                ),
+                FilterTile(
+                  icon: Icons.key_outlined,
+                  label: 'API Key',
+                  value: (settings.activeConfig.apiKeyCiphertext?.isNotEmpty ??
+                          false)
+                      ? 'Đã cài đặt'
+                      : 'Chưa cài đặt',
+                  onTap: () => _showApiKeyDialog(
+                    context,
+                    ref,
+                    settings.activeConfig.apiKeyCiphertext?.isNotEmpty ?? false,
+                  ),
+                ),
+              ],
             ),
-            trailing: const Icon(Icons.edit_outlined),
-            onTap: () => _showApiKeyDialog(
-              context,
-              ref,
-              settings.activeConfig.apiKeyCiphertext?.isNotEmpty ?? false,
-            ),
           ),
+          const SizedBox(height: 12),
 
           // ── Học tập ───────────────────────────────────────────
-          _SectionHeader('Học tập'),
-          ListTile(
-            title: const Text('Ngôn ngữ mục tiêu'),
-            subtitle: Text(
-              settings.targetLanguage.label,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.primary),
+          BloomCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const BloomSectionHeader('Học tập'),
+                FilterTile(
+                  icon: Icons.language_outlined,
+                  label: 'Ngôn ngữ mục tiêu',
+                  value: settings.targetLanguage.label,
+                  onTap: () =>
+                      _pickLanguage(context, ref, settings.targetLanguage),
+                ),
+                FilterTile(
+                  icon: Icons.school_outlined,
+                  label: 'Cấp độ mục tiêu',
+                  value: settings.targetCefrLevel?.label ?? 'Tất cả',
+                  onTap: () =>
+                      _showCefrPicker(context, ref, settings.targetCefrLevel),
+                ),
+              ],
             ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _pickLanguage(context, ref, settings.targetLanguage),
           ),
-          ListTile(
-            title: const Text('Cấp độ mục tiêu'),
-            subtitle: Text(
-              settings.targetCefrLevel?.label ?? 'Tất cả',
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.primary),
+          const SizedBox(height: 12),
+
+          // ── Giao diện ─────────────────────────────────────────
+          BloomCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const BloomSectionHeader('Giao diện'),
+                Text('Chủ đề', style: subLabelStyle),
+                const SizedBox(height: BloomSpacing.sm),
+                BloomSegmented<ThemeMode>(
+                  segments: const [
+                    BloomSegment(value: ThemeMode.light, label: 'Sáng'),
+                    BloomSegment(value: ThemeMode.dark, label: 'Tối'),
+                    BloomSegment(value: ThemeMode.system, label: 'Hệ thống'),
+                  ],
+                  selected: settings.themePreference,
+                  onChanged: notifier.setThemePreference,
+                ),
+              ],
             ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () =>
-                _showCefrPicker(context, ref, settings.targetCefrLevel),
           ),
+          const SizedBox(height: 12),
+
           // ── Thông báo ─────────────────────────────────────────
-          _SectionHeader('Thông báo'),
-          SwitchListTile(
-            title: const Text('Nhắc nhở hàng ngày'),
-            subtitle: const Text('Thông báo khi có từ cần ôn'),
-            value: settings.reminderEnabled,
-            onChanged: (v) => notifier.setReminderEnabled(enabled: v),
-          ),
-          if (settings.reminderEnabled)
-            ListTile(
-              title: const Text('Giờ nhắc cố định'),
-              trailing: Text(
-                '${settings.reminderHour.toString().padLeft(2, '0')}:'
-                '${settings.reminderMinute.toString().padLeft(2, '0')}',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              onTap: () => _showTimePicker(context, ref, settings),
+          BloomCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const BloomSectionHeader('Thông báo'),
+                BloomSwitch(
+                  title: 'Nhắc nhở hàng ngày',
+                  subtitle: 'Thông báo khi có từ cần ôn',
+                  value: settings.reminderEnabled,
+                  onChanged: (v) => notifier.setReminderEnabled(enabled: v),
+                ),
+                if (settings.reminderEnabled) ...[
+                  const SizedBox(height: BloomSpacing.sm),
+                  FilterTile(
+                    icon: Icons.schedule,
+                    label: 'Giờ nhắc cố định',
+                    value:
+                        '${settings.reminderHour.toString().padLeft(2, '0')}:'
+                        '${settings.reminderMinute.toString().padLeft(2, '0')}',
+                    onTap: () => _showTimePicker(context, ref, settings),
+                  ),
+                ],
+              ],
             ),
+          ),
         ],
       ),
     );
@@ -167,40 +209,26 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  void _showCefrPicker(
-      BuildContext context, WidgetRef ref, CEFRLevel? current) {
-    showModalBottomSheet<void>(
+  Future<void> _showCefrPicker(
+      BuildContext context, WidgetRef ref, CEFRLevel? current) async {
+    final picked = await showSingleSelectSheet<CEFRLevel?>(
       context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioListTile<CEFRLevel?>(
-              title: const Text('Tất cả'),
-              value: null,
-              groupValue: current,
-              onChanged: (_) {
-                ref
-                    .read(userSettingsNotifierProvider.notifier)
-                    .setTargetCefrLevel(null);
-                Navigator.pop(ctx);
-              },
-            ),
-            ...CEFRLevel.values.map((level) => RadioListTile<CEFRLevel?>(
-                  title: Text(level.label),
-                  value: level,
-                  groupValue: current,
-                  onChanged: (v) {
-                    ref
-                        .read(userSettingsNotifierProvider.notifier)
-                        .setTargetCefrLevel(v);
-                    Navigator.pop(ctx);
-                  },
-                )),
-          ],
-        ),
-      ),
+      title: 'Cấp độ mục tiêu',
+      options: [
+        const SelectOption<CEFRLevel?>(value: null, label: 'Tất cả'),
+        ...CEFRLevel.values
+            .map((l) => SelectOption<CEFRLevel?>(value: l, label: l.label)),
+      ],
+      selected: current,
     );
+    // `showSingleSelectSheet` returns null only on dismiss; an explicit pick of
+    // the "Tất cả" row comes back as a non-null option whose `.value` is null —
+    // which is exactly the intended `setTargetCefrLevel(null)`.
+    if (picked != null) {
+      ref
+          .read(userSettingsNotifierProvider.notifier)
+          .setTargetCefrLevel(picked.value);
+    }
   }
 
   Future<void> _showTimePicker(
@@ -217,70 +245,61 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
-// ── Model tile with preset dropdown + free-text "Khác..." option ──────────
+// ── Model tile with preset picker + free-text "Khác…" option ─────────────────
 
-class _ModelTile extends ConsumerWidget {
+class _ModelTile extends StatelessWidget {
   const _ModelTile({required this.settings, required this.onModelChanged});
   final UserSettingsState settings;
   final void Function(String) onModelChanged;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final presets = settings.activeProvider.modelPresets;
     final currentModel = settings.activeConfig.model.isEmpty
         ? settings.activeProvider.defaultModel
         : settings.activeConfig.model;
     final isCustom = !presets.contains(currentModel);
 
-    return ListTile(
-      title: const Text('Model'),
-      subtitle: Text(currentModel),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: () => _showModelPicker(context, presets, currentModel, isCustom),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FilterTile(
+          icon: Icons.psychology_outlined,
+          label: 'Model',
+          value: currentModel,
+          onTap: () =>
+              _showModelPicker(context, presets, currentModel, isCustom),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: BloomPillButton(
+            variant: BloomButtonVariant.link,
+            label: 'Nhập model khác…',
+            onPressed: () => _showCustomModelDialog(context),
+          ),
+        ),
+      ],
     );
   }
 
-  void _showModelPicker(
+  Future<void> _showModelPicker(
     BuildContext context,
     List<String> presets,
     String currentModel,
     bool isCustom,
-  ) {
-    showModalBottomSheet<void>(
+  ) async {
+    final picked = await showSingleSelectSheet<String>(
       context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (isCustom)
-              RadioListTile<String>(
-                title: Text(currentModel),
-                subtitle: const Text('Tuỳ chỉnh'),
-                value: currentModel,
-                groupValue: currentModel,
-                onChanged: (_) => Navigator.pop(ctx),
-              ),
-            ...presets.map((model) => RadioListTile<String>(
-                  title: Text(model),
-                  value: model,
-                  groupValue: currentModel,
-                  onChanged: (v) {
-                    if (v != null) onModelChanged(v);
-                    Navigator.pop(ctx);
-                  },
-                )),
-            ListTile(
-              leading: const Icon(Icons.edit_outlined),
-              title: const Text('Khác...'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _showCustomModelDialog(context);
-              },
-            ),
-          ],
-        ),
-      ),
+      title: 'Model',
+      options: [
+        // Keep the current model visible/selected when it's a custom value
+        // not in this provider's presets.
+        if (isCustom) SelectOption(value: currentModel, label: currentModel),
+        ...presets.map((m) => SelectOption(value: m, label: m)),
+      ],
+      selected: currentModel,
     );
+    if (picked != null) onModelChanged(picked.value);
   }
 
   void _showCustomModelDialog(BuildContext context) {
@@ -296,24 +315,6 @@ class _ModelTile extends ConsumerWidget {
 
 // ── Shared widgets ─────────────────────────────────────────────────────────
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(this.title);
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
-      child: Text(
-        title,
-        style: theme.textTheme.labelLarge
-            ?.copyWith(color: theme.colorScheme.primary),
-      ),
-    );
-  }
-}
-
 class _SignedInSection extends StatelessWidget {
   const _SignedInSection({
     required this.user,
@@ -324,24 +325,56 @@ class _SignedInSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundImage:
-            user.photoURL != null ? NetworkImage(user.photoURL!) : null,
-        child: user.photoURL == null
-            ? Text(
-                (user.displayName?.isNotEmpty ?? false)
-                    ? user.displayName![0].toUpperCase()
-                    : '?',
-              )
-            : null,
-      ),
-      title: Text(user.displayName ?? 'Người dùng'),
-      subtitle: Text(user.email ?? ''),
-      trailing: TextButton(
-        onPressed: onSignOut,
-        child: const Text('Đăng xuất'),
-      ),
+    final c = context.bloom;
+    final hasName = user.displayName?.isNotEmpty ?? false;
+    final initial = hasName ? user.displayName![0].toUpperCase() : '?';
+
+    return Row(
+      children: [
+        SizedBox(
+          width: 44,
+          height: 44,
+          child: user.photoURL != null
+              ? CircleAvatar(backgroundImage: NetworkImage(user.photoURL!))
+              : Container(
+                  decoration: BoxDecoration(
+                    gradient: BloomGradients.leafMark(c),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      initial,
+                      style: TextStyle(
+                        color: c.accentInk,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                user.displayName ?? 'Người dùng',
+                style: TextStyle(color: c.ink, fontWeight: FontWeight.w700),
+              ),
+              Text(
+                user.email ?? '',
+                style: TextStyle(color: c.inkSoft),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        BloomPillButton(
+          label: 'Đăng xuất',
+          variant: BloomButtonVariant.danger,
+          onPressed: onSignOut,
+        ),
+      ],
     );
   }
 }
@@ -401,36 +434,38 @@ class _ApiKeyDialogState extends State<_ApiKeyDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextField(
+          BloomTextField(
             controller: _ctrl,
             obscureText: true,
             enabled: !_saving,
-            decoration: InputDecoration(
-              hintText: widget.isConfigured ? '••••••••' : 'Nhập API key...',
-              border: const OutlineInputBorder(),
-            ),
+            hintText: widget.isConfigured ? '••••••••' : 'Nhập API key...',
           ),
           if (_error != null) ...[
             const SizedBox(height: 8),
-            Text(_error!, style: const TextStyle(color: Colors.red)),
+            Text(_error!, style: TextStyle(color: context.bloom.danger)),
           ],
         ],
       ),
       actions: [
-        TextButton(
+        BloomPillButton(
+          label: 'Huỷ',
+          variant: BloomButtonVariant.link,
           onPressed: _saving ? null : () => Navigator.pop(context),
-          child: const Text('Huỷ'),
         ),
-        FilledButton(
-          onPressed: _saving ? null : () => _save(),
-          child: _saving
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Lưu'),
-        ),
+        if (_saving)
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          )
+        else
+          BloomPillButton(
+            label: 'Lưu',
+            onPressed: () => _save(),
+          ),
       ],
     );
   }
@@ -464,23 +499,23 @@ class _CustomModelDialogState extends State<_CustomModelDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Tên model'),
-      content: TextField(
+      content: BloomTextField(
         controller: _ctrl,
-        decoration: const InputDecoration(
-          hintText: 'vd: gemini-2.5-pro, openai/gpt-oss-20b...',
-          border: OutlineInputBorder(),
-        ),
+        hintText: 'vd: gemini-2.5-pro, openai/gpt-oss-20b...',
       ),
       actions: [
-        TextButton(
-            onPressed: () => Navigator.pop(context), child: const Text('Huỷ')),
-        FilledButton(
+        BloomPillButton(
+          label: 'Huỷ',
+          variant: BloomButtonVariant.link,
+          onPressed: () => Navigator.pop(context),
+        ),
+        BloomPillButton(
+          label: 'Lưu',
           onPressed: () {
             final model = _ctrl.text.trim();
             if (model.isNotEmpty) widget.onSave(model);
             Navigator.pop(context);
           },
-          child: const Text('Lưu'),
         ),
       ],
     );
