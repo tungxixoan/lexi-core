@@ -4,9 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/lookup_result.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/provider_config.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
@@ -25,7 +27,7 @@ class _FakeSettingsNotifier extends UserSettingsNotifier {
 }
 
 Future<Widget> _buildSection({
-  required bool aiEnabled,
+  required bool aiAvailable,
   List<Override> extraOverrides = const [],
 }) async {
   SharedPreferences.setMockInitialValues({});
@@ -34,7 +36,16 @@ Future<Widget> _buildSection({
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       userSettingsNotifierProvider.overrideWith(
-        () => _FakeSettingsNotifier(UserSettingsState.defaults.copyWith(aiEnabled: aiEnabled)),
+        () => _FakeSettingsNotifier(
+          UserSettingsState.defaults.copyWith(
+            providerConfigs: {
+              AiProvider.gemini: ProviderConfig(
+                apiKeyCiphertext: aiAvailable ? 'ck' : null,
+                model: 'gemini-2.5-flash',
+              ),
+            },
+          ),
+        ),
       ),
       ...extraOverrides,
     ],
@@ -56,11 +67,15 @@ void main() {
     registerFallbackValue(CEFRLevel.b1);
   });
 
-  testWidgets('does not call the suggestions use case when AI is disabled', (tester) async {
+  testWidgets('does not call the suggestions use case when AI is disabled',
+      (tester) async {
     final mockSuggestions = MockGetVocabSuggestionsForTextUseCase();
     await tester.pumpWidget(await _buildSection(
-      aiEnabled: false,
-      extraOverrides: [getVocabSuggestionsForTextUseCaseProvider.overrideWithValue(mockSuggestions)],
+      aiAvailable: false,
+      extraOverrides: [
+        getVocabSuggestionsForTextUseCaseProvider
+            .overrideWithValue(mockSuggestions)
+      ],
     ));
     await tester.pumpAndSettle();
 
@@ -72,7 +87,8 @@ void main() {
     expect(find.text('Gợi ý từ mới'), findsNothing);
   });
 
-  testWidgets('loads suggestions with the given text/language/level and renders them',
+  testWidgets(
+      'loads suggestions with the given text/language/level and renders them',
       (tester) async {
     final mockSuggestions = MockGetVocabSuggestionsForTextUseCase();
     when(() => mockSuggestions.execute(
@@ -94,8 +110,11 @@ void main() {
         ));
 
     await tester.pumpWidget(await _buildSection(
-      aiEnabled: true,
-      extraOverrides: [getVocabSuggestionsForTextUseCaseProvider.overrideWithValue(mockSuggestions)],
+      aiAvailable: true,
+      extraOverrides: [
+        getVocabSuggestionsForTextUseCaseProvider
+            .overrideWithValue(mockSuggestions)
+      ],
     ));
     await tester.pumpAndSettle();
 
@@ -108,7 +127,8 @@ void main() {
     expect(find.text('ubiquitous'), findsOneWidget);
   });
 
-  testWidgets('shows an error message with a retry button on failure', (tester) async {
+  testWidgets('shows an error message with a retry button on failure',
+      (tester) async {
     final mockSuggestions = MockGetVocabSuggestionsForTextUseCase();
     when(() => mockSuggestions.execute(
           text: any(named: 'text'),
@@ -117,8 +137,11 @@ void main() {
         )).thenThrow(Exception('network error'));
 
     await tester.pumpWidget(await _buildSection(
-      aiEnabled: true,
-      extraOverrides: [getVocabSuggestionsForTextUseCaseProvider.overrideWithValue(mockSuggestions)],
+      aiAvailable: true,
+      extraOverrides: [
+        getVocabSuggestionsForTextUseCaseProvider
+            .overrideWithValue(mockSuggestions)
+      ],
     ));
     await tester.pumpAndSettle();
 
@@ -140,8 +163,11 @@ void main() {
     });
 
     await tester.pumpWidget(await _buildSection(
-      aiEnabled: true,
-      extraOverrides: [getVocabSuggestionsForTextUseCaseProvider.overrideWithValue(mockSuggestions)],
+      aiAvailable: true,
+      extraOverrides: [
+        getVocabSuggestionsForTextUseCaseProvider
+            .overrideWithValue(mockSuggestions)
+      ],
     ));
     await tester.pumpAndSettle();
     expect(find.text('Thử lại'), findsOneWidget);

@@ -7,9 +7,11 @@ import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
 import 'package:lexi_core/core/theme/bloom/bloom.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/provider_config.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
@@ -109,7 +111,7 @@ class _FakeVocabRepository implements VocabRepository {
 }
 
 Future<Widget> _buildScreen({
-  required bool aiEnabled,
+  required bool aiAvailable,
   required List<VocabRecord> vocabItems,
   WordRadarSource? source,
 }) async {
@@ -136,7 +138,14 @@ Future<Widget> _buildScreen({
       sharedPreferencesProvider.overrideWithValue(prefs),
       userSettingsNotifierProvider.overrideWith(
         () => _FakeSettingsNotifier(
-          UserSettingsState.defaults.copyWith(aiEnabled: aiEnabled),
+          UserSettingsState.defaults.copyWith(
+            providerConfigs: {
+              AiProvider.gemini: ProviderConfig(
+                apiKeyCiphertext: aiAvailable ? 'ck' : null,
+                model: 'gemini-2.5-flash',
+              ),
+            },
+          ),
         ),
       ),
       vocabRepositoryProvider
@@ -153,7 +162,7 @@ void main() {
   testWidgets('shows the AI-disabled note after scanning with AI off',
       (tester) async {
     await tester.pumpWidget(await _buildScreen(
-      aiEnabled: false,
+      aiAvailable: false,
       vocabItems: [_record('serendipity')],
     ));
     await tester.pumpAndSettle();
@@ -171,7 +180,7 @@ void main() {
   testWidgets('tapping a highlighted known word navigates to its detail screen',
       (tester) async {
     await tester.pumpWidget(await _buildScreen(
-      aiEnabled: false,
+      aiAvailable: false,
       vocabItems: [_record('serendipity')],
     ));
     await tester.pumpAndSettle();
@@ -202,7 +211,7 @@ void main() {
       })),
     );
     await tester.pumpWidget(await _buildScreen(
-      aiEnabled: true,
+      aiAvailable: true,
       vocabItems: const [],
       source: source,
     ));
@@ -236,7 +245,7 @@ void main() {
       })),
     );
     await tester.pumpWidget(await _buildScreen(
-      aiEnabled: true,
+      aiAvailable: true,
       vocabItems: const [],
       source: source,
     ));
@@ -278,7 +287,7 @@ void main() {
       })),
     );
     await tester.pumpWidget(await _buildScreen(
-      aiEnabled: true,
+      aiAvailable: true,
       vocabItems: const [],
       source: source,
     ));
@@ -303,7 +312,7 @@ void main() {
       _FakeGenerativeModelClient('{"suggestions":[]}'),
     );
     await tester.pumpWidget(await _buildScreen(
-      aiEnabled: true,
+      aiAvailable: true,
       vocabItems: const [],
       source: source,
     ));
@@ -319,8 +328,8 @@ void main() {
 
   testWidgets('the Quét button is disabled while the input is empty',
       (tester) async {
-    await tester
-        .pumpWidget(await _buildScreen(aiEnabled: false, vocabItems: const []));
+    await tester.pumpWidget(
+        await _buildScreen(aiAvailable: false, vocabItems: const []));
     await tester.pumpAndSettle();
 
     final button = tester.widget<BloomPillButton>(
@@ -347,7 +356,7 @@ void main() {
       })),
     );
     await tester.pumpWidget(await _buildScreen(
-      aiEnabled: true,
+      aiAvailable: true,
       vocabItems: const [],
       source: source,
     ));
@@ -371,7 +380,7 @@ void main() {
       })),
     );
     await tester.pumpWidget(await _buildScreen(
-      aiEnabled: true,
+      aiAvailable: true,
       vocabItems: [_record('cat', meaning: 'con mèo')],
       source: source,
     ));
@@ -396,7 +405,7 @@ void main() {
       })),
     );
     await tester.pumpWidget(await _buildScreen(
-      aiEnabled: true,
+      aiAvailable: true,
       vocabItems: const [],
       source: source,
     ));

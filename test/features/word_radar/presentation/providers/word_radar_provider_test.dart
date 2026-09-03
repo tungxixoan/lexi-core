@@ -7,7 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/provider_config.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
@@ -61,7 +63,8 @@ class _FakeVocabRepository implements VocabRepository {
   }
 
   @override
-  Future<VocabRecord?> getById(String id, {required Language language}) async => null;
+  Future<VocabRecord?> getById(String id, {required Language language}) async =>
+      null;
 
   @override
   Future<void> save(VocabRecord record) async {}
@@ -73,10 +76,13 @@ class _FakeVocabRepository implements VocabRepository {
   Future<void> delete(String id, {required Language language}) async {}
 
   @override
-  Future<bool> existsByHeadword(String headword, Language language) async => false;
+  Future<bool> existsByHeadword(String headword, Language language) async =>
+      false;
 
   @override
-  Future<VocabRecord?> getByHeadword(String headword, Language language) async => null;
+  Future<VocabRecord?> getByHeadword(
+          String headword, Language language) async =>
+      null;
 
   @override
   Future<List<Topic>> getTopics() async => [];
@@ -90,7 +96,8 @@ class _FakeVocabRepository implements VocabRepository {
 
 class _ThrowingGenerativeModelClient implements GenerativeModelClient {
   @override
-  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) async {
+  Future<GenerateContentResponse> generateContent(
+      Iterable<Content> prompt) async {
     throw Exception('network error');
   }
 }
@@ -103,7 +110,8 @@ class _DelayedGenerativeModelClient implements GenerativeModelClient {
   final Completer<String> _completer;
 
   @override
-  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) async {
+  Future<GenerateContentResponse> generateContent(
+      Iterable<Content> prompt) async {
     final text = await _completer.future;
     return GenerateContentResponse(
       [Candidate(Content.text(text), null, null, null, null)],
@@ -113,7 +121,7 @@ class _DelayedGenerativeModelClient implements GenerativeModelClient {
 }
 
 Future<ProviderContainer> _makeContainer({
-  required bool aiEnabled,
+  required bool aiAvailable,
   required List<VocabRecord> vocabItems,
   _FakeVocabRepository? vocabRepository,
   WordRadarSource? wordRadarSource,
@@ -125,7 +133,14 @@ Future<ProviderContainer> _makeContainer({
       sharedPreferencesProvider.overrideWithValue(prefs),
       userSettingsNotifierProvider.overrideWith(
         () => _FakeSettingsNotifier(
-          UserSettingsState.defaults.copyWith(aiEnabled: aiEnabled),
+          UserSettingsState.defaults.copyWith(
+            providerConfigs: {
+              AiProvider.gemini: ProviderConfig(
+                apiKeyCiphertext: aiAvailable ? 'ck' : null,
+                model: 'gemini-2.5-flash',
+              ),
+            },
+          ),
         ),
       ),
       vocabRepositoryProvider.overrideWithValue(
@@ -141,9 +156,10 @@ Future<ProviderContainer> _makeContainer({
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  test('populates knownRecords and leaves aiResult null when AI is disabled', () async {
+  test('populates knownRecords and leaves aiResult null when AI is disabled',
+      () async {
     final container = await _makeContainer(
-      aiEnabled: false,
+      aiAvailable: false,
       vocabItems: [_record('serendipity')],
     );
     addTearDown(container.dispose);
@@ -157,8 +173,10 @@ void main() {
     expect(state.aiResult, isNull);
   });
 
-  test('leaves knownRecords empty when nothing in the Vocab Bank matches', () async {
-    final container = await _makeContainer(aiEnabled: false, vocabItems: const []);
+  test('leaves knownRecords empty when nothing in the Vocab Bank matches',
+      () async {
+    final container =
+        await _makeContainer(aiAvailable: false, vocabItems: const []);
     addTearDown(container.dispose);
 
     await container.read(wordRadarNotifierProvider.notifier).scan('Some text.');
@@ -169,7 +187,7 @@ void main() {
 
   test('reset() clears back to the initial state', () async {
     final container = await _makeContainer(
-      aiEnabled: false,
+      aiAvailable: false,
       vocabItems: [_record('serendipity')],
     );
     addTearDown(container.dispose);
@@ -187,9 +205,10 @@ void main() {
   test('knownRecords is observable while aiResult is still loading', () async {
     final completer = Completer<String>();
     final container = await _makeContainer(
-      aiEnabled: true,
+      aiAvailable: true,
       vocabItems: [_record('serendipity')],
-      wordRadarSource: WordRadarSource.withModel(_DelayedGenerativeModelClient(completer)),
+      wordRadarSource:
+          WordRadarSource.withModel(_DelayedGenerativeModelClient(completer)),
     );
     addTearDown(container.dispose);
     // wordRadarNotifierProvider is AutoDispose; without an active listener it
@@ -218,7 +237,8 @@ void main() {
     expect(finalState.aiResult!.value!.suggestions, isEmpty);
   });
 
-  test('AI-enabled success path resolves aiResult to AsyncData with translation and suggestions',
+  test(
+      'AI-enabled success path resolves aiResult to AsyncData with translation and suggestions',
       () async {
     final json = '{"translation":"Điện thoại thông minh có mặt khắp nơi.",'
         '"suggestions":[{"headword":"ubiquitous","ipa":"/juːˈbɪkwɪtəs/",'
@@ -226,7 +246,7 @@ void main() {
         '"synonyms":["omnipresent"],"examples":["Smartphones are ubiquitous."],'
         '"suggestedTopics":["Technology"],"cefrLevel":"c1"}]}';
     final container = await _makeContainer(
-      aiEnabled: true,
+      aiAvailable: true,
       vocabItems: [_record('serendipity')],
       wordRadarSource: WordRadarSource.withModel(
         _DelayedGenerativeModelClient(Completer<String>()..complete(json)),
@@ -240,16 +260,19 @@ void main() {
 
     final state = container.read(wordRadarNotifierProvider);
     expect(state.aiResult!.hasValue, isTrue);
-    expect(state.aiResult!.value!.translation, 'Điện thoại thông minh có mặt khắp nơi.');
+    expect(state.aiResult!.value!.translation,
+        'Điện thoại thông minh có mặt khắp nơi.');
     expect(state.aiResult!.value!.suggestions, hasLength(1));
     expect(state.aiResult!.value!.suggestions.first.headword, 'ubiquitous');
   });
 
-  test('wraps a thrown AI exception into AsyncError instead of throwing', () async {
+  test('wraps a thrown AI exception into AsyncError instead of throwing',
+      () async {
     final container = await _makeContainer(
-      aiEnabled: true,
+      aiAvailable: true,
       vocabItems: [_record('serendipity')],
-      wordRadarSource: WordRadarSource.withModel(_ThrowingGenerativeModelClient()),
+      wordRadarSource:
+          WordRadarSource.withModel(_ThrowingGenerativeModelClient()),
     );
     addTearDown(container.dispose);
 
@@ -264,13 +287,16 @@ void main() {
 
   test('retrySuggestions is a no-op before any scan has run', () async {
     final container = await _makeContainer(
-      aiEnabled: true,
+      aiAvailable: true,
       vocabItems: const [],
-      wordRadarSource: WordRadarSource.withModel(_ThrowingGenerativeModelClient()),
+      wordRadarSource:
+          WordRadarSource.withModel(_ThrowingGenerativeModelClient()),
     );
     addTearDown(container.dispose);
 
-    await container.read(wordRadarNotifierProvider.notifier).retrySuggestions('text');
+    await container
+        .read(wordRadarNotifierProvider.notifier)
+        .retrySuggestions('text');
 
     final state = container.read(wordRadarNotifierProvider);
     expect(state.knownRecords, isNull);
@@ -279,7 +305,7 @@ void main() {
 
   test('retrySuggestions is a no-op when AI is disabled', () async {
     final container = await _makeContainer(
-      aiEnabled: false,
+      aiAvailable: false,
       vocabItems: [_record('serendipity')],
     );
     addTearDown(container.dispose);
@@ -295,13 +321,16 @@ void main() {
     expect(state.aiResult, isNull);
   });
 
-  test('retrySuggestions re-fetches suggestions without re-running the local pass', () async {
+  test(
+      'retrySuggestions re-fetches suggestions without re-running the local pass',
+      () async {
     final repo = _FakeVocabRepository([_record('serendipity')]);
     final container = await _makeContainer(
-      aiEnabled: true,
+      aiAvailable: true,
       vocabItems: const [],
       vocabRepository: repo,
-      wordRadarSource: WordRadarSource.withModel(_ThrowingGenerativeModelClient()),
+      wordRadarSource:
+          WordRadarSource.withModel(_ThrowingGenerativeModelClient()),
     );
     addTearDown(container.dispose);
 
@@ -309,13 +338,15 @@ void main() {
         .read(wordRadarNotifierProvider.notifier)
         .scan('It was pure serendipity.');
     expect(repo.getAllCallCount, 1);
-    expect(container.read(wordRadarNotifierProvider).aiResult!.hasError, isTrue);
+    expect(
+        container.read(wordRadarNotifierProvider).aiResult!.hasError, isTrue);
 
     await container
         .read(wordRadarNotifierProvider.notifier)
         .retrySuggestions('It was pure serendipity.');
 
     expect(repo.getAllCallCount, 1); // local pass not re-run
-    expect(container.read(wordRadarNotifierProvider).aiResult!.hasError, isTrue);
+    expect(
+        container.read(wordRadarNotifierProvider).aiResult!.hasError, isTrue);
   });
 }

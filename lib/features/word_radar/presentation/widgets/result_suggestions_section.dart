@@ -40,7 +40,7 @@ class _ResultSuggestionsSectionState
   }
 
   Future<void> _load() async {
-    if (!ref.read(userSettingsNotifierProvider).aiEnabled) return;
+    if (!ref.read(userSettingsNotifierProvider).aiAvailable) return;
     setState(() => _suggestions = const AsyncLoading());
     final result = await AsyncValue.guard(
       () => ref.read(getVocabSuggestionsForTextUseCaseProvider).execute(

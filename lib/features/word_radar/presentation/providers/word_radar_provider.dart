@@ -33,7 +33,7 @@ class WordRadarNotifier extends _$WordRadarNotifier {
         .read(findKnownHeadwordsUseCaseProvider)
         .execute(text: text, language: settings.targetLanguage);
 
-    if (!settings.aiEnabled) {
+    if (!settings.aiAvailable) {
       state = WordRadarState(knownRecords: knownRecords, aiResult: null);
       return;
     }
@@ -58,7 +58,7 @@ class WordRadarNotifier extends _$WordRadarNotifier {
     final current = state;
     if (current.knownRecords == null) return;
     final settings = ref.read(userSettingsNotifierProvider);
-    if (!settings.aiEnabled) return;
+    if (!settings.aiAvailable) return;
     state = current.copyWith(aiResult: const AsyncLoading());
     final headwords = current.knownRecords!.map((r) => r.headword).toList();
     final aiResult = await AsyncValue.guard(
