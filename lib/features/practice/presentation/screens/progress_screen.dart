@@ -1,13 +1,20 @@
-import 'dart:math' show max;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/theme/bloom/bloom.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
 import '../../domain/entities/exercise_result.dart';
+import '../../domain/entities/learning_stats.dart';
 import '../../../vocabulary/domain/entities/cefr_level.dart';
 import '../../../vocabulary/domain/entities/vocab_record.dart';
+
+String _dateKey(DateTime dt) =>
+    '${dt.year}-${dt.month.toString().padLeft(2, '0')}-'
+    '${dt.day.toString().padLeft(2, '0')}';
+
+String _weekdayLabel(DateTime d) =>
+    ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'][d.weekday - 1];
 
 class ProgressScreen extends ConsumerStatefulWidget {
   const ProgressScreen({super.key});
@@ -22,75 +29,195 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
   @override
   Widget build(BuildContext context) {
     final statsAsync = ref.watch(learningStatsProvider);
-    final theme = Theme.of(context);
 
     return statsAsync.when(
-      loading: () => const Scaffold(
+      loading: () => const BloomScaffold(
         body: Center(child: CircularProgressIndicator()),
       ),
-      error: (e, _) => Scaffold(
-        appBar: AppBar(title: const Text('Tiến độ học')),
-        body: const Center(child: Text('Không tải được dữ liệu tiến độ.')),
+      error: (e, _) => BloomScaffold(
+        appBar: BloomAppBar(
+          title: 'Tiến độ học',
+          leading: BloomIconButton(
+            icon: Icons.arrow_back_ios_new,
+            onPressed: () => context.go('/practice'),
+          ),
+        ),
+        body: Center(
+          child: Text(
+            'Không tải được dữ liệu tiến độ.',
+            style: TextStyle(color: context.bloom.inkSoft),
+          ),
+        ),
       ),
-      data: (stats) {
-        return Scaffold(
-          appBar: AppBar(title: const Text('Tiến độ học')),
-          body: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              _StreakBanner(streak: stats.currentStreak),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: _StatCard(
-                      label: 'Hôm nay',
-                      value: '${stats.dueCount}',
-                      icon: Icons.today_outlined,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _StatCard(
-                      label: 'Đã thuộc',
-                      value: '${stats.masteredCount}',
-                      icon: Icons.military_tech_outlined,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (stats.dueCount > 0) ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed:
-                        _loading ? null : () => _startDueSession(context),
-                    icon: _loading
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Icon(Icons.play_arrow),
-                    label: Text(_loading
-                        ? 'Đang tải...'
-                        : 'Ôn ${stats.dueCount} từ ngay'),
+      data: (stats) => _buildDashboard(context, stats),
+    );
+  }
+
+  Widget _buildDashboard(BuildContext context, LearningStats stats) {
+    final c = context.bloom;
+    final streak = stats.currentStreak;
+    final today = DateTime.now();
+    final last7Days =
+        List.generate(7, (i) => today.subtract(Duration(days: 6 - i)));
+
+    return BloomScaffold(
+      appBar: BloomAppBar(
+        title: 'Tiến độ học',
+        leading: BloomIconButton(
+          icon: Icons.arrow_back_ios_new,
+          onPressed: () => context.go('/practice'),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // Streak banner
+          BloomCard(
+            child: Row(
+              children: [
+                Text(
+                  streak > 0 ? '🔥' : '❄️',
+                  style: const TextStyle(fontSize: 34),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (streak > 0)
+                        Text(
+                          '$streak',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                            color: c.ink,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      Text(
+                        streak > 0 ? 'ngày liên tiếp' : 'Chưa có streak',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: c.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        streak > 0
+                            ? 'Tiếp tục giữ streak nhé!'
+                            : 'Bắt đầu hôm nay nhé!',
+                        style: TextStyle(fontSize: 13, color: c.inkSoft),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 24),
               ],
-              Text('7 ngày qua', style: theme.textTheme.titleMedium),
-              const SizedBox(height: 8),
-              _WeeklyChart(weeklyLog: stats.weeklyLog),
-              const SizedBox(height: 24),
-              Text('Theo cấp độ', style: theme.textTheme.titleMedium),
-              const SizedBox(height: 8),
-              _CefrBreakdown(
-                  breakdown: stats.cefrBreakdown, total: stats.totalCount),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Stat grid
+          Row(
+            children: [
+              Expanded(
+                child: BloomStatCard(
+                  label: 'Hôm nay',
+                  value: '${stats.dueCount}',
+                ),
+              ),
+              const SizedBox(width: BloomSpacing.md),
+              Expanded(
+                child: BloomStatCard(
+                  label: 'Đã thuộc',
+                  value: '${stats.masteredCount}',
+                ),
+              ),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 12),
+          if (stats.dueCount > 0) ...[
+            BloomPillButton(
+              label: 'Ôn ${stats.dueCount} từ ngay',
+              icon: Icons.play_arrow,
+              variant: BloomButtonVariant.primary,
+              block: true,
+              onPressed: _loading ? null : () => _startDueSession(context),
+            ),
+            const SizedBox(height: 24),
+          ],
+          // Weekly activity chart
+          BloomCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const BloomSectionHeader('7 ngày qua'),
+                const SizedBox(height: BloomSpacing.sm),
+                BloomBarChart(
+                  bars: [
+                    for (final d in last7Days)
+                      BloomBarChartBar(
+                        label: _weekdayLabel(d),
+                        value: stats.weeklyLog[_dateKey(d)] ?? 0,
+                        highlight: _dateKey(d) == _dateKey(today),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // CEFR breakdown
+          BloomCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const BloomSectionHeader('Theo cấp độ'),
+                for (final level in CEFRLevel.values)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 32,
+                          child: Text(
+                            level.name.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: c.inkSoft,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: BloomSpacing.md),
+                        Expanded(
+                          child: BloomProgressBar(
+                            value: stats.totalCount == 0
+                                ? 0.0
+                                : (stats.cefrBreakdown[level] ?? 0) /
+                                    stats.totalCount,
+                            height: 8,
+                          ),
+                        ),
+                        const SizedBox(width: BloomSpacing.md),
+                        SizedBox(
+                          width: 32,
+                          child: Text(
+                            '${stats.cefrBreakdown[level] ?? 0}',
+                            textAlign: TextAlign.end,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: c.inkSoft,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -115,203 +242,5 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-}
-
-class _StreakBanner extends StatelessWidget {
-  const _StreakBanner({required this.streak});
-  final int streak;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      color: streak > 0 ? theme.colorScheme.primaryContainer : null,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Text(
-              streak > 0 ? '🔥' : '❄️',
-              style: const TextStyle(fontSize: 32),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    streak > 0
-                        ? '$streak ngày liên tiếp'
-                        : 'Chưa có streak',
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    streak > 0
-                        ? 'Tiếp tục giữ streak nhé!'
-                        : 'Bắt đầu hôm nay nhé!',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  const _StatCard(
-      {required this.label, required this.value, required this.icon});
-  final String label;
-  final String value;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Icon(icon, color: theme.colorScheme.primary),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: theme.textTheme.headlineMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            Text(label, style: theme.textTheme.bodySmall),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _WeeklyChart extends StatelessWidget {
-  const _WeeklyChart({required this.weeklyLog});
-  final Map<String, int> weeklyLog;
-
-  String _dateKey(DateTime dt) =>
-      '${dt.year}-${dt.month.toString().padLeft(2, '0')}-'
-      '${dt.day.toString().padLeft(2, '0')}';
-
-  @override
-  Widget build(BuildContext context) {
-    final today = DateTime.now();
-    final days = List.generate(7, (i) => today.subtract(Duration(days: 6 - i)));
-    final counts = days.map((d) => weeklyLog[_dateKey(d)] ?? 0).toList();
-    final labels = days
-        .map((d) => ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'][d.weekday - 1])
-        .toList();
-    final color = Theme.of(context).colorScheme.primary;
-    final labelColor = Theme.of(context).colorScheme.onSurfaceVariant;
-
-    return SizedBox(
-      height: 80,
-      child: CustomPaint(
-        painter: _WeeklyChartPainter(
-            counts: counts, labels: labels, color: color, labelColor: labelColor),
-        child: const SizedBox.expand(),
-      ),
-    );
-  }
-}
-
-class _WeeklyChartPainter extends CustomPainter {
-  _WeeklyChartPainter(
-      {required this.counts,
-      required this.labels,
-      required this.color,
-      required this.labelColor});
-  final List<int> counts;
-  final List<String> labels;
-  final Color color;
-  final Color labelColor;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final maxCount = counts.isEmpty ? 0 : counts.reduce(max);
-    final barWidth = size.width / counts.length;
-    const minBarHeight = 4.0;
-    const labelHeight = 20.0;
-    final chartHeight = size.height - labelHeight;
-
-    final barPaint = Paint()..color = color;
-    final textStyle = TextStyle(fontSize: 10, color: labelColor);
-
-    for (int i = 0; i < counts.length; i++) {
-      final barHeight = maxCount == 0
-          ? minBarHeight
-          : (counts[i] / maxCount * (chartHeight - minBarHeight)) +
-              minBarHeight;
-      final x = i * barWidth;
-      final y = chartHeight - barHeight;
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(x + 4, y, barWidth - 8, barHeight),
-          const Radius.circular(4),
-        ),
-        barPaint,
-      );
-      final tp = TextPainter(
-        text: TextSpan(text: labels[i], style: textStyle),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      tp.paint(canvas,
-          Offset(x + (barWidth - tp.width) / 2, chartHeight + 4));
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _WeeklyChartPainter old) =>
-      !listEquals(old.counts, counts) ||
-      !listEquals(old.labels, labels) ||
-      old.color != color ||
-      old.labelColor != labelColor;
-}
-
-class _CefrBreakdown extends StatelessWidget {
-  const _CefrBreakdown({required this.breakdown, required this.total});
-  final Map<CEFRLevel, int> breakdown;
-  final int total;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      children: CEFRLevel.values.map((level) {
-        final count = breakdown[level] ?? 0;
-        final fraction = total == 0 ? 0.0 : count / total;
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 28,
-                child: Text(level.label,
-                    style: theme.textTheme.labelMedium),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: LinearProgressIndicator(value: fraction),
-              ),
-              const SizedBox(width: 8),
-              SizedBox(
-                width: 24,
-                child: Text('$count',
-                    style: theme.textTheme.bodySmall,
-                    textAlign: TextAlign.end),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
   }
 }
