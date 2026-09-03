@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
+import 'package:lexi_core/core/theme/bloom/bloom.dart';
 import 'package:lexi_core/core/services/stats_service.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
@@ -39,9 +40,18 @@ final _testPassage = ListeningPassage(
     ListeningTurn(speaker: 'B', text: 'I am looking for a jacket.'),
   ],
   questions: const [
-    ListeningQuestion(question: 'Where are they?', options: ['Store', 'Airport', 'Home', 'School'], correctIndex: 0),
-    ListeningQuestion(question: 'What do they want?', options: ['Shoes', 'A jacket', 'A book', 'A ticket'], correctIndex: 1),
-    ListeningQuestion(question: 'Who is speaking first?', options: ['A', 'B', 'Both', 'Neither'], correctIndex: 0),
+    ListeningQuestion(
+        question: 'Where are they?',
+        options: ['Store', 'Airport', 'Home', 'School'],
+        correctIndex: 0),
+    ListeningQuestion(
+        question: 'What do they want?',
+        options: ['Shoes', 'A jacket', 'A book', 'A ticket'],
+        correctIndex: 1),
+    ListeningQuestion(
+        question: 'Who is speaking first?',
+        options: ['A', 'B', 'Both', 'Neither'],
+        correctIndex: 0),
   ],
   level: CEFRLevel.b1,
   context: AppContext.general,
@@ -66,7 +76,8 @@ Future<Widget> _buildResult({List<Override> extraOverrides = const []}) async {
       ),
       GoRoute(
         path: '/listening/comprehension',
-        builder: (ctx, state) => const Scaffold(body: Text('Comprehension home')),
+        builder: (ctx, state) =>
+            const Scaffold(body: Text('Comprehension home')),
       ),
     ],
   );
@@ -74,7 +85,8 @@ Future<Widget> _buildResult({List<Override> extraOverrides = const []}) async {
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       userSettingsNotifierProvider.overrideWith(
-        () => _FakeSettingsNotifier(UserSettingsState.defaults.copyWith(aiEnabled: true)),
+        () => _FakeSettingsNotifier(
+            UserSettingsState.defaults.copyWith(aiEnabled: true)),
       ),
       ...extraOverrides,
     ],
@@ -94,7 +106,8 @@ void main() {
     expect(find.text('2/3'), findsOneWidget);
   });
 
-  testWidgets('shows all 3 question texts and the transcript turns', (tester) async {
+  testWidgets('shows all 3 question texts and the transcript turns',
+      (tester) async {
     await tester.pumpWidget(await _buildResult());
     await tester.pumpAndSettle();
     expect(find.textContaining('Where are they?'), findsOneWidget);
@@ -104,11 +117,19 @@ void main() {
     expect(find.textContaining('I am looking for a jacket.'), findsOneWidget);
   });
 
-  testWidgets('shows correct/incorrect icons matching correctCount', (tester) async {
+  testWidgets('shows correct/incorrect icons matching correctCount',
+      (tester) async {
     await tester.pumpWidget(await _buildResult());
     await tester.pumpAndSettle();
     expect(find.byIcon(Icons.check_circle), findsNWidgets(2));
     expect(find.byIcon(Icons.cancel), findsNWidgets(1));
+  });
+
+  testWidgets('renders the option breakdown as read-only BloomMcOption tiles',
+      (tester) async {
+    await tester.pumpWidget(await _buildResult());
+    await tester.pumpAndSettle();
+    expect(find.byType(BloomMcOption), findsWidgets);
   });
 
   testWidgets('shows Bài khác and Về trang chính buttons', (tester) async {
@@ -118,7 +139,8 @@ void main() {
     expect(find.text('Về trang chính'), findsOneWidget);
   });
 
-  testWidgets('records a practice session (for the streak) with the question count',
+  testWidgets(
+      'records a practice session (for the streak) with the question count',
       (tester) async {
     final mockStats = MockStatsService();
     when(() => mockStats.recordPracticeSession(any())).thenAnswer((_) async {});
@@ -156,7 +178,8 @@ void main() {
 
     await tester.pumpWidget(await _buildResult(
       extraOverrides: [
-        getVocabSuggestionsForTextUseCaseProvider.overrideWithValue(mockSuggestions),
+        getVocabSuggestionsForTextUseCaseProvider
+            .overrideWithValue(mockSuggestions),
       ],
     ));
     await tester.pumpAndSettle();
@@ -171,15 +194,18 @@ void main() {
     expect(find.text('ubiquitous'), findsOneWidget);
   });
 
-  testWidgets('does not load suggestions when AI is disabled in settings', (tester) async {
+  testWidgets('does not load suggestions when AI is disabled in settings',
+      (tester) async {
     final mockSuggestions = MockGetVocabSuggestionsForTextUseCase();
 
     await tester.pumpWidget(await _buildResult(
       extraOverrides: [
         userSettingsNotifierProvider.overrideWith(
-          () => _FakeSettingsNotifier(UserSettingsState.defaults.copyWith(aiEnabled: false)),
+          () => _FakeSettingsNotifier(
+              UserSettingsState.defaults.copyWith(aiEnabled: false)),
         ),
-        getVocabSuggestionsForTextUseCaseProvider.overrideWithValue(mockSuggestions),
+        getVocabSuggestionsForTextUseCaseProvider
+            .overrideWithValue(mockSuggestions),
       ],
     ));
     await tester.pumpAndSettle();
