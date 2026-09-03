@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_generative_ai/google_generative_ai.dart' hide Language;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
+import 'package:lexi_core/core/theme/bloom/bloom.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
@@ -23,7 +24,8 @@ class _FakeGenerativeModelClient implements GenerativeModelClient {
   final String _responseText;
 
   @override
-  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) async {
+  Future<GenerateContentResponse> generateContent(
+      Iterable<Content> prompt) async {
     return GenerateContentResponse(
       [Candidate(Content.text(_responseText), null, null, null, null)],
       null,
@@ -72,7 +74,8 @@ class _FakeVocabRepository implements VocabRepository {
       records;
 
   @override
-  Future<VocabRecord?> getById(String id, {required Language language}) async => null;
+  Future<VocabRecord?> getById(String id, {required Language language}) async =>
+      null;
 
   @override
   Future<void> save(VocabRecord record) async {}
@@ -84,7 +87,8 @@ class _FakeVocabRepository implements VocabRepository {
   Future<void> delete(String id, {required Language language}) async {}
 
   @override
-  Future<bool> existsByHeadword(String headword, Language language) async => false;
+  Future<bool> existsByHeadword(String headword, Language language) async =>
+      false;
 
   @override
   Future<VocabRecord?> getByHeadword(String headword, Language language) async {
@@ -135,7 +139,8 @@ Future<Widget> _buildScreen({
           UserSettingsState.defaults.copyWith(aiEnabled: aiEnabled),
         ),
       ),
-      vocabRepositoryProvider.overrideWithValue(_FakeVocabRepository(vocabItems)),
+      vocabRepositoryProvider
+          .overrideWithValue(_FakeVocabRepository(vocabItems)),
       if (source != null) wordRadarSourceProvider.overrideWithValue(source),
     ],
     child: MaterialApp.router(routerConfig: router),
@@ -145,12 +150,15 @@ Future<Widget> _buildScreen({
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  testWidgets('shows the AI-disabled note after scanning with AI off', (tester) async {
+  testWidgets('shows the AI-disabled note after scanning with AI off',
+      (tester) async {
     await tester.pumpWidget(await _buildScreen(
       aiEnabled: false,
       vocabItems: [_record('serendipity')],
     ));
     await tester.pumpAndSettle();
+
+    expect(find.byType(BloomAppBar), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), 'It was pure serendipity.');
     await tester.pump();
@@ -309,16 +317,20 @@ void main() {
     expect(find.text('Không có gợi ý mới.'), findsOneWidget);
   });
 
-  testWidgets('the Quét button is disabled while the input is empty', (tester) async {
-    await tester.pumpWidget(await _buildScreen(aiEnabled: false, vocabItems: const []));
+  testWidgets('the Quét button is disabled while the input is empty',
+      (tester) async {
+    await tester
+        .pumpWidget(await _buildScreen(aiEnabled: false, vocabItems: const []));
     await tester.pumpAndSettle();
 
-    final button =
-        tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Quét'));
+    final button = tester.widget<BloomPillButton>(
+      find.widgetWithText(BloomPillButton, 'Quét'),
+    );
     expect(button.onPressed, isNull);
   });
 
-  testWidgets('shows a CEFR level chip on a suggestion when the AI provides one',
+  testWidgets(
+      'shows a CEFR level chip on a suggestion when the AI provides one',
       (tester) async {
     final source = WordRadarSource.withModel(
       _FakeGenerativeModelClient(jsonEncode({
@@ -349,7 +361,8 @@ void main() {
     expect(find.text('C1'), findsOneWidget);
   });
 
-  testWidgets('shows the AI translation with the known word\'s meaning highlighted',
+  testWidgets(
+      'shows the AI translation with the known word\'s meaning highlighted',
       (tester) async {
     final source = WordRadarSource.withModel(
       _FakeGenerativeModelClient(jsonEncode({
@@ -373,7 +386,8 @@ void main() {
     expect(find.textContaining('Con mèo ngồi trên tấm thảm.'), findsOneWidget);
   });
 
-  testWidgets('does not show a translation section when the AI returns an empty translation',
+  testWidgets(
+      'does not show a translation section when the AI returns an empty translation',
       (tester) async {
     final source = WordRadarSource.withModel(
       _FakeGenerativeModelClient(jsonEncode({

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show LengthLimitingTextInputFormatter;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexi_core/core/theme/app_theme.dart';
 import 'package:lexi_core/core/theme/bloom/bloom_text_field.dart';
@@ -48,6 +49,27 @@ void main() {
     expect(field.keyboardType, TextInputType.emailAddress);
     expect(field.textInputAction, TextInputAction.search);
     expect(field.readOnly, isTrue);
+  });
+
+  testWidgets('forwards inputFormatters (a length limit truncates input)',
+      (tester) async {
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light,
+      home: Scaffold(
+        body: BloomTextField(
+          controller: controller,
+          hintText: 'x',
+          inputFormatters: [LengthLimitingTextInputFormatter(5)],
+        ),
+      ),
+    ));
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.inputFormatters, isNotNull);
+
+    await tester.enterText(find.byType(TextField), 'abcdefghij');
+    expect(controller.text, 'abcde');
   });
 
   testWidgets('renders a prefix icon and a suffix widget', (tester) async {

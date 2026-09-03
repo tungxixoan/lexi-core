@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show TextInputFormatter;
 import '../bloom_tokens.dart';
 
 /// A `TextField` wrapped in Bloom styling: `surface2` ground, pill border
@@ -20,6 +21,7 @@ class BloomTextField extends StatelessWidget {
     this.autofocus = false,
     this.keyboardType,
     this.textInputAction,
+    this.inputFormatters,
     this.prefixIcon,
     this.suffix,
   });
@@ -38,6 +40,7 @@ class BloomTextField extends StatelessWidget {
   final bool autofocus;
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
+  final List<TextInputFormatter>? inputFormatters;
   final IconData? prefixIcon;
   final Widget? suffix;
 
@@ -63,6 +66,7 @@ class BloomTextField extends StatelessWidget {
       autofocus: autofocus,
       keyboardType: keyboardType,
       textInputAction: textInputAction,
+      inputFormatters: inputFormatters,
       style: TextStyle(color: c.ink, fontSize: 16),
       decoration: InputDecoration(
         hintText: hintText,
