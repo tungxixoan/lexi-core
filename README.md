@@ -58,6 +58,8 @@ Hub với 4 tính năng con (truy cập qua tab "Luyện tập" → card "Luyệ
   - Cùng cơ chế Economy TOEIC Vol 2–5, trả lời hết rồi nộp bài, kết quả X/N (N tính động theo số câu thực tế) kèm giải thích từng câu và gợi ý từ mới
   - Không ảnh hưởng SM-2
 
+**Lưu / dùng lại bài AI** (cả 4 loại Luyện đọc + 2 loại Luyện nghe): màn hình kết quả có nút **"Lưu bài"**, màn hình chọn bài có nút **"Lấy bài có sẵn"** — bốc ngẫu nhiên một bài đã lưu khớp bộ lọc hiện tại (chủ đề / cấp độ / số từ / Economy Vol / độ khó) thay vì gọi AI tạo bài mới. Bài đã lưu nằm ở Firestore `users/{uid}/reading_exercises` + `users/{uid}/listening_exercises`, **dùng chung shape với web** nên một bài lưu trên nền tảng này mở được ở nền tảng kia. Với Đọc & gõ, các từ chưa từng dùng trong bài đã lưu được ưu tiên khi tạo bài mới (`prioritizeUnusedWords`) để bài không lặp từ.
+
 ### Luyện nghe (Listening Practice)
 Hub với 2 tính năng con (truy cập qua tab "Luyện tập" → card "Luyện nghe"), dùng chung `TtsService`, giờ phát qua Cloud Function Piper tự host (giống web) thay vì flutter_tts on-device — chỉ hỗ trợ Tiếng Việt và English (Piper chưa có giọng cho Trung/Hàn/Nhật):
 
@@ -498,6 +500,22 @@ users/
       user/
         targetLanguage: string
         targetCefrLevel: string | null
+    reading_exercises/          # bài AI đã lưu — dùng chung với web
+      {id}/
+        type: string           # bilingual | part5 | part6 | part7
+        passage: map            # JSON của ReadingPassage / Part5Set / Part6Set / Part7Set
+        generationFilters: map  # {topicIds, maxCefr, wordCount} hoặc {topicIds, volumes}
+        targetLanguage: string
+        createdAt: string       # ISO-8601 UTC
+        id: string
+    listening_exercises/        # bài AI đã lưu — dùng chung với web
+      {id}/
+        type: string           # dictation | comprehension
+        item: map               # JSON của DictationItem / ListeningPassage
+        generationFilters: map  # {difficulty} hoặc {context, level}
+        targetLanguage: string
+        createdAt: string       # ISO-8601 UTC
+        id: string
 ```
 
 ---
@@ -507,6 +525,7 @@ users/
 - [x] Nghe chép (listening dictation)
 - [x] Nghe hiểu (TOEIC-style listening comprehension)
 - [x] **Word Radar** — dán văn bản bất kỳ, tự động highlight từ đã học (Vocab Bank), gợi ý từ mới đáng học, và dịch nghĩa cả đoạn văn
+- [x] **Lưu / dùng lại bài AI** — lưu bài đã tạo và bốc lại bài đã lưu khớp bộ lọc (cả 6 loại bài AI), dùng chung Firestore với web
 
 **Ý tưởng khác đã brainstorm (chưa xếp lịch):**
 
