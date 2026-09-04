@@ -23,8 +23,29 @@ void main() {
     });
 
     test('holds a declared gender', () {
-      const turn = ListeningTurn(speaker: 'A', gender: 'female', text: 'Hello there.');
+      const turn =
+          ListeningTurn(speaker: 'A', gender: 'female', text: 'Hello there.');
       expect(turn.gender, 'female');
+    });
+
+    test('toJson / fromJson round-trips (speaker + text match web)', () {
+      const turn =
+          ListeningTurn(speaker: 'A', gender: 'female', text: 'Hello there.');
+      final json = turn.toJson();
+      expect(
+          json, {'speaker': 'A', 'gender': 'female', 'text': 'Hello there.'});
+      final decoded = ListeningTurn.fromJson(json);
+      expect(decoded.speaker, 'A');
+      expect(decoded.gender, 'female');
+      expect(decoded.text, 'Hello there.');
+    });
+
+    test('fromJson tolerates a web turn with no gender key', () {
+      final decoded =
+          ListeningTurn.fromJson({'speaker': null, 'text': 'Attention.'});
+      expect(decoded.speaker, isNull);
+      expect(decoded.gender, isNull);
+      expect(decoded.text, 'Attention.');
     });
   });
 
@@ -51,7 +72,12 @@ void main() {
       questions: const [
         ListeningQuestion(
           question: 'Where does this conversation take place?',
-          options: ['A restaurant', 'A clothing store', 'An airport', 'A hospital'],
+          options: [
+            'A restaurant',
+            'A clothing store',
+            'An airport',
+            'A hospital'
+          ],
           correctIndex: 1,
         ),
         ListeningQuestion(
@@ -61,7 +87,12 @@ void main() {
         ),
         ListeningQuestion(
           question: 'What is implied about the customer?',
-          options: ['They are in a hurry', 'They are shopping', 'They are lost', 'They are complaining'],
+          options: [
+            'They are in a hurry',
+            'They are shopping',
+            'They are lost',
+            'They are complaining'
+          ],
           correctIndex: 1,
         ),
       ],
@@ -89,6 +120,51 @@ void main() {
     test('speakerGenders defaults to empty when not provided', () {
       expect(passage.speakerGenders, isEmpty);
     });
+
+    test('toJson / fromJson round-trips including speakerGenders', () {
+      final original = ListeningPassage(
+        id: 'p1',
+        kind: ListeningKind.conversation,
+        turns: const [
+          ListeningTurn(speaker: 'A', gender: 'male', text: 'Hi.'),
+          ListeningTurn(speaker: 'B', gender: 'female', text: 'Hello.'),
+        ],
+        questions: const [
+          ListeningQuestion(
+            question: 'Where?',
+            options: ['a', 'b', 'c', 'd'],
+            correctIndex: 1,
+          ),
+        ],
+        speakerGenders: const {'A': 'male', 'B': 'female'},
+        level: CEFRLevel.b2,
+        context: AppContext.travel,
+        targetLanguage: Language.english,
+        generatedAt: DateTime(2026, 7, 19),
+      );
+      final json = original.toJson();
+      expect(json['kind'], 'conversation');
+      expect(json['speakerGenders'], {'A': 'male', 'B': 'female'});
+      expect(json['level'], 'b2');
+      expect(json['context'], 'travel');
+
+      final restored = ListeningPassage.fromJson(json);
+      expect(restored.id, 'p1');
+      expect(restored.kind, ListeningKind.conversation);
+      expect(restored.turns.length, 2);
+      expect(restored.turns[0].text, 'Hi.');
+      expect(restored.questions.single.correctIndex, 1);
+      expect(restored.speakerGenders, {'A': 'male', 'B': 'female'});
+      expect(restored.level, CEFRLevel.b2);
+      expect(restored.context, AppContext.travel);
+      expect(restored.targetLanguage, Language.english);
+      expect(restored.generatedAt, DateTime(2026, 7, 19));
+
+      // speakerGenders survives the round-trip, so assignVoices still gives
+      // two distinct-gender voices rather than collapsing to female/female.
+      expect(assignVoices(restored)['A'], 'male1');
+      expect(assignVoices(restored)['B'], 'female1');
+    });
   });
 
   group('speakerKey', () {
@@ -102,7 +178,8 @@ void main() {
   });
 
   group('assignVoices', () {
-    ListeningPassage passageWith(List<ListeningTurn> turns, Map<String, String> genders) =>
+    ListeningPassage passageWith(
+            List<ListeningTurn> turns, Map<String, String> genders) =>
         ListeningPassage(
           id: 'p',
           kind: ListeningKind.conversation,

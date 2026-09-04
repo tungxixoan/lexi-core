@@ -28,6 +28,20 @@ void main() {
       expect(question.correctIndex, 3);
       expect(question.explanation, isNotEmpty);
     });
+
+    test('toJson / fromJson round-trips (keys match web Part6Question)', () {
+      const question = Part6Question(
+        options: ['increase', 'increased', 'increasing', 'will increase'],
+        correctIndex: 3,
+        explanation: 'Cần thì tương lai.',
+      );
+      final json = question.toJson();
+      expect(json.keys.toSet(), {'options', 'correctIndex', 'explanation'});
+      final decoded = Part6Question.fromJson(json);
+      expect(decoded.options, question.options);
+      expect(decoded.correctIndex, 3);
+      expect(decoded.explanation, question.explanation);
+    });
   });
 
   group('Part6Passage', () {
@@ -41,6 +55,17 @@ void main() {
       expect(text, contains('(2)___'));
       expect(text, contains('(3)___'));
       expect(text, contains('(4)___'));
+    });
+
+    test('toJson / fromJson round-trips (keys match web Part6Passage)', () {
+      final passage = _passage(2);
+      final json = passage.toJson();
+      expect(json.keys.toSet(), {'passageText', 'questions'});
+      final decoded = Part6Passage.fromJson(json);
+      expect(decoded.passageText, passage.passageText);
+      expect(decoded.questions.length, 4);
+      expect(
+          decoded.questions[1].explanation, passage.questions[1].explanation);
     });
   });
 
@@ -62,6 +87,21 @@ void main() {
       expect(set.volumes, {EconomyVolume.vol4});
       expect(set.context, AppContext.business);
       expect(set.targetLanguage, Language.english);
+    });
+
+    test('toJson / fromJson round-trips', () {
+      final json = set.toJson();
+      expect(json['passages'], hasLength(3));
+      expect((json['volumes'] as List).toSet(), {'vol4'});
+
+      final decoded = Part6Set.fromJson(json);
+      expect(decoded.id, set.id);
+      expect(decoded.passages.length, 3);
+      expect(decoded.passages[0].questions.length, 4);
+      expect(decoded.volumes, {EconomyVolume.vol4});
+      expect(decoded.context, AppContext.business);
+      expect(decoded.targetLanguage, Language.english);
+      expect(decoded.generatedAt, set.generatedAt);
     });
   });
 }

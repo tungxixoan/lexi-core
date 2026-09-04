@@ -22,4 +22,38 @@ final class DictationItem {
   final AppContext context;
   final Language targetLanguage;
   final DateTime generatedAt;
+
+  /// `target` / `vietnamese` / `vocabIds` match apps/web/src/lib/dictation.ts's
+  /// `DictationItem`. The web persists the remaining fields on the wrapping
+  /// saved-exercise document, not on the item sub-object — serialized here
+  /// too so the Flutter entity round-trips on its own.
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'target': target,
+        'vietnamese': vietnamese,
+        'vocabIds': vocabIds,
+        'level': level.name,
+        'context': context.name,
+        'targetLanguage': targetLanguage.name,
+        'generatedAt': generatedAt.toIso8601String(),
+      };
+
+  factory DictationItem.fromJson(Map<String, dynamic> json) => DictationItem(
+        id: json['id'] as String? ?? '',
+        target: json['target'] as String? ?? '',
+        vietnamese: json['vietnamese'] as String? ?? '',
+        vocabIds: List<String>.from(json['vocabIds'] as List? ?? const []),
+        level: json['level'] != null
+            ? CEFRLevel.values.byName(json['level'] as String)
+            : CEFRLevel.a1,
+        context: json['context'] != null
+            ? AppContext.values.byName(json['context'] as String)
+            : AppContext.general,
+        targetLanguage: json['targetLanguage'] != null
+            ? Language.values.byName(json['targetLanguage'] as String)
+            : Language.english,
+        generatedAt: json['generatedAt'] != null
+            ? DateTime.parse(json['generatedAt'] as String)
+            : DateTime.fromMillisecondsSinceEpoch(0),
+      );
 }

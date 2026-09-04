@@ -35,13 +35,35 @@ void main() {
     test('holds question, 4 options, correct index, and explanation', () {
       const question = Part7Question(
         question: 'What is the main purpose of this notice?',
-        options: ['To announce a delay', 'To request feedback', 'To advertise a sale', 'To confirm a booking'],
+        options: [
+          'To announce a delay',
+          'To request feedback',
+          'To advertise a sale',
+          'To confirm a booking'
+        ],
         correctIndex: 0,
         explanation: 'Thông báo nói rõ về việc trì hoãn.',
       );
       expect(question.options.length, 4);
       expect(question.correctIndex, 0);
       expect(question.explanation, isNotEmpty);
+    });
+
+    test('toJson / fromJson round-trips (keys match web Part7Question)', () {
+      const question = Part7Question(
+        question: 'What is the main purpose of this notice?',
+        options: ['a', 'b', 'c', 'd'],
+        correctIndex: 0,
+        explanation: 'Thông báo nói rõ về việc trì hoãn.',
+      );
+      final json = question.toJson();
+      expect(json.keys.toSet(),
+          {'question', 'options', 'correctIndex', 'explanation'});
+      final decoded = Part7Question.fromJson(json);
+      expect(decoded.question, question.question);
+      expect(decoded.options, question.options);
+      expect(decoded.correctIndex, 0);
+      expect(decoded.explanation, question.explanation);
     });
   });
 
@@ -58,6 +80,17 @@ void main() {
       expect(_singleGroup(0, 3).questions.length, 3);
       expect(_singleGroup(1, 4).questions.length, 4);
       expect(_doubleGroup().questions.length, 5);
+    });
+
+    test('toJson / fromJson round-trips (keys match web Part7PassageGroup)',
+        () {
+      final group = _doubleGroup();
+      final json = group.toJson();
+      expect(json.keys.toSet(), {'documents', 'questions'});
+      final decoded = Part7PassageGroup.fromJson(json);
+      expect(decoded.documents, ['Document A', 'Document B']);
+      expect(decoded.questions.length, 5);
+      expect(decoded.questions[2].question, group.questions[2].question);
     });
   });
 
@@ -79,6 +112,22 @@ void main() {
       expect(set.volumes, {EconomyVolume.vol4});
       expect(set.context, AppContext.business);
       expect(set.targetLanguage, Language.english);
+    });
+
+    test('toJson / fromJson round-trips', () {
+      final json = set.toJson();
+      expect(json['passageGroups'], hasLength(3));
+
+      final decoded = Part7Set.fromJson(json);
+      expect(decoded.id, set.id);
+      expect(decoded.passageGroups.length, 3);
+      expect(decoded.passageGroups[0].documents.length, 1);
+      expect(decoded.passageGroups[2].documents.length, 2);
+      expect(decoded.passageGroups[2].questions.length, 5);
+      expect(decoded.volumes, {EconomyVolume.vol4});
+      expect(decoded.context, AppContext.business);
+      expect(decoded.targetLanguage, Language.english);
+      expect(decoded.generatedAt, set.generatedAt);
     });
   });
 }

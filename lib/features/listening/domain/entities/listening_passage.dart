@@ -10,6 +10,22 @@ final class ListeningTurn {
   final String? speaker; // 'A' or 'B' for a conversation; null for a talk
   final String? gender; // 'male' or 'female'; null if the AI omitted it
   final String text;
+
+  /// `speaker` / `text` match apps/web/src/lib/listeningPassage.ts's
+  /// `ListeningTurn`. Web keeps per-speaker gender only in the passage-level
+  /// `speakerGenders` map; Flutter also keeps it per turn, so `gender` is
+  /// serialized here as an extra key (web ignores it) to round-trip cleanly.
+  Map<String, dynamic> toJson() => {
+        'speaker': speaker,
+        'gender': gender,
+        'text': text,
+      };
+
+  factory ListeningTurn.fromJson(Map<String, dynamic> json) => ListeningTurn(
+        speaker: json['speaker'] as String?,
+        gender: json['gender'] as String?,
+        text: json['text'] as String? ?? '',
+      );
 }
 
 final class ListeningQuestion {
@@ -22,6 +38,20 @@ final class ListeningQuestion {
   final String question;
   final List<String> options; // always 4 items
   final int correctIndex; // 0-3
+
+  /// Keys match apps/web/src/lib/listeningPassage.ts's `ListeningQuestion`.
+  Map<String, dynamic> toJson() => {
+        'question': question,
+        'options': options,
+        'correctIndex': correctIndex,
+      };
+
+  factory ListeningQuestion.fromJson(Map<String, dynamic> json) =>
+      ListeningQuestion(
+        question: json['question'] as String? ?? '',
+        options: List<String>.from(json['options'] as List? ?? const []),
+        correctIndex: json['correctIndex'] as int? ?? 0,
+      );
 }
 
 final class ListeningPassage {
@@ -50,6 +80,55 @@ final class ListeningPassage {
   /// 'male' or 'female'. Derived once at parse time from each speaker's
   /// first-seen turn (see `ListeningPassageSource._parse`).
   final Map<String, String> speakerGenders;
+
+  /// `kind` / `turns` / `questions` / `speakerGenders` match the persisted
+  /// `ComprehensionItem` shape in apps/web/src/lib/savedListeningExercises.ts
+  /// (`speakerGenders` is web's `Partial<Record<Speaker, SpeakerGender>>` —
+  /// a `{speakerKey: "male"|"female"}` map). The web persists
+  /// `level` / `context` / `targetLanguage` on the wrapping saved-exercise
+  /// document, not on the item sub-object — serialized here too so the
+  /// Flutter entity round-trips on its own.
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'kind': kind.name,
+        'turns': turns.map((t) => t.toJson()).toList(),
+        'questions': questions.map((q) => q.toJson()).toList(),
+        'speakerGenders': speakerGenders,
+        'level': level.name,
+        'context': context.name,
+        'targetLanguage': targetLanguage.name,
+        'generatedAt': generatedAt.toIso8601String(),
+      };
+
+  factory ListeningPassage.fromJson(Map<String, dynamic> json) =>
+      ListeningPassage(
+        id: json['id'] as String? ?? '',
+        kind: json['kind'] != null
+            ? ListeningKind.values.byName(json['kind'] as String)
+            : ListeningKind.conversation,
+        turns: (json['turns'] as List? ?? const [])
+            .map((t) => ListeningTurn.fromJson(t as Map<String, dynamic>))
+            .toList(),
+        questions: (json['questions'] as List? ?? const [])
+            .map((q) => ListeningQuestion.fromJson(q as Map<String, dynamic>))
+            .toList(),
+        speakerGenders: (json['speakerGenders'] as Map?)?.map(
+              (k, v) => MapEntry(k as String, v as String),
+            ) ??
+            const {},
+        level: json['level'] != null
+            ? CEFRLevel.values.byName(json['level'] as String)
+            : CEFRLevel.a1,
+        context: json['context'] != null
+            ? AppContext.values.byName(json['context'] as String)
+            : AppContext.general,
+        targetLanguage: json['targetLanguage'] != null
+            ? Language.values.byName(json['targetLanguage'] as String)
+            : Language.english,
+        generatedAt: json['generatedAt'] != null
+            ? DateTime.parse(json['generatedAt'] as String)
+            : DateTime.fromMillisecondsSinceEpoch(0),
+      );
 }
 
 /// Normalizes a raw turn speaker ('A', 'B', or null for a talk) into the key
@@ -78,7 +157,8 @@ Map<String, String> assignVoices(ListeningPassage passage) {
     final gender = passage.speakerGenders[speaker] ?? 'female';
     final slot = nextSlotByGender[gender]!;
     result[speaker] = '$gender$slot';
-    nextSlotByGender[gender] = slot == 1 ? 2 : 1; // wraps back to 1 past 2 speakers of the same gender
+    nextSlotByGender[gender] =
+        slot == 1 ? 2 : 1; // wraps back to 1 past 2 speakers of the same gender
   }
   return result;
 }

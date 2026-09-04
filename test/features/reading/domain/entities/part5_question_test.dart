@@ -11,12 +11,30 @@ void main() {
         sentenceWithBlank: 'The report ___ by Friday.',
         options: ['finish', 'finished', 'will be finished', 'finishing'],
         correctIndex: 2,
-        explanation: 'Cần thể bị động tương lai vì báo cáo được người khác hoàn thành.',
+        explanation:
+            'Cần thể bị động tương lai vì báo cáo được người khác hoàn thành.',
       );
       expect(question.sentenceWithBlank, contains('___'));
       expect(question.options.length, 4);
       expect(question.correctIndex, 2);
       expect(question.explanation, isNotEmpty);
+    });
+
+    test('toJson / fromJson round-trips (keys match web Part5Question)', () {
+      const question = Part5Question(
+        sentenceWithBlank: 'The report ___ by Friday.',
+        options: ['finish', 'finished', 'will be finished', 'finishing'],
+        correctIndex: 2,
+        explanation: 'Cần thể bị động tương lai.',
+      );
+      final json = question.toJson();
+      expect(json.keys.toSet(),
+          {'sentenceWithBlank', 'options', 'correctIndex', 'explanation'});
+      final decoded = Part5Question.fromJson(json);
+      expect(decoded.sentenceWithBlank, question.sentenceWithBlank);
+      expect(decoded.options, question.options);
+      expect(decoded.correctIndex, 2);
+      expect(decoded.explanation, question.explanation);
     });
   });
 
@@ -46,6 +64,23 @@ void main() {
       expect(set.volumes, {EconomyVolume.vol3, EconomyVolume.vol4});
       expect(set.context, AppContext.business);
       expect(set.targetLanguage, Language.english);
+    });
+
+    test('toJson / fromJson round-trips', () {
+      final json = set.toJson();
+      expect(json['questions'], hasLength(15));
+      expect((json['volumes'] as List).toSet(), {'vol3', 'vol4'});
+      expect(json['context'], 'business');
+      expect(json['targetLanguage'], 'english');
+
+      final decoded = Part5Set.fromJson(json);
+      expect(decoded.id, set.id);
+      expect(decoded.questions.length, 15);
+      expect(decoded.questions[3].correctIndex, set.questions[3].correctIndex);
+      expect(decoded.volumes, {EconomyVolume.vol3, EconomyVolume.vol4});
+      expect(decoded.context, AppContext.business);
+      expect(decoded.targetLanguage, Language.english);
+      expect(decoded.generatedAt, set.generatedAt);
     });
   });
 }
