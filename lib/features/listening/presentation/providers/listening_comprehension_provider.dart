@@ -11,10 +11,20 @@ final class ComprehensionSessionResult {
   const ComprehensionSessionResult({
     required this.passage,
     required this.selectedAnswers,
+    this.reusedFromId,
+    this.generationFilters,
   });
 
   final ListeningPassage passage;
   final List<int?> selectedAnswers; // length == passage.questions.length
+
+  /// Non-null when this session was started from a saved exercise — the result
+  /// screen uses it to hide "Lưu bài" and to exclude the passage on "Bài khác".
+  final String? reusedFromId;
+
+  /// The raw generation-filter map the session was generated with, threaded to
+  /// the result screen's "Lưu bài" action.
+  final Map<String, dynamic>? generationFilters;
 
   int get correctCount {
     int count = 0;
@@ -34,6 +44,8 @@ final class ListeningSessionState {
     required this.selectedAnswers,
     required this.isSubmitted,
     this.speedMultiplier = 1.0,
+    this.reusedFromId,
+    this.generationFilters,
   });
 
   final ListeningPassage passage;
@@ -43,6 +55,15 @@ final class ListeningSessionState {
   final List<int?> selectedAnswers;
   final bool isSubmitted;
   final double speedMultiplier;
+
+  /// Non-null when this session was started from a saved exercise (via
+  /// [ListeningComprehensionNotifier.loadSaved]); carried onto
+  /// [ComprehensionSessionResult].
+  final String? reusedFromId;
+
+  /// The raw generation-filter map the passage was generated with; carried onto
+  /// [ComprehensionSessionResult] for "Lưu bài".
+  final Map<String, dynamic>? generationFilters;
 
   ListeningTurn get currentTurn => passage.turns[currentTurnIndex];
   bool get canSubmit => selectedAnswers.every((a) => a != null);
@@ -63,6 +84,8 @@ final class ListeningSessionState {
         selectedAnswers: selectedAnswers ?? this.selectedAnswers,
         isSubmitted: isSubmitted ?? this.isSubmitted,
         speedMultiplier: speedMultiplier ?? this.speedMultiplier,
+        reusedFromId: reusedFromId,
+        generationFilters: generationFilters,
       );
 }
 
@@ -112,6 +135,7 @@ class ListeningComprehensionNotifier extends _$ListeningComprehensionNotifier {
     required CEFRLevel level,
     required AppContext context,
     required Language targetLanguage,
+    Map<String, dynamic>? generationFilters,
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
@@ -125,8 +149,30 @@ class ListeningComprehensionNotifier extends _$ListeningComprehensionNotifier {
         playToken: 0,
         selectedAnswers: List<int?>.filled(passage.questions.length, null),
         isSubmitted: false,
+        generationFilters: generationFilters,
       );
     });
+  }
+
+  /// Starts a session from a pre-built [passage], bypassing the AI. [savedId] is
+  /// the id of the saved exercise it came from (so the result screen can hide
+  /// "Lưu bài" and exclude it on "Bài khác"); [generationFilters] is the raw
+  /// filter map to thread through to "Lưu bài".
+  void loadSaved(
+    ListeningPassage passage, {
+    String? savedId,
+    Map<String, dynamic>? generationFilters,
+  }) {
+    state = AsyncData(ListeningSessionState(
+      passage: passage,
+      currentTurnIndex: 0,
+      isSpeaking: false,
+      playToken: 0,
+      selectedAnswers: List<int?>.filled(passage.questions.length, null),
+      isSubmitted: false,
+      reusedFromId: savedId,
+      generationFilters: generationFilters,
+    ));
   }
 
   Future<void> playCurrentTurn() async {

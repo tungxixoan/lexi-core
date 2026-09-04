@@ -154,4 +154,48 @@ void main() {
     );
     expect(result.correctCount, 4);
   });
+
+  group('loadSaved / generationFilters', () {
+    const filters = {
+      'topicIds': ['t1'],
+      'targetCefr': 'b1',
+      'volumes': ['vol4'],
+    };
+
+    test(
+        'loadSaved yields a not-started state carrying the set, empty answers '
+        'sized to the dynamic question count, and reusedFromId + generationFilters',
+        () {
+      container
+          .read(part7PracticeNotifierProvider.notifier)
+          .loadSaved(fixedSet, savedId: 'saved-7', generationFilters: filters);
+
+      final state = container.read(part7PracticeNotifierProvider).valueOrNull!;
+      expect(state.set, same(fixedSet));
+      expect(state.selectedAnswers, List<int?>.filled(12, null)); // 3+4+5
+      expect(state.isSubmitted, false);
+      expect(state.canSubmit, false);
+      expect(state.reusedFromId, 'saved-7');
+      expect(state.generationFilters, filters);
+    });
+
+    test('loadSaved leaves reusedFromId + generationFilters null when omitted', () {
+      container.read(part7PracticeNotifierProvider.notifier).loadSaved(fixedSet);
+      final state = container.read(part7PracticeNotifierProvider).valueOrNull!;
+      expect(state.reusedFromId, isNull);
+      expect(state.generationFilters, isNull);
+    });
+
+    test('generate(generationFilters:) carries the map onto the state', () async {
+      await container.read(part7PracticeNotifierProvider.notifier).generate(
+            context: AppContext.general,
+            targetLanguage: Language.english,
+            volumes: const {EconomyVolume.vol4},
+            generationFilters: filters,
+          );
+      final state = container.read(part7PracticeNotifierProvider).valueOrNull!;
+      expect(state.generationFilters, filters);
+      expect(state.reusedFromId, isNull);
+    });
+  });
 }

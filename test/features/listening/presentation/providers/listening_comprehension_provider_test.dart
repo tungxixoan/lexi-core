@@ -316,4 +316,57 @@ void main() {
 
     verify(() => mockTts.stop()).called(1);
   });
+
+  group('loadSaved / generationFilters', () {
+    const filters = {
+      'level': 'b1',
+      'context': 'general',
+    };
+
+    test(
+        'loadSaved yields a not-started state at turn 0 carrying the passage, '
+        'empty answers, and reusedFromId + generationFilters', () {
+      container.read(listeningComprehensionNotifierProvider.notifier).loadSaved(
+          fixedPassage,
+          savedId: 'saved-c',
+          generationFilters: filters);
+
+      final state =
+          container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+      expect(state.passage, same(fixedPassage));
+      expect(state.currentTurnIndex, 0);
+      expect(state.isSpeaking, false);
+      expect(state.playToken, 0);
+      expect(state.selectedAnswers, [null, null, null]);
+      expect(state.isSubmitted, false);
+      expect(state.canSubmit, false);
+      expect(state.reusedFromId, 'saved-c');
+      expect(state.generationFilters, filters);
+    });
+
+    test('loadSaved leaves reusedFromId + generationFilters null when omitted', () {
+      container
+          .read(listeningComprehensionNotifierProvider.notifier)
+          .loadSaved(fixedPassage);
+      final state =
+          container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+      expect(state.reusedFromId, isNull);
+      expect(state.generationFilters, isNull);
+    });
+
+    test('generate(generationFilters:) carries the map onto the state', () async {
+      await container
+          .read(listeningComprehensionNotifierProvider.notifier)
+          .generate(
+            level: CEFRLevel.b1,
+            context: AppContext.general,
+            targetLanguage: Language.english,
+            generationFilters: filters,
+          );
+      final state =
+          container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+      expect(state.generationFilters, filters);
+      expect(state.reusedFromId, isNull);
+    });
+  });
 }

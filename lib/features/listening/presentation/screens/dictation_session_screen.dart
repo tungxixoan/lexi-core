@@ -64,6 +64,8 @@ class _DictationSessionScreenState
             blankAnswers: session.blankAnswers,
             seekCount: session.seekCount,
             seekPenaltyTotal: session.seekPenaltyTotal,
+            reusedFromId: session.reusedFromId,
+            generationFilters: session.generationFilters,
           );
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {

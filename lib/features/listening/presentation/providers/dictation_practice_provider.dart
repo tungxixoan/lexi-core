@@ -21,6 +21,8 @@ final class DictationSessionResult {
     this.blankAnswers = const [],
     this.seekCount = 0,
     this.seekPenaltyTotal = 0.0,
+    this.reusedFromId,
+    this.generationFilters,
   });
 
   final DictationItem item;
@@ -32,6 +34,14 @@ final class DictationSessionResult {
   final List<String> blankAnswers;
   final int seekCount;
   final double seekPenaltyTotal;
+
+  /// Non-null when this session was started from a saved exercise — the result
+  /// screen uses it to hide "Lưu bài" and to exclude the item on "Bài khác".
+  final String? reusedFromId;
+
+  /// The raw generation-filter map the session was generated with, threaded to
+  /// the result screen's "Lưu bài" action.
+  final Map<String, dynamic>? generationFilters;
 
   int get totalChars => item.target.length;
 
@@ -122,6 +132,8 @@ final class DictationSessionState {
     this.seekPenaltyTotal = 0.0,
     this.speedMultiplier = 1.0,
     this.isSpeaking = false,
+    this.reusedFromId,
+    this.generationFilters,
   });
 
   final DictationItem item;
@@ -137,6 +149,15 @@ final class DictationSessionState {
   final double seekPenaltyTotal;
   final double speedMultiplier;
   final bool isSpeaking;
+
+  /// Non-null when this session was started from a saved exercise (via
+  /// [DictationPracticeNotifier.loadSaved]); carried onto
+  /// [DictationSessionResult].
+  final String? reusedFromId;
+
+  /// The raw generation-filter map the item was generated with; carried onto
+  /// [DictationSessionResult] for "Lưu bài".
+  final Map<String, dynamic>? generationFilters;
 
   bool get isClozeMode => difficulty != DictationDifficulty.hard;
 
@@ -168,6 +189,8 @@ final class DictationSessionState {
         seekPenaltyTotal: seekPenaltyTotal ?? this.seekPenaltyTotal,
         speedMultiplier: speedMultiplier ?? this.speedMultiplier,
         isSpeaking: isSpeaking ?? this.isSpeaking,
+        reusedFromId: reusedFromId,
+        generationFilters: generationFilters,
       );
 }
 
@@ -188,6 +211,7 @@ class DictationPracticeNotifier extends _$DictationPracticeNotifier {
     required AppContext context,
     required Language targetLanguage,
     DictationDifficulty difficulty = DictationDifficulty.hard,
+    Map<String, dynamic>? generationFilters,
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
@@ -210,8 +234,37 @@ class DictationPracticeNotifier extends _$DictationPracticeNotifier {
         difficulty: difficulty,
         blanks: blanks,
         blankAnswers: List.filled(blanks.length, ''),
+        generationFilters: generationFilters,
       );
     });
+  }
+
+  /// Starts a session from a pre-built [item], bypassing the AI. [savedId] is
+  /// the id of the saved exercise it came from (so the result screen can hide
+  /// "Lưu bài" and exclude it on "Bài khác"); [generationFilters] is the raw
+  /// filter map to thread through to "Lưu bài".
+  void loadSaved(
+    DictationItem item, {
+    String? savedId,
+    Map<String, dynamic>? generationFilters,
+    DictationDifficulty difficulty = DictationDifficulty.hard,
+  }) {
+    final blanks = ref
+        .read(selectDictationBlanksUseCaseProvider)
+        .execute(item.target, difficulty);
+    state = AsyncData(DictationSessionState(
+      item: item,
+      typedText: '',
+      replayCount: 0,
+      hasPlayedOnce: false,
+      startedAt: DateTime.now(),
+      isComplete: false,
+      difficulty: difficulty,
+      blanks: blanks,
+      blankAnswers: List.filled(blanks.length, ''),
+      reusedFromId: savedId,
+      generationFilters: generationFilters,
+    ));
   }
 
   Future<void> play() async {

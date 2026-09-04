@@ -7,7 +7,7 @@ part of 'part6_practice_provider.dart';
 // **************************************************************************
 
 String _$part6PracticeNotifierHash() =>
-    r'7f86b4727707004acd72747a71c0b07704ecb6bc';
+    r'b7b11696d3321401cae24e59c1411a784181fda3';
 
 /// See also [Part6PracticeNotifier].
 @ProviderFor(Part6PracticeNotifier)

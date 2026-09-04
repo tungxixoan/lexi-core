@@ -7,7 +7,7 @@ part of 'listening_comprehension_provider.dart';
 // **************************************************************************
 
 String _$listeningComprehensionNotifierHash() =>
-    r'2433df7d7ac9e278b32bfab2a825fa29d02a3b09';
+    r'329347c64388a08c27bd1d78abf2fece951bb7aa';
 
 /// See also [ListeningComprehensionNotifier].
 @ProviderFor(ListeningComprehensionNotifier)

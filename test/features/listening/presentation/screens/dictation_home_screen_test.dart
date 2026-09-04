@@ -110,6 +110,7 @@ class _FakeDictationNotifier extends DictationPracticeNotifier {
     required Language targetLanguage,
     required CEFRLevel level,
     DictationDifficulty difficulty = DictationDifficulty.hard,
+    Map<String, dynamic>? generationFilters,
   }) async {
     callCount++;
     capturedWords = words;

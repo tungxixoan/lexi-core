@@ -883,4 +883,115 @@ void main() {
       verify(() => mockTts.stop()).called(1);
     });
   });
+
+  group('DictationPracticeNotifier loadSaved / generationFilters', () {
+    late MockGenerateDictationItemUseCase mockUseCase;
+    late MockTtsService mockTts;
+    late DictationItem fixedItem;
+    late List<VocabRecord> words;
+
+    const filters = {
+      'topicIds': ['t1'],
+      'targetCefr': 'b1',
+      'difficulty': 'hard',
+    };
+
+    setUp(() {
+      mockUseCase = MockGenerateDictationItemUseCase();
+      mockTts = MockTtsService();
+      fixedItem = _item('The quick brown fox jumps over the lazy dog again');
+      words = [
+        VocabRecord(
+          id: 'id1',
+          headword: 'hello',
+          inputType: InputType.word,
+          ipa: '',
+          meaning: '',
+          examples: const [],
+          personalNotes: '',
+          topicIds: const [],
+          targetLanguage: Language.english,
+          cefrLevel: CEFRLevel.b1,
+          activeContext: AppContext.general,
+          createdAt: DateTime(2026),
+          updatedAt: DateTime(2026),
+        ),
+      ];
+      when(
+        () => mockUseCase.execute(
+          words: words,
+          level: CEFRLevel.b1,
+          context: AppContext.general,
+          targetLanguage: Language.english,
+        ),
+      ).thenAnswer((_) async => fixedItem);
+      when(() => mockTts.synthesize(any(), any(), rate: any(named: 'rate')))
+          .thenAnswer((_) async {});
+      when(() => mockTts.stop()).thenAnswer((_) async {});
+    });
+
+    ProviderContainer makeContainer() => ProviderContainer(
+          overrides: [
+            generateDictationItemUseCaseProvider.overrideWithValue(mockUseCase),
+            ttsServiceProvider.overrideWithValue(mockTts),
+          ],
+        );
+
+    test(
+        'loadSaved yields a not-started state carrying the item, hard defaults, '
+        'and reusedFromId + generationFilters', () {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(dictationPracticeNotifierProvider.notifier);
+
+      notifier.loadSaved(fixedItem,
+          savedId: 'saved-d', generationFilters: filters);
+
+      final state = c.read(dictationPracticeNotifierProvider).value!;
+      expect(state.item, same(fixedItem));
+      expect(state.typedText, '');
+      expect(state.replayCount, 0);
+      expect(state.hasPlayedOnce, false);
+      expect(state.isComplete, false);
+      expect(state.difficulty, DictationDifficulty.hard);
+      expect(state.blanks, isEmpty);
+      expect(state.blankAnswers, isEmpty);
+      expect(state.reusedFromId, 'saved-d');
+      expect(state.generationFilters, filters);
+    });
+
+    test('loadSaved with difficulty: easy builds the cloze blanks', () {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(dictationPracticeNotifierProvider.notifier);
+
+      notifier.loadSaved(fixedItem, difficulty: DictationDifficulty.easy);
+
+      final state = c.read(dictationPracticeNotifierProvider).value!;
+      expect(state.difficulty, DictationDifficulty.easy);
+      expect(state.blanks, isNotEmpty);
+      expect(state.blankAnswers.length, state.blanks.length);
+      expect(state.blankAnswers, everyElement(''));
+      expect(state.reusedFromId, isNull);
+      expect(state.generationFilters, isNull);
+    });
+
+    test('generate(generationFilters:) carries the map onto the state', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(dictationPracticeNotifierProvider.notifier);
+
+      await notifier.generate(
+        words: words,
+        level: CEFRLevel.b1,
+        context: AppContext.general,
+        targetLanguage: Language.english,
+        generationFilters: filters,
+      );
+
+      final state = c.read(dictationPracticeNotifierProvider).value!;
+      expect(state.generationFilters, filters);
+      expect(state.reusedFromId, isNull);
+    });
+  });
 }

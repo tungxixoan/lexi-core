@@ -17,7 +17,11 @@ class Part5SessionScreen extends ConsumerWidget {
       if (session == null) return;
       if (session.isSubmitted) {
         final result = Part5SessionResult(
-            set: session.set, selectedAnswers: session.selectedAnswers);
+          set: session.set,
+          selectedAnswers: session.selectedAnswers,
+          reusedFromId: session.reusedFromId,
+          generationFilters: session.generationFilters,
+        );
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (context.mounted) {
             context.go('/reading/part5/session/result', extra: result);

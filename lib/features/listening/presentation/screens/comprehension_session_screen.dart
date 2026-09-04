@@ -21,6 +21,8 @@ class ComprehensionSessionScreen extends ConsumerWidget {
           final result = ComprehensionSessionResult(
             passage: session.passage,
             selectedAnswers: session.selectedAnswers,
+            reusedFromId: session.reusedFromId,
+            generationFilters: session.generationFilters,
           );
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
