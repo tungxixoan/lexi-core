@@ -315,7 +315,7 @@ final computeSm2UseCaseProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ComputeSm2UseCaseRef = AutoDisposeProviderRef<ComputeSm2UseCase>;
-String _$statsServiceHash() => r'647e931f4448655142f6912214700d446a2afaac';
+String _$statsServiceHash() => r'f754c5e023a0c34b8cb16a55a3f1061ef0e3b5a3';
 
 /// See also [statsService].
 @ProviderFor(statsService)
@@ -331,6 +331,26 @@ final statsServiceProvider = AutoDisposeProvider<StatsService>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef StatsServiceRef = AutoDisposeProviderRef<StatsService>;
+String _$savedExercisesServiceHash() =>
+    r'64b3af49bc83fc193db2d629aea6e339ab4a25d8';
+
+/// See also [savedExercisesService].
+@ProviderFor(savedExercisesService)
+final savedExercisesServiceProvider =
+    AutoDisposeProvider<SavedExercisesService>.internal(
+  savedExercisesService,
+  name: r'savedExercisesServiceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$savedExercisesServiceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef SavedExercisesServiceRef
+    = AutoDisposeProviderRef<SavedExercisesService>;
 String _$getLearningStatsUseCaseHash() =>
     r'aa0d10e18d53e6e9b5727cf042320259dabc9d14';
 

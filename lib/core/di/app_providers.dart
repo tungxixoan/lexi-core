@@ -26,6 +26,7 @@ import '../../features/practice/domain/use_cases/compute_sm2_use_case.dart';
 import '../../features/practice/domain/use_cases/generate_exercise_use_case.dart';
 // --- Stats DI (Plan 5) ---
 import '../services/stats_service.dart';
+import '../services/saved_exercises_service.dart';
 import '../../features/practice/domain/entities/learning_stats.dart';
 import '../../features/practice/domain/use_cases/get_learning_stats_use_case.dart';
 // --- Reading DI (Plan 7) ---
@@ -152,6 +153,10 @@ StatsService statsService(StatsServiceRef ref) => StatsService(
       prefs: ref.read(sharedPreferencesProvider),
       currentUid: () => ref.read(currentUidProvider),
     );
+
+@riverpod
+SavedExercisesService savedExercisesService(SavedExercisesServiceRef ref) =>
+    SavedExercisesService(currentUid: () => ref.read(currentUidProvider));
 
 @riverpod
 GetLearningStatsUseCase getLearningStatsUseCase(
