@@ -1236,6 +1236,220 @@ button.btn-primary:disabled {
   margin: 0 auto;
 }
 
+/* AI practice exercise cards (MC / fill-in-blank / translation) — ported from
+   the Flutter Bloom practice widgets. */
+.pe-loading {
+  text-align: center;
+  color: var(--ink-soft);
+  padding: 40px 0;
+}
+
+.pe-mc,
+.pe-fill,
+.pe-tr {
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+.pe-mc-question {
+  text-align: center;
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 24px;
+}
+
+.pe-mc-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pe-mc-option {
+  width: 100%;
+  text-align: left;
+  padding: 14px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 16.5px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.pe-mc-option:disabled {
+  cursor: default;
+}
+
+.pe-mc-option.pe-mc-correct {
+  background: var(--success-bg);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.pe-mc-option.pe-mc-wrong {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.pe-fill-header,
+.pe-tr-header {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 12px;
+}
+
+.pe-fill-sentence {
+  text-align: center;
+  font-size: 17px;
+  color: var(--ink);
+  margin: 0 0 24px;
+}
+
+.pe-fill-slot {
+  display: inline-block;
+  width: 80px;
+  border-bottom: 2px solid var(--accent);
+  margin: 0 4px;
+  vertical-align: middle;
+}
+
+.pe-fill-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pe-fill-input {
+  flex: 1;
+  box-sizing: border-box;
+  font-size: 18px;
+  font-family: inherit;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  outline: none;
+}
+
+.pe-fill-input:focus {
+  border-color: var(--accent);
+}
+
+.pe-fill-input-ok {
+  border-color: var(--success);
+}
+
+.pe-fill-input-bad {
+  border-color: var(--danger);
+}
+
+.pe-fill-mark {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.pe-fill-input-ok + .pe-fill-mark {
+  color: var(--success);
+}
+
+.pe-fill-input-bad + .pe-fill-mark {
+  color: var(--danger);
+}
+
+.pe-fill-answer {
+  text-align: center;
+  color: var(--success);
+  font-size: 15px;
+  margin: 8px 0 0;
+}
+
+.pe-fill-check {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+}
+
+.pe-tr-prompt {
+  text-align: center;
+  font-size: 17px;
+  color: var(--ink);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 0 0 16px;
+}
+
+.pe-tr-input {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  font-size: 17px;
+  font-family: inherit;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  outline: none;
+}
+
+.pe-tr-input:focus {
+  border-color: var(--accent);
+}
+
+.pe-tr-reveal {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.pe-tr-answer {
+  margin: 12px 0 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--success-bg);
+  border: 1px solid var(--success);
+  color: var(--success);
+  font-size: 15px;
+}
+
+.pe-tr-grade-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.pe-tr-grade-no,
+.pe-tr-grade-yes {
+  flex: 1;
+  padding: 13px 0;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 17px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pe-tr-grade-no {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+
+.pe-tr-grade-yes {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: none;
+}
+
 button.btn-secondary {
   background: var(--surface);
   color: var(--ink);
