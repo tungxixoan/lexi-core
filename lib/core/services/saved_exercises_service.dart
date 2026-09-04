@@ -54,7 +54,7 @@ class SavedExercisesService {
       type.bodyKey: passageJson,
       'generationFilters': generationFilters,
       'targetLanguage': targetLanguage.name,
-      'createdAt': DateTime.now().toIso8601String(),
+      'createdAt': DateTime.now().toUtc().toIso8601String(),
       'id': ref.id,
     });
     return ref.id;

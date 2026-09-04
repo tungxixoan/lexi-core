@@ -60,6 +60,7 @@ void main() {
     });
     expect(data['targetLanguage'], 'english');
     expect(data['createdAt'], isA<String>());
+    expect(data['createdAt'], endsWith('Z')); // UTC ISO, matching web
     expect(data['id'], id);
   });
 
@@ -149,6 +150,64 @@ void main() {
         type: SavedExerciseType.dictation,
         targetLanguage: Language.english,
         filters: const {'difficulty': 'easy'},
+      );
+      expect(got!.id, id);
+    });
+
+    test('part6', () async {
+      final fs = FakeFirebaseFirestore();
+      final svc = _service(firestore: fs);
+      final id = await svc.save(
+        type: SavedExerciseType.part6,
+        passageJson: const {'passageText': 'a ___ b', 'questions': <dynamic>[]},
+        generationFilters: const {
+          'topicIds': <String>[],
+          'volumes': <String>[]
+        },
+        targetLanguage: Language.english,
+      );
+      final got = await svc.getRandom(
+        type: SavedExerciseType.part6,
+        targetLanguage: Language.english,
+        filters: const {'topicIds': <String>[], 'volumes': <String>[]},
+      );
+      expect(got!.id, id);
+      expect(got.passageJson['passageText'], 'a ___ b');
+    });
+
+    test('part7', () async {
+      final fs = FakeFirebaseFirestore();
+      final svc = _service(firestore: fs);
+      final id = await svc.save(
+        type: SavedExerciseType.part7,
+        passageJson: const {'passages': <dynamic>[], 'questions': <dynamic>[]},
+        generationFilters: const {
+          'topicIds': <String>[],
+          'volumes': <String>[]
+        },
+        targetLanguage: Language.english,
+      );
+      final got = await svc.getRandom(
+        type: SavedExerciseType.part7,
+        targetLanguage: Language.english,
+        filters: const {'topicIds': <String>[], 'volumes': <String>[]},
+      );
+      expect(got!.id, id);
+    });
+
+    test('comprehension', () async {
+      final fs = FakeFirebaseFirestore();
+      final svc = _service(firestore: fs);
+      final id = await svc.save(
+        type: SavedExerciseType.comprehension,
+        passageJson: const {'turns': <dynamic>[]},
+        generationFilters: const {'context': 'general', 'level': 'b1'},
+        targetLanguage: Language.english,
+      );
+      final got = await svc.getRandom(
+        type: SavedExerciseType.comprehension,
+        targetLanguage: Language.english,
+        filters: const {'context': 'general', 'level': null},
       );
       expect(got!.id, id);
     });
