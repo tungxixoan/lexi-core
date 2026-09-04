@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/widgets/filter_tile.dart';
 import '../../../../core/widgets/selection_sheets.dart';
+import '../../../../core/widgets/vocab_filter.dart';
 import '../../../dictionary/domain/entities/language.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
+import '../../domain/entities/cefr_level.dart';
 import '../../domain/entities/topic.dart';
 import '../../domain/entities/vocab_record.dart';
 import '../providers/topics_provider.dart';
@@ -20,8 +22,7 @@ class VocabBankScreen extends ConsumerStatefulWidget {
 }
 
 class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
-  final Set<String> _selectedTopicIds = {};
-  String _searchQuery = '';
+  VocabFilterState _filters = const VocabFilterState();
   final _searchCtrl = TextEditingController();
 
   @override
@@ -37,33 +38,33 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
       options: topics
           .map((t) => SelectOption(value: t.id, label: t.name, emoji: t.emoji))
           .toList(),
-      initialSelected: _selectedTopicIds,
+      initialSelected: _filters.topicIds,
     );
     if (result != null) {
-      setState(() {
-        _selectedTopicIds
-          ..clear()
-          ..addAll(result);
-      });
+      setState(() => _filters = _filters.copyWith(topicIds: result));
     }
   }
 
-  List<VocabRecord> _filter(List<VocabRecord> records, Language targetLanguage) {
-    var result = records.where((r) => r.targetLanguage == targetLanguage).toList();
-    if (_selectedTopicIds.isNotEmpty) {
-      result = result
-          .where((r) => r.topicIds.any(_selectedTopicIds.contains))
-          .toList();
+  Future<void> _openLevelPicker() async {
+    final result = await showMultiSelectSheet<CEFRLevel>(
+      context: context,
+      title: 'Cấp độ',
+      options: CEFRLevel.values
+          .map((l) => SelectOption(value: l, label: l.label))
+          .toList(),
+      initialSelected: _filters.cefrLevels,
+    );
+    if (result != null) {
+      setState(() => _filters = _filters.copyWith(cefrLevels: result));
     }
-    if (_searchQuery.isNotEmpty) {
-      final q = _searchQuery.toLowerCase();
-      result = result
-          .where((r) =>
-              r.headword.toLowerCase().contains(q) ||
-              r.meaning.toLowerCase().contains(q))
-          .toList();
-    }
-    return result;
+  }
+
+  List<VocabRecord> _filter(
+      List<VocabRecord> records, Language targetLanguage) {
+    return records
+        .where((r) => r.targetLanguage == targetLanguage)
+        .where((r) => matchesVocabFilters(r, _filters))
+        .toList();
   }
 
   @override
@@ -108,13 +109,15 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
               controller: _searchCtrl,
               hintText: 'Tìm từ…',
               prefixIcon: Icons.search,
-              suffix: _searchQuery.isEmpty
+              suffix: _filters.query.isEmpty
                   ? null
                   : GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: () {
                         _searchCtrl.clear();
-                        setState(() => _searchQuery = '');
+                        setState(
+                          () => _filters = _filters.copyWith(query: ''),
+                        );
                       },
                       child: SizedBox(
                         width: 36,
@@ -122,10 +125,34 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
                         child: Icon(Icons.clear, size: 18, color: c.inkFaint),
                       ),
                     ),
-              onChanged: (v) => setState(() => _searchQuery = v),
+              onChanged: (v) =>
+                  setState(() => _filters = _filters.copyWith(query: v)),
             ),
           ),
           const SizedBox(height: 8),
+          // "Cần ôn hôm nay" toggle — filters to records that are due for review.
+          Builder(
+            builder: (context) {
+              final all = vocabAsync.valueOrNull ?? const <VocabRecord>[];
+              final dueCount = all.where((r) => vocabRecordIsDue(r)).length;
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: BloomChip(
+                    label: 'Cần ôn hôm nay ($dueCount)',
+                    style: _filters.dueOnly
+                        ? BloomChipStyle.active
+                        : BloomChipStyle.neutral,
+                    onTap: () => setState(
+                      () => _filters =
+                          _filters.copyWith(dueOnly: !_filters.dueOnly),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
           // Topic filter — opens a bottom sheet with multi-select checkboxes
           topicsAsync.when(
             data: (topics) => Padding(
@@ -133,14 +160,26 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
               child: FilterTile(
                 icon: Icons.sell_outlined,
                 label: 'Chủ đề',
-                value: _selectedTopicIds.isEmpty
+                value: _filters.topicIds.isEmpty
                     ? 'Tất cả'
-                    : '${_selectedTopicIds.length} đã chọn',
+                    : '${_filters.topicIds.length} đã chọn',
                 onTap: () => _openTopicPicker(topics),
               ),
             ),
             loading: () => const SizedBox(height: 48),
             error: (_, __) => const SizedBox(height: 48),
+          ),
+          // CEFR-level filter — opens a multi-select sheet of a1..c2.
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: FilterTile(
+              icon: Icons.school_outlined,
+              label: 'Cấp độ',
+              value: _filters.cefrLevels.isEmpty
+                  ? 'Tất cả'
+                  : '${_filters.cefrLevels.length} đã chọn',
+              onTap: _openLevelPicker,
+            ),
           ),
           const SizedBox(height: 8),
           Divider(height: 1, color: c.border),
