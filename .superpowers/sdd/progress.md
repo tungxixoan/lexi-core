@@ -2181,3 +2181,11 @@ Task 7 (listening Options + inline hub): impl ed1f7c6. DictationOptions/Comprehe
   Task 7 review: Approved (faithful refactor + correct hub). complete (cdc5b0e..ed1f7c6). 186 listening tests, analyze 0.
 Task 8 (gate + docs): DONE (controller). Flutter analyze 0 / test 898. Web typecheck clean / test 757 (82 files). README updated: bank filter parity line, reading/listening hub "options inline" note, Word Radar web-sidebar note, Tiến độ tab note, roadmap entry.
 # SP-6 ALL 8 TASKS COMPLETE. Range dd64a5d..<task8> on master. Flutter 898 tests (was 879), analyze 0. Web 757 tests, typecheck clean. Whole-branch review next.
+
+## SP-6 whole-branch review (opus) — Ready: YES, no Critical. 3 Important + minors.
+I1: reading_bilingual_options.dart:~255 unguarded ref.read after `await usedBilingualVocabIds()` -> StateError if card collapsed mid-fetch (only bilingual; others read-before-await). Fix: hoist notifier read above await or `if(!mounted) return`.
+I2: collapse-mid-generate silently drops in-flight AI result (all 6 autoDispose practice notifiers; *Options is sole listener). Re-expand shows fresh AsyncData(null), no loading indicator -> user re-fires. Fix: block hub toggle while that type's sessionAsync.isLoading.
+I3: neither inline-hub test taps "Tạo bài luyện"/"Lấy bài có sẵn" — the ONE nav path SP-6 re-routed is uncovered (stub routes declared, never reached).
+Minors: .vb-search input missing `font-family: inherit` (renders in browser default font); VocabFilterState.isActive unused + no Flutter "clear filters" affordance (web has vb-chip-clear); redundant intermediate *Options mount per hub-generate (wasted work only, skip); word-radar/page.tsx:109 stale "Bật AI" copy (unrelated, skip).
+FIX WAVE: DISPATCHED (I1+I2+I3 + 2 minors).
+FIX WAVE 1b65df2: I1 (mounted guard), I2 (hubs -> ConsumerStatefulWidget, block toggle while expanded type isLoading + SnackBar), I3 (reuse-path nav tests both hubs), M1 (.vb-search font-family: inherit), M2 (Xoá lọc chip + wire isActive). 903 tests (+5), analyze 0, web typecheck clean.
