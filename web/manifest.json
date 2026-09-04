@@ -1,11 +1,11 @@
 {
-    "name": "lexi_core",
-    "short_name": "lexi_core",
+    "name": "LexiCore",
+    "short_name": "LexiCore",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFF3EE",
+    "theme_color": "#FFF3EE",
+    "description": "Ứng dụng học từ vựng cá nhân, Việt hoá.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
