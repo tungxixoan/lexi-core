@@ -2147,3 +2147,13 @@ Task 8: impl 3d608a9. suite 862->870. analyze 0. SaveExerciseButton in lib/core/
   Task 8 review: Approved (spec ✅, quality Approved, no Critical/Important). complete (5b650b3..3d608a9). 870 tests, analyze 0.
 Task 9 (full-suite gate + README): DONE (no subagent - controller). flutter analyze 0, flutter test 870/870. README: "Lưu / dùng lại bài AI" para under reading hub + Firestore struct (reading_exercises/listening_exercises) + Roadmap checkmark. Security rules unchanged (users/{uid}/{document=**} wildcard already covers it).
 # SP-5 ALL 9 TASKS COMPLETE. Range a8d64e5-parent(9a99902..) actually 9709123..<task9> on master. 870 tests (was 780 pre-plan / 793 after Task 1). analyze 0. Whole-branch review next.
+
+## SP-5 whole-branch review (opus) — Ready: NO (2 Critical + 2 Important, all bilingual cross-platform round-trip)
+C1: ReadingPassage.fromJson/BilingualSentence.fromJson hard-cast id/level/context/targetLanguage/generatedAt — web saves only {sentences,vocabIds} for bilingual => throws inside un-try'd _reuse => "Lấy bài có sẵn" silently dead. (Task-2 ledger note "web writes full ReadingPassage JSON" was WRONG.)
+C2: BilingualSentence.toJson writes vocabIds; web BilingualSentence = {target,vietnamese,vocabWords} => web PassageReview/highlightVocabWords crashes on undefined.length for a Flutter-saved bilingual.
+I1: TOEIC _generate never threads generationFilters => every Flutter-saved part5/6/7 doc has volumes:[] (hardcoded result-screen fallback) => Vol filter inert both platforms.
+I2: comprehension/bilingual _reuse doesn't restore level/context/targetLanguage from wrapper — guarded defaults (a1/general/english) => wrong CEFR for ResultSuggestionsSection, wrong TTS lang.
+Minors: dart format drift is repo-wide 118/325 files pre-existing => separate chore commit, NOT here; web-doc tests never call fromJson; dead `words` param in reading/dictation _reuse; matchesComprehension ceiling = plan-mandated, document only.
+FIX WAVE: DISPATCHED (one subagent, all findings).
+FIX WAVE df99778: all C1/C2/I1/I2 + minors FIXED, re-review Ready:YES, no regressions. 879 tests (was 780 pre-SP5), analyze 0.
+# SP-5 COMPLETE & READY. Range 9709123..df99778 on master (13 commits). Cross-platform bilingual+listening reuse now works both directions. dart-format repo drift (118/325 files) deferred to a standalone chore commit.
