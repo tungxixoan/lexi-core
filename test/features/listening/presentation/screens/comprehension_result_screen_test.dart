@@ -6,7 +6,9 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
 import 'package:lexi_core/core/theme/bloom/bloom.dart';
+import 'package:lexi_core/core/services/saved_exercises_service.dart';
 import 'package:lexi_core/core/services/stats_service.dart';
+import 'package:lexi_core/core/widgets/save_exercise_button.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
@@ -26,6 +28,8 @@ class MockStatsService extends Mock implements StatsService {}
 
 class MockGetVocabSuggestionsForTextUseCase extends Mock
     implements GetVocabSuggestionsForTextUseCase {}
+
+class MockSavedExercisesService extends Mock implements SavedExercisesService {}
 
 class _FakeSettingsNotifier extends UserSettingsNotifier {
   _FakeSettingsNotifier(this._state);
@@ -67,14 +71,18 @@ final _testResult = ComprehensionSessionResult(
   selectedAnswers: const [0, 0, 0],
 );
 
-Future<Widget> _buildResult({List<Override> extraOverrides = const []}) async {
+Future<Widget> _buildResult({
+  ComprehensionSessionResult? result,
+  List<Override> extraOverrides = const [],
+}) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   final router = GoRouter(
     routes: [
       GoRoute(
         path: '/',
-        builder: (ctx, state) => ComprehensionResultScreen(result: _testResult),
+        builder: (ctx, state) =>
+            ComprehensionResultScreen(result: result ?? _testResult),
       ),
       GoRoute(
         path: '/listening/comprehension',
@@ -86,6 +94,8 @@ Future<Widget> _buildResult({List<Override> extraOverrides = const []}) async {
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
+      savedExercisesServiceProvider
+          .overrideWithValue(MockSavedExercisesService()),
       userSettingsNotifierProvider.overrideWith(
         () => _FakeSettingsNotifier(
           UserSettingsState.defaults.copyWith(
@@ -145,6 +155,26 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Bài khác'), findsOneWidget);
     expect(find.text('Về trang chính'), findsOneWidget);
+  });
+
+  testWidgets(
+      'shows "Lưu bài" for a fresh passage; "Đã lưu bài này" when reused',
+      (tester) async {
+    await tester.pumpWidget(await _buildResult());
+    await tester.pumpAndSettle();
+    expect(find.byType(SaveExerciseButton), findsOneWidget);
+    expect(find.text('Lưu bài'), findsOneWidget);
+
+    await tester.pumpWidget(await _buildResult(
+      result: ComprehensionSessionResult(
+        passage: _testPassage,
+        selectedAnswers: const [0, 0, 0],
+        reusedFromId: 'saved-c',
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Lưu bài'), findsNothing);
+    expect(find.text('Đã lưu bài này'), findsOneWidget);
   });
 
   testWidgets(

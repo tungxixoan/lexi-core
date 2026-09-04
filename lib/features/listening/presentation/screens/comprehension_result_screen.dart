@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/utils/web_text_scale.dart';
+import '../../../../core/widgets/save_exercise_button.dart';
+import '../../../practice/domain/entities/saved_exercise.dart';
 import '../../../word_radar/presentation/widgets/result_suggestions_section.dart';
 import '../../domain/entities/listening_passage.dart';
 import '../providers/listening_comprehension_provider.dart';
@@ -115,6 +117,17 @@ class _ComprehensionResultScreenState
                 targetCefrLevel: result.passage.level,
               ),
               const SizedBox(height: 8),
+              SaveExerciseButton(
+                type: SavedExerciseType.comprehension,
+                reusedFromId: result.reusedFromId,
+                buildPassageJson: () => result.passage.toJson(),
+                generationFilters: result.generationFilters ??
+                    <String, dynamic>{
+                      'context': result.passage.context.name,
+                      'level': result.passage.level.name,
+                    },
+                targetLanguage: result.passage.targetLanguage,
+              ),
               BloomPillButton(
                 label: 'Bài khác',
                 variant: BloomButtonVariant.primary,

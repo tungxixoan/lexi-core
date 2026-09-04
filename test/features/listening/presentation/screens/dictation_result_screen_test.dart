@@ -4,8 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
+import 'package:lexi_core/core/services/saved_exercises_service.dart';
 import 'package:lexi_core/core/services/stats_service.dart';
 import 'package:lexi_core/core/theme/bloom/bloom.dart';
+import 'package:lexi_core/core/widgets/save_exercise_button.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
@@ -22,6 +24,8 @@ import 'package:lexi_core/features/listening/domain/entities/blank_span.dart';
 import 'package:lexi_core/features/listening/domain/entities/dictation_difficulty.dart';
 
 class MockStatsService extends Mock implements StatsService {}
+
+class MockSavedExercisesService extends Mock implements SavedExercisesService {}
 
 class _FakeSettingsNotifier extends UserSettingsNotifier {
   _FakeSettingsNotifier(this._state);
@@ -227,6 +231,8 @@ Widget _buildResult(
   return ProviderScope(
     overrides: [
       vocabRepositoryProvider.overrideWithValue(repo),
+      savedExercisesServiceProvider
+          .overrideWithValue(MockSavedExercisesService()),
       userSettingsNotifierProvider.overrideWith(
         () => _FakeSettingsNotifier(UserSettingsState.defaults),
       ),
@@ -259,6 +265,27 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Câu khác'), findsOneWidget);
     expect(find.text('Về trang chính'), findsOneWidget);
+  });
+
+  testWidgets('shows "Lưu bài" for a fresh item; "Đã lưu bài này" when reused',
+      (tester) async {
+    final repo = _CapturingVocabRepository([_record('id1'), _record('id2')]);
+    await tester.pumpWidget(_buildResult(_perfectResult, repo));
+    await tester.pumpAndSettle();
+    expect(find.byType(SaveExerciseButton), findsOneWidget);
+    expect(find.text('Lưu bài'), findsOneWidget);
+
+    final reused = DictationSessionResult(
+      item: _testItem,
+      typed: 'Hello world.',
+      replayCount: 0,
+      duration: const Duration(seconds: 5),
+      reusedFromId: 'saved-d',
+    );
+    await tester.pumpWidget(_buildResult(reused, repo));
+    await tester.pumpAndSettle();
+    expect(find.text('Lưu bài'), findsNothing);
+    expect(find.text('Đã lưu bài này'), findsOneWidget);
   });
 
   testWidgets('updates SM-2 for every vocab word used in the sentence', (tester) async {

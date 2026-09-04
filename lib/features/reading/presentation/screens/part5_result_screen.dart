@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/utils/web_text_scale.dart';
+import '../../../../core/widgets/save_exercise_button.dart';
+import '../../../practice/domain/entities/saved_exercise.dart';
 import '../../../word_radar/presentation/widgets/result_suggestions_section.dart';
 import '../../domain/entities/part5_question.dart';
 import '../providers/part5_practice_provider.dart';
@@ -92,6 +94,17 @@ class _Part5ResultScreenState extends ConsumerState<Part5ResultScreen> {
                 ),
               ),
               const SizedBox(height: 8),
+              SaveExerciseButton(
+                type: SavedExerciseType.part5,
+                reusedFromId: result.reusedFromId,
+                buildPassageJson: () => result.set.toJson(),
+                generationFilters: result.generationFilters ??
+                    <String, dynamic>{
+                      'topicIds': <String>[],
+                      'volumes': <String>[],
+                    },
+                targetLanguage: result.set.targetLanguage,
+              ),
               BloomPillButton(
                 label: 'Bài khác',
                 variant: BloomButtonVariant.primary,

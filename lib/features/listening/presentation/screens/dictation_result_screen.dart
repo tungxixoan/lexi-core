@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
 import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/utils/web_text_scale.dart';
+import '../../../../core/widgets/save_exercise_button.dart';
+import '../../../practice/domain/entities/saved_exercise.dart';
 import '../../domain/entities/dictation_difficulty.dart';
 import '../providers/dictation_practice_provider.dart';
 
@@ -157,6 +159,14 @@ class _DictationResultScreenState extends ConsumerState<DictationResultScreen> {
                 style: webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16)),
               ),
               const SizedBox(height: 24),
+              SaveExerciseButton(
+                type: SavedExerciseType.dictation,
+                reusedFromId: result.reusedFromId,
+                buildPassageJson: () => result.item.toJson(),
+                generationFilters: result.generationFilters ??
+                    <String, dynamic>{'difficulty': result.difficulty.name},
+                targetLanguage: result.item.targetLanguage,
+              ),
               BloomPillButton(
                 label: 'Câu khác',
                 variant: BloomButtonVariant.primary,

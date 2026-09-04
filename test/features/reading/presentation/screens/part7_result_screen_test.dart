@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
+import 'package:lexi_core/core/services/saved_exercises_service.dart';
 import 'package:lexi_core/core/services/stats_service.dart';
+import 'package:lexi_core/core/widgets/save_exercise_button.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
@@ -23,6 +25,8 @@ import 'package:lexi_core/features/word_radar/domain/entities/word_radar_ai_resu
 import 'package:lexi_core/features/word_radar/domain/use_cases/get_vocab_suggestions_for_text_use_case.dart';
 
 class MockStatsService extends Mock implements StatsService {}
+
+class MockSavedExercisesService extends Mock implements SavedExercisesService {}
 
 class MockGetVocabSuggestionsForTextUseCase extends Mock
     implements GetVocabSuggestionsForTextUseCase {}
@@ -68,14 +72,18 @@ final _testResult = Part7SessionResult(
   selectedAnswers: const [0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
 );
 
-Future<Widget> _buildResult({List<Override> extraOverrides = const []}) async {
+Future<Widget> _buildResult({
+  Part7SessionResult? result,
+  List<Override> extraOverrides = const [],
+}) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   final router = GoRouter(
     routes: [
       GoRoute(
           path: '/',
-          builder: (ctx, state) => Part7ResultScreen(result: _testResult)),
+          builder: (ctx, state) =>
+              Part7ResultScreen(result: result ?? _testResult)),
       GoRoute(
           path: '/reading/part7',
           builder: (ctx, state) => const Scaffold(body: Text('Part7 home'))),
@@ -84,6 +92,8 @@ Future<Widget> _buildResult({List<Override> extraOverrides = const []}) async {
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
+      savedExercisesServiceProvider
+          .overrideWithValue(MockSavedExercisesService()),
       userSettingsNotifierProvider.overrideWith(
         () => _FakeSettingsNotifier(UserSettingsState.defaults.copyWith(
           providerConfigs: {
@@ -130,6 +140,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Bài khác'), findsOneWidget);
     expect(find.text('Về trang chính'), findsOneWidget);
+  });
+
+  testWidgets('shows "Lưu bài" for a fresh set; "Đã lưu bài này" when reused',
+      (tester) async {
+    await tester.pumpWidget(await _buildResult());
+    await tester.pumpAndSettle();
+    expect(find.byType(SaveExerciseButton), findsOneWidget);
+    expect(find.text('Lưu bài'), findsOneWidget);
+
+    await tester.pumpWidget(await _buildResult(
+      result: Part7SessionResult(
+        set: _testSet,
+        selectedAnswers: const [0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+        reusedFromId: 'saved-7',
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Lưu bài'), findsNothing);
+    expect(find.text('Đã lưu bài này'), findsOneWidget);
   });
 
   testWidgets(
