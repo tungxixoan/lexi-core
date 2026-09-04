@@ -131,13 +131,15 @@ DeleteTopicUseCase deleteTopicUseCase(DeleteTopicUseCaseRef ref) =>
     DeleteTopicUseCase(ref.watch(vocabRepositoryProvider));
 
 @riverpod
-ExerciseGeneratorSource exerciseGeneratorSource(ExerciseGeneratorSourceRef ref) {
+ExerciseGeneratorSource exerciseGeneratorSource(
+    ExerciseGeneratorSourceRef ref) {
   final settings = ref.watch(userSettingsNotifierProvider);
   return ExerciseGeneratorSource(settings);
 }
 
 @riverpod
-GenerateExerciseUseCase generateExerciseUseCase(GenerateExerciseUseCaseRef ref) =>
+GenerateExerciseUseCase generateExerciseUseCase(
+        GenerateExerciseUseCaseRef ref) =>
     GenerateExerciseUseCase(ref.watch(exerciseGeneratorSourceProvider));
 
 @riverpod
@@ -148,6 +150,7 @@ ComputeSm2UseCase computeSm2UseCase(ComputeSm2UseCaseRef ref) =>
 StatsService statsService(StatsServiceRef ref) => StatsService(
       repository: ref.watch(vocabRepositoryProvider),
       prefs: ref.read(sharedPreferencesProvider),
+      currentUid: () => ref.read(currentUidProvider),
     );
 
 @riverpod
@@ -158,8 +161,8 @@ GetLearningStatsUseCase getLearningStatsUseCase(
 @riverpod
 Future<LearningStats> learningStats(LearningStatsRef ref) =>
     ref.watch(statsServiceProvider).computeStats(
-      ref.watch(userSettingsNotifierProvider).targetLanguage,
-    );
+          ref.watch(userSettingsNotifierProvider).targetLanguage,
+        );
 
 @riverpod
 ReadingPassageSource readingPassageSource(ReadingPassageSourceRef ref) {
@@ -230,7 +233,8 @@ Part5Source part5Source(Part5SourceRef ref) {
 }
 
 @riverpod
-GeneratePart5SetUseCase generatePart5SetUseCase(GeneratePart5SetUseCaseRef ref) =>
+GeneratePart5SetUseCase generatePart5SetUseCase(
+        GeneratePart5SetUseCaseRef ref) =>
     GeneratePart5SetUseCase(ref.watch(part5SourceProvider));
 
 @riverpod
@@ -240,7 +244,8 @@ Part6Source part6Source(Part6SourceRef ref) {
 }
 
 @riverpod
-GeneratePart6SetUseCase generatePart6SetUseCase(GeneratePart6SetUseCaseRef ref) =>
+GeneratePart6SetUseCase generatePart6SetUseCase(
+        GeneratePart6SetUseCaseRef ref) =>
     GeneratePart6SetUseCase(ref.watch(part6SourceProvider));
 
 @riverpod
@@ -250,5 +255,6 @@ Part7Source part7Source(Part7SourceRef ref) {
 }
 
 @riverpod
-GeneratePart7SetUseCase generatePart7SetUseCase(GeneratePart7SetUseCaseRef ref) =>
+GeneratePart7SetUseCase generatePart7SetUseCase(
+        GeneratePart7SetUseCaseRef ref) =>
     GeneratePart7SetUseCase(ref.watch(part7SourceProvider));
