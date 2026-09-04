@@ -8,6 +8,7 @@ import { getTopics } from "@/lib/topics";
 import { computeSm2 } from "@/lib/sm2";
 import { recordDailyActivity } from "@/lib/dailyActivity";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
+import { generateExercise } from "@/lib/practiceExercise";
 
 vi.mock("@/lib/useAuthUser", () => ({ useAuthUser: vi.fn() }));
 vi.mock("@/lib/SettingsContext", () => ({ useSettingsContext: vi.fn() }));
@@ -15,6 +16,10 @@ vi.mock("@/lib/vocabRecords", () => ({ getVocabRecords: vi.fn(), updateVocabReco
 vi.mock("@/lib/topics", () => ({ getTopics: vi.fn() }));
 vi.mock("@/lib/sm2", () => ({ computeSm2: vi.fn() }));
 vi.mock("@/lib/dailyActivity", () => ({ recordDailyActivity: vi.fn() }));
+// `generateExercise` is mocked (controllable per test); `shouldUseFlashcard`
+// stays REAL — the picker's short-circuits (never-reviewed word / no AI key)
+// are part of what these tests exercise.
+vi.mock("@/lib/practiceExercise", () => ({ generateExercise: vi.fn() }));
 
 let mockSearchParams = new URLSearchParams();
 vi.mock("next/navigation", () => ({
@@ -187,6 +192,10 @@ describe("PracticePage (session phase)", () => {
 
     expect(await screen.findByText("Từ 2 / 2")).toBeInTheDocument();
     expect(screen.getByText("second")).toBeInTheDocument();
+
+    // DEFAULT_SETTINGS carries no API key → aiAvailable is false → shouldUseFlashcard
+    // short-circuits every word to a flashcard and the AI generator is never called.
+    expect(generateExercise).not.toHaveBeenCalled();
 
     randomSpy.mockRestore();
   });
@@ -396,5 +405,95 @@ describe("PracticePage (action=start auto-trigger)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Đã hiểu" }));
 
     await waitFor(() => expect(recordDailyActivity).toHaveBeenCalledWith("u1", 2));
+  });
+});
+
+describe("PracticePage (AI exercise types)", () => {
+  function mockSettingsWithKey() {
+    vi.mocked(useSettingsContext).mockReturnValue({
+      settings: {
+        ...DEFAULT_SETTINGS,
+        providers: {
+          ...DEFAULT_SETTINGS.providers,
+          gemini: { model: "gemini-test", apiKeyCiphertext: "ck" },
+        },
+      },
+      loading: false,
+      error: null,
+      save: vi.fn(),
+    } as never);
+  }
+
+  it("mixes in an AI multiple-choice exercise for a reviewed word when a key is set, and completes the session", async () => {
+    // 0.99 pins selectSessionWords' Fisher-Yates to a no-op AND makes
+    // shouldUseFlashcard's `rng() < 0.3` false → the AI path is taken.
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.99);
+    mockSignedIn();
+    mockSettingsWithKey();
+    const record = makeRecord({ id: "1", headword: "ephemeral", sm2Repetitions: 1 });
+    vi.mocked(getVocabRecords).mockResolvedValue([record]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(generateExercise).mockResolvedValue({
+      type: "multiple_choice",
+      record,
+      question: "What does 'ephemeral' mean?",
+      options: ["short-lived", "eternal", "loud", "green"],
+      correctIndex: 0,
+    });
+
+    render(<PracticePage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
+
+    fireEvent.click(await screen.findByRole("button", { name: "short-lived" }));
+
+    expect(await screen.findByText("100%")).toBeInTheDocument();
+    expect(screen.getByText("Đúng 1 / 1 từ")).toBeInTheDocument();
+    expect(generateExercise).toHaveBeenCalled();
+    await waitFor(() =>
+      expect(updateVocabRecordSm2).toHaveBeenCalledWith(
+        "u1",
+        "1",
+        expect.objectContaining({ sm2Repetitions: 1 }),
+        "english"
+      )
+    );
+    expect(recordDailyActivity).toHaveBeenCalledWith("u1", 1);
+
+    randomSpy.mockRestore();
+  });
+
+  it("falls back to a flashcard when generateExercise resolves to a flashcard, and still completes", async () => {
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.99);
+    mockSignedIn();
+    mockSettingsWithKey();
+    const record = makeRecord({ id: "1", headword: "solo", sm2Repetitions: 2 });
+    vi.mocked(getVocabRecords).mockResolvedValue([record]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(generateExercise).mockResolvedValue({ type: "flashcard", record });
+
+    render(<PracticePage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
+
+    fireEvent.click(await screen.findByTestId("flashcard-card"));
+    fireEvent.click(screen.getByRole("button", { name: "Đã hiểu" }));
+
+    expect(await screen.findByText("100%")).toBeInTheDocument();
+    expect(generateExercise).toHaveBeenCalledTimes(1);
+
+    randomSpy.mockRestore();
+  });
+
+  it("uses a flashcard with no AI call for a never-reviewed word even when a key is set", async () => {
+    mockSignedIn();
+    mockSettingsWithKey();
+    const record = makeRecord({ id: "1", headword: "fresh", sm2Repetitions: 0 });
+    vi.mocked(getVocabRecords).mockResolvedValue([record]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<PracticePage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
+
+    await screen.findByTestId("flashcard-card");
+    expect(generateExercise).not.toHaveBeenCalled();
   });
 });

@@ -67,6 +67,7 @@ export function FillInBlankCard({ exercise, onGrade }: FillInBlankCardProps) {
           }
           value={value}
           disabled={submitted}
+          aria-label="Nhập từ cần điền"
           placeholder="Nhập từ cần điền…"
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}

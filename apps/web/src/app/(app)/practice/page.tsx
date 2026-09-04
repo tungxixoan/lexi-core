@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuthUser } from "@/lib/useAuthUser";
 import { useSettingsContext } from "@/lib/SettingsContext";
@@ -12,6 +12,11 @@ import { TopicFilterPopover } from "@/components/vocab-bank/TopicFilterPopover";
 import { SimpleDropdown, type SimpleDropdownOption } from "@/components/shared/SimpleDropdown";
 import { selectSessionWords, type SessionWordFilters } from "@/lib/practiceSession";
 import { FlashcardCard } from "@/components/practice/FlashcardCard";
+import { MultipleChoiceCard } from "@/components/practice/MultipleChoiceCard";
+import { FillInBlankCard } from "@/components/practice/FillInBlankCard";
+import { TranslationCard } from "@/components/practice/TranslationCard";
+import { generateExercise, type PracticeExercise } from "@/lib/practiceExercise";
+import { shouldUseFlashcard } from "@/lib/pickExercise";
 import { PronunciationButton } from "@/components/shared/PronunciationButton";
 import { ttsLanguageCode } from "@/lib/pronunciation";
 import { computeSm2, type Sm2Fields } from "@/lib/sm2";
@@ -41,6 +46,8 @@ export interface SessionGradeResult {
 function PracticePageContent() {
   const { user, loading: authLoading } = useAuthUser();
   const { settings } = useSettingsContext();
+  const activeConfig = settings ? settings.providers[settings.activeProvider] : null;
+  const aiAvailable = Boolean(activeConfig?.apiKeyCiphertext);
   const searchParams = useSearchParams();
   const action = searchParams.get("action");
   const autoStartTriggeredRef = useRef(false);
@@ -57,6 +64,48 @@ function PracticePageContent() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sessionResults, setSessionResults] = useState<SessionGradeResult[]>([]);
   const sm2WrittenRef = useRef(false);
+
+  // A parallel array to `sessionWords`: the resolved exercise for each word, or
+  // `null` while its AI generation is still in flight. `exercisesRef` mirrors it
+  // so `generateAt` can check "already generated?" without closing over a stale
+  // `exercises` value. `sessionTokenRef` is bumped on every session start — a
+  // slow `generateExercise` from an abandoned session compares its captured
+  // token against the current one and discards its result.
+  const [exercises, setExercises] = useState<(PracticeExercise | null)[]>([]);
+  const exercisesRef = useRef<(PracticeExercise | null)[]>([]);
+  const sessionTokenRef = useRef(0);
+
+  useEffect(() => {
+    exercisesRef.current = exercises;
+  }, [exercises]);
+
+  const generateAt = useCallback(
+    async (index: number, words: VocabRecord[], token: number) => {
+      if (index < 0 || index >= words.length) return;
+      if (exercisesRef.current[index]) return;
+      const word = words[index];
+      let ex: PracticeExercise;
+      if (shouldUseFlashcard(word, aiAvailable)) {
+        ex = { type: "flashcard", record: word };
+      } else if (activeConfig?.apiKeyCiphertext) {
+        ex = await generateExercise(word, {
+          provider: settings!.activeProvider,
+          model: activeConfig.model,
+          apiKeyCiphertext: activeConfig.apiKeyCiphertext,
+        });
+      } else {
+        ex = { type: "flashcard", record: word };
+      }
+      if (token !== sessionTokenRef.current) return;
+      setExercises((prev) => {
+        if (prev[index]) return prev;
+        const next = [...prev];
+        next[index] = ex;
+        return next;
+      });
+    },
+    [aiAvailable, activeConfig, settings]
+  );
 
   useEffect(() => {
     if (!user || !settings) return;
@@ -81,7 +130,12 @@ function PracticePageContent() {
     setSessionResults([]);
     sm2WrittenRef.current = false;
     setPhase("session");
-  }, [action, records]);
+    const token = ++sessionTokenRef.current;
+    setExercises(new Array(words.length).fill(null));
+    exercisesRef.current = new Array(words.length).fill(null);
+    void generateAt(0, words, token);
+    void generateAt(1, words, token);
+  }, [action, records, generateAt]);
 
   useEffect(() => {
     if (phase !== "result" || sm2WrittenRef.current || !user) return;
@@ -125,6 +179,11 @@ function PracticePageContent() {
     setSessionResults([]);
     sm2WrittenRef.current = false;
     setPhase("session");
+    const token = ++sessionTokenRef.current;
+    setExercises(new Array(words.length).fill(null));
+    exercisesRef.current = new Array(words.length).fill(null);
+    void generateAt(0, words, token);
+    void generateAt(1, words, token);
   }
 
   function handleGrade(quality: 1 | 5) {
@@ -134,6 +193,9 @@ function PracticePageContent() {
 
     if (currentIndex + 1 < sessionWords.length) {
       setCurrentIndex(currentIndex + 1);
+      const token = sessionTokenRef.current;
+      void generateAt(currentIndex + 1, sessionWords, token);
+      void generateAt(currentIndex + 2, sessionWords, token);
     } else {
       setPhase("result");
       // The batch SM-2 update runs in the useEffect above once phase becomes "result".
@@ -199,6 +261,8 @@ function PracticePageContent() {
 
   if (phase === "session") {
     const progressPct = Math.round(((currentIndex + 1) / sessionWords.length) * 100);
+    const ex = exercises[currentIndex] ?? null;
+    const word = sessionWords[currentIndex];
     return (
       <div>
         <div className="practice-progress-row">
@@ -210,11 +274,17 @@ function PracticePageContent() {
         <div className="practice-progress-track">
           <div className="practice-progress-fill" style={{ width: `${progressPct}%` }} />
         </div>
-        <FlashcardCard
-          key={sessionWords[currentIndex].id}
-          record={sessionWords[currentIndex]}
-          onGrade={handleGrade}
-        />
+        {ex === null ? (
+          <p className="pe-loading">Đang tạo bài tập…</p>
+        ) : ex.type === "flashcard" ? (
+          <FlashcardCard key={word.id} record={word} onGrade={handleGrade} />
+        ) : ex.type === "multiple_choice" ? (
+          <MultipleChoiceCard key={word.id} exercise={ex} onGrade={handleGrade} />
+        ) : ex.type === "fill_in_blank" ? (
+          <FillInBlankCard key={word.id} exercise={ex} onGrade={handleGrade} />
+        ) : (
+          <TranslationCard key={word.id} exercise={ex} onGrade={handleGrade} />
+        )}
       </div>
     );
   }

@@ -32,6 +32,7 @@ export function TranslationCard({ exercise, onGrade }: TranslationCardProps) {
         rows={2}
         value={value}
         disabled={revealed}
+        aria-label="Bản dịch của bạn"
         placeholder="Nhập bản dịch của bạn…"
         onChange={(e) => setValue(e.target.value)}
       />
