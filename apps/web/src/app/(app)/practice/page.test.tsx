@@ -444,7 +444,9 @@ describe("PracticePage (AI exercise types)", () => {
     render(<PracticePage />);
     fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
 
-    fireEvent.click(await screen.findByRole("button", { name: "short-lived" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "short-lived" }, { timeout: 3000 })
+    );
 
     expect(await screen.findByText("100%")).toBeInTheDocument();
     expect(screen.getByText("Đúng 1 / 1 từ")).toBeInTheDocument();
@@ -479,6 +481,75 @@ describe("PracticePage (AI exercise types)", () => {
 
     expect(await screen.findByText("100%")).toBeInTheDocument();
     expect(generateExercise).toHaveBeenCalledTimes(1);
+
+    randomSpy.mockRestore();
+  });
+
+  it("drives a 3-word session through MC → fill-in-blank → translation and batches SM-2 for all three", async () => {
+    // 0.99: Fisher-Yates no-op (deterministic word order 1,2,3) AND
+    // shouldUseFlashcard's `rng() < 0.3` false → every reviewed word takes the AI path.
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.99);
+    mockSignedIn();
+    mockSettingsWithKey();
+    const w1 = makeRecord({ id: "1", headword: "one", sm2Repetitions: 1 });
+    const w2 = makeRecord({ id: "2", headword: "two", sm2Repetitions: 1 });
+    const w3 = makeRecord({ id: "3", headword: "three", sm2Repetitions: 1 });
+    vi.mocked(getVocabRecords).mockResolvedValue([w1, w2, w3]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(generateExercise).mockImplementation(async (record) => {
+      if (record.id === "1") {
+        return {
+          type: "multiple_choice",
+          record,
+          question: "Pick one",
+          options: ["opt-a", "opt-b", "opt-c", "opt-d"],
+          correctIndex: 0,
+        };
+      }
+      if (record.id === "2") {
+        return { type: "fill_in_blank", record, sentence: "The ___ word.", answer: "two" };
+      }
+      return {
+        type: "translation",
+        record,
+        prompt: "Translate to Vietnamese: 'the third'",
+        answer: "cái thứ ba",
+      };
+    });
+
+    render(<PracticePage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
+
+    // Word 1 — MC, pick a WRONG option (correctIndex 0) → quality 1.
+    fireEvent.click(await screen.findByRole("button", { name: "opt-b" }, { timeout: 3000 }));
+
+    // Word 2 — fill-in-blank, type the right answer + Kiểm tra → quality 5.
+    await screen.findByText("Từ 2 / 3", {}, { timeout: 3000 });
+    fireEvent.change(await screen.findByLabelText("Nhập từ cần điền"), {
+      target: { value: "two" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Kiểm tra" }));
+
+    // Word 3 — translation, reveal then self-grade "Đúng rồi" → quality 5.
+    await screen.findByText("Từ 3 / 3", {}, { timeout: 3000 });
+    fireEvent.change(screen.getByLabelText("Bản dịch của bạn"), {
+      target: { value: "guess" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Xem đáp án" }));
+    fireEvent.click(screen.getByRole("button", { name: "Đúng rồi" }));
+
+    expect(await screen.findByText("Đúng 2 / 3 từ")).toBeInTheDocument();
+
+    await waitFor(() => expect(vi.mocked(computeSm2)).toHaveBeenCalledTimes(3));
+    const qualityById = new Map(
+      vi.mocked(computeSm2).mock.calls.map((call) => [(call[0] as VocabRecord).id, call[1]])
+    );
+    expect(qualityById.get("1")).toBe(1);
+    expect(qualityById.get("2")).toBe(5);
+    expect(qualityById.get("3")).toBe(5);
+    expect(vi.mocked(updateVocabRecordSm2)).toHaveBeenCalledTimes(3);
+    expect(recordDailyActivity).toHaveBeenCalledTimes(1);
+    expect(recordDailyActivity).toHaveBeenCalledWith("u1", 3);
 
     randomSpy.mockRestore();
   });

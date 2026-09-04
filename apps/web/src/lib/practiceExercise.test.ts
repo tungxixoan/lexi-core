@@ -115,6 +115,36 @@ describe("parseExercise", () => {
     });
   });
 
+  it("falls back to flashcard for a multiple_choice with fewer than 2 options", () => {
+    expect(
+      parseExercise({ type: "multiple_choice", question: "q", options: [], correctIndex: 0 }, record)
+    ).toEqual({ type: "flashcard", record });
+  });
+
+  it("falls back to flashcard when multiple_choice correctIndex is out of range", () => {
+    expect(
+      parseExercise(
+        { type: "multiple_choice", question: "q", options: ["a", "b"], correctIndex: 5 },
+        record
+      )
+    ).toEqual({ type: "flashcard", record });
+  });
+
+  it("still parses a multiple_choice with 4 options and an in-range correctIndex", () => {
+    expect(
+      parseExercise(
+        { type: "multiple_choice", question: "q", options: ["a", "b", "c", "d"], correctIndex: 2 },
+        record
+      )
+    ).toEqual({
+      type: "multiple_choice",
+      record,
+      question: "q",
+      options: ["a", "b", "c", "d"],
+      correctIndex: 2,
+    });
+  });
+
   it("falls back to flashcard when fill_in_blank is missing sentence + answer", () => {
     expect(parseExercise({ type: "fill_in_blank" }, record)).toEqual({ type: "flashcard", record });
   });

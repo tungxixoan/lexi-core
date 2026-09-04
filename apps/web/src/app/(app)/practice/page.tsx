@@ -194,7 +194,10 @@ function PracticePageContent() {
     if (currentIndex + 1 < sessionWords.length) {
       setCurrentIndex(currentIndex + 1);
       const token = sessionTokenRef.current;
-      void generateAt(currentIndex + 1, sessionWords, token);
+      // `currentIndex + 1` was already seeded (at session start for index 1,
+      // or by the previous grade). Only the new lookahead slot needs seeding —
+      // firing `+1` again could start a duplicate in-flight generateExercise
+      // while its first call is still pending (the exercisesRef guard is null).
       void generateAt(currentIndex + 2, sessionWords, token);
     } else {
       setPhase("result");
@@ -275,7 +278,7 @@ function PracticePageContent() {
           <div className="practice-progress-fill" style={{ width: `${progressPct}%` }} />
         </div>
         {ex === null ? (
-          <p className="pe-loading">Đang tạo bài tập…</p>
+          <p className="pe-loading" role="status">Đang tạo bài tập…</p>
         ) : ex.type === "flashcard" ? (
           <FlashcardCard key={word.id} record={word} onGrade={handleGrade} />
         ) : ex.type === "multiple_choice" ? (

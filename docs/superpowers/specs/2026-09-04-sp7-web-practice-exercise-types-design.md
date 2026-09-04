@@ -104,10 +104,13 @@ idiom. Reuse `--accent`, `--success`, `--danger`, `--border` tokens.
 - On session start: `generateAt(0)` awaited (show a spinner until
   `exercises[0]` is non-null), `generateAt(1)` fired without await.
 - In `handleGrade`, after computing `nextResults`: if not the last word,
-  `generateAt(currentIndex + 2)` (index+1 was pre-fetched on the previous
-  grade / at start) — actually simplest: after advancing to `currentIndex+1`,
-  call `generateAt(currentIndex + 1)` (no-op if already set) AND
-  `generateAt(currentIndex + 2)`. Keep it to "current + next is always ready".
+  after advancing to `currentIndex + 1`, call **only** `generateAt(currentIndex + 2)`.
+  `currentIndex + 1` is already seeded (at session start for index 1, or by the
+  previous grade), so re-firing it risks a duplicate in-flight `generateExercise`
+  (wasted BYOK call) while its first request is still pending — the
+  `exercisesRef` guard is `null` until the response lands. Matches Flutter's
+  `practice_session_provider.dart` (`_generateAt(0)` + `_generateAt(1)` at start,
+  then a single `_generateAt(nextIndex + 1)` per grade).
 - `phase === "session"` render: `const ex = exercises[currentIndex]`. If
   `ex === null` → a small "Đang tạo bài tập…" spinner. Else switch on
   `ex.type`: `flashcard` → the existing `<FlashcardCard record={word} onGrade={handleGrade} />`,

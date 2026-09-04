@@ -81,6 +81,16 @@ export function parseExercise(
         return flashcard;
       }
       if (typeof correctIndex !== "number") return flashcard;
+      // A payload with <2 options or an out-of-range correctIndex renders a
+      // card with no gradeable answer — the session would dead-end (no grade →
+      // no advance). Fall back to a flashcard instead.
+      if (
+        options.length < 2 ||
+        correctIndex < 0 ||
+        correctIndex >= options.length
+      ) {
+        return flashcard;
+      }
       return {
         type: "multiple_choice",
         record,

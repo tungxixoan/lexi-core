@@ -16,7 +16,7 @@ interface TranslationCardProps {
 // "Xem đáp án" disabled while the textarea is empty. After reveal the answer
 // shows in a success box with "Sai rồi" → onGrade(1) / "Đúng rồi" → onGrade(5).
 function stripPrompt(prompt: string): string {
-  return prompt.replace("Translate to Vietnamese: ", "").replaceAll("'", "");
+  return prompt.replaceAll("Translate to Vietnamese: ", "").replaceAll("'", "");
 }
 
 export function TranslationCard({ exercise, onGrade }: TranslationCardProps) {
