@@ -85,7 +85,7 @@ Truy cập qua tab "Luyện tập" → card "Quét từ vựng":
 - Dán bất kỳ văn bản nào (bài báo, tin nhắn...) vào ô nhập (tối đa 3000 ký tự), bấm "Quét"
 - **Highlight từ đã học** — quét cục bộ (không cần AI), so khớp chuỗi con không phân biệt hoa/thường với Vocab Bank; hiện ngay lập tức, hoạt động cả khi tắt AI
 - Bấm vào từ đã highlight để mở thẳng trang chi tiết từ đó trong Vocab Bank
-- **Gợi ý từ mới** (cần bật AI) — 1 lần gọi AI duy nhất, loại trừ các từ đã có trong Vocab Bank, trả về đầy đủ IPA/nghĩa/định nghĩa/từ đồng nghĩa/ví dụ/chủ đề gợi ý/cấp độ CEFR cho mỗi từ
+- **Gợi ý từ mới** (cần API key AI) — 1 lần gọi AI duy nhất, loại trừ các từ đã có trong Vocab Bank, trả về đầy đủ IPA/nghĩa/định nghĩa/từ đồng nghĩa/ví dụ/chủ đề gợi ý/cấp độ CEFR cho mỗi từ
 - Bấm "Lưu" trên gợi ý để mở sheet lưu từ y hệt luồng tra từ ở tab Dictionary (chỉnh sửa nghĩa, chọn chủ đề, ghi chú trước khi lưu)
 - **Bản dịch tiếng Việt** của toàn bộ đoạn văn (cùng 1 lần gọi AI ở trên) — cũng highlight nghĩa tiếng Việt của các từ đã học trong bản dịch (chỉ hiển thị, không bấm được)
 - Không ảnh hưởng SM-2 cho tới khi người dùng chủ động lưu một từ gợi ý
@@ -460,8 +460,8 @@ firebase hosting:channel:deploy preview
 
 ## Bảo mật
 
-- **API key AI không bao giờ được ghi lên Firestore** — lưu hoàn toàn trong SharedPreferences
-- Chỉ các trường sau được đồng bộ lên Firestore: `targetLanguage`, `targetCefrLevel`
+- **Khoá API thô không bao giờ rời khỏi máy** — chỉ bản mã hoá Cloud KMS (ciphertext) của khoá mới được đồng bộ lên Firestore
+- Các trường được đồng bộ lên Firestore (qua `AiSettingsSyncService`): `activeProvider`, `model` của từng provider, và `targetLanguage`. `targetCefrLevel` và các tuỳ chọn còn lại chỉ lưu cục bộ trong SharedPreferences, không đồng bộ
 - Dữ liệu từ vựng (`vocab_records`, `topics`) đồng bộ có mã hóa Firestore
 - Firebase Security Rules giới hạn đọc/ghi theo UID người dùng
 
@@ -497,7 +497,6 @@ users/
     settings/
       user/
         targetLanguage: string
-        activeContext: string
         targetCefrLevel: string | null
 ```
 
