@@ -2119,3 +2119,9 @@ STATE OF MIGRATION: Flutter app effectively FULLY on Bloom. All 6 feature areas 
 SP-1 crash+translation-btn+bottomnav: DONE c27cdcd. SP-2 contrast+flashcard: DONE a33d16f. SP-3 submit-count+speed-slider+listen-btns: DONE 608a785. SP-4 streak Firestore sync: DONE cec92ca.
 User instruction 2026-09-03: "Chạy tuần tự đến SP cuối cùng không cần hỏi lại" — run SP-5..8 autonomously via spec→plan→SDD.
 SP-5 = port web savedReadingExercises + savedListeningExercises to Flutter (Lưu bài / Lấy bài có sẵn) — bilingual + part5/6/7 + dictation + comprehension. SP-6 = 4 IA changes (Tiến độ tab, inline reading/listening sub-hub options, web Radar→sidebar, bank search/filter parity). SP-7 = MC/fill/translation exercises in web practice. SP-8 = app icon (leaf mark).
+
+## SP-5 execution (plan 9709123, 9 tasks)
+Task 1 (entity JSON round-trips): complete (9709123..17e9a38, review Approved). +13 tests (793 total), analyze 0. Part5/6/7 sets+children, DictationItem, BlankSpan, ListeningPassage/Turn/Question got toJson/fromJson; ReadingPassage already had it. speakerGenders round-trips + assignVoices verified distinct.
+  CARRY TO TASK 2/3: (a) ReadingPassage.fromJson + BilingualSentence.fromJson use UNGUARDED hard casts (pre-existing) — the service must merge the wrapper doc's fields (id/level/context/targetLanguage/generatedAt) into the passage map BEFORE calling ReadingPassage.fromJson, or it crashes on a web-saved minimal doc. Same for Part5/6/7 sets (their fromJson tolerates missing extras — OK) and ListeningPassage (tolerates).
+  (b) BilingualSentence per-sentence key: Flutter `vocabIds` vs web `vocabWords` — only real per-field mismatch, degrades to [] not crash, acceptable for reuse.
+  Minor for whole-branch: EconomyVolume.values.byName unguarded (part5/6/7_*.dart) inconsistent w/ defensive style; BlankSpan.fromJson hard casts (not in persisted shape); no explicit "load web-minimal doc" test for Set/Passage entities; not test-first.

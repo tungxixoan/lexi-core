@@ -74,6 +74,10 @@ void main() {
     );
     final data = await _doc(fs, 'listening_exercises', id!);
     expect(data['type'], 'dictation');
+    // Listening docs use the `item` key (web savedListeningExercises.ts), not
+    // `passage` — a reading/listening key mismatch breaks cross-platform load.
+    expect(data['item'], {'text': 'hello'});
+    expect(data.containsKey('passage'), isFalse);
   });
 
   group('save + getRandom round-trip', () {
@@ -495,5 +499,38 @@ void main() {
     );
     expect(got!.id, 'web1');
     expect((got.passageJson['questions'] as List).length, 1);
+  });
+
+  test('a web-saved listening doc (item key) loads', () async {
+    final fs = FakeFirebaseFirestore();
+    // Web savedListeningExercises.ts writes the body under `item`, not `passage`.
+    await fs
+        .collection('users')
+        .doc(_uid)
+        .collection('listening_exercises')
+        .doc('webL1')
+        .set({
+      'type': 'comprehension',
+      'item': {
+        'kind': 'conversation',
+        'turns': [
+          {'speaker': 'A', 'text': 'Hello.'}
+        ],
+        'questions': <dynamic>[],
+        'speakerGenders': {'A': 'male'},
+      },
+      'generationFilters': {'context': 'business', 'level': 'b1'},
+      'targetLanguage': 'english',
+      'createdAt': '2026-09-01T00:00:00.000Z',
+      'id': 'webL1',
+    });
+
+    final got = await _service(firestore: fs).getRandom(
+      type: SavedExerciseType.comprehension,
+      targetLanguage: Language.english,
+      filters: const {'context': 'business', 'level': null},
+    );
+    expect(got!.id, 'webL1');
+    expect((got.passageJson['turns'] as List).length, 1);
   });
 }

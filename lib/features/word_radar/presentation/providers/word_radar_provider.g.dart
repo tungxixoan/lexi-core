@@ -6,7 +6,7 @@ part of 'word_radar_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$wordRadarNotifierHash() => r'3aa7468fe2e08b8016595f5bc13adeee86f3480d';
+String _$wordRadarNotifierHash() => r'6c85849ac7a3f6da94da406db20e8558531fcb20';
 
 /// See also [WordRadarNotifier].
 @ProviderFor(WordRadarNotifier)

@@ -18,16 +18,18 @@ enum SavedExerciseType {
   dictation,
   comprehension;
 
+  bool get _isListening =>
+      this == SavedExerciseType.dictation ||
+      this == SavedExerciseType.comprehension;
+
   /// `bilingual|part5|part6|part7` → `reading_exercises`;
   /// `dictation|comprehension` → `listening_exercises`.
-  String get collection => switch (this) {
-        SavedExerciseType.bilingual ||
-        SavedExerciseType.part5 ||
-        SavedExerciseType.part6 ||
-        SavedExerciseType.part7 =>
-          'reading_exercises',
-        SavedExerciseType.dictation ||
-        SavedExerciseType.comprehension =>
-          'listening_exercises',
-      };
+  String get collection =>
+      _isListening ? 'listening_exercises' : 'reading_exercises';
+
+  /// The doc field holding the serialized exercise body. Web
+  /// `savedReadingExercises.ts` names it `passage`; `savedListeningExercises.ts`
+  /// names it `item` — must match per-collection or a cross-platform doc fails
+  /// to load.
+  String get bodyKey => _isListening ? 'item' : 'passage';
 }

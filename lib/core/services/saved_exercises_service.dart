@@ -12,13 +12,15 @@ import '../../features/vocabulary/domain/entities/cefr_level.dart';
 ///   - `users/{uid}/listening_exercises` — `dictation` / `comprehension`
 ///     (apps/web/src/lib/savedListeningExercises.ts)
 ///
-/// Doc body matches web exactly: `{type, passage, generationFilters,
-/// targetLanguage, createdAt, id}` where `id` is duplicated into the body (web
-/// does the same via `setDoc(ref, {...record, id: ref.id})` — needed for the
-/// Flutter Hive-cache sync that reads `json['id']` directly).
+/// Doc body matches web exactly: `{type, body, generationFilters,
+/// targetLanguage, createdAt, id}` where the body field is `passage` for
+/// reading docs and `item` for listening docs (see [SavedExerciseType.bodyKey]
+/// — web uses different keys per collection), and `id` is duplicated into the
+/// body (web does the same via `setDoc(ref, {...record, id: ref.id})` — needed
+/// for the Flutter Hive-cache sync that reads `json['id']` directly).
 ///
-/// The `passage` map is returned raw from [getRandom]; the caller decodes it
-/// with the matching entity's `fromJson`.
+/// The body map is returned raw from [getRandom]; the caller decodes it with
+/// the matching entity's `fromJson`.
 class SavedExercisesService {
   SavedExercisesService({
     FirebaseFirestore? firestore,
@@ -49,7 +51,7 @@ class SavedExercisesService {
     final ref = _collection(uid, type.collection).doc();
     await ref.set({
       'type': type.name,
-      'passage': passageJson,
+      type.bodyKey: passageJson,
       'generationFilters': generationFilters,
       'targetLanguage': targetLanguage.name,
       'createdAt': DateTime.now().toIso8601String(),
@@ -85,7 +87,7 @@ class SavedExercisesService {
         final savedFilters = _asMap(data['generationFilters']);
         if (!_matches(type, savedFilters, filters)) continue;
 
-        candidates.add((id: id, passageJson: _asMap(data['passage'])));
+        candidates.add((id: id, passageJson: _asMap(data[type.bodyKey])));
       }
 
       if (candidates.isEmpty) return null;
@@ -110,7 +112,8 @@ class SavedExercisesService {
       for (final doc in snap.docs) {
         final data = doc.data();
         if (data['type'] != SavedExerciseType.bilingual.name) continue;
-        final vocabIds = _asMap(data['passage'])['vocabIds'];
+        final vocabIds =
+            _asMap(data[SavedExerciseType.bilingual.bodyKey])['vocabIds'];
         if (vocabIds is List) {
           ids.addAll(vocabIds.map((e) => e.toString()));
         }
