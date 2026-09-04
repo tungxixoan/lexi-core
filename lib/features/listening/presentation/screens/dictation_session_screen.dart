@@ -365,15 +365,6 @@ class _SpeedSelector extends StatelessWidget {
   final ValueChanged<double> onChanged;
 
   @override
-  Widget build(BuildContext context) {
-    return BloomSegmented<double>(
-      segments: const [
-        BloomSegment(value: 0.75, label: '0.75x'),
-        BloomSegment(value: 1.0, label: '1x'),
-        BloomSegment(value: 1.25, label: '1.25x'),
-      ],
-      selected: speed,
-      onChanged: onChanged,
-    );
-  }
+  Widget build(BuildContext context) =>
+      BloomSpeedSlider(value: speed, onChanged: onChanged);
 }

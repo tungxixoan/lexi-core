@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/di/app_providers.dart';
 import '../../../../core/theme/bloom/bloom.dart';
+import '../../../../services/tts_service.dart';
 import '../../../dictionary/domain/entities/app_context.dart';
 import '../../../dictionary/domain/entities/lookup_result.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
+import '../../../dictionary/presentation/widgets/pronounce_button.dart';
 import '../../../dictionary/presentation/widgets/save_vocab_sheet.dart';
 import '../../../vocabulary/domain/entities/cefr_level.dart';
 import '../../../vocabulary/domain/entities/vocab_record.dart';
@@ -166,6 +169,21 @@ class _VocabSuggestionsSectionState
                           ],
                         ),
                       ),
+                      if (ref
+                              .read(userSettingsNotifierProvider)
+                              .targetLanguage
+                              .ttsCloudCode !=
+                          null)
+                        PronounceButton(
+                          onPressed: () => ref
+                              .read(ttsServiceProvider)
+                              .pronounce(
+                                  s.headword,
+                                  ref
+                                      .read(userSettingsNotifierProvider)
+                                      .targetLanguage,
+                                  tier: PronunciationTier.word),
+                        ),
                       if (s.cefrLevel != null)
                         BloomCefrPill(s.cefrLevel!.label),
                       const SizedBox(width: 8),

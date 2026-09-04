@@ -2,8 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/di/app_providers.dart';
 import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/widgets/filter_tile.dart';
+import '../../../../services/tts_service.dart';
+import 'pronounce_button.dart';
 import '../../../../core/widgets/selection_sheets.dart';
 import '../../../../features/vocabulary/domain/entities/cefr_level.dart';
 import '../../../../features/vocabulary/domain/entities/topic.dart';
@@ -144,6 +147,17 @@ class _SaveVocabSheetState extends ConsumerState<SaveVocabSheet> {
                           fontSize: 20, fontWeight: FontWeight.w800),
                     ),
                   ),
+                  if (ref
+                          .read(userSettingsNotifierProvider)
+                          .targetLanguage
+                          .ttsCloudCode !=
+                      null)
+                    PronounceButton(
+                      onPressed: () => ref.read(ttsServiceProvider).pronounce(
+                          widget.result.headword,
+                          ref.read(userSettingsNotifierProvider).targetLanguage,
+                          tier: PronunciationTier.word),
+                    ),
                   BloomIconButton(
                     icon: Icons.close,
                     onPressed: () => Navigator.of(context).pop(false),

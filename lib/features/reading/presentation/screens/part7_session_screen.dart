@@ -11,11 +11,13 @@ class Part7SessionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen<AsyncValue<Part7SessionState?>>(part7PracticeNotifierProvider, (prev, next) {
+    ref.listen<AsyncValue<Part7SessionState?>>(part7PracticeNotifierProvider,
+        (prev, next) {
       final session = next.valueOrNull;
       if (session == null) return;
       if (session.isSubmitted) {
-        final result = Part7SessionResult(set: session.set, selectedAnswers: session.selectedAnswers);
+        final result = Part7SessionResult(
+            set: session.set, selectedAnswers: session.selectedAnswers);
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (context.mounted) {
             context.go('/reading/part7/session/result', extra: result);
@@ -37,7 +39,8 @@ class Part7SessionScreen extends ConsumerWidget {
         if (session.isSubmitted) return const Scaffold(body: SizedBox.shrink());
         return _SessionScaffold(session: session);
       },
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(body: Center(child: Text('Lỗi: $e'))),
     );
   }
@@ -83,7 +86,9 @@ class _SessionScaffoldState extends ConsumerState<_SessionScaffold> {
                       children: [
                         BloomGroupChips(
                           labels: [
-                            for (var g = 0; g < session.set.passageGroups.length; g++)
+                            for (var g = 0;
+                                g < session.set.passageGroups.length;
+                                g++)
                               'Đoạn ${g + 1}',
                           ],
                           activeIndex: _activeGroup,
@@ -96,19 +101,26 @@ class _SessionScaffoldState extends ConsumerState<_SessionScaffold> {
                           // behind the peeking passage sheet, so reaching the
                           // last question of a long group is only a scroll.
                           child: SingleChildScrollView(
-                            padding: EdgeInsets.only(bottom: peek + BloomSpacing.md),
+                            padding:
+                                EdgeInsets.only(bottom: peek + BloomSpacing.md),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                for (var q = 0; q < group.questions.length; q++) ...[
-                                  if (q > 0) const SizedBox(height: BloomSpacing.sm),
+                                for (var q = 0;
+                                    q < group.questions.length;
+                                    q++) ...[
+                                  if (q > 0)
+                                    const SizedBox(height: BloomSpacing.sm),
                                   _QuestionCard(
                                     question: group.questions[q],
                                     questionIndex: q,
                                     selected: session.selectedAnswers[
                                         Part7SessionState.flatIndex(
-                                            session.set.passageGroups, _activeGroup, q)],
-                                    onSelected: (o) => notifier.selectAnswer(_activeGroup, q, o),
+                                            session.set.passageGroups,
+                                            _activeGroup,
+                                            q)],
+                                    onSelected: (o) => notifier.selectAnswer(
+                                        _activeGroup, q, o),
                                   ),
                                 ],
                               ],
@@ -134,11 +146,11 @@ class _SessionScaffoldState extends ConsumerState<_SessionScaffold> {
             Padding(
               padding: const EdgeInsets.fromLTRB(
                   16, BloomSpacing.sm, 16, BloomSpacing.md),
-              child: BloomPillButton(
-                label: 'Nộp bài',
-                variant: BloomButtonVariant.primary,
-                block: true,
-                onPressed: session.canSubmit ? notifier.submit : null,
+              child: BloomSubmitBar(
+                answered:
+                    session.selectedAnswers.where((a) => a != null).length,
+                total: session.selectedAnswers.length,
+                onSubmit: session.canSubmit ? notifier.submit : null,
               ),
             ),
           ],
@@ -169,7 +181,8 @@ class _QuestionCard extends StatelessWidget {
         children: [
           Text(
             '${questionIndex + 1}. ${question.question}',
-            style: webScaled(const TextStyle(fontSize: 14, fontWeight: FontWeight.w700))
+            style: webScaled(
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w700))
                 .copyWith(color: context.bloom.ink),
           ),
           for (var o = 0; o < question.options.length; o++) ...[
@@ -178,7 +191,8 @@ class _QuestionCard extends StatelessWidget {
               label: question.options[o],
               leading: String.fromCharCode(65 + o),
               onTap: () => onSelected(o),
-              state: selected == o ? BloomMcState.selected : BloomMcState.neutral,
+              state:
+                  selected == o ? BloomMcState.selected : BloomMcState.neutral,
             ),
           ],
         ],

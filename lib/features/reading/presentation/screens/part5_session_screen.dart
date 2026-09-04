@@ -11,11 +11,13 @@ class Part5SessionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen<AsyncValue<Part5SessionState?>>(part5PracticeNotifierProvider, (prev, next) {
+    ref.listen<AsyncValue<Part5SessionState?>>(part5PracticeNotifierProvider,
+        (prev, next) {
       final session = next.valueOrNull;
       if (session == null) return;
       if (session.isSubmitted) {
-        final result = Part5SessionResult(set: session.set, selectedAnswers: session.selectedAnswers);
+        final result = Part5SessionResult(
+            set: session.set, selectedAnswers: session.selectedAnswers);
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (context.mounted) {
             context.go('/reading/part5/session/result', extra: result);
@@ -37,7 +39,8 @@ class Part5SessionScreen extends ConsumerWidget {
         if (session.isSubmitted) return const Scaffold(body: SizedBox.shrink());
         return _SessionScaffold(session: session);
       },
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(body: Center(child: Text('Lỗi: $e'))),
     );
   }
@@ -70,13 +73,16 @@ class _SessionScaffold extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      for (var i = 0; i < session.set.questions.length; i++) ...[
+                      for (var i = 0;
+                          i < session.set.questions.length;
+                          i++) ...[
                         if (i > 0) const SizedBox(height: BloomSpacing.md),
                         _QuestionCard(
                           index: i,
                           question: session.set.questions[i],
                           selected: session.selectedAnswers[i],
-                          onSelected: (optionIndex) => notifier.selectAnswer(i, optionIndex),
+                          onSelected: (optionIndex) =>
+                              notifier.selectAnswer(i, optionIndex),
                         ),
                       ],
                     ],
@@ -85,11 +91,11 @@ class _SessionScaffold extends ConsumerWidget {
               ),
               Padding(
                 padding: const EdgeInsets.only(top: BloomSpacing.sm),
-                child: BloomPillButton(
-                  label: 'Nộp bài',
-                  variant: BloomButtonVariant.primary,
-                  block: true,
-                  onPressed: session.canSubmit ? notifier.submit : null,
+                child: BloomSubmitBar(
+                  answered:
+                      session.selectedAnswers.where((a) => a != null).length,
+                  total: session.selectedAnswers.length,
+                  onSubmit: session.canSubmit ? notifier.submit : null,
                 ),
               ),
             ],
@@ -121,7 +127,8 @@ class _QuestionCard extends StatelessWidget {
         children: [
           Text(
             '${index + 1}. ${question.sentenceWithBlank}',
-            style: webScaled(const TextStyle(fontSize: 14, fontWeight: FontWeight.w700))
+            style: webScaled(
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w700))
                 .copyWith(color: context.bloom.ink),
           ),
           const SizedBox(height: BloomSpacing.md),
@@ -131,7 +138,8 @@ class _QuestionCard extends StatelessWidget {
               label: question.options[i],
               leading: String.fromCharCode(65 + i),
               onTap: () => onSelected(i),
-              state: selected == i ? BloomMcState.selected : BloomMcState.neutral,
+              state:
+                  selected == i ? BloomMcState.selected : BloomMcState.neutral,
             ),
           ],
         ],

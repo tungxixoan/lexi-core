@@ -10,11 +10,13 @@ class Part6SessionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen<AsyncValue<Part6SessionState?>>(part6PracticeNotifierProvider, (prev, next) {
+    ref.listen<AsyncValue<Part6SessionState?>>(part6PracticeNotifierProvider,
+        (prev, next) {
       final session = next.valueOrNull;
       if (session == null) return;
       if (session.isSubmitted) {
-        final result = Part6SessionResult(set: session.set, selectedAnswers: session.selectedAnswers);
+        final result = Part6SessionResult(
+            set: session.set, selectedAnswers: session.selectedAnswers);
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (context.mounted) {
             context.go('/reading/part6/session/result', extra: result);
@@ -36,7 +38,8 @@ class Part6SessionScreen extends ConsumerWidget {
         if (session.isSubmitted) return const Scaffold(body: SizedBox.shrink());
         return _SessionScaffold(session: session);
       },
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(body: Center(child: Text('Lỗi: $e'))),
     );
   }
@@ -82,7 +85,9 @@ class _SessionScaffoldState extends ConsumerState<_SessionScaffold> {
                       children: [
                         BloomGroupChips(
                           labels: [
-                            for (var p = 0; p < session.set.passages.length; p++)
+                            for (var p = 0;
+                                p < session.set.passages.length;
+                                p++)
                               'Đoạn ${p + 1}',
                           ],
                           activeIndex: _activePassage,
@@ -91,18 +96,23 @@ class _SessionScaffoldState extends ConsumerState<_SessionScaffold> {
                         const SizedBox(height: BloomSpacing.md),
                         Expanded(
                           child: ListView(
-                            padding: EdgeInsets.only(bottom: peek + BloomSpacing.md),
+                            padding:
+                                EdgeInsets.only(bottom: peek + BloomSpacing.md),
                             children: [
-                              for (var q = 0; q < passage.questions.length; q++) ...[
-                                if (q > 0) const SizedBox(height: BloomSpacing.sm),
+                              for (var q = 0;
+                                  q < passage.questions.length;
+                                  q++) ...[
+                                if (q > 0)
+                                  const SizedBox(height: BloomSpacing.sm),
                                 _BlankTile(
                                   key: ValueKey('$_activePassage-$q'),
                                   question: passage.questions[q],
                                   questionIndex: q,
                                   selected: session.selectedAnswers[
-                                      Part6SessionState.flatIndex(_activePassage, q)],
-                                  onSelected: (o) =>
-                                      notifier.selectAnswer(_activePassage, q, o),
+                                      Part6SessionState.flatIndex(
+                                          _activePassage, q)],
+                                  onSelected: (o) => notifier.selectAnswer(
+                                      _activePassage, q, o),
                                 ),
                               ],
                             ],
@@ -125,11 +135,11 @@ class _SessionScaffoldState extends ConsumerState<_SessionScaffold> {
             Padding(
               padding: const EdgeInsets.fromLTRB(
                   16, BloomSpacing.sm, 16, BloomSpacing.md),
-              child: BloomPillButton(
-                label: 'Nộp bài',
-                variant: BloomButtonVariant.primary,
-                block: true,
-                onPressed: session.canSubmit ? notifier.submit : null,
+              child: BloomSubmitBar(
+                answered:
+                    session.selectedAnswers.where((a) => a != null).length,
+                total: session.selectedAnswers.length,
+                onSubmit: session.canSubmit ? notifier.submit : null,
               ),
             ),
           ],
@@ -171,7 +181,8 @@ class _BlankTile extends StatelessWidget {
               label: question.options[o],
               leading: String.fromCharCode(65 + o),
               onTap: () => onSelected(o),
-              state: selected == o ? BloomMcState.selected : BloomMcState.neutral,
+              state:
+                  selected == o ? BloomMcState.selected : BloomMcState.neutral,
             ),
           ],
         ],

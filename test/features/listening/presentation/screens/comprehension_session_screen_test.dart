@@ -173,22 +173,26 @@ void main() {
     expect(nextButton.onPressed, isNull);
   });
 
+  Finder seek() => find.descendant(
+      of: find.byType(BloomWordSeekBar), matching: find.byType(Slider));
+  Finder speed() => find.descendant(
+      of: find.byType(BloomSpeedSlider), matching: find.byType(Slider));
+
   group('seek slider', () {
     testWidgets('shows a seek slider spanning the whole passage',
         (tester) async {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
-      expect(find.byType(Slider), findsOneWidget);
+      expect(seek(), findsOneWidget);
     });
 
     testWidgets('dragging shows a turn+word preview label', (tester) async {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
 
-      final slider = tester.widget<Slider>(find.byType(Slider));
       // _testPassage turn 0 "Can I help you?" = 4 words; global word 1 = word
       // index 1 of turn 0 ("I").
-      slider.onChanged?.call(1.0);
+      tester.widget<Slider>(seek()).onChanged?.call(1.0);
       await tester.pumpAndSettle();
 
       expect(find.text('Lượt 1/3 · Từ 2/4'), findsOneWidget);
@@ -200,36 +204,32 @@ void main() {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
 
-      final slider = tester.widget<Slider>(find.byType(Slider));
       // turn 0 has 4 words (indices 0-3), so global word 5 is turn 1 word 1.
-      slider.onChangeEnd?.call(5.0);
+      tester.widget<Slider>(seek()).onChangeEnd?.call(5.0);
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Lượt 2/3'), findsOneWidget);
     });
   });
 
-  group('speed selector', () {
-    testWidgets('defaults to the 1x segment selected', (tester) async {
+  group('speed slider', () {
+    testWidgets('defaults to 1.00×', (tester) async {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
-      final segmented = tester
-          .widget<BloomSegmented<double>>(find.byType(BloomSegmented<double>));
-      expect(segmented.selected, 1.0);
+      expect(find.text('1.00×'), findsOneWidget);
+      expect(tester.widget<Slider>(speed()).value, 1.0);
     });
 
     testWidgets(
-        'tapping 1.25x calls setSpeed(1.25) and updates the selected segment',
+        'dragging the speed slider calls setSpeed and updates the label',
         (tester) async {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('1.25x'));
+      tester.widget<Slider>(speed()).onChanged?.call(1.25);
       await tester.pumpAndSettle();
 
-      final segmented = tester
-          .widget<BloomSegmented<double>>(find.byType(BloomSegmented<double>));
-      expect(segmented.selected, 1.25);
+      expect(find.text('1.25×'), findsOneWidget);
     });
   });
 }

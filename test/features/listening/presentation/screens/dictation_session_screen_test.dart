@@ -359,12 +359,17 @@ void main() {
     });
   });
 
+  Finder seek() => find.descendant(
+      of: find.byType(BloomWordSeekBar), matching: find.byType(Slider));
+  Finder speed() => find.descendant(
+      of: find.byType(BloomSpeedSlider), matching: find.byType(Slider));
+
   group('seek slider', () {
     testWidgets('shows a seek slider once the item has more than 1 word',
         (tester) async {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
-      expect(find.byType(Slider), findsOneWidget);
+      expect(seek(), findsOneWidget);
     });
 
     testWidgets('shows a word-position label while dragging, before releasing',
@@ -372,8 +377,7 @@ void main() {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
 
-      final slider = tester.widget<Slider>(find.byType(Slider));
-      slider.onChanged?.call(1.0); // word index 1 of 2: "world."
+      tester.widget<Slider>(seek()).onChanged?.call(1.0); // word 1 of 2
       await tester.pumpAndSettle();
 
       expect(find.text('Từ 2/2'), findsOneWidget);
@@ -385,8 +389,7 @@ void main() {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
 
-      final slider = tester.widget<Slider>(find.byType(Slider));
-      slider.onChangeEnd?.call(1.0); // word index 1: "world."
+      tester.widget<Slider>(seek()).onChangeEnd?.call(1.0);
       await tester.pumpAndSettle();
 
       expect(find.text('Nghe lại (0)'), findsOneWidget);
@@ -401,12 +404,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final slider1 = tester.widget<Slider>(find.byType(Slider));
-      slider1.onChangeEnd?.call(1.0); // first-ever listen via seek: free
+      tester.widget<Slider>(seek()).onChangeEnd?.call(1.0); // free first listen
       await tester.pumpAndSettle();
 
-      final slider2 = tester.widget<Slider>(find.byType(Slider));
-      slider2.onChangeEnd?.call(0.0); // back to word 0: full reheard -> 5%
+      tester.widget<Slider>(seek()).onChangeEnd?.call(0.0); // reheard -> 5%
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byType(TextField), 'Hello world.');
@@ -421,27 +422,27 @@ void main() {
     });
   });
 
-  group('speed selector', () {
-    testWidgets('defaults to the 1x segment selected', (tester) async {
+  group('speed slider', () {
+    testWidgets('defaults to 1.00× and spans 0.5–2.0', (tester) async {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
-      final segmented = tester
-          .widget<BloomSegmented<double>>(find.byType(BloomSegmented<double>));
-      expect(segmented.selected, 1.0);
+      expect(find.text('1.00×'), findsOneWidget);
+      final slider = tester.widget<Slider>(speed());
+      expect(slider.value, 1.0);
+      expect(slider.min, 0.5);
+      expect(slider.max, 2.0);
     });
 
     testWidgets(
-        'tapping 0.75x calls setSpeed(0.75) and updates the selected segment',
+        'dragging the speed slider calls setSpeed and updates the label',
         (tester) async {
       await tester.pumpWidget(_buildSession(_session()));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('0.75x'));
+      tester.widget<Slider>(speed()).onChanged?.call(1.5);
       await tester.pumpAndSettle();
 
-      final segmented = tester
-          .widget<BloomSegmented<double>>(find.byType(BloomSegmented<double>));
-      expect(segmented.selected, 0.75);
+      expect(find.text('1.50×'), findsOneWidget);
     });
   });
 }
