@@ -268,6 +268,70 @@ describe("VocabBankPage", () => {
     expect(screen.getByText("meticulous")).toBeInTheDocument();
   });
 
+  it("narrows the list to rows whose headword contains the typed substring", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue([RECORD_DUE_TODAY, RECORD_NOT_DUE] as never);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<VocabBankPage />);
+    await screen.findByText("relocate");
+
+    fireEvent.change(screen.getByLabelText("Tìm từ"), { target: { value: "reloc" } });
+
+    expect(screen.getByText("relocate")).toBeInTheDocument();
+    expect(screen.queryByText("meticulous")).not.toBeInTheDocument();
+  });
+
+  it("narrows the list to rows whose meaning contains the typed substring", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue([RECORD_DUE_TODAY, RECORD_NOT_DUE] as never);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<VocabBankPage />);
+    await screen.findByText("relocate");
+
+    fireEvent.change(screen.getByLabelText("Tìm từ"), { target: { value: "tỉ mỉ" } });
+
+    expect(screen.getByText("meticulous")).toBeInTheDocument();
+    expect(screen.queryByText("relocate")).not.toBeInTheDocument();
+  });
+
+  it("restores the full list when the search input is cleared via the ✕ button", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue([RECORD_DUE_TODAY, RECORD_NOT_DUE] as never);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<VocabBankPage />);
+    await screen.findByText("relocate");
+
+    fireEvent.change(screen.getByLabelText("Tìm từ"), { target: { value: "reloc" } });
+    expect(screen.queryByText("meticulous")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("Xoá tìm kiếm"));
+
+    expect(screen.getByText("relocate")).toBeInTheDocument();
+    expect(screen.getByText("meticulous")).toBeInTheDocument();
+  });
+
+  it("AND-combines the search query with an active chip filter", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
+    vi.mocked(getVocabRecords).mockResolvedValue([RECORD_DUE_TODAY, RECORD_NOT_DUE] as never);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<VocabBankPage />);
+    await screen.findByText("relocate");
+
+    // "c" is a substring of both headwords -> query alone keeps both rows.
+    fireEvent.change(screen.getByLabelText("Tìm từ"), { target: { value: "c" } });
+    expect(screen.getByText("relocate")).toBeInTheDocument();
+    expect(screen.getByText("meticulous")).toBeInTheDocument();
+
+    // Adding the due-only chip AND-combines: only the due row survives.
+    fireEvent.click(screen.getByText("Cần ôn hôm nay (1)"));
+    expect(screen.getByText("relocate")).toBeInTheDocument();
+    expect(screen.queryByText("meticulous")).not.toBeInTheDocument();
+  });
+
   it("only renders the first 10 rows when more than 10 records match, and shows a page bar", async () => {
     vi.mocked(useAuthUser).mockReturnValue({ user: { uid: "u1" } as never, loading: false });
     vi.mocked(getVocabRecords).mockResolvedValue(MANY_RECORDS as never);

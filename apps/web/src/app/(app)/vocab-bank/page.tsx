@@ -26,6 +26,7 @@ export default function VocabBankPage() {
   const [records, setRecords] = useState<VocabRecord[] | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
   const [dueOnly, setDueOnly] = useState(false);
   const [selectedTopicIds, setSelectedTopicIds] = useState<Set<string>>(new Set());
   const [selectedCefrLevels, setSelectedCefrLevels] = useState<Set<string>>(new Set());
@@ -59,17 +60,24 @@ export default function VocabBankPage() {
   }, [records]);
 
   const filters: VocabFilterState = { dueOnly, topicIds: selectedTopicIds, cefrLevels: selectedCefrLevels };
-  const filterActive = isFilterActive(filters);
+  const filterActive = isFilterActive(filters) || query.trim() !== "";
 
   const filtered = useMemo(() => {
     if (!records) return [];
-    return records.filter((r) => matchesFilters(r, filters, isDue));
+    const q = query.trim().toLowerCase();
+    return records.filter(
+      (r) =>
+        matchesFilters(r, filters, isDue) &&
+        (q === "" ||
+          r.headword.toLowerCase().includes(q) ||
+          r.meaning.toLowerCase().includes(q))
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [records, dueOnly, selectedTopicIds, selectedCefrLevels, now]);
+  }, [records, query, dueOnly, selectedTopicIds, selectedCefrLevels, now]);
 
   const filterSignature = `${dueOnly}|${Array.from(selectedTopicIds).sort().join(",")}|${Array.from(
     selectedCefrLevels
-  ).sort().join(",")}`;
+  ).sort().join(",")}|${query.trim()}`;
 
   const { visibleItems, totalPages, currentPage, containerRef, sentinelRef, jumpToPage } =
     usePaginatedScroll(filtered, filterSignature);
@@ -84,6 +92,7 @@ export default function VocabBankPage() {
   };
 
   const clearFilters = () => {
+    setQuery("");
     setDueOnly(false);
     setSelectedTopicIds(new Set());
     setSelectedCefrLevels(new Set());
@@ -135,6 +144,25 @@ export default function VocabBankPage() {
       <h2 className="scr-title">Ngân hàng từ vựng</h2>
       <p className="scr-sub">{records.length} từ trong Ngân hàng từ vựng.</p>
       {deleteError && <p role="alert">Lỗi xoá từ: {deleteError}</p>}
+      <div className="vb-search">
+        <input
+          type="text"
+          aria-label="Tìm từ"
+          placeholder="Tìm theo từ hoặc nghĩa…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        {query !== "" && (
+          <button
+            type="button"
+            className="vb-search-clear"
+            aria-label="Xoá tìm kiếm"
+            onClick={() => setQuery("")}
+          >
+            ✕
+          </button>
+        )}
+      </div>
       <div className="vb-toolbar">
         <button className={`vb-chip${!filterActive ? " active" : ""}`} onClick={clearFilters}>
           Tất cả ({records.length})
