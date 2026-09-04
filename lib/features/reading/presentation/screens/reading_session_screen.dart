@@ -49,8 +49,7 @@ class _ReadingSessionScreenState extends ConsumerState<ReadingSessionScreen> {
         if (session == null) return;
 
         final prevIndex = prev?.valueOrNull?.currentSentenceIndex;
-        if (prevIndex != null &&
-            session.currentSentenceIndex != prevIndex) {
+        if (prevIndex != null && session.currentSentenceIndex != prevIndex) {
           _ctrl.clear();
           _focusNode.requestFocus();
         }
@@ -59,8 +58,9 @@ class _ReadingSessionScreenState extends ConsumerState<ReadingSessionScreen> {
           final result = ReadingSessionResult(
             passage: session.passage,
             sentenceResults: session.completedSentences,
-            totalDuration:
-                DateTime.now().difference(session.sessionStartedAt),
+            totalDuration: DateTime.now().difference(session.sessionStartedAt),
+            reusedFromId: session.reusedFromId,
+            generationFilters: session.generationFilters,
           );
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
@@ -294,8 +294,8 @@ class _HighlightedText extends StatelessWidget {
         break;
       }
       if (earliestStart > 0) {
-        spans.add(
-            TextSpan(text: remaining.substring(0, earliestStart), style: style));
+        spans.add(TextSpan(
+            text: remaining.substring(0, earliestStart), style: style));
       }
       spans.add(TextSpan(
         text: remaining.substring(
@@ -387,7 +387,8 @@ class _TypingArea extends StatelessWidget {
     // are stacked on top of each other, so they MUST share the exact same
     // font metrics — otherwise every typed character drifts a little further
     // out of alignment with the visible text underneath it.
-    final baseStyle = webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16));
+    final baseStyle =
+        webScaled(theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16));
     final strutStyle = StrutStyle.fromTextStyle(baseStyle);
     return Container(
       constraints: BoxConstraints(minHeight: kIsWeb ? 200 : 80),

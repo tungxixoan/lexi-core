@@ -42,12 +42,20 @@ void main() {
         ),
         sentenceResults: const [
           SentenceResult(
-            target: 'A.', typed: 'A.', correctChars: 2, totalChars: 2,
-            durationMs: 1000, deletedChars: 3,
+            target: 'A.',
+            typed: 'A.',
+            correctChars: 2,
+            totalChars: 2,
+            durationMs: 1000,
+            deletedChars: 3,
           ),
           SentenceResult(
-            target: 'B.', typed: 'B.', correctChars: 2, totalChars: 2,
-            durationMs: 1000, deletedChars: 2,
+            target: 'B.',
+            typed: 'B.',
+            correctChars: 2,
+            totalChars: 2,
+            durationMs: 1000,
+            deletedChars: 2,
           ),
         ],
         totalDuration: const Duration(seconds: 2),
@@ -59,27 +67,9 @@ void main() {
       final result = ReadingSessionResult(
         passage: ReadingPassage(
           id: 'p1',
-          sentences: const [BilingualSentence(target: 'A.', vietnamese: 'A.', vocabIds: [])],
-          vocabIds: const [],
-          level: CEFRLevel.b1,
-          context: AppContext.general,
-          targetLanguage: Language.english,
-          generatedAt: DateTime(2026),
-        ),
-        sentenceResults: const [
-          SentenceResult(target: 'A.', typed: 'A.', correctChars: 2, totalChars: 2, durationMs: 1000),
-        ],
-        totalDuration: const Duration(seconds: 1),
-      );
-      expect(result.overallAccuracy, 1.0);
-      expect(result.finalScore, 1.0);
-    });
-
-    test('finalScore subtracts a penalty proportional to the deletion ratio (deletedChars / totalChars)', () {
-      final result = ReadingSessionResult(
-        passage: ReadingPassage(
-          id: 'p1',
-          sentences: const [BilingualSentence(target: 'A.........', vietnamese: 'A.', vocabIds: [])],
+          sentences: const [
+            BilingualSentence(target: 'A.', vietnamese: 'A.', vocabIds: [])
+          ],
           vocabIds: const [],
           level: CEFRLevel.b1,
           context: AppContext.general,
@@ -88,8 +78,42 @@ void main() {
         ),
         sentenceResults: const [
           SentenceResult(
-            target: 'A.........', typed: 'A.........', correctChars: 10, totalChars: 10,
-            durationMs: 1000, deletedChars: 4,
+              target: 'A.',
+              typed: 'A.',
+              correctChars: 2,
+              totalChars: 2,
+              durationMs: 1000),
+        ],
+        totalDuration: const Duration(seconds: 1),
+      );
+      expect(result.overallAccuracy, 1.0);
+      expect(result.finalScore, 1.0);
+    });
+
+    test(
+        'finalScore subtracts a penalty proportional to the deletion ratio (deletedChars / totalChars)',
+        () {
+      final result = ReadingSessionResult(
+        passage: ReadingPassage(
+          id: 'p1',
+          sentences: const [
+            BilingualSentence(
+                target: 'A.........', vietnamese: 'A.', vocabIds: [])
+          ],
+          vocabIds: const [],
+          level: CEFRLevel.b1,
+          context: AppContext.general,
+          targetLanguage: Language.english,
+          generatedAt: DateTime(2026),
+        ),
+        sentenceResults: const [
+          SentenceResult(
+            target: 'A.........',
+            typed: 'A.........',
+            correctChars: 10,
+            totalChars: 10,
+            durationMs: 1000,
+            deletedChars: 4,
           ),
         ],
         totalDuration: const Duration(seconds: 1),
@@ -103,7 +127,9 @@ void main() {
       final result = ReadingSessionResult(
         passage: ReadingPassage(
           id: 'p1',
-          sentences: const [BilingualSentence(target: 'A.', vietnamese: 'A.', vocabIds: [])],
+          sentences: const [
+            BilingualSentence(target: 'A.', vietnamese: 'A.', vocabIds: [])
+          ],
           vocabIds: const [],
           level: CEFRLevel.b1,
           context: AppContext.general,
@@ -112,8 +138,12 @@ void main() {
         ),
         sentenceResults: const [
           SentenceResult(
-            target: 'A.', typed: 'A.', correctChars: 0, totalChars: 2,
-            durationMs: 1000, deletedChars: 200,
+            target: 'A.',
+            typed: 'A.',
+            correctChars: 0,
+            totalChars: 2,
+            durationMs: 1000,
+            deletedChars: 200,
           ),
         ],
         totalDuration: const Duration(seconds: 1),
@@ -121,14 +151,19 @@ void main() {
       expect(result.finalScore, 0.0);
     });
 
-    test('a small amount of typo-correction relative to a long passage barely dents the score', () {
+    test(
+        'a small amount of typo-correction relative to a long passage barely dents the score',
+        () {
       // Regression test for the reported bug: finishing a long passage with
       // normal typo fixes should not zero out the score.
       final target = 'A' * 200;
       final result = ReadingSessionResult(
         passage: ReadingPassage(
           id: 'p1',
-          sentences: [BilingualSentence(target: target, vietnamese: 'A.', vocabIds: const [])],
+          sentences: [
+            BilingualSentence(
+                target: target, vietnamese: 'A.', vocabIds: const [])
+          ],
           vocabIds: const [],
           level: CEFRLevel.b1,
           context: AppContext.general,
@@ -138,7 +173,8 @@ void main() {
         sentenceResults: [
           SentenceResult(
             target: target, typed: target, correctChars: 200, totalChars: 200,
-            durationMs: 1000, deletedChars: 20, // 10% of the passage deleted/retyped
+            durationMs: 1000,
+            deletedChars: 20, // 10% of the passage deleted/retyped
           ),
         ],
         totalDuration: const Duration(seconds: 1),
@@ -192,18 +228,21 @@ void main() {
 
     ProviderContainer makeContainer() => ProviderContainer(
           overrides: [
-            generateReadingPassageUseCaseProvider.overrideWithValue(mockUseCase),
+            generateReadingPassageUseCaseProvider
+                .overrideWithValue(mockUseCase),
           ],
         );
 
-    Future<void> generateSession(ReadingPracticeNotifier notifier) => notifier.generate(
+    Future<void> generateSession(ReadingPracticeNotifier notifier) =>
+        notifier.generate(
           words: words,
           level: CEFRLevel.b1,
           context: AppContext.general,
           targetLanguage: Language.english,
         );
 
-    test('typing without deleting does not increment currentDeletedChars', () async {
+    test('typing without deleting does not increment currentDeletedChars',
+        () async {
       final c = makeContainer();
       addTearDown(c.dispose);
       final notifier = c.read(readingPracticeNotifierProvider.notifier);
@@ -216,7 +255,9 @@ void main() {
       expect(state.currentDeletedChars, 0);
     });
 
-    test('deleting one character at a time increments currentDeletedChars by 1 per character', () async {
+    test(
+        'deleting one character at a time increments currentDeletedChars by 1 per character',
+        () async {
       final c = makeContainer();
       addTearDown(c.dispose);
       final notifier = c.read(readingPracticeNotifierProvider.notifier);
@@ -231,20 +272,25 @@ void main() {
       expect(state.currentDeletedChars, 2);
     });
 
-    test('deleting several characters in one edit increments currentDeletedChars by that many characters', () async {
+    test(
+        'deleting several characters in one edit increments currentDeletedChars by that many characters',
+        () async {
       final c = makeContainer();
       addTearDown(c.dispose);
       final notifier = c.read(readingPracticeNotifierProvider.notifier);
       await generateSession(notifier);
 
-      notifier.updateTypedText('Helloxxxx'); // typo (9 chars, under the 19-char target)
-      notifier.updateTypedText('Hell'); // deletes 5 chars in one go (e.g. select + delete)
+      notifier.updateTypedText(
+          'Helloxxxx'); // typo (9 chars, under the 19-char target)
+      notifier.updateTypedText(
+          'Hell'); // deletes 5 chars in one go (e.g. select + delete)
 
       final state = c.read(readingPracticeNotifierProvider).value!;
       expect(state.currentDeletedChars, 5);
     });
 
-    test('advances to the next sentence when typed length reaches the target, '
+    test(
+        'advances to the next sentence when typed length reaches the target, '
         'recording a SentenceResult with correctChars < totalChars for a wrong char',
         () async {
       final c = makeContainer();
@@ -262,7 +308,8 @@ void main() {
           lessThan(state.completedSentences.single.totalChars));
     });
 
-    test('advances even when the typed text overshoots the target length', () async {
+    test('advances even when the typed text overshoots the target length',
+        () async {
       final c = makeContainer();
       addTearDown(c.dispose);
       final notifier = c.read(readingPracticeNotifierProvider.notifier);
@@ -274,7 +321,8 @@ void main() {
       expect(state.currentSentenceIndex, 1);
     });
 
-    test('completing a sentence records its deletedChars and resets the counter for the next one',
+    test(
+        'completing a sentence records its deletedChars and resets the counter for the next one',
         () async {
       final c = makeContainer();
       addTearDown(c.dispose);
@@ -284,7 +332,8 @@ void main() {
       // Sentence 1 target: 'Hello there friend.' (19 chars).
       notifier.updateTypedText('Hello therx'); // typo (11 chars)
       notifier.updateTypedText('Hello the'); // deletes 2 chars
-      notifier.updateTypedText('Hello there friend.'); // reaches full length -> advance
+      notifier.updateTypedText(
+          'Hello there friend.'); // reaches full length -> advance
 
       var state = c.read(readingPracticeNotifierProvider).value!;
       expect(state.completedSentences.length, 1);
@@ -295,12 +344,142 @@ void main() {
       // Sentence 2 target: 'Goodbye for now.' (16 chars).
       notifier.updateTypedText('Goodbye for nox'); // typo (15 chars)
       notifier.updateTypedText('Goodbye for n'); // deletes 2 chars
-      notifier.updateTypedText('Goodbye for now.'); // reaches full length -> advance
+      notifier.updateTypedText(
+          'Goodbye for now.'); // reaches full length -> advance
 
       state = c.read(readingPracticeNotifierProvider).value!;
       expect(state.completedSentences.length, 2);
       expect(state.completedSentences.last.deletedChars, 2);
       expect(state.isComplete, true);
+    });
+  });
+
+  group('ReadingPracticeNotifier loadSaved / generationFilters', () {
+    late MockGenerateReadingPassageUseCase mockUseCase;
+    late ReadingPassage fixedPassage;
+
+    setUpAll(() {
+      registerFallbackValue(CEFRLevel.a1);
+      registerFallbackValue(AppContext.general);
+      registerFallbackValue(Language.english);
+    });
+
+    setUp(() {
+      mockUseCase = MockGenerateReadingPassageUseCase();
+      fixedPassage = ReadingPassage(
+        id: 'p1',
+        sentences: const [
+          BilingualSentence(
+              target: 'Hello there friend.',
+              vietnamese: 'Chào bạn.',
+              vocabIds: []),
+          BilingualSentence(
+              target: 'Goodbye for now.',
+              vietnamese: 'Tạm biệt.',
+              vocabIds: []),
+        ],
+        vocabIds: const [],
+        level: CEFRLevel.b1,
+        context: AppContext.general,
+        targetLanguage: Language.english,
+        generatedAt: DateTime(2026),
+      );
+      when(
+        () => mockUseCase.execute(
+          words: any(named: 'words'),
+          level: any(named: 'level'),
+          context: any(named: 'context'),
+          targetLanguage: any(named: 'targetLanguage'),
+        ),
+      ).thenAnswer((_) async => fixedPassage);
+    });
+
+    ProviderContainer makeContainer() => ProviderContainer(
+          overrides: [
+            generateReadingPassageUseCaseProvider
+                .overrideWithValue(mockUseCase),
+          ],
+        );
+
+    test(
+        'loadSaved populates state with the passage, isComplete false, '
+        'index 0, and carries reusedFromId + generationFilters', () {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(readingPracticeNotifierProvider.notifier);
+
+      const filters = {
+        'topicIds': ['t1'],
+        'maxCefr': 'b1',
+        'wordCount': 5,
+      };
+      notifier.loadSaved(
+        fixedPassage,
+        savedId: 'saved-1',
+        generationFilters: filters,
+      );
+
+      final state = c.read(readingPracticeNotifierProvider).value!;
+      expect(state.passage, fixedPassage);
+      expect(state.isComplete, false);
+      expect(state.currentSentenceIndex, 0);
+      expect(state.typedText, '');
+      expect(state.completedSentences, isEmpty);
+      expect(state.reusedFromId, 'saved-1');
+      expect(state.generationFilters, filters);
+    });
+
+    test('loadSaved leaves reusedFromId + generationFilters null when omitted',
+        () {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(readingPracticeNotifierProvider.notifier);
+
+      notifier.loadSaved(fixedPassage);
+
+      final state = c.read(readingPracticeNotifierProvider).value!;
+      expect(state.reusedFromId, isNull);
+      expect(state.generationFilters, isNull);
+    });
+
+    test('generate with generationFilters carries the map onto the state',
+        () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(readingPracticeNotifierProvider.notifier);
+
+      const filters = {
+        'topicIds': <String>[],
+        'maxCefr': 'b1',
+        'wordCount': 8,
+      };
+      await notifier.generate(
+        words: const [],
+        level: CEFRLevel.b1,
+        context: AppContext.general,
+        targetLanguage: Language.english,
+        generationFilters: filters,
+      );
+
+      final state = c.read(readingPracticeNotifierProvider).value!;
+      expect(state.generationFilters, filters);
+      expect(state.reusedFromId, isNull);
+    });
+
+    test('generate without generationFilters leaves it null', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(readingPracticeNotifierProvider.notifier);
+
+      await notifier.generate(
+        words: const [],
+        level: CEFRLevel.b1,
+        context: AppContext.general,
+        targetLanguage: Language.english,
+      );
+
+      final state = c.read(readingPracticeNotifierProvider).value!;
+      expect(state.generationFilters, isNull);
     });
   });
 }

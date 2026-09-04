@@ -33,24 +33,32 @@ final class ReadingSessionResult {
     required this.passage,
     required this.sentenceResults,
     required this.totalDuration,
+    this.reusedFromId,
+    this.generationFilters,
   });
 
   final ReadingPassage passage;
   final List<SentenceResult> sentenceResults;
   final Duration totalDuration;
 
+  /// Non-null when this session was started from a saved exercise — the result
+  /// screen uses it to hide "Lưu bài" and to exclude the passage on "Bài khác".
+  final String? reusedFromId;
+
+  /// The raw `{topicIds, maxCefr, wordCount}` filter map the session was
+  /// generated with, threaded to the result screen's "Lưu bài" action.
+  final Map<String, dynamic>? generationFilters;
+
   int get totalChars => sentenceResults.fold(0, (s, r) => s + r.totalChars);
 
   double get overallAccuracy {
     if (sentenceResults.isEmpty) return 1.0;
-    final totalCorrect =
-        sentenceResults.fold(0, (s, r) => s + r.correctChars);
+    final totalCorrect = sentenceResults.fold(0, (s, r) => s + r.correctChars);
     return totalChars == 0 ? 1.0 : totalCorrect / totalChars;
   }
 
   double get wpm {
-    final totalTyped =
-        sentenceResults.fold(0, (s, r) => s + r.typed.length);
+    final totalTyped = sentenceResults.fold(0, (s, r) => s + r.typed.length);
     final minutes = totalDuration.inSeconds / 60.0;
     if (minutes == 0) return 0;
     return (totalTyped / 5.0) / minutes;
@@ -83,6 +91,8 @@ final class ReadingSessionState {
     required this.sentenceStartedAt,
     required this.isComplete,
     this.currentDeletedChars = 0,
+    this.reusedFromId,
+    this.generationFilters,
   });
 
   final ReadingPassage passage;
@@ -93,6 +103,14 @@ final class ReadingSessionState {
   final DateTime sentenceStartedAt;
   final bool isComplete;
   final int currentDeletedChars;
+
+  /// Non-null when this session was started from a saved exercise (via
+  /// [ReadingPracticeNotifier.loadSaved]); carried onto [ReadingSessionResult].
+  final String? reusedFromId;
+
+  /// The raw `{topicIds, maxCefr, wordCount}` filter map the passage was
+  /// generated with; carried onto [ReadingSessionResult] for "Lưu bài".
+  final Map<String, dynamic>? generationFilters;
 
   BilingualSentence get currentSentence =>
       passage.sentences[currentSentenceIndex];
@@ -114,6 +132,8 @@ final class ReadingSessionState {
         sentenceStartedAt: sentenceStartedAt ?? this.sentenceStartedAt,
         isComplete: isComplete ?? this.isComplete,
         currentDeletedChars: currentDeletedChars ?? this.currentDeletedChars,
+        reusedFromId: reusedFromId,
+        generationFilters: generationFilters,
       );
 }
 
@@ -127,17 +147,17 @@ class ReadingPracticeNotifier extends _$ReadingPracticeNotifier {
     required CEFRLevel level,
     required AppContext context,
     required Language targetLanguage,
+    Map<String, dynamic>? generationFilters,
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      final passage = await ref
-          .read(generateReadingPassageUseCaseProvider)
-          .execute(
-            words: words,
-            level: level,
-            context: context,
-            targetLanguage: targetLanguage,
-          );
+      final passage =
+          await ref.read(generateReadingPassageUseCaseProvider).execute(
+                words: words,
+                level: level,
+                context: context,
+                targetLanguage: targetLanguage,
+              );
       final now = DateTime.now();
       return ReadingSessionState(
         passage: passage,
@@ -147,16 +167,39 @@ class ReadingPracticeNotifier extends _$ReadingPracticeNotifier {
         sessionStartedAt: now,
         sentenceStartedAt: now,
         isComplete: false,
+        generationFilters: generationFilters,
       );
     });
+  }
+
+  /// Starts a session from a pre-built [passage], bypassing the AI. [savedId] is
+  /// the id of the saved exercise it came from (so the result screen can hide
+  /// "Lưu bài" and exclude it on "Bài khác"); [generationFilters] is the raw
+  /// `{topicIds, maxCefr, wordCount}` map to thread through to "Lưu bài".
+  void loadSaved(
+    ReadingPassage passage, {
+    String? savedId,
+    Map<String, dynamic>? generationFilters,
+  }) {
+    final now = DateTime.now();
+    state = AsyncData(ReadingSessionState(
+      passage: passage,
+      currentSentenceIndex: 0,
+      typedText: '',
+      completedSentences: const [],
+      sessionStartedAt: now,
+      sentenceStartedAt: now,
+      isComplete: false,
+      reusedFromId: savedId,
+      generationFilters: generationFilters,
+    ));
   }
 
   void updateTypedText(String text) {
     final current = state.valueOrNull;
     if (current == null || current.isComplete) return;
     final deletedChars = text.length < current.typedText.length
-        ? current.currentDeletedChars +
-            (current.typedText.length - text.length)
+        ? current.currentDeletedChars + (current.typedText.length - text.length)
         : current.currentDeletedChars;
     if (text.length >= current.currentSentence.target.length) {
       _advance(current.copyWith(currentDeletedChars: deletedChars), text);
@@ -179,9 +222,8 @@ class ReadingPracticeNotifier extends _$ReadingPracticeNotifier {
       typed: typed,
       correctChars: correctChars,
       totalChars: target.length,
-      durationMs: DateTime.now()
-          .difference(current.sentenceStartedAt)
-          .inMilliseconds,
+      durationMs:
+          DateTime.now().difference(current.sentenceStartedAt).inMilliseconds,
       deletedChars: current.currentDeletedChars,
     );
     final nextIndex = current.currentSentenceIndex + 1;
