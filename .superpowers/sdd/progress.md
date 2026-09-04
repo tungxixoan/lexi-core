@@ -2204,3 +2204,12 @@ Task 6 (wire practice page): impl d149be4. exercises: (PracticeExercise|null)[] 
 Task 6 review: Approved (spec ✅, quality Approved; stale-closure + token guards verified correct, SM-2/result effect byte-unchanged). complete (2177b93..d149be4). web 791 tests. Minors: handleGrade seeds +1 AND +2 (dup generateExercise call possible if +1 in-flight — wasted BYOK only), activeConfig not memoized, .pe-loading no aria-live.
 Task 7 (gate + docs): DONE (controller). web typecheck clean / test 791. README "Luyện tập cách khoảng" updated (types now on web too, flashcard-mix rule spelled out) + roadmap entry.
 # SP-7 ALL 7 TASKS COMPLETE. Range 803dbe2..<task7> on master. web 791 tests (was ~757), typecheck clean. Flutter untouched. Whole-branch review next.
+
+## SP-7 whole-branch review (opus) — Ready: YES, no Critical. 2 Important + minors.
+I1: page.tsx handleGrade seeds generateAt(+1) AND (+2); +1 fires a 2nd real generateExercise when the prior +1 call is still in flight (probe confirmed {"2":2}). Wasted BYOK only, no clobber. Spec §4 miss (not task drift). FIX: drop the +1 seed, keep +2 (Flutter's single _generateAt(nextIndex+1)); coverage verified intact.
+I2: no committed multi-word mixed-type page test — Fill/Translation never drive real handleGrade. Probe passed. FIX: add it.
+Minors: MC page test 200ms from flaking (findByText default 1000ms vs 800ms timer -> {timeout:3000}); parseExercise accepts options:[] / OOB correctIndex -> dead-end unrecoverable session (Flutter parity, cheap to harden web-side); .pe-loading no role="status"; stripPrompt .replace vs Flutter .replaceAll.
+FIX WAVE: DISPATCHED (I1+I2 + minors).
+FIX WAVE a8d8be7: I1 (drop +1 lookahead seed, keep +2), I2 (multi-word mixed-type page test: MC/fill/translation qualities [1,5,5]), M1 (MC test timeout 3000), M2 (parseExercise MC requires options>=2 + in-range correctIndex else flashcard), M3 (.pe-loading role="status"), M4 (stripPrompt .replaceAll). web 795 tests (+4), typecheck clean.
+FIX WAVE re-review: all 6 FIXED, no regressions. web 795 tests, typecheck clean. Ready YES.
+# SP-7 COMPLETE & READY. Range 803dbe2..a8d8be7 on master. web 795 tests (was ~757). Flutter untouched.
