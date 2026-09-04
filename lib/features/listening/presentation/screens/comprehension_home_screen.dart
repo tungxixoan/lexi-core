@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/di/app_providers.dart';
 import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/widgets/ai_key_missing_card.dart';
 import '../../../../core/widgets/filter_tile.dart';
@@ -9,7 +10,9 @@ import '../../../../core/widgets/selection_sheets.dart';
 import '../../../dictionary/domain/entities/app_context.dart';
 import '../../../dictionary/domain/entities/language.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
+import '../../../practice/domain/entities/saved_exercise.dart';
 import '../../../vocabulary/domain/entities/cefr_level.dart';
+import '../../domain/entities/listening_passage.dart';
 import '../providers/listening_comprehension_provider.dart';
 
 class ComprehensionHomeScreen extends ConsumerStatefulWidget {
@@ -121,12 +124,25 @@ class _ComprehensionHomeScreenState
               )
             else
               sessionAsync.when(
-                data: (_) => BloomPillButton(
-                  label: 'Tạo bài luyện',
-                  icon: Icons.auto_awesome,
-                  variant: BloomButtonVariant.primary,
-                  block: true,
-                  onPressed: () => _generate(context, ref),
+                data: (_) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    BloomPillButton(
+                      label: 'Tạo bài luyện',
+                      icon: Icons.auto_awesome,
+                      variant: BloomButtonVariant.primary,
+                      block: true,
+                      onPressed: () => _generate(context, ref),
+                    ),
+                    const SizedBox(height: 10),
+                    BloomPillButton(
+                      label: 'Lấy bài có sẵn',
+                      variant: BloomButtonVariant.secondary,
+                      block: true,
+                      onPressed: () => _reuse(context, ref),
+                    ),
+                  ],
                 ),
                 loading: () => Column(
                   mainAxisSize: MainAxisSize.min,
@@ -174,6 +190,35 @@ class _ComprehensionHomeScreenState
       if (session != null) {
         context.go('/listening/comprehension/session');
       }
+    }
+  }
+
+  Future<void> _reuse(BuildContext context, WidgetRef ref) async {
+    final filters = <String, dynamic>{
+      'context': _context.name,
+      'level': _level?.name,
+    };
+    final result = await ref.read(savedExercisesServiceProvider).getRandom(
+          type: SavedExerciseType.comprehension,
+          targetLanguage: _language,
+          filters: filters,
+        );
+    if (!context.mounted) return;
+    if (result == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Chưa có bài đã lưu khớp bộ lọc.')),
+      );
+      return;
+    }
+    ref.read(listeningComprehensionNotifierProvider.notifier).loadSaved(
+          ListeningPassage.fromJson(result.passageJson),
+          savedId: result.id,
+          generationFilters: filters,
+        );
+    final session =
+        ref.read(listeningComprehensionNotifierProvider).valueOrNull;
+    if (session != null) {
+      context.go('/listening/comprehension/session');
     }
   }
 }

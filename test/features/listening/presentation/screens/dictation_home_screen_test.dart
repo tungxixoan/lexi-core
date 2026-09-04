@@ -1,8 +1,10 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
+import 'package:lexi_core/core/services/saved_exercises_service.dart';
 import 'package:lexi_core/core/widgets/ai_key_missing_card.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
@@ -12,8 +14,10 @@ import 'package:lexi_core/features/dictionary/domain/entities/provider_config.da
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/listening/domain/entities/dictation_difficulty.dart';
+import 'package:lexi_core/features/listening/domain/entities/dictation_item.dart';
 import 'package:lexi_core/features/listening/presentation/providers/dictation_practice_provider.dart';
 import 'package:lexi_core/features/listening/presentation/screens/dictation_home_screen.dart';
+import 'package:lexi_core/features/practice/domain/entities/saved_exercise.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/topic.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/vocab_record.dart';
@@ -120,6 +124,32 @@ class _FakeDictationNotifier extends DictationPracticeNotifier {
   }
 }
 
+class _FakeSavedExercisesService extends SavedExercisesService {
+  _FakeSavedExercisesService({this.random})
+      : super(firestore: FakeFirebaseFirestore(), currentUid: () => null);
+  final ({String id, Map<String, dynamic> passageJson})? random;
+
+  @override
+  Future<({String id, Map<String, dynamic> passageJson})?> getRandom({
+    required SavedExerciseType type,
+    required Language targetLanguage,
+    required Map<String, dynamic> filters,
+    String? excludeId,
+  }) async =>
+      random;
+}
+
+DictationItem _dictationItem() => DictationItem(
+      id: 'd1',
+      target: 'The quarterly report is almost ready for review.',
+      vietnamese: 'Báo cáo quý gần như đã sẵn sàng để xem xét.',
+      vocabIds: const [],
+      level: CEFRLevel.a1,
+      context: AppContext.general,
+      targetLanguage: Language.english,
+      generatedAt: DateTime.utc(2026, 1, 1),
+    );
+
 UserSettingsState _settings(
         {bool aiAvailable = true, Language? targetLanguage}) =>
     UserSettingsState.defaults.copyWith(
@@ -136,6 +166,7 @@ Widget _buildHome({
   required UserSettingsState settings,
   required List<VocabRecord> vocabItems,
   _FakeDictationNotifier? dictationNotifier,
+  SavedExercisesService? savedService,
 }) {
   SharedPreferences.setMockInitialValues({});
   final router = GoRouter(
@@ -162,6 +193,8 @@ Widget _buildHome({
           .overrideWithValue(_FakeVocabRepository(vocabItems)),
       if (dictationNotifier != null)
         dictationPracticeNotifierProvider.overrideWith(() => dictationNotifier),
+      if (savedService != null)
+        savedExercisesServiceProvider.overrideWithValue(savedService),
     ],
     child: MaterialApp.router(routerConfig: router),
   );
@@ -305,5 +338,45 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('chưa hỗ trợ'), findsOneWidget);
     expect(find.text('Tạo bài luyện'), findsNothing);
+  });
+
+  testWidgets('shows "Lấy bài có sẵn" alongside "Tạo bài luyện"',
+      (tester) async {
+    await tester.pumpWidget(_buildHome(
+      settings: _settings(),
+      vocabItems: List.generate(5, _record),
+      savedService: _FakeSavedExercisesService(),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Tạo bài luyện'), findsOneWidget);
+    expect(find.text('Lấy bài có sẵn'), findsOneWidget);
+  });
+
+  testWidgets('reuse navigates to the dictation session on a match',
+      (tester) async {
+    await tester.pumpWidget(_buildHome(
+      settings: _settings(),
+      vocabItems: List.generate(5, _record),
+      savedService: _FakeSavedExercisesService(
+        random: (id: 'd1', passageJson: _dictationItem().toJson()),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Lấy bài có sẵn'));
+    await tester.pumpAndSettle();
+    expect(find.text('Session screen'), findsOneWidget);
+  });
+
+  testWidgets('reuse shows a snackbar when nothing matches the filters',
+      (tester) async {
+    await tester.pumpWidget(_buildHome(
+      settings: _settings(),
+      vocabItems: List.generate(5, _record),
+      savedService: _FakeSavedExercisesService(random: null),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Lấy bài có sẵn'));
+    await tester.pump();
+    expect(find.text('Chưa có bài đã lưu khớp bộ lọc.'), findsOneWidget);
   });
 }

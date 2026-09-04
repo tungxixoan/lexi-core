@@ -10,11 +10,13 @@ import '../../../../core/widgets/selection_sheets.dart';
 import '../../../dictionary/domain/entities/app_context.dart';
 import '../../../dictionary/domain/entities/language.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
+import '../../../practice/domain/entities/saved_exercise.dart';
 import '../../../vocabulary/domain/entities/cefr_level.dart';
 import '../../../vocabulary/domain/entities/topic.dart';
 import '../../../vocabulary/domain/entities/vocab_record.dart';
 import '../../../vocabulary/presentation/providers/topics_provider.dart';
 import '../../domain/entities/dictation_difficulty.dart';
+import '../../domain/entities/dictation_item.dart';
 import '../providers/dictation_practice_provider.dart';
 
 class DictationHomeScreen extends ConsumerStatefulWidget {
@@ -193,12 +195,25 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
               )
             else
               sessionAsync.when(
-                data: (_) => BloomPillButton(
-                  label: 'Tạo bài luyện',
-                  icon: Icons.auto_awesome,
-                  variant: BloomButtonVariant.primary,
-                  block: true,
-                  onPressed: () => _generate(context, ref, words),
+                data: (_) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    BloomPillButton(
+                      label: 'Tạo bài luyện',
+                      icon: Icons.auto_awesome,
+                      variant: BloomButtonVariant.primary,
+                      block: true,
+                      onPressed: () => _generate(context, ref, words),
+                    ),
+                    const SizedBox(height: 10),
+                    BloomPillButton(
+                      label: 'Lấy bài có sẵn',
+                      variant: BloomButtonVariant.secondary,
+                      block: true,
+                      onPressed: () => _reuse(context, ref, words),
+                    ),
+                  ],
                 ),
                 loading: () => Column(
                   mainAxisSize: MainAxisSize.min,
@@ -262,6 +277,36 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
       if (session != null && !session.isComplete) {
         context.go('/listening/dictation/session');
       }
+    }
+  }
+
+  Future<void> _reuse(
+    BuildContext context,
+    WidgetRef ref,
+    List<VocabRecord> words,
+  ) async {
+    final filters = <String, dynamic>{'difficulty': _difficulty.name};
+    final result = await ref.read(savedExercisesServiceProvider).getRandom(
+          type: SavedExerciseType.dictation,
+          targetLanguage: _language,
+          filters: filters,
+        );
+    if (!context.mounted) return;
+    if (result == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Chưa có bài đã lưu khớp bộ lọc.')),
+      );
+      return;
+    }
+    ref.read(dictationPracticeNotifierProvider.notifier).loadSaved(
+          DictationItem.fromJson(result.passageJson),
+          savedId: result.id,
+          generationFilters: filters,
+          difficulty: _difficulty,
+        );
+    final session = ref.read(dictationPracticeNotifierProvider).valueOrNull;
+    if (session != null && !session.isComplete) {
+      context.go('/listening/dictation/session');
     }
   }
 }
