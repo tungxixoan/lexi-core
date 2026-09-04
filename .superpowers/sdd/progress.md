@@ -2113,3 +2113,9 @@ Minor findings: (1-3) README fixes (activeContext in settings schema, Bảo mậ
 STATE OF MIGRATION: Flutter app effectively FULLY on Bloom. All 6 feature areas + shared widgets via lib/core/theme/bloom/. Raw SegmentedButton/Switch/RadioListTile retired app-wide (analyze 0). "Bật AI" toggle gone. Remaining Material (AlertDialog/showTimePicker/LinearProgressIndicator) is deliberate — AppTheme Bloom-maps ThemeData for those.
 
 # FLUTTER BLOOM PLAN 6 — COMPLETE. Range ece08c5..0308e40 on master. 764 tests (was 743), analyze 0 (was 12). 13 tasks + 2 in-task fixes + 1 final-review README fix, all reviews clean. Ready to merge. THE 6-PLAN BLOOM REDESIGN IS DONE.
+
+---
+# POST-DEVICE-TEST PUNCH LIST (user's ~17 items → 8 sub-projects SP-1..SP-8)
+SP-1 crash+translation-btn+bottomnav: DONE c27cdcd. SP-2 contrast+flashcard: DONE a33d16f. SP-3 submit-count+speed-slider+listen-btns: DONE 608a785. SP-4 streak Firestore sync: DONE cec92ca.
+User instruction 2026-09-03: "Chạy tuần tự đến SP cuối cùng không cần hỏi lại" — run SP-5..8 autonomously via spec→plan→SDD.
+SP-5 = port web savedReadingExercises + savedListeningExercises to Flutter (Lưu bài / Lấy bài có sẵn) — bilingual + part5/6/7 + dictation + comprehension. SP-6 = 4 IA changes (Tiến độ tab, inline reading/listening sub-hub options, web Radar→sidebar, bank search/filter parity). SP-7 = MC/fill/translation exercises in web practice. SP-8 = app icon (leaf mark).
