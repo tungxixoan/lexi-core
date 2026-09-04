@@ -8,11 +8,12 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("Sidebar", () => {
-  it("renders all 7 nav items with the 3 group labels, and marks the current route active", () => {
+  it("renders all 8 nav items with the 4 group labels, and marks the current route active", () => {
     vi.mocked(usePathname).mockReturnValue("/vocab-bank");
     render(<Sidebar />);
 
     expect(screen.getByText("Đọc")).toBeInTheDocument();
+    expect(screen.getByText("Quét từ")).toBeInTheDocument();
     expect(screen.getByText("Nghe")).toBeInTheDocument();
     expect(screen.getByText("Khác")).toBeInTheDocument();
 
@@ -25,10 +26,22 @@ describe("Sidebar", () => {
     expect(inactive).toHaveAttribute("href", "/dashboard");
   });
 
-  it("renders exactly 7 nav links (not the mockup's 12 demo entries)", () => {
+  it("renders exactly 8 nav links (not the mockup's 12 demo entries)", () => {
     vi.mocked(usePathname).mockReturnValue("/vocab-bank");
     render(<Sidebar />);
-    expect(screen.getAllByRole("link")).toHaveLength(7);
+    expect(screen.getAllByRole("link")).toHaveLength(8);
+  });
+
+  it("renders the Word Radar link and marks it active on /word-radar", () => {
+    vi.mocked(usePathname).mockReturnValue("/word-radar");
+    render(<Sidebar />);
+
+    const radar = screen.getByRole("link", { name: /Quét từ vựng/ });
+    expect(radar).toHaveAttribute("href", "/word-radar");
+    expect(radar).toHaveClass("active");
+
+    const reading = screen.getByRole("link", { name: /Đọc — tổng quan/ });
+    expect(reading).not.toHaveClass("active");
   });
 
   it("labels the practice nav item 'Ôn tập', not 'Luyện tập'", () => {

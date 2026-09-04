@@ -259,18 +259,3 @@ describe("ReadingHubPage (navigation)", () => {
     expect(pushMock).toHaveBeenCalledWith("/reading/part7?volumes=vol2&action=generate");
   });
 });
-
-describe("ReadingHubPage (Word Radar card)", () => {
-  it("navigates straight to /reading/word-radar without touching the mode/filter state", async () => {
-    mockSignedIn();
-    vi.mocked(getVocabRecords).mockResolvedValue([]);
-
-    render(<ReadingHubPage />);
-    const card = await screen.findByRole("button", { name: /Quét từ vựng/ });
-    fireEvent.click(card);
-
-    expect(pushMock).toHaveBeenCalledWith("/reading/word-radar");
-    expect(screen.queryByRole("button", { name: "Tạo bài luyện" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "🔀 Lấy bài có sẵn" })).not.toBeInTheDocument();
-  });
-});
