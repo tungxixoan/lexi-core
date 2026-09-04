@@ -13,6 +13,8 @@ import 'package:lexi_core/features/dictionary/domain/entities/provider_config.da
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/practice/domain/entities/saved_exercise.dart';
+import 'package:lexi_core/features/reading/domain/entities/reading_passage.dart';
+import 'package:lexi_core/features/reading/presentation/providers/reading_practice_provider.dart';
 import 'package:lexi_core/features/reading/presentation/screens/reading_hub_screen.dart';
 import 'package:lexi_core/features/reading/presentation/widgets/part5_options.dart';
 import 'package:lexi_core/features/reading/presentation/widgets/part6_options.dart';
@@ -96,9 +98,20 @@ class _FakeSettingsNotifier extends UserSettingsNotifier {
   UserSettingsState build() => _state;
 }
 
+/// Stuck in the loading state, standing in for a session mid-generate.
+class _LoadingReadingNotifier extends ReadingPracticeNotifier {
+  @override
+  AsyncValue<ReadingSessionState?> build() => const AsyncLoading();
+}
+
 class _FakeSavedExercisesService extends SavedExercisesService {
-  _FakeSavedExercisesService()
+  _FakeSavedExercisesService({this.random})
       : super(firestore: FakeFirebaseFirestore(), currentUid: () => null);
+  final ({
+    String id,
+    Map<String, dynamic> passageJson,
+    Map<String, dynamic> generationFilters,
+  })? random;
 
   @override
   Future<
@@ -112,7 +125,7 @@ class _FakeSavedExercisesService extends SavedExercisesService {
     required Map<String, dynamic> filters,
     String? excludeId,
   }) async =>
-      null;
+      random;
 
   @override
   Future<Set<String>> usedBilingualVocabIds() async => const {};
@@ -127,7 +140,10 @@ UserSettingsState _settings() => UserSettingsState.defaults.copyWith(
       },
     );
 
-Widget _buildHub() {
+Widget _buildHub({
+  _FakeSavedExercisesService? saved,
+  List<Override> extraOverrides = const [],
+}) {
   SharedPreferences.setMockInitialValues({});
   final router = GoRouter(
     routes: [
@@ -154,7 +170,8 @@ Widget _buildHub() {
       vocabRepositoryProvider
           .overrideWithValue(_FakeVocabRepository(List.generate(10, _record))),
       savedExercisesServiceProvider
-          .overrideWithValue(_FakeSavedExercisesService()),
+          .overrideWithValue(saved ?? _FakeSavedExercisesService()),
+      ...extraOverrides,
     ],
     child: MaterialApp.router(routerConfig: router),
   );
@@ -220,5 +237,66 @@ void main() {
     await tester.tap(find.text('Part 5 — Điền câu'));
     await tester.pumpAndSettle();
     expect(find.byType(Part5Options), findsNothing);
+  });
+
+  testWidgets(
+      'expanding bilingual and tapping "Lấy bài có sẵn" opens the session stub',
+      (tester) async {
+    final passage = ReadingPassage(
+      id: 'p1',
+      sentences: const [
+        BilingualSentence(target: 'Hi.', vietnamese: 'Chào.', vocabIds: []),
+      ],
+      vocabIds: const [],
+      level: CEFRLevel.a1,
+      context: AppContext.general,
+      targetLanguage: Language.english,
+      generatedAt: DateTime.utc(2026, 1, 1),
+    );
+    await tester.pumpWidget(_buildHub(
+      saved: _FakeSavedExercisesService(
+        random: (
+          id: 'p1',
+          passageJson: passage.toJson(),
+          generationFilters: const <String, dynamic>{},
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Đọc & gõ'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Lấy bài có sẵn'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('bilingual session stub'), findsOneWidget);
+  });
+
+  testWidgets('a tap is ignored while the expanded type is mid-generate',
+      (tester) async {
+    await tester.pumpWidget(_buildHub(
+      extraOverrides: [
+        readingPracticeNotifierProvider
+            .overrideWith(_LoadingReadingNotifier.new),
+      ],
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Đọc & gõ'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byType(ReadingBilingualOptions), findsOneWidget);
+    // The loading branch's LinearProgressIndicator never settles, so pump by
+    // hand from here on.
+    expect(find.text('Đang tạo bài...'), findsOneWidget);
+
+    // Tapping another card must not switch away mid-generate.
+    await tester.tap(find.text('Part 5 — Điền câu'), warnIfMissed: false);
+    await tester.pump();
+
+    expect(find.byType(Part5Options), findsNothing);
+    expect(find.byType(ReadingBilingualOptions), findsOneWidget);
+    expect(find.text('Đang tạo bài — vui lòng đợi.'), findsOneWidget);
   });
 }

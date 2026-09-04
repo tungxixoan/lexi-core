@@ -1,22 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/bloom/bloom.dart';
+import '../providers/dictation_practice_provider.dart';
+import '../providers/listening_comprehension_provider.dart';
 import '../widgets/comprehension_options.dart';
 import '../widgets/dictation_options.dart';
 
-class ListeningHomeScreen extends StatefulWidget {
+class ListeningHomeScreen extends ConsumerStatefulWidget {
   const ListeningHomeScreen({super.key});
 
   @override
-  State<ListeningHomeScreen> createState() => _ListeningHomeScreenState();
+  ConsumerState<ListeningHomeScreen> createState() =>
+      _ListeningHomeScreenState();
 }
 
-class _ListeningHomeScreenState extends State<ListeningHomeScreen> {
+class _ListeningHomeScreenState extends ConsumerState<ListeningHomeScreen> {
   /// One of `'dictation' | 'comprehension'`, or null when every type card is
   /// collapsed.
   String? _expanded;
 
+  /// True while the currently-expanded type's practice session is generating.
+  /// The inline `*Options` is the sole listener of its `autoDispose` notifier,
+  /// so collapsing/switching mid-generate would drop the in-flight AI result.
+  bool _expandedIsLoading() {
+    switch (_expanded) {
+      case 'dictation':
+        return ref.read(dictationPracticeNotifierProvider).isLoading;
+      case 'comprehension':
+        return ref.read(listeningComprehensionNotifierProvider).isLoading;
+      default:
+        return false;
+    }
+  }
+
   void _toggle(String type) {
+    if (_expanded != null && _expandedIsLoading()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đang tạo bài — vui lòng đợi.')),
+      );
+      return;
+    }
     setState(() => _expanded = _expanded == type ? null : type);
   }
 

@@ -1,24 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/bloom/bloom.dart';
+import '../providers/part5_practice_provider.dart';
+import '../providers/part6_practice_provider.dart';
+import '../providers/part7_practice_provider.dart';
+import '../providers/reading_practice_provider.dart';
 import '../widgets/part5_options.dart';
 import '../widgets/part6_options.dart';
 import '../widgets/part7_options.dart';
 import '../widgets/reading_bilingual_options.dart';
 
-class ReadingHubScreen extends StatefulWidget {
+class ReadingHubScreen extends ConsumerStatefulWidget {
   const ReadingHubScreen({super.key});
 
   @override
-  State<ReadingHubScreen> createState() => _ReadingHubScreenState();
+  ConsumerState<ReadingHubScreen> createState() => _ReadingHubScreenState();
 }
 
-class _ReadingHubScreenState extends State<ReadingHubScreen> {
+class _ReadingHubScreenState extends ConsumerState<ReadingHubScreen> {
   /// One of `'bilingual' | 'part5' | 'part6' | 'part7'`, or null when every
   /// type card is collapsed.
   String? _expanded;
 
+  /// True while the currently-expanded type's practice session is generating.
+  /// The inline `*Options` is the sole listener of its `autoDispose` notifier,
+  /// so collapsing/switching mid-generate would drop the in-flight AI result.
+  bool _expandedIsLoading() {
+    switch (_expanded) {
+      case 'bilingual':
+        return ref.read(readingPracticeNotifierProvider).isLoading;
+      case 'part5':
+        return ref.read(part5PracticeNotifierProvider).isLoading;
+      case 'part6':
+        return ref.read(part6PracticeNotifierProvider).isLoading;
+      case 'part7':
+        return ref.read(part7PracticeNotifierProvider).isLoading;
+      default:
+        return false;
+    }
+  }
+
   void _toggle(String type) {
+    if (_expanded != null && _expandedIsLoading()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đang tạo bài — vui lòng đợi.')),
+      );
+      return;
+    }
     setState(() => _expanded = _expanded == type ? null : type);
   }
 

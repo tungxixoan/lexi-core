@@ -139,15 +139,32 @@ class _VocabBankScreenState extends ConsumerState<VocabBankScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: BloomChip(
-                    label: 'Cần ôn hôm nay ($dueCount)',
-                    style: _filters.dueOnly
-                        ? BloomChipStyle.active
-                        : BloomChipStyle.neutral,
-                    onTap: () => setState(
-                      () => _filters =
-                          _filters.copyWith(dueOnly: !_filters.dueOnly),
-                    ),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      BloomChip(
+                        label: 'Cần ôn hôm nay ($dueCount)',
+                        style: _filters.dueOnly
+                            ? BloomChipStyle.active
+                            : BloomChipStyle.neutral,
+                        onTap: () => setState(
+                          () => _filters =
+                              _filters.copyWith(dueOnly: !_filters.dueOnly),
+                        ),
+                      ),
+                      if (_filters.isActive)
+                        BloomChip(
+                          label: 'Xoá lọc',
+                          style: BloomChipStyle.clear,
+                          onTap: () {
+                            _searchCtrl.clear();
+                            setState(
+                              () => _filters = const VocabFilterState(),
+                            );
+                          },
+                        ),
+                    ],
                   ),
                 ),
               );

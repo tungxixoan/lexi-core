@@ -12,6 +12,8 @@ import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/provider_config.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
+import 'package:lexi_core/features/listening/domain/entities/dictation_item.dart';
+import 'package:lexi_core/features/listening/presentation/providers/dictation_practice_provider.dart';
 import 'package:lexi_core/features/listening/presentation/screens/listening_home_screen.dart';
 import 'package:lexi_core/features/listening/presentation/widgets/comprehension_options.dart';
 import 'package:lexi_core/features/listening/presentation/widgets/dictation_options.dart';
@@ -95,8 +97,13 @@ class _FakeSettingsNotifier extends UserSettingsNotifier {
 }
 
 class _FakeSavedExercisesService extends SavedExercisesService {
-  _FakeSavedExercisesService()
+  _FakeSavedExercisesService({this.random})
       : super(firestore: FakeFirebaseFirestore(), currentUid: () => null);
+  final ({
+    String id,
+    Map<String, dynamic> passageJson,
+    Map<String, dynamic> generationFilters,
+  })? random;
 
   @override
   Future<
@@ -110,8 +117,25 @@ class _FakeSavedExercisesService extends SavedExercisesService {
     required Map<String, dynamic> filters,
     String? excludeId,
   }) async =>
-      null;
+      random;
 }
+
+/// Stuck in the loading state, standing in for a session mid-generate.
+class _LoadingDictationNotifier extends DictationPracticeNotifier {
+  @override
+  AsyncValue<DictationSessionState?> build() => const AsyncLoading();
+}
+
+DictationItem _dictationItem() => DictationItem(
+      id: 'd1',
+      target: 'The quarterly report is almost ready for review.',
+      vietnamese: 'Báo cáo quý gần như đã sẵn sàng để xem xét.',
+      vocabIds: const [],
+      level: CEFRLevel.a1,
+      context: AppContext.general,
+      targetLanguage: Language.english,
+      generatedAt: DateTime.utc(2026, 1, 1),
+    );
 
 UserSettingsState _settings() => UserSettingsState.defaults.copyWith(
       providerConfigs: {
@@ -122,7 +146,10 @@ UserSettingsState _settings() => UserSettingsState.defaults.copyWith(
       },
     );
 
-Widget _buildHub() {
+Widget _buildHub({
+  _FakeSavedExercisesService? saved,
+  List<Override> extraOverrides = const [],
+}) {
   SharedPreferences.setMockInitialValues({});
   final router = GoRouter(
     routes: [
@@ -149,7 +176,8 @@ Widget _buildHub() {
       vocabRepositoryProvider
           .overrideWithValue(_FakeVocabRepository(List.generate(5, _record))),
       savedExercisesServiceProvider
-          .overrideWithValue(_FakeSavedExercisesService()),
+          .overrideWithValue(saved ?? _FakeSavedExercisesService()),
+      ...extraOverrides,
     ],
     child: MaterialApp.router(routerConfig: router),
   );
@@ -211,5 +239,54 @@ void main() {
     await tester.tap(find.text('Nghe hiểu'));
     await tester.pumpAndSettle();
     expect(find.byType(ComprehensionOptions), findsNothing);
+  });
+
+  testWidgets(
+      'expanding dictation and tapping "Lấy bài có sẵn" opens the session stub',
+      (tester) async {
+    await tester.pumpWidget(_buildHub(
+      saved: _FakeSavedExercisesService(
+        random: (
+          id: 'd1',
+          passageJson: _dictationItem().toJson(),
+          generationFilters: const <String, dynamic>{},
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Nghe chép'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Lấy bài có sẵn'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('dictation session stub'), findsOneWidget);
+  });
+
+  testWidgets('a tap is ignored while the expanded type is mid-generate',
+      (tester) async {
+    await tester.pumpWidget(_buildHub(
+      extraOverrides: [
+        dictationPracticeNotifierProvider
+            .overrideWith(_LoadingDictationNotifier.new),
+      ],
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Nghe chép'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byType(DictationOptions), findsOneWidget);
+    // The loading branch's LinearProgressIndicator never settles, so pump by
+    // hand from here on.
+    expect(find.text('Đang tạo bài...'), findsOneWidget);
+
+    await tester.tap(find.text('Nghe hiểu'), warnIfMissed: false);
+    await tester.pump();
+
+    expect(find.byType(ComprehensionOptions), findsNothing);
+    expect(find.byType(DictationOptions), findsOneWidget);
+    expect(find.text('Đang tạo bài — vui lòng đợi.'), findsOneWidget);
   });
 }

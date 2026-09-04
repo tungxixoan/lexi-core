@@ -153,6 +153,34 @@ void main() {
     expect(find.text('basicword'), findsNothing);
   });
 
+  testWidgets(
+      'the "Xoá lọc" chip appears when a filter is active and resets '
+      'the list and search field', (tester) async {
+    await tester.pumpWidget(_buildScreen([
+      _record('due1', headword: 'duebound'),
+      _record('notdue1', headword: 'laterword'),
+    ]));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Xoá lọc'), findsNothing);
+
+    await tester.enterText(find.byType(TextField), 'duebound');
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BloomListRow), findsOneWidget);
+    expect(find.text('Xoá lọc'), findsOneWidget);
+
+    await tester.tap(find.text('Xoá lọc'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BloomListRow), findsNWidgets(2));
+    expect(find.text('Xoá lọc'), findsNothing);
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller!.text,
+      isEmpty,
+    );
+  });
+
   testWidgets('due chip and CEFR filter combine (AND)', (tester) async {
     await tester.pumpWidget(_buildScreen([
       _record('a', headword: 'duebasic', cefrLevel: CEFRLevel.a1),

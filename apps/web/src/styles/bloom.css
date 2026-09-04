@@ -216,6 +216,7 @@ p.scr-sub {
   background: var(--surface-2);
   color: var(--ink);
   font-size: 18px;
+  font-family: inherit;
 }
 
 .vb-search-clear {

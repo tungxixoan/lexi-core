@@ -253,6 +253,7 @@ class _ReadingBilingualOptionsState
     final prioritized = [...dueWords, ...notDueWords];
     final usedIds =
         await ref.read(savedExercisesServiceProvider).usedBilingualVocabIds();
+    if (!mounted) return;
     final pool = prioritizeUnusedWords(prioritized, usedIds);
     final words = (_wordCount == null ? pool : pool.take(_wordCount!)).toList();
 
