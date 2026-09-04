@@ -27,11 +27,11 @@
 
 ### Luyện tập cách khoảng (Spaced Repetition Practice)
 - Thuật toán **SM-2** tính lịch ôn tập tối ưu
-- Tự động tạo bài tập bằng AI theo cấp độ CEFR của từng từ:
+- Tự động tạo bài tập bằng AI theo cấp độ CEFR của từng từ — **giống nhau trên cả app Flutter và web** (web trước đây chỉ có Flashcard):
   - **Multiple Choice** (A1/A2)
   - **Fill in the Blank** (B1/B2)
-  - **Translation** (C1/C2)
-  - **Flashcard** (fallback khi AI lỗi hoặc chưa có key)
+  - **Translation** (C1/C2) — tự chấm (Đúng rồi / Sai rồi)
+  - **Flashcard** — luôn dùng cho từ chưa ôn lần nào, khi chưa có API key, ~30% số lượt còn lại, và làm fallback khi AI lỗi
 - Phiên luyện tập có điểm số và tổng kết kết quả
 - Bộ lọc luyện tập theo cấp độ CEFR mục tiêu
 
@@ -529,6 +529,7 @@ users/
 - [x] **Word Radar** — dán văn bản bất kỳ, tự động highlight từ đã học (Vocab Bank), gợi ý từ mới đáng học, và dịch nghĩa cả đoạn văn
 - [x] **Lưu / dùng lại bài AI** — lưu bài đã tạo và bốc lại bài đã lưu khớp bộ lọc (cả 6 loại bài AI), dùng chung Firestore với web
 - [x] **Đồng bộ IA app ↔ web** — tab "Tiến độ" riêng trên app; tùy chọn loại bài hiện ngay trong hub Luyện đọc/Luyện nghe; Word Radar lên sidebar web; bộ lọc Ngân hàng từ (tìm kiếm + Cần ôn + chủ đề + CEFR) giống nhau hai nền tảng
+- [x] **AI exercise types trên web Ôn tập** — web giờ trộn Multiple Choice / Fill-in-blank / Translation vào phiên SM-2 giống app Flutter (trước đây chỉ Flashcard)
 
 **Ý tưởng khác đã brainstorm (chưa xếp lịch):**
 

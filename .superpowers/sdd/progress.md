@@ -2189,3 +2189,18 @@ I3: neither inline-hub test taps "Tạo bài luyện"/"Lấy bài có sẵn" —
 Minors: .vb-search input missing `font-family: inherit` (renders in browser default font); VocabFilterState.isActive unused + no Flutter "clear filters" affordance (web has vb-chip-clear); redundant intermediate *Options mount per hub-generate (wasted work only, skip); word-radar/page.tsx:109 stale "Bật AI" copy (unrelated, skip).
 FIX WAVE: DISPATCHED (I1+I2+I3 + 2 minors).
 FIX WAVE 1b65df2: I1 (mounted guard), I2 (hubs -> ConsumerStatefulWidget, block toggle while expanded type isLoading + SnackBar), I3 (reuse-path nav tests both hubs), M1 (.vb-search font-family: inherit), M2 (Xoá lọc chip + wire isActive). 903 tests (+5), analyze 0, web typecheck clean.
+
+---
+# SP-7 (web practice AI exercise types) — spec+plan committed. 7 tasks. Web-only. Port Flutter's MC/fill/translation SM-2 exercises to /practice (currently flashcard-only). No standalone drill-picker (out of scope).
+
+## SP-7 execution
+Task 1 (practiceExercise.ts): impl 6639ffa. PracticeExercise union + buildExercisePrompt (LANGUAGE_LABELS) + parseExercise (typeof/Array.isArray guards, no throw -> flashcard) + generateExercise (try/catch -> flashcard). 10 tests, typecheck clean.
+Task 2 (pickExercise.ts): impl b4e0a3f (controller, trivial). shouldUseFlashcard(record, aiAvailable, rng). 5 tests, typecheck clean.
+  Review (1+2): Approved (faithful port, no blocking drift). complete (803dbe2..b4e0a3f).
+Tasks 3-5 (MC/Fill/Translation cards): impl 2177b93. All "use client", prop = Extract<PracticeExercise,{type}> + onGrade(1|5). MC 800ms auto, Fill 1200ms auto (Enter submits), Translation manual self-grade. .pe-* CSS. 16 tests, typecheck clean.
+  Review (3-5): Approved (matches Flutter UX, contract exact). complete (b4e0a3f..2177b93). 16 tests. Minor: input aria-label (fold into Task 6).
+Task 6 (wire practice page): impl d149be4. exercises: (PracticeExercise|null)[] parallel to sessionWords; generateAt reads exercisesRef (no stale closure) + sessionTokenRef guard; lookahead: start seeds 0+1, each non-final grade seeds current+1 & current+2. Render 4-way type switch, .pe-loading spinner while null. aria-labels added to Fill input + Translation textarea. web 791 pass (was ~757), typecheck clean.
+  Review: PENDING.
+Task 6 review: Approved (spec ✅, quality Approved; stale-closure + token guards verified correct, SM-2/result effect byte-unchanged). complete (2177b93..d149be4). web 791 tests. Minors: handleGrade seeds +1 AND +2 (dup generateExercise call possible if +1 in-flight — wasted BYOK only), activeConfig not memoized, .pe-loading no aria-live.
+Task 7 (gate + docs): DONE (controller). web typecheck clean / test 791. README "Luyện tập cách khoảng" updated (types now on web too, flashcard-mix rule spelled out) + roadmap entry.
+# SP-7 ALL 7 TASKS COMPLETE. Range 803dbe2..<task7> on master. web 791 tests (was ~757), typecheck clean. Flutter untouched. Whole-branch review next.
