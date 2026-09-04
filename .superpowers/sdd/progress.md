@@ -2213,3 +2213,18 @@ FIX WAVE: DISPATCHED (I1+I2 + minors).
 FIX WAVE a8d8be7: I1 (drop +1 lookahead seed, keep +2), I2 (multi-word mixed-type page test: MC/fill/translation qualities [1,5,5]), M1 (MC test timeout 3000), M2 (parseExercise MC requires options>=2 + in-range correctIndex else flashcard), M3 (.pe-loading role="status"), M4 (stripPrompt .replaceAll). web 795 tests (+4), typecheck clean.
 FIX WAVE re-review: all 6 FIXED, no regressions. web 795 tests, typecheck clean. Ready YES.
 # SP-7 COMPLETE & READY. Range 803dbe2..a8d8be7 on master. web 795 tests (was ~757). Flutter untouched.
+
+---
+# SP-8 (app icon) — spec 2026-09-04-sp8-app-icon-design.md. DONE (controller — asset generation, no subagent).
+Bloom leaf mark (accent #C9587A -> sage #6F9A87 gradient, border-radius 50/50/50/6%, on #FFF3EE). scripts/gen-icons.mjs uses apps/web/node_modules/sharp to rasterize 2 master SVGs. flutter_launcher_icons v0.14.4 (dev dep) regenerates Android legacy+adaptive / iOS full set / Flutter web + manifest. React web: src/app/icon.svg + apple-icon.png + manifest.ts + public/icon-*.png (Next file-based conventions).
+Fixed pbxproj ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS=AppIcon bug (reverted — flutter_launcher_icons 0.14.4 mangles it). Fixed flutter-create default name/description in web/index.html + web/manifest.json.
+Verified: flutter analyze 0, flutter build web --release OK (after clearing a STALE .dart_tool/flutter_build web_plugin_registrant still referencing the removed flutter_tts — pre-existing, unrelated), flutter test 903. apps/web npm run build OK (/icon.svg /apple-icon.png /manifest.webmanifest routes), typecheck clean, npx vitest run 795/795.
+Commit b5f757f (57 files).
+# SP-8 COMPLETE.
+
+# ============================================================
+# POST-DEVICE-TEST PUNCH LIST: SP-1..SP-8 ALL COMPLETE.
+# SP-1 c27cdcd, SP-2 a33d16f, SP-3 608a785, SP-4 cec92ca, SP-5 9709123..df99778,
+# SP-6 dd64a5d..1b65df2, SP-7 803dbe2..a8d8be7, SP-8 b5f757f. All pushed except SP-8 (pushing now).
+# Flutter 903 tests / analyze 0. Web 795 tests / typecheck clean. Both build.
+# ============================================================

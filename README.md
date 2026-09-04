@@ -530,6 +530,7 @@ users/
 - [x] **Lưu / dùng lại bài AI** — lưu bài đã tạo và bốc lại bài đã lưu khớp bộ lọc (cả 6 loại bài AI), dùng chung Firestore với web
 - [x] **Đồng bộ IA app ↔ web** — tab "Tiến độ" riêng trên app; tùy chọn loại bài hiện ngay trong hub Luyện đọc/Luyện nghe; Word Radar lên sidebar web; bộ lọc Ngân hàng từ (tìm kiếm + Cần ôn + chủ đề + CEFR) giống nhau hai nền tảng
 - [x] **AI exercise types trên web Ôn tập** — web giờ trộn Multiple Choice / Fill-in-blank / Translation vào phiên SM-2 giống app Flutter (trước đây chỉ Flashcard)
+- [x] **App icon** — biểu tượng LexiCore (Bloom leaf mark) cho Android/iOS/web + favicon/PWA React web; sinh từ `scripts/gen-icons.mjs` + `flutter_launcher_icons`
 
 **Ý tưởng khác đã brainstorm (chưa xếp lịch):**
 
