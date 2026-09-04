@@ -2157,3 +2157,27 @@ Minors: dart format drift is repo-wide 118/325 files pre-existing => separate ch
 FIX WAVE: DISPATCHED (one subagent, all findings).
 FIX WAVE df99778: all C1/C2/I1/I2 + minors FIXED, re-review Ready:YES, no regressions. 879 tests (was 780 pre-SP5), analyze 0.
 # SP-5 COMPLETE & READY. Range 9709123..df99778 on master (13 commits). Cross-platform bilingual+listening reuse now works both directions. dart-format repo drift (118/325 files) deferred to a standalone chore commit.
+
+---
+# SP-6 (IA changes) — spec+plan committed. 8 tasks. spec 2026-09-04-sp6-ia-changes-design.md, plan 2026-09-04-sp6-ia-changes.md.
+6a Tiến độ tab (Flutter) / 6b inline reading+listening hub options (Flutter) / 6c web Radar->sidebar / 6d bank filter parity (web search + app dueOnly/CEFR).
+
+## SP-6 execution
+Task 1 (Tiến độ tab): impl 617c3fc. suite 881 (+2), analyze 0. /progress top-level ShellRoute child; app_shell 5th _Dest (Icons.insights, idx 3); practice_hub drops Tiến độ card (4 left); progress_screen both appbars lose back button + loading branch gains appbar. BloomBottomNav handles 5 @ 320dp (no fix needed).
+  Task 1 review: Approved (spec ✅, quality Approved). complete (dd64a5d..617c3fc). 881 tests, analyze 0.
+Task 2 (web Radar -> sidebar): impl 07ff4b1. git mv reading/word-radar -> word-radar (/word-radar route). Sidebar new "Quét từ" group. reading hub card removed. web 753 tests pass, typecheck clean.
+  Task 2 review: Approved (spec ✅, quality Approved, no findings). complete (617c3fc..07ff4b1). web 753 tests, typecheck clean.
+Task 3 (web bank search box): impl 429d98e. vb-search input (aria-label "Tìm từ") + clear btn above vb-toolbar; folded into filtered useMemo + filterSignature + clearFilters. filterActive extended locally (query counts). web 756 pass (+4), 1 PRE-EXISTING unrelated flake (listening/dictation seek-slider, order-dependent, passes in isolation). typecheck clean.
+  review: Approved.
+Task 4 (app bank dueOnly+CEFR filter): impl 3927640. NEW lib/core/widgets/vocab_filter.dart (VocabFilterState/vocabRecordIsDue/matchesVocabFilters mirror web vocabFilters.ts). Due chip (Builder, N from vocabAsync.valueOrNull) above topic FilterTile; CEFR FilterTile after it. +17 tests (898 total), analyze 0.
+  review: Approved.
+Task 3 review: Approved (spec ✅, quality Approved). complete (07ff4b1..429d98e).
+Task 4 review: Approved (spec ✅, quality Approved, Minors only — isActive unused yet). complete (429d98e..3927640). 898 tests, analyze 0.
+Task 5 (extract reading *Options widgets): impl 642b90d. ReadingBilingualOptions/Part5Options/Part6Options/Part7Options ConsumerStatefulWidget in reading/presentation/widgets/, build returns bare Column. *HomeScreen thin StatelessWidget wrappers (SingleChildScrollView+pad+appbar). Tests unchanged 195, analyze 0. Clean move.
+  Task 5 review: Approved (faithful refactor, no drift). complete (3927640..642b90d). 195 reading tests, analyze 0.
+Task 6 (inline Reading hub): impl cdc5b0e. ReadingHubScreen StatefulWidget, _expanded string, BloomNavCard onTap toggles (no nav), *Options renders below expanded card. No AnimatedSize. hub test rewritten 6->4 tests (old nav-assertion tests obsolete — cards no longer navigate). reading tests 195->194. analyze 0.
+  Task 6 review: Approved (spec ✅, quality Approved; test -1 acceptable — obsolete nav-assertions removed, replaced w/ real expand/collapse tests). complete (642b90d..cdc5b0e). 194 reading tests, analyze 0.
+Task 7 (listening Options + inline hub): impl ed1f7c6. DictationOptions/ComprehensionOptions extracted (verbatim), *HomeScreen thin wrappers. ListeningHomeScreen StatefulWidget _expanded, cards toggle. dictation/comprehension home tests unchanged (12/7), listening_home_screen_test 3->4. listening 185->186, analyze 0.
+  Task 7 review: Approved (faithful refactor + correct hub). complete (cdc5b0e..ed1f7c6). 186 listening tests, analyze 0.
+Task 8 (gate + docs): DONE (controller). Flutter analyze 0 / test 898. Web typecheck clean / test 757 (82 files). README updated: bank filter parity line, reading/listening hub "options inline" note, Word Radar web-sidebar note, Tiến độ tab note, roadmap entry.
+# SP-6 ALL 8 TASKS COMPLETE. Range dd64a5d..<task8> on master. Flutter 898 tests (was 879), analyze 0. Web 757 tests, typecheck clean. Whole-branch review next.

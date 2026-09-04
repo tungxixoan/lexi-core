@@ -22,7 +22,7 @@
 - Ghi chú cá nhân (personal notes) cho từng từ
 - Gán nhiều chủ đề (topics) cho mỗi từ
 - Quản lý chủ đề: tạo mới, đổi tên, xóa
-- Lọc danh sách theo cấp độ CEFR (A1–C2) và chủ đề
+- Ô tìm kiếm (khớp trên từ hoặc nghĩa) + lọc theo **Cần ôn hôm nay**, chủ đề, và cấp độ CEFR (A1–C2) — bộ lọc giống hệt nhau trên cả app Flutter và web
 - Xem chi tiết, sửa, xóa từ
 
 ### Luyện tập cách khoảng (Spaced Repetition Practice)
@@ -36,7 +36,7 @@
 - Bộ lọc luyện tập theo cấp độ CEFR mục tiêu
 
 ### Luyện đọc (Reading Practice)
-Hub với 4 tính năng con (truy cập qua tab "Luyện tập" → card "Luyện đọc"):
+Hub với 4 tính năng con (truy cập qua tab "Luyện tập" → card "Luyện đọc"). Chọn một loại ngay trên hub sẽ mở luôn các tùy chọn (ngôn ngữ / chủ đề / cấp độ / số từ hoặc Economy Vol) + nút "Tạo bài luyện" / "Lấy bài có sẵn" ngay tại đó — không còn màn hình cài đặt riêng:
 
 - **Đọc & gõ (Bilingual Reading Practice)**
   - AI tạo đoạn văn 4–6 câu sử dụng từ vựng trong ngân hàng của bạn
@@ -61,7 +61,7 @@ Hub với 4 tính năng con (truy cập qua tab "Luyện tập" → card "Luyệ
 **Lưu / dùng lại bài AI** (cả 4 loại Luyện đọc + 2 loại Luyện nghe): màn hình kết quả có nút **"Lưu bài"**, màn hình chọn bài có nút **"Lấy bài có sẵn"** — bốc ngẫu nhiên một bài đã lưu khớp bộ lọc hiện tại (chủ đề / cấp độ / số từ / Economy Vol / độ khó) thay vì gọi AI tạo bài mới. Bài đã lưu nằm ở Firestore `users/{uid}/reading_exercises` + `users/{uid}/listening_exercises`, **dùng chung shape với web** nên một bài lưu trên nền tảng này mở được ở nền tảng kia. Với Đọc & gõ, các từ chưa từng dùng trong bài đã lưu được ưu tiên khi tạo bài mới (`prioritizeUnusedWords`) để bài không lặp từ.
 
 ### Luyện nghe (Listening Practice)
-Hub với 2 tính năng con (truy cập qua tab "Luyện tập" → card "Luyện nghe"), dùng chung `TtsService`, giờ phát qua Cloud Function Piper tự host (giống web) thay vì flutter_tts on-device — chỉ hỗ trợ Tiếng Việt và English (Piper chưa có giọng cho Trung/Hàn/Nhật):
+Hub với 2 tính năng con (truy cập qua tab "Luyện tập" → card "Luyện nghe"), dùng chung `TtsService`, giờ phát qua Cloud Function Piper tự host (giống web) thay vì flutter_tts on-device — chỉ hỗ trợ Tiếng Việt và English (Piper chưa có giọng cho Trung/Hàn/Nhật). Như hub Luyện đọc, chọn một loại sẽ mở các tùy chọn ngay trong hub:
 
 - **Nghe chép (dictation)** — AI tạo một câu vừa-dài dùng ~2 từ từ Vocab Bank; nghe (không tự phát, phải bấm) rồi gõ lại chính xác
   - **3 mức độ** (chọn mỗi phiên luyện tập, mặc định Khó):
@@ -82,7 +82,7 @@ Hub với 2 tính năng con (truy cập qua tab "Luyện tập" → card "Luyệ
   - **Không ảnh hưởng SM-2** — không có từ vựng cụ thể nào để gắn điểm vào
 
 ### Quét từ vựng (Word Radar)
-Truy cập qua tab "Luyện tập" → card "Quét từ vựng":
+Trên app Flutter: tab "Luyện tập" → card "Quét từ vựng". Trên web: mục **"Quét từ vựng"** riêng trên sidebar (ngang hàng với "Đọc", không còn nằm trong hub Đọc).
 
 - Dán bất kỳ văn bản nào (bài báo, tin nhắn...) vào ô nhập (tối đa 3000 ký tự), bấm "Quét"
 - **Highlight từ đã học** — quét cục bộ (không cần AI), so khớp chuỗi con không phân biệt hoa/thường với Vocab Bank; hiện ngay lập tức, hoạt động cả khi tắt AI
@@ -93,6 +93,8 @@ Truy cập qua tab "Luyện tập" → card "Quét từ vựng":
 - Không ảnh hưởng SM-2 cho tới khi người dùng chủ động lưu một từ gợi ý
 
 ### Tiến độ học tập (Progress Dashboard)
+
+Tab riêng trên thanh điều hướng ("Tiến độ", giữa "Luyện tập" và "Cài đặt") — app Flutter giờ có 5 tab.
 
 - Tổng số từ đã học
 - Chuỗi ngày học (streak)
@@ -526,6 +528,7 @@ users/
 - [x] Nghe hiểu (TOEIC-style listening comprehension)
 - [x] **Word Radar** — dán văn bản bất kỳ, tự động highlight từ đã học (Vocab Bank), gợi ý từ mới đáng học, và dịch nghĩa cả đoạn văn
 - [x] **Lưu / dùng lại bài AI** — lưu bài đã tạo và bốc lại bài đã lưu khớp bộ lọc (cả 6 loại bài AI), dùng chung Firestore với web
+- [x] **Đồng bộ IA app ↔ web** — tab "Tiến độ" riêng trên app; tùy chọn loại bài hiện ngay trong hub Luyện đọc/Luyện nghe; Word Radar lên sidebar web; bộ lọc Ngân hàng từ (tìm kiếm + Cần ôn + chủ đề + CEFR) giống nhau hai nền tảng
 
 **Ý tưởng khác đã brainstorm (chưa xếp lịch):**
 
