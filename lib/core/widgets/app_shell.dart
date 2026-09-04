@@ -49,6 +49,7 @@ class _AppShellState extends ConsumerState<AppShell>
     _Dest(path: '/', icon: Icons.search, label: 'Tra từ'),
     _Dest(path: '/vocab', icon: Icons.library_books, label: 'Từ vựng'),
     _Dest(path: '/practice', icon: Icons.school, label: 'Luyện tập'),
+    _Dest(path: '/progress', icon: Icons.insights, label: 'Tiến độ'),
     _Dest(path: '/settings', icon: Icons.settings, label: 'Cài đặt'),
   ];
 

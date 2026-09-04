@@ -35,13 +35,6 @@ class PracticeHubScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           BloomNavCard(
-            icon: Icons.bar_chart_outlined,
-            title: 'Tiến độ học tập',
-            subtitle: 'Chuỗi ngày học, từ đến hạn, phân bố cấp độ CEFR.',
-            onTap: () => context.push('/practice/progress'),
-          ),
-          const SizedBox(height: 12),
-          BloomNavCard(
             icon: Icons.radar_outlined,
             title: 'Quét từ vựng',
             subtitle:

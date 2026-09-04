@@ -21,6 +21,7 @@ Future<Widget> _buildShell({String initialLocation = '/'}) async {
           GoRoute(path: '/', builder: (ctx, state) => stub('Home')),
           GoRoute(path: '/vocab', builder: (ctx, state) => stub('Vocab')),
           GoRoute(path: '/practice', builder: (ctx, state) => stub('Practice')),
+          GoRoute(path: '/progress', builder: (ctx, state) => stub('Progress')),
           GoRoute(
             path: '/reading',
             builder: (ctx, state) => stub('Reading'),
@@ -78,7 +79,7 @@ void main() {
   });
 
   testWidgets(
-      'shows exactly 4 destinations: Tra từ, Từ vựng, Luyện tập, Cài đặt',
+      'shows exactly 5 destinations: Tra từ, Từ vựng, Luyện tập, Tiến độ, Cài đặt',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(400, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -89,9 +90,37 @@ void main() {
     expect(find.text('Tra từ'), findsOneWidget);
     expect(find.text('Từ vựng'), findsOneWidget);
     expect(find.text('Luyện tập'), findsOneWidget);
+    expect(find.text('Tiến độ'), findsOneWidget);
     expect(find.text('Cài đặt'), findsOneWidget);
     expect(find.text('Đọc'), findsNothing);
     expect(find.text('Luyện nghe'), findsNothing);
+  });
+
+  testWidgets('location /progress selects the "Tiến độ" tab (index 3)',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(await _buildShell(initialLocation: '/progress'));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<BloomBottomNav>(find.byType(BloomBottomNav)).selectedIndex,
+      3,
+    );
+  });
+
+  testWidgets('5-item BloomBottomNav does not overflow at 320dp width',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(await _buildShell());
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(BloomBottomNav), findsOneWidget);
+    expect(find.text('Tiến độ'), findsOneWidget);
   });
 
   testWidgets('"Luyện tập" stays selected on /reading and /listening routes',
@@ -124,6 +153,7 @@ void main() {
     expect(find.text('Tra từ'), findsOneWidget);
     expect(find.text('Từ vựng'), findsOneWidget);
     expect(find.text('Luyện tập'), findsOneWidget);
+    expect(find.text('Tiến độ'), findsOneWidget);
     expect(find.text('Cài đặt'), findsOneWidget);
   });
 }

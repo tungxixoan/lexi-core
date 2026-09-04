@@ -161,14 +161,12 @@ void main() {
     expect(find.byType(BloomPillButton), findsNothing);
   });
 
-  testWidgets('the back button routes to /practice', (tester) async {
+  testWidgets('renders as a root tab — no back button in the app bar',
+      (tester) async {
     await tester.pumpWidget(_buildProgress(_stats));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(BloomIconButton));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Practice stub'), findsOneWidget);
+    expect(find.byType(BloomIconButton), findsNothing);
   });
 
   testWidgets('loading state shows a spinner', (tester) async {

@@ -22,10 +22,6 @@ Widget _buildHub() {
         builder: (ctx, state) => const Scaffold(body: Text('Listening home')),
       ),
       GoRoute(
-        path: '/practice/progress',
-        builder: (ctx, state) => const Scaffold(body: Text('Progress screen')),
-      ),
-      GoRoute(
         path: '/practice/radar',
         builder: (ctx, state) => const Scaffold(body: Text('Word Radar screen')),
       ),
@@ -35,14 +31,15 @@ Widget _buildHub() {
 }
 
 void main() {
-  testWidgets('shows all 5 hub cards', (tester) async {
+  testWidgets('shows all 4 hub cards (no Tiến độ card — it is a tab now)',
+      (tester) async {
     await tester.pumpWidget(_buildHub());
     await tester.pumpAndSettle();
     expect(find.text('Từ vựng cách khoảng'), findsOneWidget);
     expect(find.text('Luyện đọc'), findsOneWidget);
     expect(find.text('Luyện nghe'), findsOneWidget);
-    expect(find.text('Tiến độ học tập'), findsOneWidget);
     expect(find.text('Quét từ vựng'), findsOneWidget);
+    expect(find.text('Tiến độ học tập'), findsNothing);
     expect(find.byType(BloomScaffold), findsOneWidget);
   });
 

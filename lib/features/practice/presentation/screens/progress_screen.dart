@@ -32,16 +32,11 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
 
     return statsAsync.when(
       loading: () => const BloomScaffold(
+        appBar: BloomAppBar(title: 'Tiến độ học'),
         body: Center(child: CircularProgressIndicator()),
       ),
       error: (e, _) => BloomScaffold(
-        appBar: BloomAppBar(
-          title: 'Tiến độ học',
-          leading: BloomIconButton(
-            icon: Icons.arrow_back_ios_new,
-            onPressed: () => context.go('/practice'),
-          ),
-        ),
+        appBar: const BloomAppBar(title: 'Tiến độ học'),
         body: Center(
           child: Text(
             'Không tải được dữ liệu tiến độ.',
@@ -61,13 +56,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
         List.generate(7, (i) => today.subtract(Duration(days: 6 - i)));
 
     return BloomScaffold(
-      appBar: BloomAppBar(
-        title: 'Tiến độ học',
-        leading: BloomIconButton(
-          icon: Icons.arrow_back_ios_new,
-          onPressed: () => context.go('/practice'),
-        ),
-      ),
+      appBar: const BloomAppBar(title: 'Tiến độ học'),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

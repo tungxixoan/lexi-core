@@ -185,10 +185,6 @@ final appRouter = GoRouter(
               builder: (context, state) => const PracticeHomeScreen(),
             ),
             GoRoute(
-              path: 'progress',
-              builder: (context, state) => const ProgressScreen(),
-            ),
-            GoRoute(
               path: 'session',
               // When the child `result` route is active, go_router rebuilds
               // this parent too — with the child's `extra` (a SessionResult).
@@ -216,6 +212,10 @@ final appRouter = GoRouter(
               builder: (context, state) => const WordRadarScreen(),
             ),
           ],
+        ),
+        GoRoute(
+          path: '/progress',
+          builder: (context, state) => const ProgressScreen(),
         ),
         GoRoute(
           path: '/reading',
