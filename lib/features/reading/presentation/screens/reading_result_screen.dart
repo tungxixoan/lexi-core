@@ -6,6 +6,7 @@ import '../../../../core/di/app_providers.dart';
 import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../features/vocabulary/domain/entities/vocab_record.dart';
 import '../../../../features/vocabulary/presentation/providers/vocab_bank_provider.dart';
+import '../../../practice/domain/entities/saved_exercise.dart';
 import '../../../word_radar/presentation/widgets/result_suggestions_section.dart';
 import '../providers/reading_practice_provider.dart';
 
@@ -20,9 +21,14 @@ class ReadingResultScreen extends ConsumerStatefulWidget {
 class _ReadingResultScreenState extends ConsumerState<ReadingResultScreen> {
   ReadingSessionResult get result => widget.result;
 
+  bool _saving = false;
+  String? _savedId;
+
   @override
   void initState() {
     super.initState();
+    // Already-saved if this session was started from a reused exercise.
+    _savedId = widget.result.reusedFromId;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _recordPracticeSession();
     });
@@ -133,6 +139,24 @@ class _ReadingResultScreenState extends ConsumerState<ReadingResultScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              if (_savedId != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    'Đã lưu bài này',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: context.bloom.inkSoft, fontSize: 13),
+                  ),
+                )
+              else ...[
+                BloomPillButton(
+                  label: _saving ? 'Đang lưu…' : 'Lưu bài',
+                  variant: BloomButtonVariant.secondary,
+                  block: true,
+                  onPressed: _saving ? null : _save,
+                ),
+                const SizedBox(height: 8),
+              ],
               BloomPillButton(
                 label: 'Sinh bài mới',
                 variant: BloomButtonVariant.primary,
@@ -178,6 +202,41 @@ class _ReadingResultScreenState extends ConsumerState<ReadingResultScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Đã sao chép đoạn văn.')),
     );
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    try {
+      final id = await ref.read(savedExercisesServiceProvider).save(
+            type: SavedExerciseType.bilingual,
+            passageJson: result.passage.toJson(),
+            generationFilters: result.generationFilters ??
+                <String, dynamic>{
+                  'topicIds': <String>[],
+                  'maxCefr': result.passage.level.name,
+                  'wordCount': null,
+                },
+            targetLanguage: result.passage.targetLanguage,
+          );
+      if (!mounted) return;
+      if (id == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Chưa đăng nhập — không lưu được.')),
+        );
+        setState(() => _saving = false);
+        return;
+      }
+      setState(() {
+        _savedId = id;
+        _saving = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lưu bài thất bại. Thử lại sau.')),
+      );
+    }
   }
 
   void _regenerate(BuildContext context, WidgetRef ref) {

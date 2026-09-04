@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
+import 'package:lexi_core/core/services/saved_exercises_service.dart';
 import 'package:lexi_core/core/services/stats_service.dart';
+import 'package:lexi_core/features/practice/domain/entities/saved_exercise.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
@@ -24,6 +26,8 @@ import 'package:lexi_core/features/word_radar/domain/entities/word_radar_ai_resu
 import 'package:lexi_core/features/word_radar/domain/use_cases/get_vocab_suggestions_for_text_use_case.dart';
 
 class MockStatsService extends Mock implements StatsService {}
+
+class MockSavedExercisesService extends Mock implements SavedExercisesService {}
 
 class MockGetVocabSuggestionsForTextUseCase extends Mock
     implements GetVocabSuggestionsForTextUseCase {}
@@ -168,6 +172,8 @@ void main() {
   setUpAll(() {
     registerFallbackValue(Language.english);
     registerFallbackValue(CEFRLevel.b1);
+    registerFallbackValue(SavedExerciseType.bilingual);
+    registerFallbackValue(<String, dynamic>{});
   });
 
   testWidgets('shows accuracy percentage', (tester) async {
@@ -296,6 +302,79 @@ void main() {
 
     expect(find.text('Sinh bài mới'), findsOneWidget); // screen still renders
     expect(find.textContaining('Không tải được gợi ý'), findsOneWidget);
+  });
+
+  testWidgets(
+      'shows "Lưu bài" for a fresh result; tapping it saves and swaps to '
+      '"Đã lưu bài này"', (tester) async {
+    final mock = MockSavedExercisesService();
+    when(() => mock.save(
+          type: any(named: 'type'),
+          passageJson: any(named: 'passageJson'),
+          generationFilters: any(named: 'generationFilters'),
+          targetLanguage: any(named: 'targetLanguage'),
+        )).thenAnswer((_) async => 'new-id');
+
+    await tester.pumpWidget(await _buildResult(
+      extraOverrides: [savedExercisesServiceProvider.overrideWithValue(mock)],
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Lưu bài'), findsOneWidget);
+    await tester.tap(find.text('Lưu bài'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Đã lưu bài này'), findsOneWidget);
+    expect(find.text('Lưu bài'), findsNothing);
+    verify(() => mock.save(
+          type: any(named: 'type', that: equals(SavedExerciseType.bilingual)),
+          passageJson: any(named: 'passageJson'),
+          generationFilters: any(named: 'generationFilters'),
+          targetLanguage: any(named: 'targetLanguage', that: equals(Language.english)),
+        )).called(1);
+  });
+
+  testWidgets('hides "Lưu bài" for a result that was reused from a saved exercise',
+      (tester) async {
+    final reused = ReadingSessionResult(
+      passage: _testResult.passage,
+      sentenceResults: _testResult.sentenceResults,
+      totalDuration: _testResult.totalDuration,
+      reusedFromId: 'saved-7',
+    );
+    await tester.pumpWidget(await _buildResult(
+      result: reused,
+      extraOverrides: [
+        savedExercisesServiceProvider
+            .overrideWithValue(MockSavedExercisesService()),
+      ],
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Lưu bài'), findsNothing);
+    expect(find.text('Đã lưu bài này'), findsOneWidget);
+  });
+
+  testWidgets('save failure shows a snackbar and restores the "Lưu bài" button',
+      (tester) async {
+    final mock = MockSavedExercisesService();
+    when(() => mock.save(
+          type: any(named: 'type'),
+          passageJson: any(named: 'passageJson'),
+          generationFilters: any(named: 'generationFilters'),
+          targetLanguage: any(named: 'targetLanguage'),
+        )).thenThrow(Exception('nope'));
+
+    await tester.pumpWidget(await _buildResult(
+      extraOverrides: [savedExercisesServiceProvider.overrideWithValue(mock)],
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Lưu bài'));
+    await tester.pump();
+
+    expect(find.textContaining('Lưu bài thất bại'), findsOneWidget);
+    expect(find.text('Lưu bài'), findsOneWidget);
   });
 
   testWidgets('does not load suggestions when AI is disabled in settings',

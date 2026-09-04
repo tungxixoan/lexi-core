@@ -274,6 +274,7 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
           level: _level ?? settings.targetCefrLevel ?? CEFRLevel.b1,
           context: AppContext.general,
           targetLanguage: _language,
+          generationFilters: _filters(),
         );
 
     if (context.mounted) {
@@ -284,16 +285,21 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
     }
   }
 
+  /// The raw `{topicIds, maxCefr, wordCount}` map both `_generate` (threaded to
+  /// the result screen's "Lưu bài") and `_reuse` (matched against saved docs)
+  /// build from the current filter selection.
+  Map<String, dynamic> _filters() => <String, dynamic>{
+        'topicIds': _topicIds.toList(),
+        'maxCefr': _level?.name,
+        'wordCount': _wordCount,
+      };
+
   Future<void> _reuse(
     BuildContext context,
     WidgetRef ref,
     List<VocabRecord> words,
   ) async {
-    final filters = <String, dynamic>{
-      'topicIds': _topicIds.toList(),
-      'maxCefr': _level?.name,
-      'wordCount': _wordCount,
-    };
+    final filters = _filters();
     final result = await ref.read(savedExercisesServiceProvider).getRandom(
           type: SavedExerciseType.bilingual,
           targetLanguage: _language,

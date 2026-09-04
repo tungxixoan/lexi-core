@@ -15,6 +15,7 @@ import 'package:lexi_core/features/dictionary/domain/entities/user_settings_stat
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/practice/domain/entities/saved_exercise.dart';
 import 'package:lexi_core/features/reading/domain/entities/reading_passage.dart';
+import 'package:lexi_core/features/reading/presentation/providers/reading_practice_provider.dart';
 import 'package:lexi_core/features/reading/presentation/screens/reading_home_screen.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/topic.dart';
@@ -116,10 +117,30 @@ class _FakeSavedExercisesService extends SavedExercisesService {
   Future<Set<String>> usedBilingualVocabIds() async => used;
 }
 
+/// Records the args passed to [generate] without hitting the AI use case, so a
+/// test can assert `_generate` threads `generationFilters` through.
+class _RecordingReadingPracticeNotifier extends ReadingPracticeNotifier {
+  bool generateCalled = false;
+  Map<String, dynamic>? capturedFilters;
+
+  @override
+  Future<void> generate({
+    required List<VocabRecord> words,
+    required CEFRLevel level,
+    required AppContext context,
+    required Language targetLanguage,
+    Map<String, dynamic>? generationFilters,
+  }) async {
+    generateCalled = true;
+    capturedFilters = generationFilters;
+  }
+}
+
 Widget _buildHome({
   required UserSettingsState settings,
   required List<VocabRecord> vocabItems,
   SavedExercisesService? savedService,
+  ReadingPracticeNotifier? readingNotifier,
 }) {
   SharedPreferences.setMockInitialValues({});
   final router = GoRouter(
@@ -146,6 +167,8 @@ Widget _buildHome({
           .overrideWithValue(_FakeVocabRepository(vocabItems)),
       if (savedService != null)
         savedExercisesServiceProvider.overrideWithValue(savedService),
+      if (readingNotifier != null)
+        readingPracticeNotifierProvider.overrideWith(() => readingNotifier),
     ],
     child: MaterialApp.router(routerConfig: router),
   );
@@ -256,5 +279,26 @@ void main() {
     await tester.tap(find.text('Lấy bài có sẵn'));
     await tester.pump();
     expect(find.text('Chưa có bài đã lưu khớp bộ lọc.'), findsOneWidget);
+  });
+
+  testWidgets('"Tạo bài luyện" threads the generation filters into generate()',
+      (tester) async {
+    final notifier = _RecordingReadingPracticeNotifier();
+    await tester.pumpWidget(_buildHome(
+      settings: _settings(),
+      vocabItems: List.generate(10, _record),
+      savedService: _FakeSavedExercisesService(used: const {}),
+      readingNotifier: notifier,
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Tạo bài luyện'));
+    await tester.pumpAndSettle();
+
+    expect(notifier.generateCalled, isTrue);
+    expect(notifier.capturedFilters, isNotNull);
+    expect(notifier.capturedFilters!.containsKey('topicIds'), isTrue);
+    expect(notifier.capturedFilters!.containsKey('maxCefr'), isTrue);
+    expect(notifier.capturedFilters!['wordCount'], 10);
   });
 }
