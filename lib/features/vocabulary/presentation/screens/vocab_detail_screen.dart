@@ -53,7 +53,8 @@ class _VocabDetailScreenState extends ConsumerState<VocabDetailScreen> {
   void _initControllers(VocabRecord r) {
     _meaningCtrl = TextEditingController(text: r.meaning);
     _notesCtrl = TextEditingController(text: r.personalNotes);
-    _exampleCtrls = r.examples.map((e) => TextEditingController(text: e)).toList();
+    _exampleCtrls =
+        r.examples.map((e) => TextEditingController(text: e)).toList();
     _editTopicIds = List.from(r.topicIds);
   }
 
@@ -120,8 +121,7 @@ class _VocabDetailScreenState extends ConsumerState<VocabDetailScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Xoá khỏi Ngân hàng từ?'),
-        content:
-            Text('"${_record!.headword}" sẽ bị xoá. Không thể hoàn tác.'),
+        content: Text('"${_record!.headword}" sẽ bị xoá. Không thể hoàn tác.'),
         actions: [
           BloomPillButton(
             label: 'Huỷ',
@@ -308,7 +308,7 @@ class _VocabDetailScreenState extends ConsumerState<VocabDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('${e.key + 1}. ',
-                                style: TextStyle(color: c.inkFaint)),
+                                style: TextStyle(color: c.inkSoft)),
                             Expanded(
                               child: Text(
                                 e.value,
@@ -355,7 +355,7 @@ class _VocabDetailScreenState extends ConsumerState<VocabDetailScreen> {
                       error: (e, _) => Text(e.toString()),
                     )
               else if (r.topicIds.isEmpty)
-                Text('Chưa có', style: TextStyle(color: c.inkFaint))
+                Text('Chưa có', style: TextStyle(color: c.inkSoft))
               else
                 ref.watch(topicsNotifierProvider).when(
                       data: (topics) {
@@ -392,7 +392,7 @@ class _VocabDetailScreenState extends ConsumerState<VocabDetailScreen> {
                     )
                   : r.personalNotes.isEmpty
                       ? Text('Chưa có ghi chú.',
-                          style: TextStyle(color: c.inkFaint))
+                          style: TextStyle(color: c.inkSoft))
                       : Text(r.personalNotes,
                           style: TextStyle(color: c.inkSoft)),
             ],

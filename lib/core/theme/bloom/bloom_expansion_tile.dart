@@ -40,8 +40,7 @@ class _BloomExpansionTileState extends State<BloomExpansionTile> {
         const SizedBox(width: BloomSpacing.sm),
         Text(widget.summary,
             style: TextStyle(
-                fontSize: 12.5,
-                color: widget.answered ? c.sage : c.inkFaint)),
+                fontSize: 12.5, color: widget.answered ? c.sage : c.inkSoft)),
         const SizedBox(width: BloomSpacing.xs),
         AnimatedRotation(
           turns: _expanded ? 0.5 : 0,
@@ -78,8 +77,8 @@ class _BloomExpansionTileState extends State<BloomExpansionTile> {
             alignment: Alignment.topCenter,
             child: _expanded
                 ? Padding(
-                    padding: const EdgeInsets.fromLTRB(BloomSpacing.lg, 0,
-                        BloomSpacing.lg, BloomSpacing.lg),
+                    padding: const EdgeInsets.fromLTRB(
+                        BloomSpacing.lg, 0, BloomSpacing.lg, BloomSpacing.lg),
                     child: widget.child,
                   )
                 : const SizedBox(width: double.infinity),

@@ -32,10 +32,13 @@ class BloomListRow extends StatelessWidget {
               width: 32,
               height: 32,
               alignment: Alignment.center,
-              decoration: BoxDecoration(color: c.sageBg, shape: BoxShape.circle),
+              decoration:
+                  BoxDecoration(color: c.sageBg, shape: BoxShape.circle),
               child: Text(cefr.toUpperCase(),
                   style: TextStyle(
-                      color: c.sage, fontWeight: FontWeight.w800, fontSize: 11)),
+                      color: c.sage,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 11)),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -45,8 +48,8 @@ class BloomListRow extends StatelessWidget {
                     child: Text(headword,
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
-                        style:
-                            TextStyle(color: c.ink, fontWeight: FontWeight.w700)),
+                        style: TextStyle(
+                            color: c.ink, fontWeight: FontWeight.w700)),
                   ),
                   const SizedBox(width: 2),
                   Expanded(
@@ -60,7 +63,7 @@ class BloomListRow extends StatelessWidget {
             if (trailingText != null) ...[
               const SizedBox(width: 8),
               Text(trailingText!,
-                  style: TextStyle(color: c.inkFaint, fontSize: 12)),
+                  style: TextStyle(color: c.inkSoft, fontSize: 12)),
             ],
           ],
         ),

@@ -75,7 +75,7 @@ class BloomBarChart extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
-                      color: bar.highlight ? c.accent : c.inkFaint,
+                      color: bar.highlight ? c.accent : c.inkSoft,
                     ),
                   ),
                 ],

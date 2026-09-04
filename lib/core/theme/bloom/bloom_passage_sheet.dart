@@ -74,7 +74,7 @@ class _BloomPassageSheetState extends State<BloomPassageSheet> {
               const SizedBox(height: BloomSpacing.xs),
               Center(
                 child: Text(widget.hint,
-                    style: TextStyle(fontSize: 12.5, color: c.inkFaint)),
+                    style: TextStyle(fontSize: 12.5, color: c.inkSoft)),
               ),
               if (widget.tabs.length > 1) ...[
                 const SizedBox(height: BloomSpacing.sm),
@@ -98,8 +98,7 @@ class _BloomPassageSheetState extends State<BloomPassageSheet> {
               Container(
                 padding: const EdgeInsets.only(left: BloomSpacing.md),
                 decoration: BoxDecoration(
-                  border:
-                      Border(left: BorderSide(color: c.accent, width: 3)),
+                  border: Border(left: BorderSide(color: c.accent, width: 3)),
                 ),
                 child: Text(
                   widget.passages[_tab],

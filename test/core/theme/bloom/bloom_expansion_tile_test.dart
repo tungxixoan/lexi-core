@@ -22,7 +22,9 @@ void main() {
 
   testWidgets('tapping the header reveals the child', (tester) async {
     await tester.pumpWidget(_host(const BloomExpansionTile(
-      title: 'T', summary: 'S', child: Text('BODY'),
+      title: 'T',
+      summary: 'S',
+      child: Text('BODY'),
     )));
     await tester.tap(find.text('T'));
     await tester.pumpAndSettle();
@@ -32,24 +34,32 @@ void main() {
   testWidgets('initiallyExpanded: true shows the child immediately',
       (tester) async {
     await tester.pumpWidget(_host(const BloomExpansionTile(
-      title: 'T', summary: 'S', initiallyExpanded: true, child: Text('BODY'),
+      title: 'T',
+      summary: 'S',
+      initiallyExpanded: true,
+      child: Text('BODY'),
     )));
     await tester.pumpAndSettle();
     expect(find.text('BODY'), findsOneWidget);
   });
 
-  testWidgets('answered summary is drawn in sage, unanswered in inkFaint',
+  testWidgets('answered summary is drawn in sage, unanswered in inkSoft',
       (tester) async {
     await tester.pumpWidget(_host(const BloomExpansionTile(
-      title: 'T', summary: 'Đã chọn: on', answered: true, child: SizedBox(),
+      title: 'T',
+      summary: 'Đã chọn: on',
+      answered: true,
+      child: SizedBox(),
     )));
     final answered = tester.widget<Text>(find.text('Đã chọn: on'));
     expect(answered.style!.color, BloomColors.light.sage);
 
     await tester.pumpWidget(_host(const BloomExpansionTile(
-      title: 'T', summary: 'Chưa trả lời', child: SizedBox(),
+      title: 'T',
+      summary: 'Chưa trả lời',
+      child: SizedBox(),
     )));
     final unanswered = tester.widget<Text>(find.text('Chưa trả lời'));
-    expect(unanswered.style!.color, BloomColors.light.inkFaint);
+    expect(unanswered.style!.color, BloomColors.light.inkSoft);
   });
 }

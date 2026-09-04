@@ -6,7 +6,7 @@ import 'package:lexi_core/core/theme/bloom_tokens.dart';
 import 'package:lexi_core/core/theme/bloom/bloom_labels.dart';
 
 void main() {
-  testWidgets('section header is uppercased, spaced, faint', (tester) async {
+  testWidgets('section header is uppercased, spaced, soft', (tester) async {
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.light,
       home: const Scaffold(body: BloomSectionHeader('Tài khoản')),
@@ -14,7 +14,7 @@ void main() {
     final txt = tester.widget<Text>(find.byType(Text));
     expect(txt.data, 'TÀI KHOẢN');
     expect(txt.style?.letterSpacing, greaterThan(0));
-    expect(txt.style?.color, BloomColors.light.inkFaint);
+    expect(txt.style?.color, BloomColors.light.inkSoft);
   });
 
   testWidgets('leaf mark paints a gradient teardrop', (tester) async {

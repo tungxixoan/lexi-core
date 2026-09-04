@@ -36,7 +36,7 @@ class BloomStatCard extends StatelessWidget {
               fontSize: 12.5,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.4,
-              color: c.inkFaint,
+              color: c.inkSoft,
             ),
           ),
           const SizedBox(height: 6),

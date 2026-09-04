@@ -40,7 +40,7 @@ void main() {
     expect(tester.widget<Text>(find.text('CN')).style!.color,
         BloomColors.light.accent);
     expect(tester.widget<Text>(find.text('T2')).style!.color,
-        BloomColors.light.inkFaint);
+        BloomColors.light.inkSoft);
   });
 
   testWidgets('renders with an all-zero week without throwing', (tester) async {

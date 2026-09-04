@@ -82,6 +82,28 @@ void main() {
     expect(find.text('tồn tại trong thời gian ngắn'), findsNothing);
   });
 
+  testWidgets('no listen button on the front when onPronounce is null',
+      (tester) async {
+    await tester.pumpWidget(_buildCard((_) {}));
+    expect(find.byIcon(Icons.volume_up), findsNothing);
+  });
+
+  testWidgets('the front listen button fires onPronounce', (tester) async {
+    var spoke = 0;
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light,
+      home: Scaffold(
+        body: FlashcardWidget(
+          exercise: FlashcardExercise(vocabRecord: _record),
+          onResult: (_) {},
+          onPronounce: () => spoke++,
+        ),
+      ),
+    ));
+    await tester.tap(find.byIcon(Icons.volume_up));
+    expect(spoke, 1);
+  });
+
   testWidgets('tapping the front flips to the back (meaning)', (tester) async {
     await tester.pumpWidget(_buildCard((_) {}));
     await tester.tap(find.text('ephemeral'));
@@ -101,6 +123,22 @@ void main() {
 
     expect(find.text('ephemeral'), findsOneWidget);
     expect(find.text('tồn tại trong thời gian ngắn'), findsNothing);
+  });
+
+  testWidgets('tapping the blank space above the meaning also flips back',
+      (tester) async {
+    await tester.pumpWidget(_buildCard((_) {}));
+    await tester.tap(find.text('ephemeral'));
+    await tester.pumpAndSettle();
+
+    // Empty area inside the card, above the vertically-centred meaning block:
+    // a quarter of the face height up from centre.
+    final face = find.byKey(const Key('flashcard-face'));
+    await tester.tapAt(
+        tester.getCenter(face) - Offset(0, tester.getSize(face).height * 0.25));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ephemeral'), findsOneWidget);
   });
 
   testWidgets('can flip back and forth multiple times before grading',

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../bloom_tokens.dart';
 
-/// Small uppercase group label, letter-spaced, `inkFaint`.
+/// Small uppercase group label, letter-spaced, `inkSoft`.
 class BloomSectionHeader extends StatelessWidget {
   const BloomSectionHeader(this.text, {super.key});
   final String text;
@@ -17,7 +17,7 @@ class BloomSectionHeader extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.8,
-          color: c.inkFaint,
+          color: c.inkSoft,
         ),
       ),
     );

@@ -256,8 +256,9 @@ final appRouter = GoRouter(
                     GoRoute(
                       path: 'result',
                       redirect: (context, state) {
-                        if (state.extra is! Part5SessionResult)
+                        if (state.extra is! Part5SessionResult) {
                           return '/reading/part5';
+                        }
                         return null;
                       },
                       builder: (context, state) => Part5ResultScreen(
@@ -279,8 +280,9 @@ final appRouter = GoRouter(
                     GoRoute(
                       path: 'result',
                       redirect: (context, state) {
-                        if (state.extra is! Part6SessionResult)
+                        if (state.extra is! Part6SessionResult) {
                           return '/reading/part6';
+                        }
                         return null;
                       },
                       builder: (context, state) => Part6ResultScreen(
@@ -302,8 +304,9 @@ final appRouter = GoRouter(
                     GoRoute(
                       path: 'result',
                       redirect: (context, state) {
-                        if (state.extra is! Part7SessionResult)
+                        if (state.extra is! Part7SessionResult) {
                           return '/reading/part7';
+                        }
                         return null;
                       },
                       builder: (context, state) => Part7ResultScreen(

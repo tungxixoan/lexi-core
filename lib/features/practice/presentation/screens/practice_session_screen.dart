@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/di/app_providers.dart';
 import '../../../../core/theme/bloom/bloom.dart';
+import '../../../../services/tts_service.dart';
+import '../../../dictionary/presentation/providers/user_settings_provider.dart';
+import '../../../vocabulary/domain/entities/vocab_record.dart';
 import '../../domain/entities/exercise.dart';
 import '../../domain/entities/exercise_result.dart';
 import '../providers/practice_session_provider.dart';
@@ -38,6 +42,16 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
 
   void _onResult(ExerciseResult result) {
     ref.read(practiceSessionNotifierProvider.notifier).recordAndAdvance(result);
+  }
+
+  /// A "speak the headword" callback, or null when the target language has no
+  /// Piper voice (zh/ko/ja) — matches the dictionary result widgets.
+  VoidCallback? _pronounceFor(VocabRecord record) {
+    final language = ref.read(userSettingsNotifierProvider).targetLanguage;
+    if (language.ttsCloudCode == null) return null;
+    return () => ref
+        .read(ttsServiceProvider)
+        .pronounce(record.headword, language, tier: PronunciationTier.word);
   }
 
   @override
@@ -131,8 +145,12 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
     // flags) since consecutive exercises share the same widget type.
     final key = ValueKey(exercise.vocabRecord.id);
     return switch (exercise) {
-      FlashcardExercise e =>
-        FlashcardWidget(key: key, exercise: e, onResult: _onResult),
+      FlashcardExercise e => FlashcardWidget(
+          key: key,
+          exercise: e,
+          onResult: _onResult,
+          onPronounce: _pronounceFor(e.vocabRecord),
+        ),
       MultipleChoiceExercise e =>
         MultipleChoiceWidget(key: key, exercise: e, onResult: _onResult),
       FillInBlankExercise e =>
