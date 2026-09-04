@@ -177,11 +177,27 @@ class _ComprehensionHomeScreenState
     );
   }
 
+  /// The lookup filter `_reuse` matches saved docs against — `level` is nullable
+  /// here ("match any level").
+  Map<String, dynamic> _filters() => <String, dynamic>{
+        'context': _context.name,
+        'level': _level?.name,
+      };
+
+  /// What `_generate` persists as the saved doc's `generationFilters` — `level`
+  /// is ALWAYS concrete here (mirrors web: a saved `generationFilters.level` is
+  /// never null; only the lookup filter can be).
+  Map<String, dynamic> _generationFilters() => <String, dynamic>{
+        'context': _context.name,
+        'level': (_level ?? CEFRLevel.b1).name,
+      };
+
   Future<void> _generate(BuildContext context, WidgetRef ref) async {
     await ref.read(listeningComprehensionNotifierProvider.notifier).generate(
           level: _level ?? CEFRLevel.b1,
           context: _context,
           targetLanguage: _language,
+          generationFilters: _generationFilters(),
         );
 
     if (context.mounted) {
@@ -194,10 +210,7 @@ class _ComprehensionHomeScreenState
   }
 
   Future<void> _reuse(BuildContext context, WidgetRef ref) async {
-    final filters = <String, dynamic>{
-      'context': _context.name,
-      'level': _level?.name,
-    };
+    final filters = _filters();
     final result = await ref.read(savedExercisesServiceProvider).getRandom(
           type: SavedExerciseType.comprehension,
           targetLanguage: _language,
@@ -210,8 +223,22 @@ class _ComprehensionHomeScreenState
       );
       return;
     }
+    // A web-saved comprehension `item` carries only
+    // `{kind, turns, questions, speakerGenders}` — level/context/targetLanguage
+    // live on the wrapper. Rebuild them from the current language and the
+    // wrapper's own `generationFilters` (mirrors the web restore path in
+    // apps/web listening/comprehension/page.tsx), not overwriting a real value
+    // the doc already carries.
+    final passageJson = <String, dynamic>{
+      ...result.passageJson,
+      'targetLanguage': _language.name,
+      'level':
+          result.generationFilters['level'] ?? result.passageJson['level'],
+      'context':
+          result.generationFilters['context'] ?? result.passageJson['context'],
+    };
     ref.read(listeningComprehensionNotifierProvider.notifier).loadSaved(
-          ListeningPassage.fromJson(result.passageJson),
+          ListeningPassage.fromJson(passageJson),
           savedId: result.id,
           generationFilters: filters,
         );

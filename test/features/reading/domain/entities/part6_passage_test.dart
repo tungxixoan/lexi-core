@@ -103,5 +103,26 @@ void main() {
       expect(decoded.targetLanguage, Language.english);
       expect(decoded.generatedAt, set.generatedAt);
     });
+
+    test('fromJson decodes a web-shaped passage sub-object without throwing', () {
+      final json = <String, dynamic>{
+        'passages': [
+          {
+            'passageText': 'We (1)___ to inform you.',
+            'questions': [
+              {
+                'options': ['are pleased', 'pleasing', 'pleased', 'please'],
+                'correctIndex': 0,
+                'explanation': 'x',
+              },
+            ],
+          },
+        ],
+      };
+      final decoded = Part6Set.fromJson(json);
+      expect(decoded.passages.single.passageText, 'We (1)___ to inform you.');
+      expect(decoded.targetLanguage, Language.english);
+      expect(decoded.context, AppContext.general);
+    });
   });
 }

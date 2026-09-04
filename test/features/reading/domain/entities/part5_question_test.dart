@@ -82,5 +82,24 @@ void main() {
       expect(decoded.targetLanguage, Language.english);
       expect(decoded.generatedAt, set.generatedAt);
     });
+
+    test('fromJson decodes a web-shaped passage sub-object without throwing', () {
+      // apps/web savedReadingExercises.ts writes only the web `Part5Set` keys
+      // (`questions`) — no id/volumes/context/targetLanguage/generatedAt.
+      final json = <String, dynamic>{
+        'questions': [
+          {
+            'sentenceWithBlank': 'The report is ___ complete.',
+            'options': ['near', 'nearly', 'nearness', 'neared'],
+            'correctIndex': 1,
+            'explanation': 'adverb',
+          },
+        ],
+      };
+      final decoded = Part5Set.fromJson(json);
+      expect(decoded.questions.single.correctIndex, 1);
+      expect(decoded.targetLanguage, Language.english);
+      expect(decoded.context, AppContext.general);
+    });
   });
 }

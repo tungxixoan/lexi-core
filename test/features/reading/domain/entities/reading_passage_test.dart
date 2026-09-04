@@ -27,6 +27,29 @@ void main() {
       final sentence = BilingualSentence.fromJson(json);
       expect(sentence.vocabIds, isEmpty);
     });
+
+    test('vocabWords round-trips through toJson (web reads this key)', () {
+      const sentence = BilingualSentence(
+        target: 'She showed great perseverance.',
+        vietnamese: 'Cô ấy thể hiện sự kiên trì tuyệt vời.',
+        vocabIds: ['id1'],
+        vocabWords: ['perseverance'],
+      );
+      final json = sentence.toJson();
+      expect(json['vocabWords'], ['perseverance']);
+      expect(json['vocabIds'], ['id1']);
+      final decoded = BilingualSentence.fromJson(json);
+      expect(decoded.vocabWords, ['perseverance']);
+      expect(decoded.vocabIds, ['id1']);
+    });
+
+    test('fromJson defaults vocabWords to empty when the key is absent', () {
+      final sentence = BilingualSentence.fromJson(<String, dynamic>{
+        'target': 'Hi.',
+        'vietnamese': 'Chào.',
+      });
+      expect(sentence.vocabWords, isEmpty);
+    });
   });
 
   group('ReadingPassage', () {
@@ -85,6 +108,26 @@ void main() {
       expect(restored.context, AppContext.general);
       expect(restored.targetLanguage, Language.english);
       expect(restored.generatedAt, original.generatedAt);
+    });
+
+    test('fromJson decodes a web-shaped bilingual passage sub-object', () {
+      // Exactly what apps/web savedReadingExercises.ts writes for a bilingual
+      // `passage`: only `sentences` (with `vocabWords`, no `vocabIds` per
+      // sentence) + a top-level `vocabIds` — no id/level/context/
+      // targetLanguage/generatedAt.
+      final json = <String, dynamic>{
+        'sentences': [
+          {'target': 'Hi.', 'vietnamese': 'Chào.', 'vocabWords': ['hi']},
+        ],
+        'vocabIds': <String>[],
+      };
+      final decoded = ReadingPassage.fromJson(json);
+      expect(decoded.sentences.single.target, 'Hi.');
+      expect(decoded.sentences.single.vocabWords, ['hi']);
+      expect(decoded.level, CEFRLevel.b1);
+      expect(decoded.context, AppContext.general);
+      expect(decoded.targetLanguage, Language.english);
+      expect(decoded.id, '');
     });
   });
 }

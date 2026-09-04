@@ -28,10 +28,19 @@ class _FakeSettingsNotifier extends UserSettingsNotifier {
 class _FakeSavedExercisesService extends SavedExercisesService {
   _FakeSavedExercisesService({this.random})
       : super(firestore: FakeFirebaseFirestore(), currentUid: () => null);
-  final ({String id, Map<String, dynamic> passageJson})? random;
+  final ({
+    String id,
+    Map<String, dynamic> passageJson,
+    Map<String, dynamic> generationFilters,
+  })? random;
 
   @override
-  Future<({String id, Map<String, dynamic> passageJson})?> getRandom({
+  Future<
+      ({
+        String id,
+        Map<String, dynamic> passageJson,
+        Map<String, dynamic> generationFilters,
+      })?> getRandom({
     required SavedExerciseType type,
     required Language targetLanguage,
     required Map<String, dynamic> filters,
@@ -165,7 +174,11 @@ void main() {
     await tester.pumpWidget(_buildHome(
       settings: _settings(),
       savedService: _FakeSavedExercisesService(
-        random: (id: 'l1', passageJson: _passage().toJson()),
+        random: (
+          id: 'l1',
+          passageJson: _passage().toJson(),
+          generationFilters: const {'context': 'general', 'level': 'b1'},
+        ),
       ),
     ));
     await tester.pumpAndSettle();

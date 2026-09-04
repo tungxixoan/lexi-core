@@ -74,8 +74,16 @@ class SavedExercisesService {
   }
 
   /// A random saved exercise of [type] whose stored `generationFilters` match
-  /// [filters], excluding [excludeId]; null if none / signed out / offline.
-  Future<({String id, Map<String, dynamic> passageJson})?> getRandom({
+  /// [filters], excluding [excludeId]; null if none / signed out / offline. The
+  /// doc's own `generationFilters` are returned alongside the body so a `_reuse`
+  /// caller can restore fields the web keeps only on the wrapper (`level` /
+  /// `context` for comprehension, etc.).
+  Future<
+      ({
+        String id,
+        Map<String, dynamic> passageJson,
+        Map<String, dynamic> generationFilters,
+      })?> getRandom({
     required SavedExerciseType type,
     required Language targetLanguage,
     required Map<String, dynamic> filters,
@@ -89,7 +97,11 @@ class SavedExercisesService {
           .where('targetLanguage', isEqualTo: targetLanguage.name)
           .get();
 
-      final candidates = <({String id, Map<String, dynamic> passageJson})>[];
+      final candidates = <({
+        String id,
+        Map<String, dynamic> passageJson,
+        Map<String, dynamic> generationFilters,
+      })>[];
       for (final doc in snap.docs) {
         final data = doc.data();
         if (data['type'] != type.name) continue;
@@ -100,7 +112,11 @@ class SavedExercisesService {
         final savedFilters = _asMap(data['generationFilters']);
         if (!_matches(type, savedFilters, filters)) continue;
 
-        candidates.add((id: id, passageJson: _asMap(data[type.bodyKey])));
+        candidates.add((
+          id: id,
+          passageJson: _asMap(data[type.bodyKey]),
+          generationFilters: savedFilters,
+        ));
       }
 
       if (candidates.isEmpty) return null;
@@ -212,6 +228,10 @@ class SavedExercisesService {
 
   /// `context` equal; `level` — null filter matches any, otherwise the saved
   /// `level` must be non-null and no higher than the filter by CEFR order.
+  ///
+  /// NOTE: this deliberately diverges from web's exact-equality on `level`
+  /// (`matchesComprehension` in savedListeningExercises.ts) — the CEFR-ceiling
+  /// behaviour here is the plan-mandated ceiling; do not "fix" it to match web.
   bool _matchesComprehension(
     Map<String, dynamic> saved,
     Map<String, dynamic> filters,

@@ -71,4 +71,20 @@ void main() {
     );
     expect(item.vocabIds, isEmpty);
   });
+
+  test('fromJson decodes a web-shaped item sub-object without throwing', () {
+    // apps/web savedListeningExercises.ts writes only the web `DictationItem`
+    // keys (`target` / `vietnamese` / `vocabIds`) — no id/level/context/
+    // targetLanguage/generatedAt.
+    final json = <String, dynamic>{
+      'target': 'The quarterly report is almost ready.',
+      'vietnamese': 'Báo cáo quý gần như đã sẵn sàng.',
+      'vocabIds': <String>[],
+    };
+    final decoded = DictationItem.fromJson(json);
+    expect(decoded.target, 'The quarterly report is almost ready.');
+    expect(decoded.level, CEFRLevel.a1);
+    expect(decoded.context, AppContext.general);
+    expect(decoded.targetLanguage, Language.english);
+  });
 }

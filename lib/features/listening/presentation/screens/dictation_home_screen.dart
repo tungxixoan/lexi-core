@@ -211,7 +211,7 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
                       label: 'Lấy bài có sẵn',
                       variant: BloomButtonVariant.secondary,
                       block: true,
-                      onPressed: () => _reuse(context, ref, words),
+                      onPressed: () => _reuse(context, ref),
                     ),
                   ],
                 ),
@@ -270,6 +270,7 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
           context: AppContext.general,
           targetLanguage: _language,
           difficulty: _difficulty,
+          generationFilters: _filters(),
         );
 
     if (context.mounted) {
@@ -280,12 +281,15 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
     }
   }
 
-  Future<void> _reuse(
-    BuildContext context,
-    WidgetRef ref,
-    List<VocabRecord> words,
-  ) async {
-    final filters = <String, dynamic>{'difficulty': _difficulty.name};
+  /// The raw `{difficulty}` map both `_generate` (threaded to the result
+  /// screen's "Lưu bài") and `_reuse` (matched against saved docs) build from
+  /// the current filter selection.
+  Map<String, dynamic> _filters() => <String, dynamic>{
+        'difficulty': _difficulty.name,
+      };
+
+  Future<void> _reuse(BuildContext context, WidgetRef ref) async {
+    final filters = _filters();
     final result = await ref.read(savedExercisesServiceProvider).getRandom(
           type: SavedExerciseType.dictation,
           targetLanguage: _language,
@@ -298,8 +302,15 @@ class _DictationHomeScreenState extends ConsumerState<DictationHomeScreen> {
       );
       return;
     }
+    // A web-saved dictation item omits only `targetLanguage` from the item
+    // sub-object; the rest is tolerated by DictationItem.fromJson's guarded
+    // defaults.
+    final passageJson = <String, dynamic>{
+      ...result.passageJson,
+      'targetLanguage': _language.name,
+    };
     ref.read(dictationPracticeNotifierProvider.notifier).loadSaved(
-          DictationItem.fromJson(result.passageJson),
+          DictationItem.fromJson(passageJson),
           savedId: result.id,
           generationFilters: filters,
           difficulty: _difficulty,

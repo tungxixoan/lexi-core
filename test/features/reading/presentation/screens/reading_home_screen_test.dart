@@ -101,11 +101,20 @@ UserSettingsState _settings({bool aiAvailable = true}) =>
 class _FakeSavedExercisesService extends SavedExercisesService {
   _FakeSavedExercisesService({this.random, this.used = const {}})
       : super(firestore: FakeFirebaseFirestore(), currentUid: () => null);
-  final ({String id, Map<String, dynamic> passageJson})? random;
+  final ({
+    String id,
+    Map<String, dynamic> passageJson,
+    Map<String, dynamic> generationFilters,
+  })? random;
   final Set<String> used;
 
   @override
-  Future<({String id, Map<String, dynamic> passageJson})?> getRandom({
+  Future<
+      ({
+        String id,
+        Map<String, dynamic> passageJson,
+        Map<String, dynamic> generationFilters,
+      })?> getRandom({
     required SavedExerciseType type,
     required Language targetLanguage,
     required Map<String, dynamic> filters,
@@ -259,7 +268,11 @@ void main() {
       settings: _settings(),
       vocabItems: List.generate(5, _record),
       savedService: _FakeSavedExercisesService(
-        random: (id: 'p1', passageJson: passage.toJson()),
+        random: (
+          id: 'p1',
+          passageJson: passage.toJson(),
+          generationFilters: const {'maxCefr': 'a1'},
+        ),
       ),
     ));
     await tester.pumpAndSettle();

@@ -165,6 +165,28 @@ void main() {
       expect(assignVoices(restored)['A'], 'male1');
       expect(assignVoices(restored)['B'], 'female1');
     });
+
+    test('fromJson decodes a web-shaped comprehension item without throwing',
+        () {
+      // apps/web savedListeningExercises.ts writes a `ComprehensionItem` —
+      // only `{kind, turns, questions, speakerGenders}`, no id/level/context/
+      // targetLanguage/generatedAt.
+      final json = <String, dynamic>{
+        'kind': 'conversation',
+        'turns': [
+          {'speaker': 'A', 'text': 'Hello.'},
+        ],
+        'questions': <dynamic>[],
+        'speakerGenders': {'A': 'male'},
+      };
+      final decoded = ListeningPassage.fromJson(json);
+      expect(decoded.kind, ListeningKind.conversation);
+      expect(decoded.turns.single.text, 'Hello.');
+      expect(decoded.speakerGenders, {'A': 'male'});
+      expect(decoded.level, CEFRLevel.a1);
+      expect(decoded.context, AppContext.general);
+      expect(decoded.targetLanguage, Language.english);
+    });
   });
 
   group('speakerKey', () {

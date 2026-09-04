@@ -127,10 +127,19 @@ class _FakeDictationNotifier extends DictationPracticeNotifier {
 class _FakeSavedExercisesService extends SavedExercisesService {
   _FakeSavedExercisesService({this.random})
       : super(firestore: FakeFirebaseFirestore(), currentUid: () => null);
-  final ({String id, Map<String, dynamic> passageJson})? random;
+  final ({
+    String id,
+    Map<String, dynamic> passageJson,
+    Map<String, dynamic> generationFilters,
+  })? random;
 
   @override
-  Future<({String id, Map<String, dynamic> passageJson})?> getRandom({
+  Future<
+      ({
+        String id,
+        Map<String, dynamic> passageJson,
+        Map<String, dynamic> generationFilters,
+      })?> getRandom({
     required SavedExerciseType type,
     required Language targetLanguage,
     required Map<String, dynamic> filters,
@@ -358,7 +367,11 @@ void main() {
       settings: _settings(),
       vocabItems: List.generate(5, _record),
       savedService: _FakeSavedExercisesService(
-        random: (id: 'd1', passageJson: _dictationItem().toJson()),
+        random: (
+          id: 'd1',
+          passageJson: _dictationItem().toJson(),
+          generationFilters: const {'difficulty': 'hard'},
+        ),
       ),
     ));
     await tester.pumpAndSettle();

@@ -7,23 +7,27 @@ final class BilingualSentence {
     required this.target,
     required this.vietnamese,
     required this.vocabIds,
+    this.vocabWords = const [],
   });
 
   final String target;
   final String vietnamese;
   final List<String> vocabIds; // VocabRecord.id values used in this sentence
+  final List<String> vocabWords; // raw headwords — web reads this key, not vocabIds
 
   factory BilingualSentence.fromJson(Map<String, dynamic> json) =>
       BilingualSentence(
-        target: json['target'] as String,
-        vietnamese: json['vietnamese'] as String,
-        vocabIds: List<String>.from(json['vocabIds'] as List? ?? []),
+        target: json['target'] as String? ?? '',
+        vietnamese: json['vietnamese'] as String? ?? '',
+        vocabIds: List<String>.from(json['vocabIds'] as List? ?? const []),
+        vocabWords: List<String>.from(json['vocabWords'] as List? ?? const []),
       );
 
   Map<String, dynamic> toJson() => {
         'target': target,
         'vietnamese': vietnamese,
-        'vocabIds': vocabIds,
+        'vocabIds': vocabIds, // Flutter's own reuse path reads this
+        'vocabWords': vocabWords, // web's PassageReview reads this (highlightVocabWords)
       };
 }
 
@@ -60,15 +64,28 @@ final class ReadingPassage {
         'generatedAt': generatedAt.toIso8601String(),
       };
 
+  /// Defensive against a web-saved `bilingual` passage sub-object, which carries
+  /// only `{sentences, vocabIds}` — no id/level/context/targetLanguage/
+  /// generatedAt (web persists those on the wrapping saved-exercise doc). Mirrors
+  /// the guarded-default idiom the sibling entities use (`Part5Set.fromJson`
+  /// etc.).
   factory ReadingPassage.fromJson(Map<String, dynamic> json) => ReadingPassage(
-        id: json['id'] as String,
-        sentences: (json['sentences'] as List)
+        id: json['id'] as String? ?? '',
+        sentences: (json['sentences'] as List? ?? const [])
             .map((s) => BilingualSentence.fromJson(s as Map<String, dynamic>))
             .toList(),
-        vocabIds: List<String>.from(json['vocabIds'] as List? ?? []),
-        level: CEFRLevel.values.byName(json['level'] as String),
-        context: AppContext.values.byName(json['context'] as String),
-        targetLanguage: Language.values.byName(json['targetLanguage'] as String),
-        generatedAt: DateTime.parse(json['generatedAt'] as String),
+        vocabIds: List<String>.from(json['vocabIds'] as List? ?? const []),
+        level: json['level'] != null
+            ? CEFRLevel.values.byName(json['level'] as String)
+            : CEFRLevel.b1,
+        context: json['context'] != null
+            ? AppContext.values.byName(json['context'] as String)
+            : AppContext.general,
+        targetLanguage: json['targetLanguage'] != null
+            ? Language.values.byName(json['targetLanguage'] as String)
+            : Language.english,
+        generatedAt: json['generatedAt'] != null
+            ? DateTime.parse(json['generatedAt'] as String)
+            : DateTime.now(),
       );
 }

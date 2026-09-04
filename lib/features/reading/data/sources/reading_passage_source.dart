@@ -95,6 +95,7 @@ class ReadingPassageSource {
         target: normalizeTypography(sm['target'] as String),
         vietnamese: normalizeTypography(sm['vietnamese'] as String),
         vocabIds: vocabIds,
+        vocabWords: vocabWords, // web's result screen highlights from this
       );
     }).toList();
 

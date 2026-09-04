@@ -213,7 +213,7 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
                       label: 'Lấy bài có sẵn',
                       variant: BloomButtonVariant.secondary,
                       block: true,
-                      onPressed: () => _reuse(context, ref, words),
+                      onPressed: () => _reuse(context, ref),
                     ),
                   ],
                 ),
@@ -294,11 +294,7 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
         'wordCount': _wordCount,
       };
 
-  Future<void> _reuse(
-    BuildContext context,
-    WidgetRef ref,
-    List<VocabRecord> words,
-  ) async {
+  Future<void> _reuse(BuildContext context, WidgetRef ref) async {
     final filters = _filters();
     final result = await ref.read(savedExercisesServiceProvider).getRandom(
           type: SavedExerciseType.bilingual,
@@ -312,8 +308,18 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
       );
       return;
     }
+    // A web-saved bilingual passage carries only `{sentences, vocabIds}` — the
+    // level/targetLanguage/id live on the wrapper. Rebuild them from the current
+    // filter selection and the wrapper's own `generationFilters`, without
+    // overwriting a real value the doc already carries.
+    final passageJson = <String, dynamic>{
+      ...result.passageJson,
+      'targetLanguage': _language.name,
+      'level': result.generationFilters['maxCefr'] ?? result.passageJson['level'],
+      'id': result.passageJson['id'] ?? result.id,
+    };
     ref.read(readingPracticeNotifierProvider.notifier).loadSaved(
-          ReadingPassage.fromJson(result.passageJson),
+          ReadingPassage.fromJson(passageJson),
           savedId: result.id,
           generationFilters: filters,
         );

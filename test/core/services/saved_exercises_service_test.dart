@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lexi_core/core/services/saved_exercises_service.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/practice/domain/entities/saved_exercise.dart';
+import 'package:lexi_core/features/reading/domain/entities/reading_passage.dart';
 
 const _uid = 'u1';
 
@@ -231,7 +232,12 @@ void main() {
   });
 
   group('matchesBilingual', () {
-    Future<({String id, Map<String, dynamic> passageJson})?> run({
+    Future<
+        ({
+          String id,
+          Map<String, dynamic> passageJson,
+          Map<String, dynamic> generationFilters,
+        })?> run({
       required Map<String, dynamic> saved,
       required Map<String, dynamic> filters,
     }) async {
@@ -316,7 +322,12 @@ void main() {
   });
 
   group('matchesToeic', () {
-    Future<({String id, Map<String, dynamic> passageJson})?> run({
+    Future<
+        ({
+          String id,
+          Map<String, dynamic> passageJson,
+          Map<String, dynamic> generationFilters,
+        })?> run({
       required Map<String, dynamic> saved,
       required Map<String, dynamic> filters,
     }) async {
@@ -389,7 +400,12 @@ void main() {
   });
 
   group('matchesComprehension', () {
-    Future<({String id, Map<String, dynamic> passageJson})?> run({
+    Future<
+        ({
+          String id,
+          Map<String, dynamic> passageJson,
+          Map<String, dynamic> generationFilters,
+        })?> run({
       required Map<String, dynamic> saved,
       required Map<String, dynamic> filters,
     }) async {
@@ -591,5 +607,53 @@ void main() {
     );
     expect(got!.id, 'webL1');
     expect((got.passageJson['turns'] as List).length, 1);
+    // The wrapper's generationFilters come back too, so a _reuse caller can
+    // restore level/context the web-saved `item` sub-object omits.
+    expect(got.generationFilters, {'context': 'business', 'level': 'b1'});
+  });
+
+  test('a web-saved bilingual doc loads and decodes via ReadingPassage.fromJson',
+      () async {
+    final fs = FakeFirebaseFirestore();
+    // Doc as apps/web savedReadingExercises.ts writes it: the `passage`
+    // sub-object carries ONLY {sentences (with vocabWords), vocabIds}.
+    await fs
+        .collection('users')
+        .doc(_uid)
+        .collection('reading_exercises')
+        .doc('webB1')
+        .set({
+      'type': 'bilingual',
+      'passage': {
+        'sentences': [
+          {'target': 'Hi.', 'vietnamese': 'Chào.', 'vocabWords': ['hi']},
+        ],
+        'vocabIds': <String>[],
+      },
+      'generationFilters': {
+        'topicIds': <String>[],
+        'maxCefr': 'b1',
+        'wordCount': null,
+      },
+      'targetLanguage': 'english',
+      'createdAt': '2026-09-01T00:00:00.000Z',
+      'id': 'webB1',
+    });
+
+    final got = await _service(firestore: fs).getRandom(
+      type: SavedExerciseType.bilingual,
+      targetLanguage: Language.english,
+      filters: const {
+        'topicIds': <String>[],
+        'maxCefr': 'b1',
+        'wordCount': null,
+      },
+    );
+    expect(got!.id, 'webB1');
+    // The critical decode: this threw `type 'Null' is not a subtype of String`
+    // before the defensive fromJson fix.
+    final passage = ReadingPassage.fromJson(got.passageJson);
+    expect(passage.sentences.single.target, 'Hi.');
+    expect(passage.sentences.single.vocabWords, ['hi']);
   });
 }

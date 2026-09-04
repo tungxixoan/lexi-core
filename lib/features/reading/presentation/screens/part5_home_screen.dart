@@ -175,11 +175,20 @@ class _Part5HomeScreenState extends ConsumerState<Part5HomeScreen> {
     );
   }
 
+  /// The raw `{topicIds, volumes}` map both `_generate` (threaded to the result
+  /// screen's "Lưu bài") and `_reuse` (matched against saved docs) build from
+  /// the current filter selection.
+  Map<String, dynamic> _filters() => <String, dynamic>{
+        'topicIds': <String>[],
+        'volumes': _volumes.map((v) => v.name).toList(),
+      };
+
   Future<void> _generate(BuildContext context, WidgetRef ref) async {
     await ref.read(part5PracticeNotifierProvider.notifier).generate(
           context: _context,
           targetLanguage: _language,
           volumes: _volumes,
+          generationFilters: _filters(),
         );
     if (context.mounted) {
       final session = ref.read(part5PracticeNotifierProvider).valueOrNull;
@@ -188,10 +197,7 @@ class _Part5HomeScreenState extends ConsumerState<Part5HomeScreen> {
   }
 
   Future<void> _reuse(BuildContext context, WidgetRef ref) async {
-    final filters = <String, dynamic>{
-      'topicIds': <String>[],
-      'volumes': _volumes.map((v) => v.name).toList(),
-    };
+    final filters = _filters();
     final result = await ref.read(savedExercisesServiceProvider).getRandom(
           type: SavedExerciseType.part5,
           targetLanguage: _language,
@@ -204,8 +210,14 @@ class _Part5HomeScreenState extends ConsumerState<Part5HomeScreen> {
       );
       return;
     }
+    // A web-saved TOEIC set omits only `targetLanguage` from the passage
+    // sub-object; the rest is tolerated by Part5Set.fromJson's guarded defaults.
+    final passageJson = <String, dynamic>{
+      ...result.passageJson,
+      'targetLanguage': _language.name,
+    };
     ref.read(part5PracticeNotifierProvider.notifier).loadSaved(
-          Part5Set.fromJson(result.passageJson),
+          Part5Set.fromJson(passageJson),
           savedId: result.id,
           generationFilters: filters,
         );
