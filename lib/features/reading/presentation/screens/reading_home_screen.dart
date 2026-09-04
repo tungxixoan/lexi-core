@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_providers.dart';
+import '../../../../core/services/saved_exercises_service.dart';
 import '../../../../core/theme/bloom/bloom.dart';
 import '../../../../core/widgets/ai_key_missing_card.dart';
 import '../../../../core/widgets/filter_tile.dart';
@@ -9,11 +10,13 @@ import '../../../../core/widgets/home_notice_card.dart';
 import '../../../../core/widgets/selection_sheets.dart';
 import '../../../../features/dictionary/domain/entities/app_context.dart';
 import '../../../../features/dictionary/domain/entities/language.dart';
+import '../../../../features/practice/domain/entities/saved_exercise.dart';
 import '../../../../features/dictionary/presentation/providers/user_settings_provider.dart';
 import '../../../../features/vocabulary/domain/entities/cefr_level.dart';
 import '../../../../features/vocabulary/domain/entities/topic.dart';
 import '../../../../features/vocabulary/domain/entities/vocab_record.dart';
 import '../../../../features/vocabulary/presentation/providers/topics_provider.dart';
+import '../../domain/entities/reading_passage.dart';
 import '../providers/reading_practice_provider.dart';
 
 class ReadingHomeScreen extends ConsumerStatefulWidget {
@@ -194,12 +197,25 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
               )
             else
               sessionAsync.when(
-                data: (_) => BloomPillButton(
-                  label: 'Tạo bài luyện',
-                  icon: Icons.auto_awesome,
-                  variant: BloomButtonVariant.primary,
-                  block: true,
-                  onPressed: () => _generate(context, ref, words),
+                data: (_) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    BloomPillButton(
+                      label: 'Tạo bài luyện',
+                      icon: Icons.auto_awesome,
+                      variant: BloomButtonVariant.primary,
+                      block: true,
+                      onPressed: () => _generate(context, ref, words),
+                    ),
+                    const SizedBox(height: 10),
+                    BloomPillButton(
+                      label: 'Lấy bài có sẵn',
+                      variant: BloomButtonVariant.secondary,
+                      block: true,
+                      onPressed: () => _reuse(context, ref, words),
+                    ),
+                  ],
                 ),
                 loading: () => Column(
                   mainAxisSize: MainAxisSize.min,
@@ -247,10 +263,11 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
     final dueWords = vocabItems.where(isDue).toList()..shuffle();
     final notDueWords = vocabItems.where((r) => !isDue(r)).toList()..shuffle();
     final prioritized = [...dueWords, ...notDueWords];
+    final usedIds =
+        await ref.read(savedExercisesServiceProvider).usedBilingualVocabIds();
+    final pool = prioritizeUnusedWords(prioritized, usedIds);
     final words =
-        (_wordCount == null ? prioritized : prioritized.take(_wordCount!))
-            .toList()
-            .cast<VocabRecord>();
+        (_wordCount == null ? pool : pool.take(_wordCount!)).toList();
 
     await ref.read(readingPracticeNotifierProvider.notifier).generate(
           words: words,
@@ -264,6 +281,39 @@ class _ReadingHomeScreenState extends ConsumerState<ReadingHomeScreen> {
       if (session != null && !session.isComplete) {
         context.go('/reading/bilingual/session');
       }
+    }
+  }
+
+  Future<void> _reuse(
+    BuildContext context,
+    WidgetRef ref,
+    List<VocabRecord> words,
+  ) async {
+    final filters = <String, dynamic>{
+      'topicIds': _topicIds.toList(),
+      'maxCefr': _level?.name,
+      'wordCount': _wordCount,
+    };
+    final result = await ref.read(savedExercisesServiceProvider).getRandom(
+          type: SavedExerciseType.bilingual,
+          targetLanguage: _language,
+          filters: filters,
+        );
+    if (!context.mounted) return;
+    if (result == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Chưa có bài đã lưu khớp bộ lọc.')),
+      );
+      return;
+    }
+    ref.read(readingPracticeNotifierProvider.notifier).loadSaved(
+          ReadingPassage.fromJson(result.passageJson),
+          savedId: result.id,
+          generationFilters: filters,
+        );
+    final session = ref.read(readingPracticeNotifierProvider).valueOrNull;
+    if (context.mounted && session != null && !session.isComplete) {
+      context.go('/reading/bilingual/session');
     }
   }
 }

@@ -4,6 +4,19 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../features/dictionary/domain/entities/language.dart';
 import '../../features/practice/domain/entities/saved_exercise.dart';
 import '../../features/vocabulary/domain/entities/cefr_level.dart';
+import '../../features/vocabulary/domain/entities/vocab_record.dart';
+
+/// Words whose id is not in [usedVocabIds] sort before words that are — a
+/// stable partition, so repeated generation varies which words the AI sees.
+/// Ported from web `prioritizeUnusedWords`.
+List<VocabRecord> prioritizeUnusedWords(
+  List<VocabRecord> words,
+  Set<String> usedVocabIds,
+) {
+  final unused = words.where((w) => !usedVocabIds.contains(w.id)).toList();
+  final used = words.where((w) => usedVocabIds.contains(w.id)).toList();
+  return [...unused, ...used];
+}
 
 /// Reads/writes the SAME Firestore collections the React web app uses, so a
 /// saved AI exercise is shared across platforms:

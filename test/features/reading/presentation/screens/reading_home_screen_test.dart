@@ -1,8 +1,10 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
+import 'package:lexi_core/core/services/saved_exercises_service.dart';
 import 'package:lexi_core/core/widgets/ai_key_missing_card.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
@@ -11,6 +13,8 @@ import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/provider_config.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
+import 'package:lexi_core/features/practice/domain/entities/saved_exercise.dart';
+import 'package:lexi_core/features/reading/domain/entities/reading_passage.dart';
 import 'package:lexi_core/features/reading/presentation/screens/reading_home_screen.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/topic.dart';
@@ -93,9 +97,29 @@ UserSettingsState _settings({bool aiAvailable = true}) =>
       },
     );
 
+class _FakeSavedExercisesService extends SavedExercisesService {
+  _FakeSavedExercisesService({this.random, this.used = const {}})
+      : super(firestore: FakeFirebaseFirestore(), currentUid: () => null);
+  final ({String id, Map<String, dynamic> passageJson})? random;
+  final Set<String> used;
+
+  @override
+  Future<({String id, Map<String, dynamic> passageJson})?> getRandom({
+    required SavedExerciseType type,
+    required Language targetLanguage,
+    required Map<String, dynamic> filters,
+    String? excludeId,
+  }) async =>
+      random;
+
+  @override
+  Future<Set<String>> usedBilingualVocabIds() async => used;
+}
+
 Widget _buildHome({
   required UserSettingsState settings,
   required List<VocabRecord> vocabItems,
+  SavedExercisesService? savedService,
 }) {
   SharedPreferences.setMockInitialValues({});
   final router = GoRouter(
@@ -108,6 +132,10 @@ Widget _buildHome({
         path: '/settings',
         builder: (ctx, state) => const Scaffold(body: Text('Settings stub')),
       ),
+      GoRoute(
+        path: '/reading/bilingual/session',
+        builder: (ctx, state) => const Scaffold(body: Text('session stub')),
+      ),
     ],
   );
   return ProviderScope(
@@ -116,6 +144,8 @@ Widget _buildHome({
           .overrideWith(() => _FakeSettingsNotifier(settings)),
       vocabRepositoryProvider
           .overrideWithValue(_FakeVocabRepository(vocabItems)),
+      if (savedService != null)
+        savedExercisesServiceProvider.overrideWithValue(savedService),
     ],
     child: MaterialApp.router(routerConfig: router),
   );
@@ -176,5 +206,55 @@ void main() {
     expect(find.text('Chủ đề'), findsOneWidget);
     expect(find.text('Cấp độ'), findsOneWidget);
     expect(find.text('Số từ dùng để tạo bài'), findsOneWidget);
+  });
+
+  testWidgets('shows "Lấy bài có sẵn" alongside "Tạo bài luyện"',
+      (tester) async {
+    await tester.pumpWidget(_buildHome(
+      settings: _settings(),
+      vocabItems: List.generate(5, _record),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Tạo bài luyện'), findsOneWidget);
+    expect(find.text('Lấy bài có sẵn'), findsOneWidget);
+  });
+
+  testWidgets('reuse navigates to the bilingual session on a match',
+      (tester) async {
+    final passage = ReadingPassage(
+      id: 'p1',
+      sentences: const [
+        BilingualSentence(target: 'Hi.', vietnamese: 'Chào.', vocabIds: []),
+      ],
+      vocabIds: const [],
+      level: CEFRLevel.a1,
+      context: AppContext.general,
+      targetLanguage: Language.english,
+      generatedAt: DateTime.utc(2026, 1, 1),
+    );
+    await tester.pumpWidget(_buildHome(
+      settings: _settings(),
+      vocabItems: List.generate(5, _record),
+      savedService: _FakeSavedExercisesService(
+        random: (id: 'p1', passageJson: passage.toJson()),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Lấy bài có sẵn'));
+    await tester.pumpAndSettle();
+    expect(find.text('session stub'), findsOneWidget);
+  });
+
+  testWidgets('reuse shows a snackbar when nothing matches the filters',
+      (tester) async {
+    await tester.pumpWidget(_buildHome(
+      settings: _settings(),
+      vocabItems: List.generate(5, _record),
+      savedService: _FakeSavedExercisesService(random: null, used: const {}),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Lấy bài có sẵn'));
+    await tester.pump();
+    expect(find.text('Chưa có bài đã lưu khớp bộ lọc.'), findsOneWidget);
   });
 }
