@@ -36,7 +36,8 @@ final _exercise = TranslationExercise(
 Widget _harness(void Function(ExerciseResult) onResult) => MaterialApp(
       theme: AppTheme.light,
       home: Scaffold(
-        body: TranslationExerciseWidget(exercise: _exercise, onResult: onResult),
+        body:
+            TranslationExerciseWidget(exercise: _exercise, onResult: onResult),
       ),
     );
 
@@ -44,17 +45,28 @@ BloomPillButton _pill(WidgetTester tester, String label) =>
     tester.widget<BloomPillButton>(find.widgetWithText(BloomPillButton, label));
 
 void main() {
-  testWidgets('"Xem đáp án" is disabled while the field is empty', (tester) async {
+  testWidgets('"Xem đáp án" is disabled while the field is empty',
+      (tester) async {
     await tester.pumpWidget(_harness((_) {}));
     expect(_pill(tester, 'Xem đáp án').onPressed, isNull);
   });
 
-  testWidgets('revealing the answer then grading correct reports quality 5', (tester) async {
+  testWidgets('"Xem đáp án" enables as soon as the field has text',
+      (tester) async {
+    await tester.pumpWidget(_harness((_) {}));
+    await tester.enterText(find.byType(TextField), 'một bản dịch nào đó');
+    await tester.pump();
+    expect(_pill(tester, 'Xem đáp án').onPressed, isNotNull);
+  });
+
+  testWidgets('revealing the answer then grading correct reports quality 5',
+      (tester) async {
     ExerciseResult? captured;
     await tester.pumpWidget(_harness((r) => captured = r));
 
-    await tester.enterText(find.byType(TextField), 'Vẻ đẹp phù du của hoa anh đào');
-    await tester.pumpWidget(_harness((r) => captured = r)); // force a rebuild
+    await tester.enterText(
+        find.byType(TextField), 'Vẻ đẹp phù du của hoa anh đào');
+    await tester.pump();
 
     expect(_pill(tester, 'Xem đáp án').onPressed, isNotNull);
     await tester.tap(find.widgetWithText(BloomPillButton, 'Xem đáp án'));
@@ -80,7 +92,7 @@ void main() {
     await tester.pumpWidget(_harness((r) => captured = r));
 
     await tester.enterText(find.byType(TextField), 'sai bét');
-    await tester.pumpWidget(_harness((r) => captured = r)); // force a rebuild
+    await tester.pump();
 
     await tester.tap(find.widgetWithText(BloomPillButton, 'Xem đáp án'));
     await tester.pump();

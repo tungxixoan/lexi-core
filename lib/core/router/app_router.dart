@@ -190,14 +190,23 @@ final appRouter = GoRouter(
             ),
             GoRoute(
               path: 'session',
-              builder: (context, state) => PracticeSessionScreen(
-                config: state.extra as SessionConfig,
-              ),
+              // When the child `result` route is active, go_router rebuilds
+              // this parent too — with the child's `extra` (a SessionResult).
+              // Tolerate it: null config → the screen renders nothing (it's
+              // under the result page anyway).
+              builder: (context, state) {
+                final extra = state.extra;
+                return PracticeSessionScreen(
+                  config: extra is SessionConfig ? extra : null,
+                );
+              },
               routes: [
                 GoRoute(
                   path: 'result',
+                  redirect: (context, state) =>
+                      state.extra is SessionResult ? null : '/practice',
                   builder: (context, state) => SessionResultScreen(
-                    result: state.extra as SessionResult,
+                    result: state.extra! as SessionResult,
                   ),
                 ),
               ],
@@ -247,7 +256,8 @@ final appRouter = GoRouter(
                     GoRoute(
                       path: 'result',
                       redirect: (context, state) {
-                        if (state.extra is! Part5SessionResult) return '/reading/part5';
+                        if (state.extra is! Part5SessionResult)
+                          return '/reading/part5';
                         return null;
                       },
                       builder: (context, state) => Part5ResultScreen(
@@ -269,7 +279,8 @@ final appRouter = GoRouter(
                     GoRoute(
                       path: 'result',
                       redirect: (context, state) {
-                        if (state.extra is! Part6SessionResult) return '/reading/part6';
+                        if (state.extra is! Part6SessionResult)
+                          return '/reading/part6';
                         return null;
                       },
                       builder: (context, state) => Part6ResultScreen(
@@ -291,7 +302,8 @@ final appRouter = GoRouter(
                     GoRoute(
                       path: 'result',
                       redirect: (context, state) {
-                        if (state.extra is! Part7SessionResult) return '/reading/part7';
+                        if (state.extra is! Part7SessionResult)
+                          return '/reading/part7';
                         return null;
                       },
                       builder: (context, state) => Part7ResultScreen(
@@ -338,7 +350,8 @@ final appRouter = GoRouter(
               routes: [
                 GoRoute(
                   path: 'session',
-                  builder: (context, state) => const ComprehensionSessionScreen(),
+                  builder: (context, state) =>
+                      const ComprehensionSessionScreen(),
                   routes: [
                     GoRoute(
                       path: 'result',

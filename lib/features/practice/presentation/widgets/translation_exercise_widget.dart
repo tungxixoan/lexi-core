@@ -5,12 +5,14 @@ import '../../domain/entities/exercise.dart';
 import '../../domain/entities/exercise_result.dart';
 
 class TranslationExerciseWidget extends StatefulWidget {
-  const TranslationExerciseWidget({super.key, required this.exercise, required this.onResult});
+  const TranslationExerciseWidget(
+      {super.key, required this.exercise, required this.onResult});
   final TranslationExercise exercise;
   final void Function(ExerciseResult) onResult;
 
   @override
-  State<TranslationExerciseWidget> createState() => _TranslationExerciseWidgetState();
+  State<TranslationExerciseWidget> createState() =>
+      _TranslationExerciseWidgetState();
 }
 
 class _TranslationExerciseWidgetState extends State<TranslationExerciseWidget> {
@@ -46,7 +48,8 @@ class _TranslationExerciseWidgetState extends State<TranslationExerciseWidget> {
             widget.exercise.prompt
                 .replaceAll("Translate to Vietnamese: ", "")
                 .replaceAll("'", ""),
-            style: webScaled(theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16)),
+            style: webScaled(
+                theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16)),
             textAlign: TextAlign.center,
           ),
         ),
@@ -57,6 +60,8 @@ class _TranslationExerciseWidgetState extends State<TranslationExerciseWidget> {
           maxLines: 2,
           minLines: 2,
           hintText: 'Nhập bản dịch của bạn…',
+          // Rebuild so "Xem đáp án" enables as soon as the field is non-empty.
+          onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 12),
         if (!_revealed)

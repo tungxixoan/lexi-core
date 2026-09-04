@@ -67,7 +67,8 @@ Future<Widget> _buildScreen() async {
 }
 
 void main() {
-  testWidgets('renders the Bloom progress bar, the N / total title and the exercise',
+  testWidgets(
+      'renders the Bloom progress bar, the N / total title and the exercise',
       (tester) async {
     await tester.pumpWidget(await _buildScreen());
     await tester.pumpAndSettle();
@@ -76,5 +77,25 @@ void main() {
     expect(find.text('1 / 1'), findsOneWidget);
     expect(find.byType(FlashcardWidget), findsOneWidget);
     expect(find.byType(BackButton), findsNothing);
+  });
+
+  testWidgets(
+      'renders nothing (no crash) when config is null — the route is '
+      'rebuilt underneath its result child', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        practiceSessionNotifierProvider
+            .overrideWith(_FakePracticeSessionNotifier.new),
+      ],
+      child: const MaterialApp(home: PracticeSessionScreen(config: null)),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(BloomScaffold), findsNothing);
+    expect(find.byType(FlashcardWidget), findsNothing);
   });
 }

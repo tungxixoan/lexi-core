@@ -55,8 +55,21 @@ class _AppShellState extends ConsumerState<AppShell>
   static final _navItems =
       _destinations.map((d) => d.navItem).toList(growable: false);
 
+  // `/reading` and `/listening` are top-level shell routes but belong to the
+  // "Luyện tập" tab — the practice hub links out to them.
+  static const _tabAliases = <String, String>{
+    '/reading': '/practice',
+    '/listening': '/practice',
+  };
+
   int _selectedIndex(BuildContext context, List<_Dest> dests) {
-    final location = GoRouterState.of(context).matchedLocation;
+    var location = GoRouterState.of(context).matchedLocation;
+    for (final MapEntry(key: from, value: to) in _tabAliases.entries) {
+      if (location == from || location.startsWith('$from/')) {
+        location = to;
+        break;
+      }
+    }
     for (int i = dests.length - 1; i >= 0; i--) {
       final p = dests[i].path;
       if (p == '/' ? location == '/' : location.startsWith(p)) return i;

@@ -12,10 +12,14 @@ import '../widgets/translation_exercise_widget.dart';
 
 class PracticeSessionScreen extends ConsumerStatefulWidget {
   const PracticeSessionScreen({super.key, required this.config});
-  final SessionConfig config;
+
+  /// Null only while this route is rebuilt underneath its `result` child —
+  /// see `app_router.dart`. In that state the screen renders nothing.
+  final SessionConfig? config;
 
   @override
-  ConsumerState<PracticeSessionScreen> createState() => _PracticeSessionScreenState();
+  ConsumerState<PracticeSessionScreen> createState() =>
+      _PracticeSessionScreenState();
 }
 
 class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
@@ -24,11 +28,11 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
   @override
   void initState() {
     super.initState();
+    final config = widget.config;
+    if (config == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(practiceSessionNotifierProvider.notifier)
-          .startSession(widget.config);
-      setState(() => _started = true);
+      ref.read(practiceSessionNotifierProvider.notifier).startSession(config);
+      if (mounted) setState(() => _started = true);
     });
   }
 
@@ -38,6 +42,9 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Rebuilt underneath the `result` child route — nothing to show.
+    if (widget.config == null) return const SizedBox.shrink();
+
     final sessionAsync = ref.watch(practiceSessionNotifierProvider);
 
     // A hardware/browser back mid-session would pop the nested route with no
@@ -49,66 +56,71 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
         if (!didPop) context.go('/practice/vocab');
       },
       child: sessionAsync.when(
-      loading: () => const BloomScaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => BloomScaffold(body: Center(child: Text('Lỗi: $e'))),
-      data: (session) {
-        if (session.isComplete && _started) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              context.go('/practice/session/result',
-                  extra: SessionResult(results: session.results, words: session.words));
-            }
-          });
-          return const BloomScaffold(body: Center(child: CircularProgressIndicator()));
-        }
+        loading: () => const BloomScaffold(
+            body: Center(child: CircularProgressIndicator())),
+        error: (e, _) => BloomScaffold(body: Center(child: Text('Lỗi: $e'))),
+        data: (session) {
+          if (session.isComplete && _started) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                context.go('/practice/session/result',
+                    extra: SessionResult(
+                        results: session.results, words: session.words));
+              }
+            });
+            return const BloomScaffold(
+                body: Center(child: CircularProgressIndicator()));
+          }
 
-        final total = session.words.length;
-        final current = session.currentIndex;
-        final exercise = session.currentExercise;
+          final total = session.words.length;
+          final current = session.currentIndex;
+          final exercise = session.currentExercise;
 
-        return BloomScaffold(
-          appBar: BloomAppBar(
-            title: '${current + 1} / $total',
-            automaticallyImplyLeading: false,
-            actions: [
-              BloomPillButton(
-                label: 'Thoát',
-                variant: BloomButtonVariant.link,
-                onPressed: () => context.go('/practice/vocab'),
-              ),
-            ],
-          ),
-          body: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                child: BloomProgressBar(value: total > 0 ? current / total : 0),
-              ),
-              Expanded(
-                child: exercise == null
-                    ? const Center(child: CircularProgressIndicator())
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          transitionBuilder: (child, animation) => FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0, 0.08),
-                                end: Offset.zero,
-                              ).animate(animation),
-                              child: child,
+          return BloomScaffold(
+            appBar: BloomAppBar(
+              title: '${current + 1} / $total',
+              automaticallyImplyLeading: false,
+              actions: [
+                BloomPillButton(
+                  label: 'Thoát',
+                  variant: BloomButtonVariant.link,
+                  onPressed: () => context.go('/practice/vocab'),
+                ),
+              ],
+            ),
+            body: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                  child:
+                      BloomProgressBar(value: total > 0 ? current / total : 0),
+                ),
+                Expanded(
+                  child: exercise == null
+                      ? const Center(child: CircularProgressIndicator())
+                      : SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            transitionBuilder: (child, animation) =>
+                                FadeTransition(
+                              opacity: animation,
+                              child: SlideTransition(
+                                position: Tween<Offset>(
+                                  begin: const Offset(0, 0.08),
+                                  end: Offset.zero,
+                                ).animate(animation),
+                                child: child,
+                              ),
                             ),
+                            child: _buildExerciseWidget(exercise),
                           ),
-                          child: _buildExerciseWidget(exercise),
                         ),
-                      ),
-              ),
-            ],
-          ),
-        );
-      },
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -119,10 +131,14 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
     // flags) since consecutive exercises share the same widget type.
     final key = ValueKey(exercise.vocabRecord.id);
     return switch (exercise) {
-      FlashcardExercise e => FlashcardWidget(key: key, exercise: e, onResult: _onResult),
-      MultipleChoiceExercise e => MultipleChoiceWidget(key: key, exercise: e, onResult: _onResult),
-      FillInBlankExercise e => FillInBlankWidget(key: key, exercise: e, onResult: _onResult),
-      TranslationExercise e => TranslationExerciseWidget(key: key, exercise: e, onResult: _onResult),
+      FlashcardExercise e =>
+        FlashcardWidget(key: key, exercise: e, onResult: _onResult),
+      MultipleChoiceExercise e =>
+        MultipleChoiceWidget(key: key, exercise: e, onResult: _onResult),
+      FillInBlankExercise e =>
+        FillInBlankWidget(key: key, exercise: e, onResult: _onResult),
+      TranslationExercise e =>
+        TranslationExerciseWidget(key: key, exercise: e, onResult: _onResult),
     };
   }
 }
