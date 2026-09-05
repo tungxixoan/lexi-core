@@ -14,7 +14,8 @@ void main() {
   });
 
   test('dark theme carries the dark Bloom extension', () {
-    expect(AppTheme.dark.extension<BloomColors>()!.accent, BloomColors.dark.accent);
+    expect(AppTheme.dark.extension<BloomColors>()!.accent,
+        BloomColors.dark.accent);
     expect(AppTheme.dark.brightness, Brightness.dark);
   });
 

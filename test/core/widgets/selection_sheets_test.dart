@@ -35,7 +35,8 @@ void main() {
     expect(picked?.value, 'b');
   });
 
-  testWidgets('multi-select confirm returns the checked values via BloomPillButton',
+  testWidgets(
+      'multi-select confirm returns the checked values via BloomPillButton',
       (tester) async {
     Set<String>? result;
     await tester.pumpWidget(MaterialApp(
@@ -71,7 +72,8 @@ void main() {
     expect(result, {'b'});
   });
 
-  testWidgets('multi-select "Bỏ chọn hết" clears the selection', (tester) async {
+  testWidgets('multi-select "Bỏ chọn hết" clears the selection',
+      (tester) async {
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.light,
       home: Scaffold(

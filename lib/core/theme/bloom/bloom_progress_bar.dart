@@ -25,7 +25,8 @@ class BloomProgressBar extends StatelessWidget {
             heightFactor: 1,
             child: DecoratedBox(
               key: const ValueKey('bloom-progress-fill'),
-              decoration: BoxDecoration(gradient: BloomGradients.progressFill(c)),
+              decoration:
+                  BoxDecoration(gradient: BloomGradients.progressFill(c)),
             ),
           ),
         ),

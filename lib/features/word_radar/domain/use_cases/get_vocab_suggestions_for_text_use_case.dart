@@ -14,7 +14,8 @@ class GetVocabSuggestionsForTextUseCase {
     required Language targetLanguage,
     required CEFRLevel? targetCefrLevel,
   }) async {
-    final known = await _findKnown.execute(text: text, language: targetLanguage);
+    final known =
+        await _findKnown.execute(text: text, language: targetLanguage);
     return _generate.execute(
       text: text,
       targetLanguage: targetLanguage,

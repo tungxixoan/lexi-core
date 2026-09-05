@@ -51,8 +51,13 @@ void main() {
         final before = DateTime.now();
         final result = useCase.compute(makeRecord(), 0);
         final after = DateTime.now();
-        expect(result.nextReviewAt!.isAfter(before.add(const Duration(hours: 23))), isTrue);
-        expect(result.nextReviewAt!.isBefore(after.add(const Duration(days: 1, seconds: 1))), isTrue);
+        expect(
+            result.nextReviewAt!.isAfter(before.add(const Duration(hours: 23))),
+            isTrue);
+        expect(
+            result.nextReviewAt!
+                .isBefore(after.add(const Duration(days: 1, seconds: 1))),
+            isTrue);
       });
 
       test('quality=2 also fails (< 3 threshold)', () {
@@ -70,13 +75,15 @@ void main() {
       });
 
       test('second repetition (rep=1): interval becomes 6', () {
-        final result = useCase.compute(makeRecord(sm2Repetitions: 1, sm2Interval: 1), 5);
+        final result =
+            useCase.compute(makeRecord(sm2Repetitions: 1, sm2Interval: 1), 5);
         expect(result.sm2Interval, 6);
         expect(result.sm2Repetitions, 2);
       });
 
       test('third repetition (rep=2): interval = round(6 * 2.5) = 15', () {
-        final result = useCase.compute(makeRecord(sm2Repetitions: 2, sm2Interval: 6), 5);
+        final result =
+            useCase.compute(makeRecord(sm2Repetitions: 2, sm2Interval: 6), 5);
         expect(result.sm2Interval, 15);
         expect(result.sm2Repetitions, 3);
       });
@@ -96,7 +103,8 @@ void main() {
       });
 
       test('EF clamped at minimum 1.3', () {
-        final r = makeRecord(sm2EaseFactor: 1.3, sm2Repetitions: 2, sm2Interval: 6);
+        final r =
+            makeRecord(sm2EaseFactor: 1.3, sm2Repetitions: 2, sm2Interval: 6);
         final result = useCase.compute(r, 3);
         expect(result.sm2EaseFactor, greaterThanOrEqualTo(1.3));
       });
@@ -115,7 +123,10 @@ void main() {
       test('updatedAt is updated', () {
         final before = DateTime.now();
         final result = useCase.compute(makeRecord(), 5);
-        expect(result.updatedAt.isAfter(before) || result.updatedAt.isAtSameMomentAs(before), isTrue);
+        expect(
+            result.updatedAt.isAfter(before) ||
+                result.updatedAt.isAtSameMomentAs(before),
+            isTrue);
       });
     });
   });

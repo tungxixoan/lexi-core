@@ -54,8 +54,7 @@ Widget _buildSession() {
       ),
       GoRoute(
         path: '/reading/bilingual/session/result',
-        builder: (ctx, state) =>
-            const Scaffold(body: Text('Result screen')),
+        builder: (ctx, state) => const Scaffold(body: Text('Result screen')),
       ),
     ],
   );
@@ -159,7 +158,8 @@ void main() {
     expect(find.textContaining('Hello.'), findsWidgets);
   });
 
-  testWidgets('shows Vietnamese translation of current sentence', (tester) async {
+  testWidgets('shows Vietnamese translation of current sentence',
+      (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
     expect(find.text('Xin chào.'), findsOneWidget);
@@ -188,8 +188,7 @@ void main() {
     expect(limiter.maxLength, 'Hello.'.length);
   });
 
-  testWidgets(
-      'highlighted passage sentence keeps Be Vietnam Pro on every span',
+  testWidgets('highlighted passage sentence keeps Be Vietnam Pro on every span',
       (tester) async {
     await tester.pumpWidget(_buildHighlightSession());
     await tester.pumpAndSettle();

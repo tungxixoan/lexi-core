@@ -14,7 +14,8 @@ class FakeGenerativeModelClient implements GenerativeModelClient {
   String? lastPrompt;
 
   @override
-  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) async {
+  Future<GenerateContentResponse> generateContent(
+      Iterable<Content> prompt) async {
     lastPrompt = (prompt.first.parts.first as TextPart).text;
     return GenerateContentResponse(
       [Candidate(Content.text(_responseText), null, null, null, null)],
@@ -63,7 +64,8 @@ void main() {
     );
 
     expect(item.target, 'She showed remarkable perseverance in her work.');
-    expect(item.vietnamese, 'Cô ấy thể hiện sự kiên trì đáng kể trong công việc.');
+    expect(
+        item.vietnamese, 'Cô ấy thể hiện sự kiên trì đáng kể trong công việc.');
     expect(item.vocabIds, containsAll(['id1', 'id2']));
     expect(item.level, CEFRLevel.b1);
     expect(item.context, AppContext.general);
@@ -71,7 +73,8 @@ void main() {
     expect(item.id, isNotEmpty);
   });
 
-  test('resolves a vocabId when the AI returns a differently-cased word', () async {
+  test('resolves a vocabId when the AI returns a differently-cased word',
+      () async {
     final record = _makeRecord('rid1', 'Report');
     final casedJson = jsonEncode({
       'target': 'He sent the report today.',

@@ -14,7 +14,8 @@ class FakeGenerativeModelClient implements GenerativeModelClient {
   String? capturedPrompt;
 
   @override
-  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) async {
+  Future<GenerateContentResponse> generateContent(
+      Iterable<Content> prompt) async {
     capturedPrompt = prompt
         .expand((c) => c.parts)
         .whereType<TextPart>()
@@ -31,13 +32,26 @@ void main() {
   final conversationJson = jsonEncode({
     'kind': 'conversation',
     'turns': [
-      {'speaker': 'A', 'gender': 'female', 'text': 'Can I help you find something?'},
-      {'speaker': 'B', 'gender': 'male', 'text': 'Yes, I am looking for a winter jacket.'},
+      {
+        'speaker': 'A',
+        'gender': 'female',
+        'text': 'Can I help you find something?'
+      },
+      {
+        'speaker': 'B',
+        'gender': 'male',
+        'text': 'Yes, I am looking for a winter jacket.'
+      },
     ],
     'questions': [
       {
         'question': 'Where does this conversation take place?',
-        'options': ['A restaurant', 'A clothing store', 'An airport', 'A hospital'],
+        'options': [
+          'A restaurant',
+          'A clothing store',
+          'An airport',
+          'A hospital'
+        ],
         'correctIndex': 1,
       },
       {
@@ -107,7 +121,8 @@ void main() {
     expect(prompt, contains('the speaker'));
   });
 
-  test('parses a talk response (null speaker) into a ListeningPassage', () async {
+  test('parses a talk response (null speaker) into a ListeningPassage',
+      () async {
     final talkJson = jsonEncode({
       'kind': 'talk',
       'turns': [
@@ -117,7 +132,12 @@ void main() {
       'questions': [
         {
           'question': 'What is being announced?',
-          'options': ['A delay', 'A boarding call', 'A cancellation', 'A gate change'],
+          'options': [
+            'A delay',
+            'A boarding call',
+            'A cancellation',
+            'A gate change'
+          ],
           'correctIndex': 1,
         },
         {
@@ -164,18 +184,35 @@ void main() {
     );
   });
 
-  test('speakerGenders uses the first-seen gender when a later turn disagrees', () async {
+  test('speakerGenders uses the first-seen gender when a later turn disagrees',
+      () async {
     final inconsistentJson = jsonEncode({
       'kind': 'conversation',
       'turns': [
         {'speaker': 'A', 'gender': 'female', 'text': 'Can I help you?'},
         {'speaker': 'B', 'gender': 'male', 'text': 'Yes, please.'},
-        {'speaker': 'A', 'gender': 'male', 'text': 'Sure thing.'}, // inconsistent — ignored
+        {
+          'speaker': 'A',
+          'gender': 'male',
+          'text': 'Sure thing.'
+        }, // inconsistent — ignored
       ],
       'questions': [
-        {'question': 'Q1', 'options': ['a', 'b', 'c', 'd'], 'correctIndex': 0},
-        {'question': 'Q2', 'options': ['a', 'b', 'c', 'd'], 'correctIndex': 0},
-        {'question': 'Q3', 'options': ['a', 'b', 'c', 'd'], 'correctIndex': 0},
+        {
+          'question': 'Q1',
+          'options': ['a', 'b', 'c', 'd'],
+          'correctIndex': 0
+        },
+        {
+          'question': 'Q2',
+          'options': ['a', 'b', 'c', 'd'],
+          'correctIndex': 0
+        },
+        {
+          'question': 'Q3',
+          'options': ['a', 'b', 'c', 'd'],
+          'correctIndex': 0
+        },
       ],
     });
     final source = ListeningPassageSource.withModel(
@@ -187,6 +224,7 @@ void main() {
       targetLanguage: Language.english,
     );
 
-    expect(passage.speakerGenders['A'], 'female'); // first-seen wins, not the 3rd turn's 'male'
+    expect(passage.speakerGenders['A'],
+        'female'); // first-seen wins, not the 3rd turn's 'male'
   });
 }

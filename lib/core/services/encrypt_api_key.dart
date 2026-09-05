@@ -1,4 +1,4 @@
-﻿import 'cloud_function_caller.dart';
+import 'cloud_function_caller.dart';
 
 /// Thrown when the `encryptApiKey` Cloud Function call fails — carries a
 /// user-facing Vietnamese message shown directly in the Settings API-key

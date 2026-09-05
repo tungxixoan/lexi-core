@@ -12,14 +12,16 @@ abstract class TtsService {
   /// the `getPronunciation` Cloud Function, which caches by
   /// sha256(text+lang+voice) in Firebase Storage and is shared across all
   /// users. No-ops silently if [language].ttsCloudCode is null.
-  Future<void> pronounce(String text, Language language, {required PronunciationTier tier});
+  Future<void> pronounce(String text, Language language,
+      {required PronunciationTier tier});
 
   /// Uncached synthesis for freshly AI-generated text (Nghe chép sentences,
   /// Nghe hiểu turns) — calls `synthesizeSpeech`, never cached. [voice]
   /// picks one of Piper's 4 voices ('male1'/'male2'/'female1'/'female2');
   /// [rate] is a post-synthesis playback-speed multiplier (1.0 = normal).
   /// No-ops silently if [language].ttsCloudCode is null.
-  Future<void> synthesize(String text, Language language, {String? voice, double? rate});
+  Future<void> synthesize(String text, Language language,
+      {String? voice, double? rate});
 
   Future<void> stop();
 
@@ -61,7 +63,8 @@ class CloudTtsService implements TtsService {
   AudioPlayer? get _existingPlayer => _providedPlayer ?? _resolvedPlayer;
 
   @override
-  Future<void> pronounce(String text, Language language, {required PronunciationTier tier}) async {
+  Future<void> pronounce(String text, Language language,
+      {required PronunciationTier tier}) async {
     final code = language.ttsCloudCode;
     if (code == null || text.trim().isEmpty) return;
     try {
@@ -81,7 +84,8 @@ class CloudTtsService implements TtsService {
   }
 
   @override
-  Future<void> synthesize(String text, Language language, {String? voice, double? rate}) async {
+  Future<void> synthesize(String text, Language language,
+      {String? voice, double? rate}) async {
     final code = language.ttsCloudCode;
     if (code == null || text.trim().isEmpty) return;
     try {

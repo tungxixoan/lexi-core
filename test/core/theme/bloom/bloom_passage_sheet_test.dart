@@ -11,7 +11,8 @@ Widget _host(Widget sheet) => MaterialApp(
     );
 
 void main() {
-  testWidgets('single tab: shows the passage text and the hint', (tester) async {
+  testWidgets('single tab: shows the passage text and the hint',
+      (tester) async {
     await tester.pumpWidget(_host(BloomPassageSheet(
       tabs: ['Văn bản'],
       passages: ['The quarterly report is attached.'],
@@ -22,7 +23,8 @@ void main() {
     expect(find.text('The quarterly report is attached.'), findsOneWidget);
   });
 
-  testWidgets('two tabs: switching the tab swaps the passage text', (tester) async {
+  testWidgets('two tabs: switching the tab swaps the passage text',
+      (tester) async {
     await tester.pumpWidget(_host(BloomPassageSheet(
       tabs: ['Văn bản 1', 'Văn bản 2'],
       passages: ['FIRST DOC', 'SECOND DOC'],

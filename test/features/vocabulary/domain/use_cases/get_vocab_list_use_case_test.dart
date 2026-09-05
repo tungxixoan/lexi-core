@@ -57,7 +57,8 @@ void main() {
         )).called(1);
   });
 
-  test('execute() passes maxCefrLevel to repo and returns its result', () async {
+  test('execute() passes maxCefrLevel to repo and returns its result',
+      () async {
     final records = [_makeRecord('word1', CEFRLevel.b1)];
     when(() => repo.getAll(
           language: any(named: 'language'),
@@ -66,7 +67,8 @@ void main() {
           maxCefrLevel: any(named: 'maxCefrLevel'),
         )).thenAnswer((_) async => records);
 
-    final result = await useCase.execute(language: Language.english, maxCefrLevel: CEFRLevel.b2);
+    final result = await useCase.execute(
+        language: Language.english, maxCefrLevel: CEFRLevel.b2);
 
     verify(() => repo.getAll(
           language: Language.english,
@@ -81,6 +83,7 @@ void main() {
     when(() => repo.getAll(language: Language.english, dueOnly: true))
         .thenAnswer((_) async => []);
     await useCase.execute(language: Language.english, dueOnly: true);
-    verify(() => repo.getAll(language: Language.english, dueOnly: true)).called(1);
+    verify(() => repo.getAll(language: Language.english, dueOnly: true))
+        .called(1);
   });
 }

@@ -9,13 +9,15 @@ import '../../../vocabulary/domain/entities/cefr_level.dart';
 import '../../domain/entities/listening_passage.dart';
 
 // Re-export so test imports (from this file) continue to resolve.
-export '../../../../core/services/ai_client_factory.dart' show GenerativeModelClient;
+export '../../../../core/services/ai_client_factory.dart'
+    show GenerativeModelClient;
 
 class ListeningPassageSource {
   ListeningPassageSource(UserSettingsState settings)
       : _client = AiClientFactory.buildClient(settings);
 
-  ListeningPassageSource.withModel(GenerativeModelClient client) : _client = client;
+  ListeningPassageSource.withModel(GenerativeModelClient client)
+      : _client = client;
 
   final GenerativeModelClient _client;
   static const _uuid = Uuid();

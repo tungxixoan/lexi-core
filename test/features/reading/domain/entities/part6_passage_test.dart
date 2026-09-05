@@ -104,7 +104,8 @@ void main() {
       expect(decoded.generatedAt, set.generatedAt);
     });
 
-    test('fromJson decodes a web-shaped passage sub-object without throwing', () {
+    test('fromJson decodes a web-shaped passage sub-object without throwing',
+        () {
       final json = <String, dynamic>{
         'passages': [
           {

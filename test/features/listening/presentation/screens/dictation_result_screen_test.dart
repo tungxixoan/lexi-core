@@ -34,7 +34,8 @@ class _FakeSettingsNotifier extends UserSettingsNotifier {
   UserSettingsState build() => _state;
 }
 
-VocabRecord _record(String id, {Language language = Language.english}) => VocabRecord(
+VocabRecord _record(String id, {Language language = Language.english}) =>
+    VocabRecord(
       id: id,
       headword: id,
       inputType: InputType.word,
@@ -72,7 +73,8 @@ class _CapturingVocabRepository implements VocabRepository {
   Future<void> save(VocabRecord record) async {}
 
   @override
-  Future<VocabRecord?> getById(String id, {required Language language}) async => null;
+  Future<VocabRecord?> getById(String id, {required Language language}) async =>
+      null;
 
   @override
   Future<void> update(VocabRecord record) async {
@@ -87,7 +89,8 @@ class _CapturingVocabRepository implements VocabRepository {
       false;
 
   @override
-  Future<VocabRecord?> getByHeadword(String headword, Language language) async =>
+  Future<VocabRecord?> getByHeadword(
+          String headword, Language language) async =>
       null;
 
   @override
@@ -123,7 +126,8 @@ class _LanguageScopedVocabRepository implements VocabRepository {
   Future<void> save(VocabRecord record) async {}
 
   @override
-  Future<VocabRecord?> getById(String id, {required Language language}) async => null;
+  Future<VocabRecord?> getById(String id, {required Language language}) async =>
+      null;
 
   @override
   Future<void> update(VocabRecord record) async {
@@ -138,7 +142,8 @@ class _LanguageScopedVocabRepository implements VocabRepository {
       false;
 
   @override
-  Future<VocabRecord?> getByHeadword(String headword, Language language) async =>
+  Future<VocabRecord?> getByHeadword(
+          String headword, Language language) async =>
       null;
 
   @override
@@ -168,7 +173,8 @@ class _ThrowingVocabRepository implements VocabRepository {
   Future<void> save(VocabRecord record) async {}
 
   @override
-  Future<VocabRecord?> getById(String id, {required Language language}) async => null;
+  Future<VocabRecord?> getById(String id, {required Language language}) async =>
+      null;
 
   @override
   Future<void> update(VocabRecord record) async {
@@ -183,7 +189,8 @@ class _ThrowingVocabRepository implements VocabRepository {
       false;
 
   @override
-  Future<VocabRecord?> getByHeadword(String headword, Language language) async =>
+  Future<VocabRecord?> getByHeadword(
+          String headword, Language language) async =>
       null;
 
   @override
@@ -251,7 +258,8 @@ void main() {
     expect(find.byType(BloomStatCard), findsNWidgets(4));
   });
 
-  testWidgets('shows the target sentence and Vietnamese translation', (tester) async {
+  testWidgets('shows the target sentence and Vietnamese translation',
+      (tester) async {
     final repo = _CapturingVocabRepository([_record('id1'), _record('id2')]);
     await tester.pumpWidget(_buildResult(_perfectResult, repo));
     await tester.pumpAndSettle();
@@ -288,7 +296,8 @@ void main() {
     expect(find.text('Đã lưu bài này'), findsOneWidget);
   });
 
-  testWidgets('updates SM-2 for every vocab word used in the sentence', (tester) async {
+  testWidgets('updates SM-2 for every vocab word used in the sentence',
+      (tester) async {
     final repo = _CapturingVocabRepository([_record('id1'), _record('id2')]);
     await tester.pumpWidget(_buildResult(_perfectResult, repo));
     await tester.pumpAndSettle();
@@ -302,7 +311,8 @@ void main() {
     }
   });
 
-  testWidgets('records a practice session (for the streak) with the item vocab count',
+  testWidgets(
+      'records a practice session (for the streak) with the item vocab count',
       (tester) async {
     final repo = _CapturingVocabRepository([_record('id1'), _record('id2')]);
     final mockStats = MockStatsService();
@@ -359,7 +369,8 @@ void main() {
       extraOverrides: [
         userSettingsNotifierProvider.overrideWith(
           () => _FakeSettingsNotifier(
-            UserSettingsState.defaults.copyWith(targetLanguage: Language.english),
+            UserSettingsState.defaults
+                .copyWith(targetLanguage: Language.english),
           ),
         ),
       ],
@@ -386,7 +397,8 @@ void main() {
     expect(repo.updated, isEmpty);
   });
 
-  testWidgets('shows the Số lần tua stat with count and penalty percentage', (tester) async {
+  testWidgets('shows the Số lần tua stat with count and penalty percentage',
+      (tester) async {
     final repo = _CapturingVocabRepository([_record('id1'), _record('id2')]);
     final result = DictationSessionResult(
       item: _testItem,
@@ -403,7 +415,8 @@ void main() {
     expect(find.textContaining('2 (−3%)'), findsOneWidget);
   });
 
-  testWidgets('shows the Số lần tua stat as 0 (−0%) when no seeks happened', (tester) async {
+  testWidgets('shows the Số lần tua stat as 0 (−0%) when no seeks happened',
+      (tester) async {
     final repo = _CapturingVocabRepository([_record('id1'), _record('id2')]);
     await tester.pumpWidget(_buildResult(_perfectResult, repo));
     await tester.pumpAndSettle();
@@ -440,7 +453,8 @@ void main() {
       expect(find.textContaining('đúng: world.'), findsOneWidget);
     });
 
-    testWidgets('shows the score based on blockAccuracy (1 of 2 blanks correct = 50%)',
+    testWidgets(
+        'shows the score based on blockAccuracy (1 of 2 blanks correct = 50%)',
         (tester) async {
       final repo = _CapturingVocabRepository([_record('id1'), _record('id2')]);
       await tester.pumpWidget(_buildResult(clozeResult, repo));
@@ -448,7 +462,8 @@ void main() {
       expect(find.textContaining('50'), findsWidgets);
     });
 
-    testWidgets('still shows the full correct sentence and Vietnamese translation',
+    testWidgets(
+        'still shows the full correct sentence and Vietnamese translation',
         (tester) async {
       final repo = _CapturingVocabRepository([_record('id1'), _record('id2')]);
       await tester.pumpWidget(_buildResult(clozeResult, repo));

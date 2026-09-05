@@ -16,7 +16,8 @@ final class Part7SessionResult {
   });
 
   final Part7Set set;
-  final List<int?> selectedAnswers; // flat, group-major order (see Part7SessionState.flatIndex)
+  final List<int?>
+      selectedAnswers; // flat, group-major order (see Part7SessionState.flatIndex)
 
   /// Non-null when this session was started from a saved exercise — the result
   /// screen uses it to hide "Lưu bài" and to exclude the set on "Bài khác".
@@ -66,7 +67,8 @@ final class Part7SessionState {
   /// from each preceding group's ACTUAL question count. Single-passage
   /// groups may have 3 or 4 questions — never hardcode a per-group count
   /// here (that was the Part 6 bug this design deliberately avoids).
-  static int flatIndex(List<Part7PassageGroup> groups, int groupIndex, int questionIndex) {
+  static int flatIndex(
+      List<Part7PassageGroup> groups, int groupIndex, int questionIndex) {
     var offset = 0;
     for (var g = 0; g < groupIndex; g++) {
       offset += groups[g].questions.length;
@@ -74,7 +76,8 @@ final class Part7SessionState {
     return offset + questionIndex;
   }
 
-  Part7SessionState copyWith({List<int?>? selectedAnswers, bool? isSubmitted}) =>
+  Part7SessionState copyWith(
+          {List<int?>? selectedAnswers, bool? isSubmitted}) =>
       Part7SessionState(
         set: set,
         selectedAnswers: selectedAnswers ?? this.selectedAnswers,
@@ -102,7 +105,8 @@ class Part7PracticeNotifier extends _$Part7PracticeNotifier {
             targetLanguage: targetLanguage,
             volumes: volumes,
           );
-      final totalQuestions = set.passageGroups.fold(0, (sum, g) => sum + g.questions.length);
+      final totalQuestions =
+          set.passageGroups.fold(0, (sum, g) => sum + g.questions.length);
       return Part7SessionState(
         set: set,
         selectedAnswers: List<int?>.filled(totalQuestions, null),
@@ -136,7 +140,8 @@ class Part7PracticeNotifier extends _$Part7PracticeNotifier {
     final current = state.valueOrNull;
     if (current == null || current.isSubmitted) return;
     final updated = List<int?>.from(current.selectedAnswers);
-    final flat = Part7SessionState.flatIndex(current.set.passageGroups, groupIndex, questionIndex);
+    final flat = Part7SessionState.flatIndex(
+        current.set.passageGroups, groupIndex, questionIndex);
     updated[flat] = optionIndex;
     state = AsyncData(current.copyWith(selectedAnswers: updated));
   }

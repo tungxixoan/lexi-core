@@ -52,7 +52,8 @@ class BloomBottomNav extends StatelessWidget {
 }
 
 class _NavCell extends StatelessWidget {
-  const _NavCell({required this.item, required this.selected, required this.onTap});
+  const _NavCell(
+      {required this.item, required this.selected, required this.onTap});
   final BloomNavItem item;
   final bool selected;
   final VoidCallback onTap;
@@ -73,7 +74,8 @@ class _NavCell extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
                 decoration: BoxDecoration(
                   color: selected ? c.surface3 : Colors.transparent,
                   borderRadius: BorderRadius.circular(BloomRadii.pill),
@@ -135,9 +137,8 @@ class BloomNavRail extends StatelessWidget {
             label: Text(it.label),
           ),
       ],
-      labelType: extended
-          ? NavigationRailLabelType.none
-          : NavigationRailLabelType.all,
+      labelType:
+          extended ? NavigationRailLabelType.none : NavigationRailLabelType.all,
     );
   }
 }

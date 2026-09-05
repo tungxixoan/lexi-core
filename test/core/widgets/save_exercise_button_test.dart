@@ -35,7 +35,10 @@ void main() {
             buildPassageJson:
                 buildPassageJson ?? () => <String, dynamic>{'k': 'v'},
             generationFilters: generationFilters ??
-                <String, dynamic>{'topicIds': <String>[], 'volumes': <String>[]},
+                <String, dynamic>{
+                  'topicIds': <String>[],
+                  'volumes': <String>[]
+                },
             targetLanguage: targetLanguage,
           ),
         ),
@@ -58,7 +61,9 @@ void main() {
       service: service,
       type: SavedExerciseType.part6,
       buildPassageJson: () => <String, dynamic>{'passage': 'body'},
-      generationFilters: <String, dynamic>{'topicIds': <String>['t1']},
+      generationFilters: <String, dynamic>{
+        'topicIds': <String>['t1']
+      },
       targetLanguage: Language.chinese,
     ));
 
@@ -76,7 +81,9 @@ void main() {
     expect(captured, [
       SavedExerciseType.part6,
       <String, dynamic>{'passage': 'body'},
-      <String, dynamic>{'topicIds': <String>['t1']},
+      <String, dynamic>{
+        'topicIds': <String>['t1']
+      },
       Language.chinese,
     ]);
 

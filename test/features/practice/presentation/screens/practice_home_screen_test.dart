@@ -44,7 +44,8 @@ class _FakeGetVocabListUseCase implements GetVocabListUseCase {
 
 class _FakeStatsService implements StatsService {
   @override
-  Future<LearningStats> computeStats(Language language) async => const LearningStats(
+  Future<LearningStats> computeStats(Language language) async =>
+      const LearningStats(
         dueCount: 0,
         masteredCount: 0,
         totalCount: 0,
@@ -103,7 +104,8 @@ void main() {
     );
   });
 
-  testWidgets('when dueCount is 0 the "Ôn hôm nay" button is disabled', (tester) async {
+  testWidgets('when dueCount is 0 the "Ôn hôm nay" button is disabled',
+      (tester) async {
     await tester.pumpWidget(await _buildScreen());
     await tester.pumpAndSettle();
 

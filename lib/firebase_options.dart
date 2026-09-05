@@ -72,5 +72,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'lexi-core.firebasestorage.app',
     measurementId: 'G-022E2HVV27',
   );
-
 }

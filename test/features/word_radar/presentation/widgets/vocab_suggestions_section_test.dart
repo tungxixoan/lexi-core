@@ -36,7 +36,8 @@ class _FakeVocabRepository implements VocabRepository {
       records;
 
   @override
-  Future<VocabRecord?> getById(String id, {required Language language}) async => null;
+  Future<VocabRecord?> getById(String id, {required Language language}) async =>
+      null;
 
   @override
   Future<void> save(VocabRecord record) async {}
@@ -48,10 +49,13 @@ class _FakeVocabRepository implements VocabRepository {
   Future<void> delete(String id, {required Language language}) async {}
 
   @override
-  Future<bool> existsByHeadword(String headword, Language language) async => false;
+  Future<bool> existsByHeadword(String headword, Language language) async =>
+      false;
 
   @override
-  Future<VocabRecord?> getByHeadword(String headword, Language language) async => null;
+  Future<VocabRecord?> getByHeadword(
+          String headword, Language language) async =>
+      null;
 
   @override
   Future<List<Topic>> getTopics() async => [];
@@ -92,7 +96,8 @@ Future<Widget> _buildSection(List<WordPhraseResult> suggestions) async {
 }
 
 void main() {
-  testWidgets('shows "Không có gợi ý mới." when there are no suggestions', (tester) async {
+  testWidgets('shows "Không có gợi ý mới." when there are no suggestions',
+      (tester) async {
     await tester.pumpWidget(await _buildSection(const []));
     await tester.pumpAndSettle();
     expect(find.text('Không có gợi ý mới.'), findsOneWidget);
@@ -109,7 +114,8 @@ void main() {
     expect(find.text('Lưu "ubiquitous"'), findsOneWidget);
   });
 
-  testWidgets('tapping the dismiss icon removes a suggestion from the list', (tester) async {
+  testWidgets('tapping the dismiss icon removes a suggestion from the list',
+      (tester) async {
     await tester.pumpWidget(await _buildSection(const [_suggestion]));
     await tester.pumpAndSettle();
 
@@ -120,7 +126,8 @@ void main() {
     expect(find.text('Không có gợi ý mới.'), findsOneWidget);
   });
 
-  testWidgets('Lưu tất cả saves every suggestion and shows a checkmark', (tester) async {
+  testWidgets('Lưu tất cả saves every suggestion and shows a checkmark',
+      (tester) async {
     await tester.pumpWidget(await _buildSection(const [_suggestion]));
     await tester.pumpAndSettle();
 

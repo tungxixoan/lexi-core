@@ -12,7 +12,8 @@ class FakeGenerativeModelClient implements GenerativeModelClient {
   Iterable<Content>? lastPrompt;
 
   @override
-  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) async {
+  Future<GenerateContentResponse> generateContent(
+      Iterable<Content> prompt) async {
     lastPrompt = prompt;
     return GenerateContentResponse(
       [Candidate(Content.text(_responseText), null, null, null, null)],
@@ -34,7 +35,8 @@ Map<String, dynamic> _passage(int i) => {
     };
 
 void main() {
-  test('parses 3 passages of 4 questions each from a valid AI response', () async {
+  test('parses 3 passages of 4 questions each from a valid AI response',
+      () async {
     final json = jsonEncode({'passages': List.generate(3, _passage)});
     final source = Part6Source.withModel(FakeGenerativeModelClient(json));
 
@@ -69,7 +71,8 @@ void main() {
     );
   });
 
-  test('empty volumes selection sends all 4 volume labels in the prompt', () async {
+  test('empty volumes selection sends all 4 volume labels in the prompt',
+      () async {
     final client = FakeGenerativeModelClient(
       jsonEncode({'passages': List.generate(3, _passage)}),
     );
@@ -88,7 +91,8 @@ void main() {
     expect(part.text, contains('Vol 5'));
   });
 
-  test('prompt requires at least one sentence-insertion blank per passage', () async {
+  test('prompt requires at least one sentence-insertion blank per passage',
+      () async {
     final client = FakeGenerativeModelClient(
       jsonEncode({'passages': List.generate(3, _passage)}),
     );
@@ -101,10 +105,12 @@ void main() {
     );
 
     final part = client.lastPrompt!.first.parts.first as TextPart;
-    expect(part.text.toLowerCase(), contains('select the sentence that best fits'));
+    expect(part.text.toLowerCase(),
+        contains('select the sentence that best fits'));
   });
 
-  test('prompt instructs the AI to keep explanations in Vietnamese script only', () async {
+  test('prompt instructs the AI to keep explanations in Vietnamese script only',
+      () async {
     final client = FakeGenerativeModelClient(
       jsonEncode({'passages': List.generate(3, _passage)}),
     );

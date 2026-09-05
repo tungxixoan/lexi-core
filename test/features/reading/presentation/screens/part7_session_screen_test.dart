@@ -85,7 +85,9 @@ Widget _buildSession({Part7SessionState? session}) {
 }
 
 void main() {
-  testWidgets('group 1 questions first; chips switch groups; double group shows two doc tabs', (tester) async {
+  testWidgets(
+      'group 1 questions first; chips switch groups; double group shows two doc tabs',
+      (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
     expect(find.byType(BloomGroupChips), findsOneWidget);
@@ -102,7 +104,8 @@ void main() {
     expect(find.textContaining('Q0-0?'), findsNothing);
   });
 
-  testWidgets('answering group 3 / question 1 writes flatIndex(groups, 2, 0)', (tester) async {
+  testWidgets('answering group 3 / question 1 writes flatIndex(groups, 2, 0)',
+      (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
     await tester.tap(find.text('Đoạn 3'));
@@ -118,38 +121,58 @@ void main() {
 
     final groups = _testSet.passageGroups;
     final container = ProviderScope.containerOf(
-        tester.element(find.byType(Part7SessionScreen)), listen: false);
-    final answers = container.read(part7PracticeNotifierProvider).value!.selectedAnswers;
+        tester.element(find.byType(Part7SessionScreen)),
+        listen: false);
+    final answers =
+        container.read(part7PracticeNotifierProvider).value!.selectedAnswers;
     expect(answers[Part7SessionState.flatIndex(groups, 2, 0)], 1); // 3+4+0 = 7
     expect(answers[Part7SessionState.flatIndex(groups, 0, 0)], isNull);
   });
 
-  testWidgets('Nộp bài is disabled until every question is answered', (tester) async {
+  testWidgets('Nộp bài is disabled until every question is answered',
+      (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
-    expect(tester.widget<BloomPillButton>(find.byType(BloomPillButton)).onPressed, isNull);
+    expect(
+        tester.widget<BloomPillButton>(find.byType(BloomPillButton)).onPressed,
+        isNull);
   });
 
-  testWidgets('Nộp bài is enabled once all 12 answers are selected', (tester) async {
-    await tester.pumpWidget(_buildSession(session: Part7SessionState(
-        set: _testSet, selectedAnswers: List<int?>.filled(12, 0), isSubmitted: false)));
+  testWidgets('Nộp bài is enabled once all 12 answers are selected',
+      (tester) async {
+    await tester.pumpWidget(_buildSession(
+        session: Part7SessionState(
+            set: _testSet,
+            selectedAnswers: List<int?>.filled(12, 0),
+            isSubmitted: false)));
     await tester.pumpAndSettle();
-    expect(tester.widget<BloomPillButton>(find.byType(BloomPillButton)).onPressed, isNotNull);
+    expect(
+        tester.widget<BloomPillButton>(find.byType(BloomPillButton)).onPressed,
+        isNotNull);
   });
 
   testWidgets('submitting navigates to the result screen', (tester) async {
-    await tester.pumpWidget(_buildSession(session: Part7SessionState(
-        set: _testSet, selectedAnswers: List<int?>.filled(12, 0), isSubmitted: false)));
+    await tester.pumpWidget(_buildSession(
+        session: Part7SessionState(
+            set: _testSet,
+            selectedAnswers: List<int?>.filled(12, 0),
+            isSubmitted: false)));
     await tester.pumpAndSettle();
     await tester.tap(find.byType(BloomPillButton));
     await tester.pumpAndSettle();
     expect(find.text('Result screen'), findsOneWidget);
   });
 
-  testWidgets('answering group-by-group across all 3 groups enables Nộp bài only after the last question', (tester) async {
+  testWidgets(
+      'answering group-by-group across all 3 groups enables Nộp bài only after the last question',
+      (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
-    bool enabled() => tester.widget<BloomPillButton>(find.byType(BloomPillButton)).onPressed != null;
+    bool enabled() =>
+        tester
+            .widget<BloomPillButton>(find.byType(BloomPillButton))
+            .onPressed !=
+        null;
     expect(enabled(), isFalse);
 
     // group 0: 3 questions; group 1: 4; group 2: 5. Answer option 'a' for each.
@@ -161,12 +184,14 @@ void main() {
         await tester.pumpAndSettle();
       }
       for (var q = 0; q < perGroup[g]; q++) {
-        final opt = find.descendant(of: find.byType(BloomCard).at(q), matching: find.text('a'));
+        final opt = find.descendant(
+            of: find.byType(BloomCard).at(q), matching: find.text('a'));
         await tester.ensureVisible(opt);
         await tester.tap(opt);
         await tester.pumpAndSettle();
         answeredTotal++;
-        expect(enabled(), answeredTotal == 12, reason: 'after group $g question $q');
+        expect(enabled(), answeredTotal == 12,
+            reason: 'after group $g question $q');
       }
     }
   });

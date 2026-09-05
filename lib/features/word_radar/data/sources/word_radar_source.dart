@@ -10,7 +10,8 @@ import '../../../vocabulary/domain/entities/cefr_level.dart';
 import '../../domain/entities/word_radar_ai_result.dart';
 
 // Re-export so test imports (from this file) continue to resolve.
-export '../../../../core/services/ai_client_factory.dart' show GenerativeModelClient;
+export '../../../../core/services/ai_client_factory.dart'
+    show GenerativeModelClient;
 
 class WordRadarSource {
   WordRadarSource(UserSettingsState settings)
@@ -39,7 +40,9 @@ class WordRadarSource {
     final json = parseAiJsonObject(responseText);
     final suggestions = (json['suggestions'] as List? ?? [])
         .whereType<Map<String, dynamic>>()
-        .where((item) => item['headword'] is String && (item['headword'] as String).isNotEmpty)
+        .where((item) =>
+            item['headword'] is String &&
+            (item['headword'] as String).isNotEmpty)
         .map((item) => _parseSuggestion(item))
         .toList();
     return WordRadarAiResult(
@@ -55,8 +58,9 @@ class WordRadarSource {
     required List<String> knownHeadwords,
     required bool includeTranslation,
   }) {
-    final levelClause =
-        targetCefrLevel != null ? 'at ${targetCefrLevel.label} level' : 'at any level';
+    final levelClause = targetCefrLevel != null
+        ? 'at ${targetCefrLevel.label} level'
+        : 'at any level';
     final exclusionClause = knownHeadwords.isEmpty
         ? 'There are no already-known words to exclude.'
         : 'Do NOT suggest any of these already-known words: ${knownHeadwords.join(", ")}.';
@@ -94,15 +98,16 @@ class WordRadarSource {
     final detectedType = InputDetector.detect(headword);
     return WordPhraseResult(
       headword: headword,
-      inputType: detectedType == InputType.word ? InputType.word : InputType.phrase,
+      inputType:
+          detectedType == InputType.word ? InputType.word : InputType.phrase,
       ipa: json['ipa'] as String? ?? '',
       meaning: json['meaning'] as String? ?? '',
       examples: _stringList(json['examples']),
       suggestedTopics: _stringList(json['suggestedTopics']),
       definition: json['definition'] as String? ?? '',
       synonyms: _stringList(json['synonyms']),
-      cefrLevel: CEFRLevel.values.asNameMap()[
-          (json['cefrLevel'] as String?)?.trim().toLowerCase()],
+      cefrLevel: CEFRLevel.values
+          .asNameMap()[(json['cefrLevel'] as String?)?.trim().toLowerCase()],
     );
   }
 

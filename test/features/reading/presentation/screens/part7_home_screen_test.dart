@@ -154,14 +154,18 @@ void main() {
     expect(find.text('Lấy bài có sẵn'), findsOneWidget);
   });
 
-  testWidgets('reuse navigates to the part7 session on a match', (tester) async {
+  testWidgets('reuse navigates to the part7 session on a match',
+      (tester) async {
     await tester.pumpWidget(_buildHome(
       settings: _settings(),
       savedService: _FakeSavedExercisesService(
         random: (
           id: 'p1',
           passageJson: _set().toJson(),
-          generationFilters: const {'topicIds': <String>[], 'volumes': <String>[]},
+          generationFilters: const {
+            'topicIds': <String>[],
+            'volumes': <String>[]
+          },
         ),
       ),
     ));

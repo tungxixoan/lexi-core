@@ -8,7 +8,7 @@ final class ExerciseResult {
   });
 
   final String vocabRecordId;
-  final int quality;    // 5 = correct/knew it, 1 = incorrect/didn't know
+  final int quality; // 5 = correct/knew it, 1 = incorrect/didn't know
   final bool isCorrect;
 }
 

@@ -43,8 +43,9 @@ class WordResultWidget extends ConsumerWidget {
                   const SizedBox(width: 8),
                   PronounceButton(
                     tooltip: 'Phát âm từ',
-                    onPressed: () => tts.pronounce(result.headword,
-                        targetLanguage, tier: PronunciationTier.word),
+                    onPressed: () => tts.pronounce(
+                        result.headword, targetLanguage,
+                        tier: PronunciationTier.word),
                   ),
                 ],
                 if (result.cefrLevel != null) ...[
@@ -57,19 +58,17 @@ class WordResultWidget extends ConsumerWidget {
               const SizedBox(height: 4),
               Text(result.ipa,
                   style: TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 13,
-                      color: c.inkSoft)),
+                      fontFamily: 'monospace', fontSize: 13, color: c.inkSoft)),
             ],
             const SizedBox(height: 10),
             Text(result.meaning,
-                style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.w600)),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             if (result.definition.isNotEmpty) ...[
               const SizedBox(height: 6),
               Text(result.definition,
-                  style: TextStyle(
-                      fontStyle: FontStyle.italic, color: c.inkSoft)),
+                  style:
+                      TextStyle(fontStyle: FontStyle.italic, color: c.inkSoft)),
             ],
             if (result.synonyms.isNotEmpty) ...[
               const SizedBox(height: 10),
@@ -92,8 +91,7 @@ class WordResultWidget extends ConsumerWidget {
                       Expanded(
                         child: Text(ex,
                             style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: c.inkSoft)),
+                                fontStyle: FontStyle.italic, color: c.inkSoft)),
                       ),
                       if (canSpeak) ...[
                         const SizedBox(width: 8),

@@ -9,7 +9,8 @@ import 'package:lexi_core/features/reading/domain/entities/part5_question.dart';
 import 'package:lexi_core/features/reading/domain/use_cases/generate_part5_set_use_case.dart';
 import 'package:lexi_core/features/reading/presentation/providers/part5_practice_provider.dart';
 
-class MockGeneratePart5SetUseCase extends Mock implements GeneratePart5SetUseCase {}
+class MockGeneratePart5SetUseCase extends Mock
+    implements GeneratePart5SetUseCase {}
 
 void main() {
   setUpAll(() {
@@ -49,12 +50,15 @@ void main() {
     ).thenAnswer((_) async => fixedSet);
 
     container = ProviderContainer(
-      overrides: [generatePart5SetUseCaseProvider.overrideWithValue(mockUseCase)],
+      overrides: [
+        generatePart5SetUseCaseProvider.overrideWithValue(mockUseCase)
+      ],
     );
     addTearDown(container.dispose);
   });
 
-  Future<void> generateFixed() => container.read(part5PracticeNotifierProvider.notifier).generate(
+  Future<void> generateFixed() =>
+      container.read(part5PracticeNotifierProvider.notifier).generate(
         context: AppContext.general,
         targetLanguage: Language.english,
         volumes: const {EconomyVolume.vol3},
@@ -83,21 +87,27 @@ void main() {
     final notifier = container.read(part5PracticeNotifierProvider.notifier);
     notifier.selectAnswer(0, 0);
     notifier.selectAnswer(1, 1);
-    expect(container.read(part5PracticeNotifierProvider).valueOrNull!.canSubmit, false);
+    expect(container.read(part5PracticeNotifierProvider).valueOrNull!.canSubmit,
+        false);
     notifier.selectAnswer(2, 2);
-    expect(container.read(part5PracticeNotifierProvider).valueOrNull!.canSubmit, true);
+    expect(container.read(part5PracticeNotifierProvider).valueOrNull!.canSubmit,
+        true);
   });
 
   test('submit() is a no-op until canSubmit is true', () async {
     await generateFixed();
     final notifier = container.read(part5PracticeNotifierProvider.notifier);
     notifier.submit();
-    expect(container.read(part5PracticeNotifierProvider).valueOrNull!.isSubmitted, false);
+    expect(
+        container.read(part5PracticeNotifierProvider).valueOrNull!.isSubmitted,
+        false);
     notifier.selectAnswer(0, 0);
     notifier.selectAnswer(1, 0);
     notifier.selectAnswer(2, 0);
     notifier.submit();
-    expect(container.read(part5PracticeNotifierProvider).valueOrNull!.isSubmitted, true);
+    expect(
+        container.read(part5PracticeNotifierProvider).valueOrNull!.isSubmitted,
+        true);
   });
 
   test('reset() returns state to null', () async {
@@ -109,7 +119,11 @@ void main() {
   test('Part5SessionResult.correctCount counts matching answers', () {
     final result = Part5SessionResult(
       set: fixedSet,
-      selectedAnswers: const [0, 1, 3], // question 0 & 1's correctIndex are 0 & 1; question 2's is 2
+      selectedAnswers: const [
+        0,
+        1,
+        3
+      ], // question 0 & 1's correctIndex are 0 & 1; question 2's is 2
     );
     expect(result.correctCount, 2);
   });
@@ -137,14 +151,18 @@ void main() {
       expect(state.generationFilters, filters);
     });
 
-    test('loadSaved leaves reusedFromId + generationFilters null when omitted', () {
-      container.read(part5PracticeNotifierProvider.notifier).loadSaved(fixedSet);
+    test('loadSaved leaves reusedFromId + generationFilters null when omitted',
+        () {
+      container
+          .read(part5PracticeNotifierProvider.notifier)
+          .loadSaved(fixedSet);
       final state = container.read(part5PracticeNotifierProvider).valueOrNull!;
       expect(state.reusedFromId, isNull);
       expect(state.generationFilters, isNull);
     });
 
-    test('generate(generationFilters:) carries the map onto the state', () async {
+    test('generate(generationFilters:) carries the map onto the state',
+        () async {
       await container.read(part5PracticeNotifierProvider.notifier).generate(
             context: AppContext.general,
             targetLanguage: Language.english,

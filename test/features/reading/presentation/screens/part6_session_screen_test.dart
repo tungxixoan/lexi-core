@@ -69,7 +69,8 @@ Widget _buildSession({Part6SessionState? session}) {
 }
 
 void main() {
-  testWidgets('shows passage 1 questions first; chips switch passages', (tester) async {
+  testWidgets('shows passage 1 questions first; chips switch passages',
+      (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
     expect(find.text('Chỗ trống (1)'), findsOneWidget);
@@ -82,16 +83,21 @@ void main() {
     expect(find.textContaining('Passage 0'), findsNothing);
   });
 
-  testWidgets('expanding a blank and picking an option writes only that flat slot', (tester) async {
+  testWidgets(
+      'expanding a blank and picking an option writes only that flat slot',
+      (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.text('Chỗ trống (3)'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Chỗ trống (3)')); // q index 2 — distinct from option index, catches an arg-order swap
+    await tester.tap(find.text(
+        'Chỗ trống (3)')); // q index 2 — distinct from option index, catches an arg-order swap
     await tester.pumpAndSettle();
     final bInTile3 = find.descendant(
-      of: find.ancestor(of: find.text('Chỗ trống (3)'), matching: find.byType(BloomExpansionTile)),
+      of: find.ancestor(
+          of: find.text('Chỗ trống (3)'),
+          matching: find.byType(BloomExpansionTile)),
       matching: find.text('b'),
     );
     await tester.ensureVisible(bInTile3);
@@ -99,13 +105,17 @@ void main() {
     await tester.pumpAndSettle();
 
     final container = ProviderScope.containerOf(
-      tester.element(find.byType(Part6SessionScreen)), listen: false);
-    final answers = container.read(part6PracticeNotifierProvider).value!.selectedAnswers;
+        tester.element(find.byType(Part6SessionScreen)),
+        listen: false);
+    final answers =
+        container.read(part6PracticeNotifierProvider).value!.selectedAnswers;
     expect(answers[Part6SessionState.flatIndex(0, 2)], 1);
     expect(answers[Part6SessionState.flatIndex(0, 0)], isNull);
   });
 
-  testWidgets("answering a blank after switching to passage 2 writes that passage's flat slot", (tester) async {
+  testWidgets(
+      "answering a blank after switching to passage 2 writes that passage's flat slot",
+      (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
 
@@ -117,7 +127,8 @@ void main() {
     // options are already visible — pick 'b' (option index 1) directly.
     final bInBlank1 = find.descendant(
       of: find.ancestor(
-          of: find.text('Chỗ trống (1)'), matching: find.byType(BloomExpansionTile)),
+          of: find.text('Chỗ trống (1)'),
+          matching: find.byType(BloomExpansionTile)),
       matching: find.text('b'),
     );
     await tester.ensureVisible(bInBlank1);
@@ -126,28 +137,42 @@ void main() {
     await tester.pumpAndSettle();
 
     final container = ProviderScope.containerOf(
-      tester.element(find.byType(Part6SessionScreen)), listen: false);
-    final answers = container.read(part6PracticeNotifierProvider).value!.selectedAnswers;
+        tester.element(find.byType(Part6SessionScreen)),
+        listen: false);
+    final answers =
+        container.read(part6PracticeNotifierProvider).value!.selectedAnswers;
     expect(answers[Part6SessionState.flatIndex(1, 0)], 1);
     expect(answers[Part6SessionState.flatIndex(0, 0)], isNull);
   });
 
-  testWidgets('Nộp bài is disabled until all 12 blanks are answered', (tester) async {
+  testWidgets('Nộp bài is disabled until all 12 blanks are answered',
+      (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
-    expect(tester.widget<BloomPillButton>(find.byType(BloomPillButton)).onPressed, isNull);
+    expect(
+        tester.widget<BloomPillButton>(find.byType(BloomPillButton)).onPressed,
+        isNull);
   });
 
-  testWidgets('Nộp bài is enabled once all 12 blanks are answered', (tester) async {
-    await tester.pumpWidget(_buildSession(session: Part6SessionState(
-      set: _testSet, selectedAnswers: List<int?>.filled(12, 0), isSubmitted: false)));
+  testWidgets('Nộp bài is enabled once all 12 blanks are answered',
+      (tester) async {
+    await tester.pumpWidget(_buildSession(
+        session: Part6SessionState(
+            set: _testSet,
+            selectedAnswers: List<int?>.filled(12, 0),
+            isSubmitted: false)));
     await tester.pumpAndSettle();
-    expect(tester.widget<BloomPillButton>(find.byType(BloomPillButton)).onPressed, isNotNull);
+    expect(
+        tester.widget<BloomPillButton>(find.byType(BloomPillButton)).onPressed,
+        isNotNull);
   });
 
   testWidgets('submitting navigates to the result screen', (tester) async {
-    await tester.pumpWidget(_buildSession(session: Part6SessionState(
-      set: _testSet, selectedAnswers: List<int?>.filled(12, 0), isSubmitted: false)));
+    await tester.pumpWidget(_buildSession(
+        session: Part6SessionState(
+            set: _testSet,
+            selectedAnswers: List<int?>.filled(12, 0),
+            isSubmitted: false)));
     await tester.pumpAndSettle();
     await tester.tap(find.byType(BloomPillButton));
     await tester.pumpAndSettle();

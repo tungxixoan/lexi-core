@@ -27,7 +27,8 @@ class AppTheme {
     final baseText = (brightness == Brightness.light
             ? Typography.blackMountainView
             : Typography.whiteMountainView)
-        .apply(fontFamily: 'BeVietnamPro', bodyColor: c.ink, displayColor: c.ink);
+        .apply(
+            fontFamily: 'BeVietnamPro', bodyColor: c.ink, displayColor: c.ink);
 
     return ThemeData(
       useMaterial3: true,
@@ -38,7 +39,8 @@ class AppTheme {
       extensions: [c],
       textTheme: baseText.copyWith(
         titleLarge: baseText.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-        titleMedium: baseText.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        titleMedium:
+            baseText.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         titleSmall: baseText.titleSmall?.copyWith(fontWeight: FontWeight.w700),
         labelLarge: baseText.labelLarge
             ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.4),
@@ -61,7 +63,8 @@ class AppTheme {
         backgroundColor: c.surface,
         surfaceTintColor: Colors.transparent,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(BloomRadii.lg)),
+          borderRadius:
+              BorderRadius.vertical(top: Radius.circular(BloomRadii.lg)),
         ),
       ),
       snackBarTheme: SnackBarThemeData(

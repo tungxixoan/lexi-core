@@ -19,7 +19,8 @@ class _FakeCaller implements CloudFunctionCaller {
   Map<String, dynamic>? capturedData;
 
   @override
-  Future<Map<String, dynamic>> call(String name, Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> call(
+      String name, Map<String, dynamic> data) async {
     capturedName = name;
     capturedData = data;
     if (error != null) throw error!;
@@ -44,32 +45,41 @@ void main() {
   });
 
   group('CloudTtsService.pronounce', () {
-    test('sends {text, language, tier} to getPronunciation and plays the returned url', () async {
-      final caller = _FakeCaller(response: {'url': 'https://example.com/a.wav'});
+    test(
+        'sends {text, language, tier} to getPronunciation and plays the returned url',
+        () async {
+      final caller =
+          _FakeCaller(response: {'url': 'https://example.com/a.wav'});
       final service = CloudTtsService(caller: caller, player: mockPlayer);
 
-      await service.pronounce('hello', Language.english, tier: PronunciationTier.word);
+      await service.pronounce('hello', Language.english,
+          tier: PronunciationTier.word);
 
       expect(caller.capturedName, 'getPronunciation');
-      expect(caller.capturedData, {'text': 'hello', 'language': 'en', 'tier': 'word'});
+      expect(caller.capturedData,
+          {'text': 'hello', 'language': 'en', 'tier': 'word'});
       verify(() => mockPlayer.play(any(that: isA<UrlSource>()))).called(1);
     });
 
     test('sends tier "sentence" for PronunciationTier.sentence', () async {
-      final caller = _FakeCaller(response: {'url': 'https://example.com/a.wav'});
+      final caller =
+          _FakeCaller(response: {'url': 'https://example.com/a.wav'});
       final service = CloudTtsService(caller: caller, player: mockPlayer);
 
-      await service.pronounce('Hello world.', Language.vietnamese, tier: PronunciationTier.sentence);
+      await service.pronounce('Hello world.', Language.vietnamese,
+          tier: PronunciationTier.sentence);
 
       expect(caller.capturedData?['language'], 'vi');
       expect(caller.capturedData?['tier'], 'sentence');
     });
 
-    test('does not call the Cloud Function for a language with no Piper voice', () async {
+    test('does not call the Cloud Function for a language with no Piper voice',
+        () async {
       final caller = _FakeCaller();
       final service = CloudTtsService(caller: caller, player: mockPlayer);
 
-      await service.pronounce('你好', Language.chinese, tier: PronunciationTier.word);
+      await service.pronounce('你好', Language.chinese,
+          tier: PronunciationTier.word);
 
       expect(caller.capturedName, isNull);
       verifyNever(() => mockPlayer.play(any()));
@@ -80,15 +90,19 @@ void main() {
       final service = CloudTtsService(caller: caller, player: mockPlayer);
 
       await expectLater(
-        service.pronounce('hello', Language.english, tier: PronunciationTier.word),
+        service.pronounce('hello', Language.english,
+            tier: PronunciationTier.word),
         completes,
       );
     });
   });
 
   group('CloudTtsService.synthesize', () {
-    test('sends {text, language} to synthesizeSpeech and plays the decoded audio', () async {
-      final caller = _FakeCaller(response: {'audioBase64': 'T0s='}); // base64 for "OK"
+    test(
+        'sends {text, language} to synthesizeSpeech and plays the decoded audio',
+        () async {
+      final caller =
+          _FakeCaller(response: {'audioBase64': 'T0s='}); // base64 for "OK"
       final service = CloudTtsService(caller: caller, player: mockPlayer);
 
       await service.synthesize('Hello world.', Language.english);
@@ -104,10 +118,12 @@ void main() {
 
       await service.synthesize('Hi.', Language.english, voice: 'female2');
 
-      expect(caller.capturedData, {'text': 'Hi.', 'language': 'en', 'voice': 'female2'});
+      expect(caller.capturedData,
+          {'text': 'Hi.', 'language': 'en', 'voice': 'female2'});
     });
 
-    test('applies rate via setPlaybackRate before playing when provided', () async {
+    test('applies rate via setPlaybackRate before playing when provided',
+        () async {
       final caller = _FakeCaller(response: {'audioBase64': 'T0s='});
       final service = CloudTtsService(caller: caller, player: mockPlayer);
 
@@ -125,7 +141,8 @@ void main() {
       verifyNever(() => mockPlayer.setPlaybackRate(any()));
     });
 
-    test('does not call the Cloud Function for a language with no Piper voice', () async {
+    test('does not call the Cloud Function for a language with no Piper voice',
+        () async {
       final caller = _FakeCaller();
       final service = CloudTtsService(caller: caller, player: mockPlayer);
 
@@ -140,11 +157,14 @@ void main() {
     test('play() blocks until onPlayerStateChanged emits completed', () async {
       final caller = _FakeCaller(response: {'audioBase64': 'T0s='});
       final controller = StreamController<PlayerState>();
-      when(() => mockPlayer.onPlayerStateChanged).thenAnswer((_) => controller.stream);
+      when(() => mockPlayer.onPlayerStateChanged)
+          .thenAnswer((_) => controller.stream);
       final service = CloudTtsService(caller: caller, player: mockPlayer);
 
       var resolved = false;
-      final future = service.synthesize('Hi.', Language.english).then((_) => resolved = true);
+      final future = service
+          .synthesize('Hi.', Language.english)
+          .then((_) => resolved = true);
       await Future<void>.delayed(Duration.zero);
       expect(resolved, isFalse); // still waiting
 
@@ -154,14 +174,19 @@ void main() {
       await controller.close();
     });
 
-    test('play() also unblocks on PlayerState.stopped (an external stop() call)', () async {
+    test(
+        'play() also unblocks on PlayerState.stopped (an external stop() call)',
+        () async {
       final caller = _FakeCaller(response: {'audioBase64': 'T0s='});
       final controller = StreamController<PlayerState>();
-      when(() => mockPlayer.onPlayerStateChanged).thenAnswer((_) => controller.stream);
+      when(() => mockPlayer.onPlayerStateChanged)
+          .thenAnswer((_) => controller.stream);
       final service = CloudTtsService(caller: caller, player: mockPlayer);
 
       var resolved = false;
-      final future = service.synthesize('Hi.', Language.english).then((_) => resolved = true);
+      final future = service
+          .synthesize('Hi.', Language.english)
+          .then((_) => resolved = true);
       await Future<void>.delayed(Duration.zero);
       expect(resolved, isFalse);
 
@@ -174,30 +199,37 @@ void main() {
 
   group('CloudTtsService.stop', () {
     test('delegates to AudioPlayer.stop()', () async {
-      final service = CloudTtsService(caller: _FakeCaller(), player: mockPlayer);
+      final service =
+          CloudTtsService(caller: _FakeCaller(), player: mockPlayer);
       await service.stop();
       verify(() => mockPlayer.stop()).called(1);
     });
   });
 
   group('CloudTtsService construction and disposal', () {
-    test('constructing with no args does not throw (no eager Firebase/platform-channel touch)', () {
+    test(
+        'constructing with no args does not throw (no eager Firebase/platform-channel touch)',
+        () {
       expect(() => CloudTtsService(), returnsNormally);
     });
 
-    test('stop() before anything has played is a no-op that completes cleanly', () async {
+    test('stop() before anything has played is a no-op that completes cleanly',
+        () async {
       final service = CloudTtsService(caller: _FakeCaller());
       await expectLater(service.stop(), completes);
     });
 
     test('dispose() never disposes an injected (test-owned) player', () async {
-      final service = CloudTtsService(caller: _FakeCaller(), player: mockPlayer);
+      final service =
+          CloudTtsService(caller: _FakeCaller(), player: mockPlayer);
       await service.dispose();
       verifyNever(() => mockPlayer.dispose());
     });
 
-    test('stop() delegates to an injected player when one is provided', () async {
-      final service = CloudTtsService(caller: _FakeCaller(), player: mockPlayer);
+    test('stop() delegates to an injected player when one is provided',
+        () async {
+      final service =
+          CloudTtsService(caller: _FakeCaller(), player: mockPlayer);
       await service.stop();
       verify(() => mockPlayer.stop()).called(1);
     });

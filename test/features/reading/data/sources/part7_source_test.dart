@@ -12,7 +12,8 @@ class FakeGenerativeModelClient implements GenerativeModelClient {
   Iterable<Content>? lastPrompt;
 
   @override
-  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) async {
+  Future<GenerateContentResponse> generateContent(
+      Iterable<Content> prompt) async {
     lastPrompt = prompt;
     return GenerateContentResponse(
       [Candidate(Content.text(_responseText), null, null, null, null)],
@@ -82,7 +83,8 @@ void main() {
     );
   });
 
-  test('throws when a single-passage group has the wrong document count', () async {
+  test('throws when a single-passage group has the wrong document count',
+      () async {
     final malformed = {
       'passageGroups': [
         _doubleGroup(), // wrong: group 0 must be single-passage (1 document), not 2
@@ -104,14 +106,16 @@ void main() {
     );
   });
 
-  test('throws when the double-passage group has the wrong question count', () async {
+  test('throws when the double-passage group has the wrong question count',
+      () async {
     final malformed = {
       'passageGroups': [
         _singleGroup(0, 3),
         _singleGroup(1, 4),
         {
           'documents': ['Document A', 'Document B'], // correct: 2 documents
-          'questions': List.generate(4, _question), // wrong: must be 5 questions
+          'questions':
+              List.generate(4, _question), // wrong: must be 5 questions
         },
       ],
     };
@@ -129,10 +133,12 @@ void main() {
     );
   });
 
-  test('throws when a single-passage group has an out-of-range question count', () async {
+  test('throws when a single-passage group has an out-of-range question count',
+      () async {
     final malformed = {
       'passageGroups': [
-        _singleGroup(0, 2), // wrong: single-passage groups must have 3 or 4 questions, not 2
+        _singleGroup(0,
+            2), // wrong: single-passage groups must have 3 or 4 questions, not 2
         _singleGroup(1, 4),
         _doubleGroup(),
       ],
@@ -151,7 +157,8 @@ void main() {
     );
   });
 
-  test('empty volumes selection sends all 4 volume labels in the prompt', () async {
+  test('empty volumes selection sends all 4 volume labels in the prompt',
+      () async {
     final client = FakeGenerativeModelClient(jsonEncode(_wellFormedResponse()));
     final source = Part7Source.withModel(client);
 
@@ -168,7 +175,8 @@ void main() {
     expect(part.text, contains('Vol 5'));
   });
 
-  test('prompt requires the double-passage group to need both documents', () async {
+  test('prompt requires the double-passage group to need both documents',
+      () async {
     final client = FakeGenerativeModelClient(jsonEncode(_wellFormedResponse()));
     final source = Part7Source.withModel(client);
 
@@ -182,7 +190,8 @@ void main() {
     expect(part.text.toLowerCase(), contains('both'));
   });
 
-  test('prompt includes the Vietnamese-script guard for the explanation field', () async {
+  test('prompt includes the Vietnamese-script guard for the explanation field',
+      () async {
     final client = FakeGenerativeModelClient(jsonEncode(_wellFormedResponse()));
     final source = Part7Source.withModel(client);
 

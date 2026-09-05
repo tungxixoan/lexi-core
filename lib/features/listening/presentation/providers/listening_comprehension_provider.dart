@@ -141,7 +141,8 @@ class ListeningComprehensionNotifier extends _$ListeningComprehensionNotifier {
     state = await AsyncValue.guard(() async {
       final passage = await ref
           .read(generateListeningPassageUseCaseProvider)
-          .execute(level: level, context: context, targetLanguage: targetLanguage);
+          .execute(
+              level: level, context: context, targetLanguage: targetLanguage);
       return ListeningSessionState(
         passage: passage,
         currentTurnIndex: 0,
@@ -189,11 +190,14 @@ class ListeningComprehensionNotifier extends _$ListeningComprehensionNotifier {
           rate: _rateFor(current.speedMultiplier),
         );
     final latest = state.valueOrNull;
-    if (latest == null || latest.playToken != token) return; // superseded meanwhile
+    if (latest == null || latest.playToken != token) {
+      return; // superseded meanwhile
+    }
     if (latest.currentTurnIndex < latest.passage.turns.length - 1) {
       // Turn finished naturally (not interrupted) and it's not the last one
       // — keep going without a gap, staying "isSpeaking" the whole time.
-      state = AsyncData(latest.copyWith(currentTurnIndex: latest.currentTurnIndex + 1));
+      state = AsyncData(
+          latest.copyWith(currentTurnIndex: latest.currentTurnIndex + 1));
       await playCurrentTurn();
       return;
     }
@@ -224,7 +228,9 @@ class ListeningComprehensionNotifier extends _$ListeningComprehensionNotifier {
           rate: _rateFor(current.speedMultiplier),
         );
     final latest = state.valueOrNull;
-    if (latest == null || latest.playToken != token) return; // superseded meanwhile
+    if (latest == null || latest.playToken != token) {
+      return; // superseded meanwhile
+    }
     state = AsyncData(latest.copyWith(isSpeaking: false));
   }
 
@@ -246,7 +252,8 @@ class ListeningComprehensionNotifier extends _$ListeningComprehensionNotifier {
     await ref.read(ttsServiceProvider).stop();
     final latest = state.valueOrNull;
     if (latest == null) return;
-    state = AsyncData(latest.copyWith(isSpeaking: false, playToken: latest.playToken + 1));
+    state = AsyncData(
+        latest.copyWith(isSpeaking: false, playToken: latest.playToken + 1));
   }
 
   void previousTurn() {

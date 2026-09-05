@@ -23,8 +23,8 @@ void main() {
   });
 
   test('does not get confused by braces inside string values', () {
-    final result =
-        parseAiJsonObject('{"meaning": "a symbol like { or }"}\nExtra trailing text');
+    final result = parseAiJsonObject(
+        '{"meaning": "a symbol like { or }"}\nExtra trailing text');
     expect(result, {'meaning': 'a symbol like { or }'});
   });
 

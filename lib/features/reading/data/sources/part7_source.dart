@@ -9,7 +9,8 @@ import '../../domain/entities/economy_volume.dart';
 import '../../domain/entities/part7_passage.dart';
 
 // Re-export so test imports (from this file) continue to resolve.
-export '../../../../core/services/ai_client_factory.dart' show GenerativeModelClient;
+export '../../../../core/services/ai_client_factory.dart'
+    show GenerativeModelClient;
 
 class Part7Source {
   Part7Source(UserSettingsState settings)
@@ -27,7 +28,8 @@ class Part7Source {
     required Language targetLanguage,
     required Set<EconomyVolume> volumes,
   }) async {
-    final effectiveVolumes = volumes.isEmpty ? EconomyVolume.values.toSet() : volumes;
+    final effectiveVolumes =
+        volumes.isEmpty ? EconomyVolume.values.toSet() : volumes;
     final prompt = _buildPrompt(
       context: context,
       targetLanguage: targetLanguage,
@@ -51,7 +53,9 @@ class Part7Source {
     if (groups.length != 3) return false;
     for (var i = 0; i < 2; i++) {
       if (groups[i].documents.length != 1) return false;
-      if (!_singleQuestionRange.contains(groups[i].questions.length)) return false;
+      if (!_singleQuestionRange.contains(groups[i].questions.length)) {
+        return false;
+      }
     }
     final doubleGroup = groups[2];
     if (doubleGroup.documents.length != 2) return false;
@@ -64,7 +68,8 @@ class Part7Source {
     required Language targetLanguage,
     required Set<EconomyVolume> volumes,
   }) {
-    final volumeHints = volumes.map((v) => '${v.label}: ${v.promptHint}').join('; ');
+    final volumeHints =
+        volumes.map((v) => '${v.label}: ${v.promptHint}').join('; ');
     return 'You are creating a TOEIC Part 7 (Reading Comprehension) practice set for a '
         'Vietnamese speaker learning ${targetLanguage.label}, in a ${context.label} '
         'register/setting, calibrated to the Economy TOEIC difficulty volumes below '

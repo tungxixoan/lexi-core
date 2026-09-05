@@ -30,7 +30,12 @@ final _record = VocabRecord(
 final _exercise = MultipleChoiceExercise(
   vocabRecord: _record,
   question: 'Nghĩa của "ephemeral"?',
-  options: const ['bền vững', 'to lớn', 'tồn tại trong thời gian ngắn', 'màu xanh'],
+  options: const [
+    'bền vững',
+    'to lớn',
+    'tồn tại trong thời gian ngắn',
+    'màu xanh'
+  ],
   correctIndex: 2,
 );
 
@@ -47,7 +52,8 @@ void main() {
     expect(find.byType(BloomMcOption), findsNWidgets(4));
   });
 
-  testWidgets('tapping the correct option reports quality 5 / isCorrect', (tester) async {
+  testWidgets('tapping the correct option reports quality 5 / isCorrect',
+      (tester) async {
     ExerciseResult? captured;
     await tester.pumpWidget(_harness((r) => captured = r));
 
@@ -65,7 +71,8 @@ void main() {
     await tester.tap(find.text('tồn tại trong thời gian ngắn'));
     await tester.pump(const Duration(milliseconds: 900));
 
-    for (final option in tester.widgetList<BloomMcOption>(find.byType(BloomMcOption))) {
+    for (final option
+        in tester.widgetList<BloomMcOption>(find.byType(BloomMcOption))) {
       expect(option.onTap, isNull);
     }
   });

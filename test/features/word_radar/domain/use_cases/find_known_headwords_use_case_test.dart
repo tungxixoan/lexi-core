@@ -46,7 +46,8 @@ class _FakeVocabRepository implements VocabRepository {
       records.where((r) => r.targetLanguage == language).toList();
 
   @override
-  Future<VocabRecord?> getById(String id, {required Language language}) async => null;
+  Future<VocabRecord?> getById(String id, {required Language language}) async =>
+      null;
 
   @override
   Future<void> save(VocabRecord record) async {}
@@ -58,10 +59,13 @@ class _FakeVocabRepository implements VocabRepository {
   Future<void> delete(String id, {required Language language}) async {}
 
   @override
-  Future<bool> existsByHeadword(String headword, Language language) async => false;
+  Future<bool> existsByHeadword(String headword, Language language) async =>
+      false;
 
   @override
-  Future<VocabRecord?> getByHeadword(String headword, Language language) async => null;
+  Future<VocabRecord?> getByHeadword(
+          String headword, Language language) async =>
+      null;
 
   @override
   Future<List<Topic>> getTopics() async => [];
@@ -74,7 +78,8 @@ class _FakeVocabRepository implements VocabRepository {
 }
 
 void main() {
-  test('finds the VocabRecord for a headword that appears as a substring in the text',
+  test(
+      'finds the VocabRecord for a headword that appears as a substring in the text',
       () async {
     final repo = _FakeVocabRepository([_record('serendipity')]);
     final useCase = FindKnownHeadwordsUseCase(repo);
@@ -101,7 +106,8 @@ void main() {
     expect(result[0].headword, 'Hello');
   });
 
-  test('returns no duplicates when a headword appears multiple times', () async {
+  test('returns no duplicates when a headword appears multiple times',
+      () async {
     final repo = _FakeVocabRepository([_record('cat')]);
     final useCase = FindKnownHeadwordsUseCase(repo);
 
@@ -153,7 +159,8 @@ void main() {
     expect(result, isEmpty);
   });
 
-  test('returns full records including meaning, needed for translation highlighting',
+  test(
+      'returns full records including meaning, needed for translation highlighting',
       () async {
     final repo = _FakeVocabRepository([_record('cat', meaning: 'con mèo')]);
     final useCase = FindKnownHeadwordsUseCase(repo);

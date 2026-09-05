@@ -60,7 +60,8 @@ void main() {
     expect(captured!.isCorrect, isTrue);
   });
 
-  testWidgets('wrong answer reports quality 1 and shows the answer key', (tester) async {
+  testWidgets('wrong answer reports quality 1 and shows the answer key',
+      (tester) async {
     ExerciseResult? captured;
     await tester.pumpWidget(_harness((r) => captured = r));
 

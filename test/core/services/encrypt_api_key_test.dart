@@ -1,4 +1,4 @@
-﻿import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:lexi_core/core/services/cloud_function_caller.dart';
 import 'package:lexi_core/core/services/encrypt_api_key.dart';
 
@@ -10,7 +10,8 @@ class _FakeCaller implements CloudFunctionCaller {
   Map<String, dynamic>? capturedData;
 
   @override
-  Future<Map<String, dynamic>> call(String name, Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> call(
+      String name, Map<String, dynamic> data) async {
     capturedName = name;
     capturedData = data;
     if (error != null) throw error!;
@@ -31,7 +32,8 @@ void main() {
       expect(fake.capturedData, {'apiKey': 'raw-key-123'});
     });
 
-    test('throws EncryptApiKeyException when the response has no ciphertext', () async {
+    test('throws EncryptApiKeyException when the response has no ciphertext',
+        () async {
       final fake = _FakeCaller(response: {});
       final encryptor = ApiKeyEncryptor(caller: fake);
 
@@ -41,7 +43,9 @@ void main() {
       );
     });
 
-    test('throws EncryptApiKeyException when the response has an empty ciphertext', () async {
+    test(
+        'throws EncryptApiKeyException when the response has an empty ciphertext',
+        () async {
       final fake = _FakeCaller(response: {'ciphertext': ''});
       final encryptor = ApiKeyEncryptor(caller: fake);
 
@@ -51,7 +55,8 @@ void main() {
       );
     });
 
-    test('wraps an underlying Cloud Function error as EncryptApiKeyException', () async {
+    test('wraps an underlying Cloud Function error as EncryptApiKeyException',
+        () async {
       final fake = _FakeCaller(error: Exception('permission-denied'));
       final encryptor = ApiKeyEncryptor(caller: fake);
 

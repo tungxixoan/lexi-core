@@ -33,9 +33,12 @@ void main() {
       ListeningTurn(speaker: 'A', text: 'Sure, for how many guests?'),
     ],
     questions: const [
-      ListeningQuestion(question: 'Q1', options: ['a', 'b', 'c', 'd'], correctIndex: 0),
-      ListeningQuestion(question: 'Q2', options: ['a', 'b', 'c', 'd'], correctIndex: 1),
-      ListeningQuestion(question: 'Q3', options: ['a', 'b', 'c', 'd'], correctIndex: 2),
+      ListeningQuestion(
+          question: 'Q1', options: ['a', 'b', 'c', 'd'], correctIndex: 0),
+      ListeningQuestion(
+          question: 'Q2', options: ['a', 'b', 'c', 'd'], correctIndex: 1),
+      ListeningQuestion(
+          question: 'Q3', options: ['a', 'b', 'c', 'd'], correctIndex: 2),
     ],
     level: CEFRLevel.b1,
     context: AppContext.general,
@@ -58,7 +61,8 @@ void main() {
       ),
     ).thenAnswer((_) async => fixedPassage);
     when(
-      () => mockTts.synthesize(any(), any(), voice: any(named: 'voice'), rate: any(named: 'rate')),
+      () => mockTts.synthesize(any(), any(),
+          voice: any(named: 'voice'), rate: any(named: 'rate')),
     ).thenAnswer((_) async {});
     when(() => mockTts.stop()).thenAnswer((_) async {});
 
@@ -71,13 +75,17 @@ void main() {
     addTearDown(container.dispose);
   });
 
-  Future<void> generateFixed() => container
-      .read(listeningComprehensionNotifierProvider.notifier)
-      .generate(level: CEFRLevel.b1, context: AppContext.general, targetLanguage: Language.english);
+  Future<void> generateFixed() =>
+      container.read(listeningComprehensionNotifierProvider.notifier).generate(
+          level: CEFRLevel.b1,
+          context: AppContext.general,
+          targetLanguage: Language.english);
 
-  test('generate() populates state at turn 0 with all answers unselected', () async {
+  test('generate() populates state at turn 0 with all answers unselected',
+      () async {
     await generateFixed();
-    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    final state =
+        container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.passage, same(fixedPassage));
     expect(state.currentTurnIndex, 0);
     expect(state.selectedAnswers, [null, null, null]);
@@ -85,197 +93,264 @@ void main() {
     expect(state.canSubmit, false);
   });
 
-  test('playCurrentTurn() speaks the current turn with the correct voice and resets isSpeaking on completion', () async {
+  test(
+      'playCurrentTurn() speaks the current turn with the correct voice and resets isSpeaking on completion',
+      () async {
     await generateFixed();
-    await container.read(listeningComprehensionNotifierProvider.notifier).playCurrentTurn();
+    await container
+        .read(listeningComprehensionNotifierProvider.notifier)
+        .playCurrentTurn();
     verify(() => mockTts.synthesize('Hello, can I help you?', Language.english,
-            voice: 'female1', rate: 1.0))
-        .called(1);
-    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
-    expect(state.isSpeaking, false); // reset after the awaited synthesize() completes
+        voice: 'female1', rate: 1.0)).called(1);
+    final state =
+        container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    expect(state.isSpeaking,
+        false); // reset after the awaited synthesize() completes
   });
 
-  test('playCurrentTurn() auto-continues through every turn until the last one', () async {
+  test('playCurrentTurn() auto-continues through every turn until the last one',
+      () async {
     await generateFixed();
-    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+    final notifier =
+        container.read(listeningComprehensionNotifierProvider.notifier);
 
     await notifier.playCurrentTurn();
 
     verify(() => mockTts.synthesize('Hello, can I help you?', Language.english,
-            voice: 'female1', rate: 1.0))
-        .called(1);
-    verify(() => mockTts.synthesize('Yes, I need a room for tonight.', Language.english,
-            voice: 'female2', rate: 1.0))
-        .called(1);
-    verify(() => mockTts.synthesize('Sure, for how many guests?', Language.english,
-            voice: 'female1', rate: 1.0))
-        .called(1);
-    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+        voice: 'female1', rate: 1.0)).called(1);
+    verify(() => mockTts.synthesize(
+        'Yes, I need a room for tonight.', Language.english,
+        voice: 'female2', rate: 1.0)).called(1);
+    verify(() => mockTts.synthesize(
+        'Sure, for how many guests?', Language.english,
+        voice: 'female1', rate: 1.0)).called(1);
+    final state =
+        container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.currentTurnIndex, 2); // last turn
     expect(state.isSpeaking, false);
   });
 
-  test('interrupting playback via stopPlayback() cancels the auto-continue chain', () async {
+  test(
+      'interrupting playback via stopPlayback() cancels the auto-continue chain',
+      () async {
     await generateFixed();
-    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+    final notifier =
+        container.read(listeningComprehensionNotifierProvider.notifier);
     final completer = Completer<void>();
-    when(() => mockTts.synthesize(any(), any(), voice: any(named: 'voice'), rate: any(named: 'rate')))
-        .thenAnswer((_) => completer.future);
+    when(() => mockTts.synthesize(any(), any(),
+        voice: any(named: 'voice'),
+        rate: any(named: 'rate'))).thenAnswer((_) => completer.future);
 
     final playFuture = notifier.playCurrentTurn();
     await notifier.stopPlayback(); // supersedes the in-flight turn 0 playback
     completer.complete(); // let the original (now-superseded) speak() resolve
     await playFuture;
 
-    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    final state =
+        container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.currentTurnIndex, 0); // stopPlayback() doesn't change turns
-    verify(() => mockTts.synthesize(any(), any(), voice: any(named: 'voice'), rate: any(named: 'rate')))
-        .called(1); // no auto-continue
+    verify(() => mockTts.synthesize(any(), any(),
+        voice: any(named: 'voice'),
+        rate: any(named: 'rate'))).called(1); // no auto-continue
   });
 
-  test('nextTurn() advances currentTurnIndex and stops any playing audio', () async {
+  test('nextTurn() advances currentTurnIndex and stops any playing audio',
+      () async {
     await generateFixed();
-    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+    final notifier =
+        container.read(listeningComprehensionNotifierProvider.notifier);
     notifier.nextTurn();
-    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    final state =
+        container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.currentTurnIndex, 1);
     verify(() => mockTts.stop()).called(greaterThanOrEqualTo(1));
   });
 
   test('nextTurn() at the last turn does not go out of bounds', () async {
     await generateFixed();
-    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+    final notifier =
+        container.read(listeningComprehensionNotifierProvider.notifier);
     notifier.nextTurn();
     notifier.nextTurn();
     notifier.nextTurn(); // one extra call past the last index (2)
-    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    final state =
+        container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.currentTurnIndex, 2);
   });
 
   test('previousTurn() at turn 0 does not go negative', () async {
     await generateFixed();
-    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+    final notifier =
+        container.read(listeningComprehensionNotifierProvider.notifier);
     notifier.previousTurn();
-    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    final state =
+        container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.currentTurnIndex, 0);
   });
 
   test('replayFromStart() resets currentTurnIndex to 0', () async {
     await generateFixed();
-    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+    final notifier =
+        container.read(listeningComprehensionNotifierProvider.notifier);
     notifier.nextTurn();
     notifier.nextTurn();
     notifier.replayFromStart();
-    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    final state =
+        container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.currentTurnIndex, 0);
   });
 
   test('selectAnswer() records an answer without marking submitted', () async {
     await generateFixed();
-    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+    final notifier =
+        container.read(listeningComprehensionNotifierProvider.notifier);
     notifier.selectAnswer(0, 2);
-    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    final state =
+        container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.selectedAnswers, [2, null, null]);
     expect(state.isSubmitted, false);
   });
 
   test('canSubmit is true only once all 3 answers are selected', () async {
     await generateFixed();
-    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+    final notifier =
+        container.read(listeningComprehensionNotifierProvider.notifier);
     notifier.selectAnswer(0, 0);
     notifier.selectAnswer(1, 1);
-    expect(container.read(listeningComprehensionNotifierProvider).valueOrNull!.canSubmit, false);
+    expect(
+        container
+            .read(listeningComprehensionNotifierProvider)
+            .valueOrNull!
+            .canSubmit,
+        false);
     notifier.selectAnswer(2, 2);
-    expect(container.read(listeningComprehensionNotifierProvider).valueOrNull!.canSubmit, true);
+    expect(
+        container
+            .read(listeningComprehensionNotifierProvider)
+            .valueOrNull!
+            .canSubmit,
+        true);
   });
 
   test('submit() is a no-op until canSubmit is true', () async {
     await generateFixed();
-    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+    final notifier =
+        container.read(listeningComprehensionNotifierProvider.notifier);
     notifier.submit();
-    expect(container.read(listeningComprehensionNotifierProvider).valueOrNull!.isSubmitted, false);
+    expect(
+        container
+            .read(listeningComprehensionNotifierProvider)
+            .valueOrNull!
+            .isSubmitted,
+        false);
     notifier.selectAnswer(0, 0);
     notifier.selectAnswer(1, 0);
     notifier.selectAnswer(2, 0);
     notifier.submit();
-    expect(container.read(listeningComprehensionNotifierProvider).valueOrNull!.isSubmitted, true);
+    expect(
+        container
+            .read(listeningComprehensionNotifierProvider)
+            .valueOrNull!
+            .isSubmitted,
+        true);
   });
 
   test('reset() returns state to null', () async {
     await generateFixed();
     container.read(listeningComprehensionNotifierProvider.notifier).reset();
-    expect(container.read(listeningComprehensionNotifierProvider).valueOrNull, isNull);
+    expect(container.read(listeningComprehensionNotifierProvider).valueOrNull,
+        isNull);
   });
 
   test('totalWordsOf sums word counts across all turns', () async {
     await generateFixed();
-    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    final state =
+        container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     // Turn 0 "Hello, can I help you?" = 5 words; turn 1 "Yes, I need a room for
     // tonight." = 7 words; turn 2 "Sure, for how many guests?" = 5 words.
     expect(totalWordsOf(state.passage), 17);
   });
 
-  test('seekToWord within the first turn speaks from that word to the end of the turn', () async {
+  test(
+      'seekToWord within the first turn speaks from that word to the end of the turn',
+      () async {
     await generateFixed();
-    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+    final notifier =
+        container.read(listeningComprehensionNotifierProvider.notifier);
 
     await notifier.seekToWord(2); // turn 0, word index 2: "I"
 
-    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    final state =
+        container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.currentTurnIndex, 0);
-    verify(() => mockTts.synthesize('I help you?', Language.english, voice: 'female1', rate: 1.0))
-        .called(1);
+    verify(() => mockTts.synthesize('I help you?', Language.english,
+        voice: 'female1', rate: 1.0)).called(1);
   });
 
   test(
       "seekToWord crossing into a later turn switches currentTurnIndex and uses that turn's voice",
       () async {
     await generateFixed();
-    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+    final notifier =
+        container.read(listeningComprehensionNotifierProvider.notifier);
 
-    await notifier.seekToWord(5); // turn 0 has 5 words (indices 0-4), so this is turn 1 word 0
+    await notifier.seekToWord(
+        5); // turn 0 has 5 words (indices 0-4), so this is turn 1 word 0
 
-    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    final state =
+        container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.currentTurnIndex, 1);
-    verify(() => mockTts.synthesize('Yes, I need a room for tonight.', Language.english,
-            voice: 'female2', rate: 1.0))
-        .called(1);
+    verify(() => mockTts.synthesize(
+        'Yes, I need a room for tonight.', Language.english,
+        voice: 'female2', rate: 1.0)).called(1);
   });
 
   test('seekToWord with an out-of-range index is a no-op', () async {
     await generateFixed();
-    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+    final notifier =
+        container.read(listeningComprehensionNotifierProvider.notifier);
 
     await notifier.seekToWord(-1);
     await notifier.seekToWord(17); // total is 17, valid indices are 0-16
 
-    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    final state =
+        container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.currentTurnIndex, 0);
-    verifyNever(() => mockTts.synthesize(any(), any(), voice: any(named: 'voice'), rate: any(named: 'rate')));
+    verifyNever(() => mockTts.synthesize(any(), any(),
+        voice: any(named: 'voice'), rate: any(named: 'rate')));
   });
 
-  test('setSpeed() while idle only updates speedMultiplier and plays nothing', () async {
+  test('setSpeed() while idle only updates speedMultiplier and plays nothing',
+      () async {
     await generateFixed();
-    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+    final notifier =
+        container.read(listeningComprehensionNotifierProvider.notifier);
 
     await notifier.setSpeed(0.75);
 
-    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    final state =
+        container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.speedMultiplier, 0.75);
     expect(state.isSpeaking, false);
-    verifyNever(() => mockTts.synthesize(any(), any(), voice: any(named: 'voice'), rate: any(named: 'rate')));
+    verifyNever(() => mockTts.synthesize(any(), any(),
+        voice: any(named: 'voice'), rate: any(named: 'rate')));
     verifyNever(() => mockTts.stop());
   });
 
-  test('setSpeed() while speaking stops the current turn and replays it at the new rate', () async {
+  test(
+      'setSpeed() while speaking stops the current turn and replays it at the new rate',
+      () async {
     await generateFixed();
-    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+    final notifier =
+        container.read(listeningComprehensionNotifierProvider.notifier);
 
     final completer = Completer<void>();
-    when(() => mockTts.synthesize(any(), any(), voice: any(named: 'voice'), rate: any(named: 'rate')))
-        .thenAnswer((_) => completer.future);
+    when(() => mockTts.synthesize(any(), any(),
+        voice: any(named: 'voice'),
+        rate: any(named: 'rate'))).thenAnswer((_) => completer.future);
 
-    final playFuture = notifier.playCurrentTurn(); // hangs on completer for turn 0
+    final playFuture =
+        notifier.playCurrentTurn(); // hangs on completer for turn 0
     final speedFuture = notifier.setSpeed(0.75);
     completer.complete(); // let every hung/future speak() call resolve
     await playFuture;
@@ -285,23 +360,27 @@ void main() {
     verify(() => mockTts.synthesize('Hello, can I help you?', Language.english,
             voice: 'female1', rate: 0.75))
         .called(1); // the setSpeed()-triggered restart, at the new 0.75x rate
-    final state = container.read(listeningComprehensionNotifierProvider).valueOrNull!;
+    final state =
+        container.read(listeningComprehensionNotifierProvider).valueOrNull!;
     expect(state.speedMultiplier, 0.75);
   });
 
-  test('setSpeed() passes 0.75x/1x/1.25x straight through as the playback rate for the next playCurrentTurn()', () async {
+  test(
+      'setSpeed() passes 0.75x/1x/1.25x straight through as the playback rate for the next playCurrentTurn()',
+      () async {
     await generateFixed();
-    final notifier = container.read(listeningComprehensionNotifierProvider.notifier);
+    final notifier =
+        container.read(listeningComprehensionNotifierProvider.notifier);
 
     await notifier.setSpeed(1.25); // idle: just stores the choice
     await notifier.playCurrentTurn();
 
     verify(() => mockTts.synthesize('Hello, can I help you?', Language.english,
-            voice: 'female1', rate: 1.25))
-        .called(1);
+        voice: 'female1', rate: 1.25)).called(1);
   });
 
-  test('disposing the provider (e.g. navigating away mid-playback) stops TTS', () async {
+  test('disposing the provider (e.g. navigating away mid-playback) stops TTS',
+      () async {
     final localContainer = ProviderContainer(
       overrides: [
         generateListeningPassageUseCaseProvider.overrideWithValue(mockUseCase),
@@ -310,7 +389,10 @@ void main() {
     );
     await localContainer
         .read(listeningComprehensionNotifierProvider.notifier)
-        .generate(level: CEFRLevel.b1, context: AppContext.general, targetLanguage: Language.english);
+        .generate(
+            level: CEFRLevel.b1,
+            context: AppContext.general,
+            targetLanguage: Language.english);
 
     localContainer.dispose();
 
@@ -344,7 +426,8 @@ void main() {
       expect(state.generationFilters, filters);
     });
 
-    test('loadSaved leaves reusedFromId + generationFilters null when omitted', () {
+    test('loadSaved leaves reusedFromId + generationFilters null when omitted',
+        () {
       container
           .read(listeningComprehensionNotifierProvider.notifier)
           .loadSaved(fixedPassage);
@@ -354,7 +437,8 @@ void main() {
       expect(state.generationFilters, isNull);
     });
 
-    test('generate(generationFilters:) carries the map onto the state', () async {
+    test('generate(generationFilters:) carries the map onto the state',
+        () async {
       await container
           .read(listeningComprehensionNotifierProvider.notifier)
           .generate(

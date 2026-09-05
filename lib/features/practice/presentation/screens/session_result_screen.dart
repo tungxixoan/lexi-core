@@ -13,7 +13,8 @@ class SessionResultScreen extends ConsumerStatefulWidget {
   final SessionResult result;
 
   @override
-  ConsumerState<SessionResultScreen> createState() => _SessionResultScreenState();
+  ConsumerState<SessionResultScreen> createState() =>
+      _SessionResultScreenState();
 }
 
 class _SessionResultScreenState extends ConsumerState<SessionResultScreen> {
@@ -66,85 +67,88 @@ class _SessionResultScreenState extends ConsumerState<SessionResultScreen> {
         if (!didPop) context.go('/practice/vocab');
       },
       child: BloomScaffold(
-      appBar: const BloomAppBar(title: 'Kết quả', automaticallyImplyLeading: false),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Column(
-              children: [
-                BloomResultRing(percent: pct),
-                const SizedBox(height: 8),
-                Text(
-                  '$correct / $total từ đúng',
-                  style: TextStyle(color: context.bloom.inkSoft),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView.builder(
-                itemCount: widget.result.results.length,
-                itemBuilder: (context, i) {
-                  final r = widget.result.results[i];
-                  final word = widget.result.words.firstWhere(
-                    (w) => w.id == r.vocabRecordId,
-                    orElse: () => widget.result.words[i],
-                  );
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: BloomCard(
-                      child: Row(
-                        children: [
-                          Icon(
-                            r.isCorrect
-                                ? Icons.check_circle_outline
-                                : Icons.cancel_outlined,
-                            color: r.isCorrect
-                                ? context.bloom.success
-                                : context.bloom.danger,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  word.headword,
-                                  style: webScaled(theme.textTheme.bodyLarge ??
-                                          const TextStyle(fontSize: 16))
-                                      .copyWith(fontWeight: FontWeight.w700),
-                                ),
-                                Text(
-                                  word.meaning,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: webScaled(theme.textTheme.bodyMedium ??
-                                          const TextStyle(fontSize: 14))
-                                      .copyWith(color: context.bloom.inkSoft),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+        appBar: const BloomAppBar(
+            title: 'Kết quả', automaticallyImplyLeading: false),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Column(
+                children: [
+                  BloomResultRing(percent: pct),
+                  const SizedBox(height: 8),
+                  Text(
+                    '$correct / $total từ đúng',
+                    style: TextStyle(color: context.bloom.inkSoft),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 16),
-            BloomPillButton(
-              label: 'Luyện tập lại',
-              variant: BloomButtonVariant.primary,
-              block: true,
-              onPressed: () => context.go('/practice/vocab'),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: widget.result.results.length,
+                  itemBuilder: (context, i) {
+                    final r = widget.result.results[i];
+                    final word = widget.result.words.firstWhere(
+                      (w) => w.id == r.vocabRecordId,
+                      orElse: () => widget.result.words[i],
+                    );
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: BloomCard(
+                        child: Row(
+                          children: [
+                            Icon(
+                              r.isCorrect
+                                  ? Icons.check_circle_outline
+                                  : Icons.cancel_outlined,
+                              color: r.isCorrect
+                                  ? context.bloom.success
+                                  : context.bloom.danger,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    word.headword,
+                                    style: webScaled(
+                                            theme.textTheme.bodyLarge ??
+                                                const TextStyle(fontSize: 16))
+                                        .copyWith(fontWeight: FontWeight.w700),
+                                  ),
+                                  Text(
+                                    word.meaning,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: webScaled(
+                                            theme.textTheme.bodyMedium ??
+                                                const TextStyle(fontSize: 14))
+                                        .copyWith(color: context.bloom.inkSoft),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              BloomPillButton(
+                label: 'Luyện tập lại',
+                variant: BloomButtonVariant.primary,
+                block: true,
+                onPressed: () => context.go('/practice/vocab'),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

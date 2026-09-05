@@ -52,12 +52,17 @@ class BloomPillButton extends StatelessWidget {
     }
 
     final textColor = onPressed == null ? fg.withValues(alpha: 0.5) : fg;
-    final textStyle = TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: textColor);
+    final textStyle =
+        TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: textColor);
     final child = icon == null
         ? Text(label, style: textStyle)
         : Row(
             mainAxisSize: MainAxisSize.min,
-            children: [Icon(icon, size: 16), const SizedBox(width: 6), Text(label, style: textStyle)],
+            children: [
+              Icon(icon, size: 16),
+              const SizedBox(width: 6),
+              Text(label, style: textStyle)
+            ],
           );
 
     final button = TextButton(

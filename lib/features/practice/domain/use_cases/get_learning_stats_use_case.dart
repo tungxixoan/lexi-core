@@ -6,5 +6,6 @@ class GetLearningStatsUseCase {
   const GetLearningStatsUseCase(this._statsService);
   final StatsService _statsService;
 
-  Future<LearningStats> execute(Language language) => _statsService.computeStats(language);
+  Future<LearningStats> execute(Language language) =>
+      _statsService.computeStats(language);
 }

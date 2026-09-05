@@ -9,7 +9,8 @@ import '../../domain/entities/economy_volume.dart';
 import '../../domain/entities/part6_passage.dart';
 
 // Re-export so test imports (from this file) continue to resolve.
-export '../../../../core/services/ai_client_factory.dart' show GenerativeModelClient;
+export '../../../../core/services/ai_client_factory.dart'
+    show GenerativeModelClient;
 
 class Part6Source {
   Part6Source(UserSettingsState settings)
@@ -27,7 +28,8 @@ class Part6Source {
     required Language targetLanguage,
     required Set<EconomyVolume> volumes,
   }) async {
-    final effectiveVolumes = volumes.isEmpty ? EconomyVolume.values.toSet() : volumes;
+    final effectiveVolumes =
+        volumes.isEmpty ? EconomyVolume.values.toSet() : volumes;
     final prompt = _buildPrompt(
       context: context,
       targetLanguage: targetLanguage,
@@ -50,7 +52,8 @@ class Part6Source {
     required Language targetLanguage,
     required Set<EconomyVolume> volumes,
   }) {
-    final volumeHints = volumes.map((v) => '${v.label}: ${v.promptHint}').join('; ');
+    final volumeHints =
+        volumes.map((v) => '${v.label}: ${v.promptHint}').join('; ');
     return 'You are creating a TOEIC Part 6 (Text Completion) practice set for a Vietnamese '
         'speaker learning ${targetLanguage.label}, in a ${context.label} register/setting, '
         'calibrated to the Economy TOEIC difficulty volumes below (mix passages across them '
@@ -77,21 +80,24 @@ class Part6Source {
     AppContext context,
     Language targetLanguage,
   ) {
-    final passages = (json['passages'] as List? ?? []).map((p) {
-      final pm = p as Map<String, dynamic>;
-      final questions = (pm['questions'] as List? ?? []).map((q) {
-        final qm = q as Map<String, dynamic>;
-        return Part6Question(
-          options: List<String>.from(qm['options'] as List? ?? []),
-          correctIndex: qm['correctIndex'] as int? ?? 0,
-          explanation: qm['explanation'] as String? ?? '',
-        );
-      }).toList();
-      return Part6Passage(
-        passageText: pm['passageText'] as String? ?? '',
-        questions: questions,
-      );
-    }).where((passage) => passage.questions.length == _blanksPerPassage).toList();
+    final passages = (json['passages'] as List? ?? [])
+        .map((p) {
+          final pm = p as Map<String, dynamic>;
+          final questions = (pm['questions'] as List? ?? []).map((q) {
+            final qm = q as Map<String, dynamic>;
+            return Part6Question(
+              options: List<String>.from(qm['options'] as List? ?? []),
+              correctIndex: qm['correctIndex'] as int? ?? 0,
+              explanation: qm['explanation'] as String? ?? '',
+            );
+          }).toList();
+          return Part6Passage(
+            passageText: pm['passageText'] as String? ?? '',
+            questions: questions,
+          );
+        })
+        .where((passage) => passage.questions.length == _blanksPerPassage)
+        .toList();
 
     return Part6Set(
       id: _uuid.v4(),

@@ -16,7 +16,8 @@ final class Part6SessionResult {
   });
 
   final Part6Set set;
-  final List<int?> selectedAnswers; // flat, passage-major order (see Part6SessionState.flatIndex)
+  final List<int?>
+      selectedAnswers; // flat, passage-major order (see Part6SessionState.flatIndex)
 
   /// Non-null when this session was started from a saved exercise — the result
   /// screen uses it to hide "Lưu bài" and to exclude the set on "Bài khác".
@@ -67,7 +68,8 @@ final class Part6SessionState {
   static int flatIndex(int passageIndex, int questionIndex) =>
       passageIndex * 4 + questionIndex;
 
-  Part6SessionState copyWith({List<int?>? selectedAnswers, bool? isSubmitted}) =>
+  Part6SessionState copyWith(
+          {List<int?>? selectedAnswers, bool? isSubmitted}) =>
       Part6SessionState(
         set: set,
         selectedAnswers: selectedAnswers ?? this.selectedAnswers,
@@ -95,7 +97,8 @@ class Part6PracticeNotifier extends _$Part6PracticeNotifier {
             targetLanguage: targetLanguage,
             volumes: volumes,
           );
-      final totalQuestions = set.passages.fold(0, (sum, p) => sum + p.questions.length);
+      final totalQuestions =
+          set.passages.fold(0, (sum, p) => sum + p.questions.length);
       return Part6SessionState(
         set: set,
         selectedAnswers: List<int?>.filled(totalQuestions, null),
@@ -129,7 +132,8 @@ class Part6PracticeNotifier extends _$Part6PracticeNotifier {
     final current = state.valueOrNull;
     if (current == null || current.isSubmitted) return;
     final updated = List<int?>.from(current.selectedAnswers);
-    updated[Part6SessionState.flatIndex(passageIndex, questionIndex)] = optionIndex;
+    updated[Part6SessionState.flatIndex(passageIndex, questionIndex)] =
+        optionIndex;
     state = AsyncData(current.copyWith(selectedAnswers: updated));
   }
 

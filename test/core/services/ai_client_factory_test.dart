@@ -7,7 +7,8 @@ import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/provider_config.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 
-UserSettingsState _settingsFor(AiProvider provider, String model, {String? ciphertext}) =>
+UserSettingsState _settingsFor(AiProvider provider, String model,
+        {String? ciphertext}) =>
     UserSettingsState.defaults.copyWith(
       activeProvider: provider,
       providerConfigs: {
@@ -26,7 +27,8 @@ class _FakeCaller implements CloudFunctionCaller {
   Object? error;
 
   @override
-  Future<Map<String, dynamic>> call(String name, Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> call(
+      String name, Map<String, dynamic> data) async {
     capturedName = name;
     capturedData = data;
     if (error != null) throw error!;
@@ -54,7 +56,8 @@ void main() {
 
     test('returns GenerativeModelClient for OpenRouter', () {
       final client = AiClientFactory.buildClient(
-        _settingsFor(AiProvider.openRouter, 'meta-llama/llama-3.3-70b-instruct'),
+        _settingsFor(
+            AiProvider.openRouter, 'meta-llama/llama-3.3-70b-instruct'),
         functionCaller: _FakeCaller(),
       );
       expect(client, isA<GenerativeModelClient>());
@@ -62,10 +65,12 @@ void main() {
   });
 
   group('_CloudFunctionClient.generateContent — payload shape', () {
-    test('sends provider/apiKeyCiphertext/model/prompt to generateContent', () async {
+    test('sends provider/apiKeyCiphertext/model/prompt to generateContent',
+        () async {
       final fake = _FakeCaller()..response = {'text': '{"word": "hello"}'};
       final client = AiClientFactory.buildClient(
-        _settingsFor(AiProvider.groq, 'openai/gpt-oss-120b', ciphertext: 'cipher-xyz'),
+        _settingsFor(AiProvider.groq, 'openai/gpt-oss-120b',
+            ciphertext: 'cipher-xyz'),
         functionCaller: fake,
       );
 
@@ -80,10 +85,12 @@ void main() {
       });
     });
 
-    test('maps AiProvider.openRouter to the lowercase "openrouter" id', () async {
+    test('maps AiProvider.openRouter to the lowercase "openrouter" id',
+        () async {
       final fake = _FakeCaller()..response = {'text': 'ok'};
       final client = AiClientFactory.buildClient(
-        _settingsFor(AiProvider.openRouter, 'meta-llama/llama-3.3-70b-instruct'),
+        _settingsFor(
+            AiProvider.openRouter, 'meta-llama/llama-3.3-70b-instruct'),
         functionCaller: fake,
       );
 
@@ -117,7 +124,8 @@ void main() {
       );
     });
 
-    test('flattens multiple Content parts into one newline-joined prompt', () async {
+    test('flattens multiple Content parts into one newline-joined prompt',
+        () async {
       final fake = _FakeCaller()..response = {'text': 'ok'};
       final client = AiClientFactory.buildClient(
         _settingsFor(AiProvider.gemini, 'gemini-2.5-flash'),

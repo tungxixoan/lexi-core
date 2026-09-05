@@ -29,7 +29,8 @@ void main() {
       }
     });
 
-    test('blanks are distinct, non-adjacent, and avoid the first/last word '
+    test(
+        'blanks are distinct, non-adjacent, and avoid the first/last word '
         'for a 12-word sentence, across many random seeds', () {
       for (var seed = 0; seed < 100; seed++) {
         final blanks = useCase.execute(
@@ -47,7 +48,8 @@ void main() {
       }
     });
 
-    test('still returns 2 distinct blanks for a short (3-word) sentence, '
+    test(
+        'still returns 2 distinct blanks for a short (3-word) sentence, '
         'across many random seeds', () {
       for (var seed = 0; seed < 50; seed++) {
         final blanks = useCase.execute(
@@ -59,12 +61,14 @@ void main() {
         final indices = blanks.map((b) => b.startWordIndex).toSet();
         expect(indices.length, 2, reason: 'seed=$seed');
         for (final b in blanks) {
-          expect(b.startWordIndex, inInclusiveRange(0, 2), reason: 'seed=$seed');
+          expect(b.startWordIndex, inInclusiveRange(0, 2),
+              reason: 'seed=$seed');
         }
       }
     });
 
-    test('adjacency is not avoided for short (3-5 word) sentences: at least '
+    test(
+        'adjacency is not avoided for short (3-5 word) sentences: at least '
         'one seed out of many produces an adjacent pair for a 4-word '
         'sentence', () {
       var sawAdjacentPair = false;
@@ -88,7 +92,8 @@ void main() {
               'when wordCount >= 6');
     });
 
-    test('does not crash for a 0-word sentence and returns a single blank '
+    test(
+        'does not crash for a 0-word sentence and returns a single blank '
         'at index 0', () {
       final blanks = useCase.execute(
         _sentence(0),
@@ -99,7 +104,8 @@ void main() {
       expect(blanks.single.startWordIndex, 0);
     });
 
-    test('does not crash for a 1-word sentence and returns a single blank '
+    test(
+        'does not crash for a 1-word sentence and returns a single blank '
         'at index 0', () {
       final blanks = useCase.execute(
         _sentence(1),
@@ -112,7 +118,9 @@ void main() {
   });
 
   group('medium difficulty', () {
-    test('returns exactly 1 multi-word blank spanning ~35% of a 12-word sentence', () {
+    test(
+        'returns exactly 1 multi-word blank spanning ~35% of a 12-word sentence',
+        () {
       final blanks = useCase.execute(
         _sentence(12),
         DictationDifficulty.medium,
@@ -122,7 +130,8 @@ void main() {
       expect(blanks.single.wordCount, 4); // round(12 * 0.35) == 4
     });
 
-    test('span always leaves at least 1 word of context on each side, '
+    test(
+        'span always leaves at least 1 word of context on each side, '
         'across many random seeds', () {
       for (var seed = 0; seed < 100; seed++) {
         final blanks = useCase.execute(
@@ -132,13 +141,15 @@ void main() {
         );
         expect(blanks.length, 1, reason: 'seed=$seed');
         final span = blanks.single;
-        expect(span.startWordIndex, greaterThanOrEqualTo(1), reason: 'seed=$seed');
+        expect(span.startWordIndex, greaterThanOrEqualTo(1),
+            reason: 'seed=$seed');
         expect(span.startWordIndex + span.wordCount, lessThanOrEqualTo(11),
             reason: 'seed=$seed');
       }
     });
 
-    test('falls back to a single blank covering the whole sentence for '
+    test(
+        'falls back to a single blank covering the whole sentence for '
         'wordCount 1, 2, and 3 (the wordCount <= 3 early-return path)', () {
       for (final wordCount in [1, 2, 3]) {
         final blanks = useCase.execute(
@@ -147,12 +158,15 @@ void main() {
           random: Random(1),
         );
         expect(blanks.length, 1, reason: 'wordCount=$wordCount');
-        expect(blanks.single.wordCount, wordCount, reason: 'wordCount=$wordCount');
+        expect(blanks.single.wordCount, wordCount,
+            reason: 'wordCount=$wordCount');
         expect(blanks.single.startWordIndex, 0, reason: 'wordCount=$wordCount');
       }
     });
 
-    test('span length is clamped between 2 and wordCount-2 for a range of sentence lengths', () {
+    test(
+        'span length is clamped between 2 and wordCount-2 for a range of sentence lengths',
+        () {
       for (final wordCount in [4, 5, 6, 10, 18]) {
         for (var seed = 0; seed < 20; seed++) {
           final blanks = useCase.execute(

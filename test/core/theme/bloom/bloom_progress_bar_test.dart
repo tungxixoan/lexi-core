@@ -11,8 +11,10 @@ void main() {
         body: SizedBox(width: 200, child: BloomProgressBar(value: 0.5)),
       ),
     ));
-    final fill = tester.getSize(find.byKey(const ValueKey('bloom-progress-fill')));
-    final track = tester.getSize(find.byKey(const ValueKey('bloom-progress-track')));
+    final fill =
+        tester.getSize(find.byKey(const ValueKey('bloom-progress-fill')));
+    final track =
+        tester.getSize(find.byKey(const ValueKey('bloom-progress-track')));
     expect(fill.width, closeTo(track.width * 0.5, 1.0));
     // The fill must span the full track height (6px), not collapse to zero.
     expect(fill.height, track.height);
@@ -26,8 +28,10 @@ void main() {
         body: SizedBox(width: 200, child: BloomProgressBar(value: 5)),
       ),
     ));
-    final fill = tester.getSize(find.byKey(const ValueKey('bloom-progress-fill')));
-    final track = tester.getSize(find.byKey(const ValueKey('bloom-progress-track')));
+    final fill =
+        tester.getSize(find.byKey(const ValueKey('bloom-progress-fill')));
+    final track =
+        tester.getSize(find.byKey(const ValueKey('bloom-progress-track')));
     expect(fill.width, closeTo(track.width, 1.0));
   });
 }

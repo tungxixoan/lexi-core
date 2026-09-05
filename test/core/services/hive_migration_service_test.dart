@@ -87,7 +87,9 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  test('pushes existing Hive vocab and topics into Firestore when Hive has data', () async {
+  test(
+      'pushes existing Hive vocab and topics into Firestore when Hive has data',
+      () async {
     await vocabBox.put('v1', jsonEncode(_vocabJson('v1', headword: 'apple')));
     await topicsBox.put('t1', jsonEncode({'id': 't1', 'name': 'Travel'}));
 
@@ -95,20 +97,25 @@ void main() {
     final migrated = await service.migrateIfNeeded('u1');
 
     expect(migrated, isTrue);
-    final vocabDoc =
-        await firestore.collection('users/u1/vocab_records_english').doc('v1').get();
+    final vocabDoc = await firestore
+        .collection('users/u1/vocab_records_english')
+        .doc('v1')
+        .get();
     expect(vocabDoc.data()!['headword'], 'apple');
-    final topicDoc = await firestore.collection('users/u1/topics').doc('t1').get();
+    final topicDoc =
+        await firestore.collection('users/u1/topics').doc('t1').get();
     expect(topicDoc.data()!['name'], 'Travel');
     expect(vocabBox.isEmpty, isTrue);
     expect(topicsBox.isEmpty, isTrue);
   });
 
-  test('lands a migrated record in the per-language collection matching its targetLanguage,'
+  test(
+      'lands a migrated record in the per-language collection matching its targetLanguage,'
       ' not the flat vocab_records collection', () async {
     await vocabBox.put(
       'v1',
-      jsonEncode(_vocabJson('v1', headword: 'apple', targetLanguage: 'english')),
+      jsonEncode(
+          _vocabJson('v1', headword: 'apple', targetLanguage: 'english')),
     );
     // A second record in a DIFFERENT target language, in the same test, so
     // an implementation that hard-coded "vocab_records_english" (rather
@@ -122,22 +129,28 @@ void main() {
     final migrated = await service.migrateIfNeeded('u1');
 
     expect(migrated, isTrue);
-    final perLanguageDoc =
-        await firestore.collection('users/u1/vocab_records_english').doc('v1').get();
+    final perLanguageDoc = await firestore
+        .collection('users/u1/vocab_records_english')
+        .doc('v1')
+        .get();
     expect(perLanguageDoc.exists, isTrue);
     expect(perLanguageDoc.data()!['headword'], 'apple');
 
-    final chineseDoc =
-        await firestore.collection('users/u1/vocab_records_chinese').doc('v2').get();
+    final chineseDoc = await firestore
+        .collection('users/u1/vocab_records_chinese')
+        .doc('v2')
+        .get();
     expect(chineseDoc.exists, isTrue);
     expect(chineseDoc.data()!['headword'], '苹果');
 
     // Never lands in the old dead flat collection.
-    final flatSnapshot = await firestore.collection('users/u1/vocab_records').get();
+    final flatSnapshot =
+        await firestore.collection('users/u1/vocab_records').get();
     expect(flatSnapshot.docs, isEmpty);
   });
 
-  test('does nothing and returns false when both Hive boxes are empty', () async {
+  test('does nothing and returns false when both Hive boxes are empty',
+      () async {
     final service = HiveMigrationService(firestore: firestore, prefs: prefs);
     final migrated = await service.migrateIfNeeded('u1');
 
@@ -154,7 +167,9 @@ void main() {
     expect(migrated, isTrue);
   });
 
-  test('calling migrateIfNeeded twice for the same uid only pushes to Firestore once', () async {
+  test(
+      'calling migrateIfNeeded twice for the same uid only pushes to Firestore once',
+      () async {
     await vocabBox.put('v1', jsonEncode(_vocabJson('v1', headword: 'apple')));
     final service = HiveMigrationService(firestore: firestore, prefs: prefs);
 
@@ -172,7 +187,9 @@ void main() {
     expect(vocabSnapshot.docs.map((d) => d.id), ['v1']);
   });
 
-  test('skips migration without touching Hive when Firestore already has vocab data for this uid', () async {
+  test(
+      'skips migration without touching Hive when Firestore already has vocab data for this uid',
+      () async {
     // Pre-existing Firestore data for u1 — as if they'd signed in before
     // under the old SyncService and this Hive box is now just a stale
     // local mirror, not their only copy.
@@ -194,8 +211,10 @@ void main() {
     final vocabSnapshot =
         await firestore.collection('users/u1/vocab_records_english').get();
     expect(vocabSnapshot.docs.map((d) => d.id), ['existing']);
-    final existingDoc =
-        await firestore.collection('users/u1/vocab_records_english').doc('existing').get();
+    final existingDoc = await firestore
+        .collection('users/u1/vocab_records_english')
+        .doc('existing')
+        .get();
     expect(existingDoc.data()!['headword'], 'orange');
 
     // Hive is left as-is (not cleared) in this path.
@@ -203,7 +222,8 @@ void main() {
     expect(vocabBox.get('v1'), jsonEncode(_vocabJson('v1', headword: 'apple')));
   });
 
-  test('skips migration without touching Hive when Firestore already has vocab data'
+  test(
+      'skips migration without touching Hive when Firestore already has vocab data'
       ' for this uid in a NON-English per-language collection', () async {
     // Existing data lives only in vocab_records_chinese (never touching
     // vocab_records_english at all) — proves the "does this uid already
@@ -232,7 +252,8 @@ void main() {
     expect(vocabBox.containsKey('v1'), isTrue);
   });
 
-  test('skips one malformed Hive record but still migrates the valid ones', () async {
+  test('skips one malformed Hive record but still migrates the valid ones',
+      () async {
     await vocabBox.put('bad', 'not valid json{');
     await vocabBox.put('v1', jsonEncode(_vocabJson('v1', headword: 'apple')));
 
@@ -240,20 +261,24 @@ void main() {
     final migrated = await service.migrateIfNeeded('u1');
 
     expect(migrated, isTrue);
-    final vocabDoc =
-        await firestore.collection('users/u1/vocab_records_english').doc('v1').get();
+    final vocabDoc = await firestore
+        .collection('users/u1/vocab_records_english')
+        .doc('v1')
+        .get();
     expect(vocabDoc.data()!['headword'], 'apple');
     final vocabSnapshot =
         await firestore.collection('users/u1/vocab_records_english').get();
     expect(vocabSnapshot.docs.length, 1);
   });
 
-  test('skips a Hive record whose JSON is well-formed but fails to parse into a VocabRecord',
+  test(
+      'skips a Hive record whose JSON is well-formed but fails to parse into a VocabRecord',
       () async {
     // Valid JSON, but missing required VocabRecord fields (e.g. targetLanguage,
     // inputType) — VocabRecord.fromJson throws on this, and it must be
     // skipped the same way a jsonDecode failure is.
-    await vocabBox.put('bad', jsonEncode({'id': 'bad', 'headword': 'incomplete'}));
+    await vocabBox.put(
+        'bad', jsonEncode({'id': 'bad', 'headword': 'incomplete'}));
     await vocabBox.put('v1', jsonEncode(_vocabJson('v1', headword: 'apple')));
 
     final service = HiveMigrationService(firestore: firestore, prefs: prefs);
@@ -265,14 +290,15 @@ void main() {
     expect(vocabSnapshot.docs.map((d) => d.id), ['v1']);
   });
 
-  test('propagates a Firestore save() failure instead of silently skipping it,'
+  test(
+      'propagates a Firestore save() failure instead of silently skipping it,'
       ' and does NOT clear Hive or set the migrated flag', () async {
     await vocabBox.put('v1', jsonEncode(_vocabJson('v1', headword: 'apple')));
     await topicsBox.put('t1', jsonEncode({'id': 't1', 'name': 'Travel'}));
 
     final mockRepo = MockVocabRepository();
-    when(() => mockRepo.save(any()))
-        .thenThrow(Exception('permission-denied: simulated Firestore write failure'));
+    when(() => mockRepo.save(any())).thenThrow(
+        Exception('permission-denied: simulated Firestore write failure'));
 
     final service = HiveMigrationService(
       firestore: firestore,

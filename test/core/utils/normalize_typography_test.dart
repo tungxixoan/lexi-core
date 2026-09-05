@@ -6,7 +6,8 @@ void main() {
     expect(normalizeTypography('it\u2019s \u2018here\u2019'), "it's 'here'");
   });
   test('straightens curly double quotes and guillemets', () {
-    expect(normalizeTypography('\u201Cquote\u201D \u00ABx\u00BB'), '"quote" "x"');
+    expect(
+        normalizeTypography('\u201Cquote\u201D \u00ABx\u00BB'), '"quote" "x"');
   });
   test('expands the ellipsis character', () {
     expect(normalizeTypography('wait\u2026'), 'wait...');

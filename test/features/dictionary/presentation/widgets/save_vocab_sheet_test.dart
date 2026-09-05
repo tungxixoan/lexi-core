@@ -33,7 +33,8 @@ class _RecordingVocabRepository implements VocabRepository {
       [];
 
   @override
-  Future<VocabRecord?> getById(String id, {required Language language}) async => null;
+  Future<VocabRecord?> getById(String id, {required Language language}) async =>
+      null;
 
   @override
   Future<void> update(VocabRecord record) async {}
@@ -42,10 +43,13 @@ class _RecordingVocabRepository implements VocabRepository {
   Future<void> delete(String id, {required Language language}) async {}
 
   @override
-  Future<bool> existsByHeadword(String headword, Language language) async => false;
+  Future<bool> existsByHeadword(String headword, Language language) async =>
+      false;
 
   @override
-  Future<VocabRecord?> getByHeadword(String headword, Language language) async => null;
+  Future<VocabRecord?> getByHeadword(
+          String headword, Language language) async =>
+      null;
 
   @override
   Future<List<Topic>> getTopics() async => [];
@@ -57,7 +61,8 @@ class _RecordingVocabRepository implements VocabRepository {
   Future<void> deleteTopic(String id) async {}
 }
 
-Future<Widget> _buildSheet(WordPhraseResult result, _RecordingVocabRepository repo) async {
+Future<Widget> _buildSheet(
+    WordPhraseResult result, _RecordingVocabRepository repo) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   return ProviderScope(
@@ -99,15 +104,16 @@ void main() {
     await tester.pumpWidget(await _buildSheet(result, repo));
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    await tester.tap(
-        find.widgetWithText(BloomPillButton, 'Lưu vào Ngân hàng từ'));
+    await tester
+        .tap(find.widgetWithText(BloomPillButton, 'Lưu vào Ngân hàng từ'));
     await tester.pumpAndSettle();
 
     expect(repo.saved, isNotNull);
     expect(repo.saved!.cefrLevel, CEFRLevel.c1);
   });
 
-  testWidgets('defaults to B1 when the result has no cefrLevel', (tester) async {
+  testWidgets('defaults to B1 when the result has no cefrLevel',
+      (tester) async {
     final repo = _RecordingVocabRepository();
     const result = WordPhraseResult(
       headword: 'cat',
@@ -120,8 +126,8 @@ void main() {
     await tester.pumpWidget(await _buildSheet(result, repo));
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    await tester.tap(
-        find.widgetWithText(BloomPillButton, 'Lưu vào Ngân hàng từ'));
+    await tester
+        .tap(find.widgetWithText(BloomPillButton, 'Lưu vào Ngân hàng từ'));
     await tester.pumpAndSettle();
 
     expect(repo.saved, isNotNull);

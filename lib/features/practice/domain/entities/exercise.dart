@@ -18,7 +18,7 @@ final class MultipleChoiceExercise extends Exercise {
   });
   final String question;
   final List<String> options; // always 4 items
-  final int correctIndex;     // 0-3
+  final int correctIndex; // 0-3
 }
 
 final class FillInBlankExercise extends Exercise {
@@ -28,7 +28,7 @@ final class FillInBlankExercise extends Exercise {
     required this.answer,
   });
   final String sentence; // contains exactly one '___'
-  final String answer;   // lowercase expected answer
+  final String answer; // lowercase expected answer
 }
 
 final class TranslationExercise extends Exercise {
@@ -37,6 +37,7 @@ final class TranslationExercise extends Exercise {
     required this.prompt,
     required this.answer,
   });
-  final String prompt; // e.g. "Translate to Vietnamese: 'The ephemeral beauty...'"
+  final String
+      prompt; // e.g. "Translate to Vietnamese: 'The ephemeral beauty...'"
   final String answer; // Gemini-provided answer key
 }

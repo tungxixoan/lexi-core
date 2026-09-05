@@ -11,7 +11,8 @@ Widget _buildHub() {
       GoRoute(path: '/', builder: (ctx, state) => const PracticeHubScreen()),
       GoRoute(
         path: '/practice/vocab',
-        builder: (ctx, state) => const Scaffold(body: Text('Vocab practice home')),
+        builder: (ctx, state) =>
+            const Scaffold(body: Text('Vocab practice home')),
       ),
       GoRoute(
         path: '/reading',
@@ -23,7 +24,8 @@ Widget _buildHub() {
       ),
       GoRoute(
         path: '/practice/radar',
-        builder: (ctx, state) => const Scaffold(body: Text('Word Radar screen')),
+        builder: (ctx, state) =>
+            const Scaffold(body: Text('Word Radar screen')),
       ),
     ],
   );
@@ -43,7 +45,8 @@ void main() {
     expect(find.byType(BloomScaffold), findsOneWidget);
   });
 
-  testWidgets('tapping Quét từ vựng navigates to /practice/radar', (tester) async {
+  testWidgets('tapping Quét từ vựng navigates to /practice/radar',
+      (tester) async {
     await tester.pumpWidget(_buildHub());
     await tester.pumpAndSettle();
     await tester.tap(find.text('Quét từ vựng'));

@@ -187,9 +187,7 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
               value: _wordLimit?.toString() ?? 'Tất cả',
               onTap: _pickWordLimit,
             ),
-
             const Spacer(),
-
             BloomPillButton(
               label: _dueCount == 0
                   ? 'Hôm nay đã ôn xong ✓'
@@ -200,7 +198,6 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
               onPressed: _dueCount == 0 ? null : _startDueSession,
             ),
             const SizedBox(height: 8),
-
             BloomPillButton(
               label: 'Bắt đầu luyện tập',
               variant: BloomButtonVariant.primary,

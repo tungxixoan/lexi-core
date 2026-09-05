@@ -34,13 +34,16 @@ class _Part6ResultScreenState extends ConsumerState<Part6ResultScreen> {
 
   Future<void> _recordPracticeSession() async {
     try {
-      await ref.read(statsServiceProvider).recordPracticeSession(_totalQuestions);
+      await ref
+          .read(statsServiceProvider)
+          .recordPracticeSession(_totalQuestions);
     } catch (_) {
       // best-effort: don't crash the result screen on a stats update failure
     }
   }
 
-  String get _passagesText => result.set.passages.map((p) => p.passageText).join(' ');
+  String get _passagesText =>
+      result.set.passages.map((p) => p.passageText).join(' ');
 
   @override
   Widget build(BuildContext context) {
@@ -159,7 +162,8 @@ class _PassageBreakdown extends StatelessWidget {
         children: [
           Text(
             'Đoạn ${passageIndex + 1}',
-            style: TextStyle(fontWeight: FontWeight.w700, color: context.bloom.ink),
+            style: TextStyle(
+                fontWeight: FontWeight.w700, color: context.bloom.ink),
           ),
           const SizedBox(height: 8),
           Text(
@@ -172,7 +176,8 @@ class _PassageBreakdown extends StatelessWidget {
             _QuestionBreakdown(
               blankNumber: q + 1,
               question: passage.questions[q],
-              selected: selectedAnswers[Part6SessionState.flatIndex(passageIndex, q)],
+              selected:
+                  selectedAnswers[Part6SessionState.flatIndex(passageIndex, q)],
             ),
         ],
       ),
@@ -181,7 +186,10 @@ class _PassageBreakdown extends StatelessWidget {
 }
 
 class _QuestionBreakdown extends StatelessWidget {
-  const _QuestionBreakdown({required this.blankNumber, required this.question, required this.selected});
+  const _QuestionBreakdown(
+      {required this.blankNumber,
+      required this.question,
+      required this.selected});
 
   final int blankNumber;
   final Part6Question question;
@@ -207,7 +215,8 @@ class _QuestionBreakdown extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'Chỗ trống ($blankNumber)',
-                style: theme.textTheme.titleSmall?.copyWith(color: context.bloom.ink),
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(color: context.bloom.ink),
               ),
             ],
           ),
@@ -221,14 +230,17 @@ class _QuestionBreakdown extends StatelessWidget {
                 onTap: null,
                 state: i == question.correctIndex
                     ? BloomMcState.correct
-                    : (i == selected ? BloomMcState.wrong : BloomMcState.neutral),
+                    : (i == selected
+                        ? BloomMcState.wrong
+                        : BloomMcState.neutral),
               ),
             );
           }),
           Text(
             'Giải thích: ${question.explanation}',
             style: webScaled(
-              (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)).copyWith(
+              (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+                  .copyWith(
                 fontStyle: FontStyle.italic,
                 color: context.bloom.inkSoft,
               ),

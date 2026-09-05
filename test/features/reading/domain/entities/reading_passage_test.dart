@@ -117,7 +117,11 @@ void main() {
       // targetLanguage/generatedAt.
       final json = <String, dynamic>{
         'sentences': [
-          {'target': 'Hi.', 'vietnamese': 'Chào.', 'vocabWords': ['hi']},
+          {
+            'target': 'Hi.',
+            'vietnamese': 'Chào.',
+            'vocabWords': ['hi']
+          },
         ],
         'vocabIds': <String>[],
       };

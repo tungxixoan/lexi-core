@@ -19,7 +19,8 @@ import 'encrypt_api_key.dart';
 /// UserSettingsNotifier via the aiSettingsSyncServiceProvider seam so tests
 /// can substitute a fake.
 class AiSettingsSyncService {
-  AiSettingsSyncService({FirebaseFirestore? firestore, ApiKeyEncryptor? encryptor})
+  AiSettingsSyncService(
+      {FirebaseFirestore? firestore, ApiKeyEncryptor? encryptor})
       : _firestore = firestore ?? FirebaseFirestore.instance,
         _encryptor = encryptor ?? ApiKeyEncryptor();
 
@@ -46,8 +47,9 @@ class AiSettingsSyncService {
 
       final legacyToMigrate = <AiProvider, String>{};
       for (final provider in AiProvider.values) {
-        final remoteEntry =
-            remoteProviders is Map<String, dynamic> ? remoteProviders[provider.cloudId] : null;
+        final remoteEntry = remoteProviders is Map<String, dynamic>
+            ? remoteProviders[provider.cloudId]
+            : null;
         if (remoteEntry is Map<String, dynamic>) {
           final remoteCiphertext = remoteEntry['apiKeyCiphertext'] as String?;
           if (remoteCiphertext != null && remoteCiphertext.isNotEmpty) {
@@ -105,8 +107,8 @@ class AiSettingsSyncService {
           // Best-effort — try again on the next bootstrap.
           continue;
         }
-        final model =
-            notifier.state.providerConfigs[entry.key]?.model ?? entry.key.defaultModel;
+        final model = notifier.state.providerConfigs[entry.key]?.model ??
+            entry.key.defaultModel;
         notifier.setProviderConfig(
           entry.key,
           ProviderConfig(apiKeyCiphertext: ciphertext, model: model),

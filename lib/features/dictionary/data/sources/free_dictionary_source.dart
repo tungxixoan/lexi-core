@@ -24,9 +24,8 @@ class FreeDictionarySource {
             ?.whereType<Map<String, dynamic>>()
             .toList() ??
         [];
-    final ipa = phonetics.isNotEmpty
-        ? (phonetics.first['text'] as String?) ?? ''
-        : '';
+    final ipa =
+        phonetics.isNotEmpty ? (phonetics.first['text'] as String?) ?? '' : '';
 
     final meanings =
         (data['meanings'] as List?)?.whereType<Map<String, dynamic>>() ?? [];

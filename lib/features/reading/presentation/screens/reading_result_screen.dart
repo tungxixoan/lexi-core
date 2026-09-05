@@ -16,7 +16,8 @@ class ReadingResultScreen extends ConsumerStatefulWidget {
   final ReadingSessionResult result;
 
   @override
-  ConsumerState<ReadingResultScreen> createState() => _ReadingResultScreenState();
+  ConsumerState<ReadingResultScreen> createState() =>
+      _ReadingResultScreenState();
 }
 
 class _ReadingResultScreenState extends ConsumerState<ReadingResultScreen> {

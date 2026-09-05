@@ -18,8 +18,8 @@ class ComputeSm2UseCase {
       1 => 6,
       _ => (record.sm2Interval * record.sm2EaseFactor).round(),
     };
-    final newEF = (record.sm2EaseFactor + 0.1 - (5 - quality) * 0.08)
-        .clamp(1.3, 2.5);
+    final newEF =
+        (record.sm2EaseFactor + 0.1 - (5 - quality) * 0.08).clamp(1.3, 2.5);
     return record.copyWith(
       sm2Repetitions: record.sm2Repetitions + 1,
       sm2Interval: newInterval,

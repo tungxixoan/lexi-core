@@ -9,7 +9,8 @@ import '../../domain/entities/economy_volume.dart';
 import '../../domain/entities/part5_question.dart';
 
 // Re-export so test imports (from this file) continue to resolve.
-export '../../../../core/services/ai_client_factory.dart' show GenerativeModelClient;
+export '../../../../core/services/ai_client_factory.dart'
+    show GenerativeModelClient;
 
 class Part5Source {
   Part5Source(UserSettingsState settings)
@@ -26,7 +27,8 @@ class Part5Source {
     required Language targetLanguage,
     required Set<EconomyVolume> volumes,
   }) async {
-    final effectiveVolumes = volumes.isEmpty ? EconomyVolume.values.toSet() : volumes;
+    final effectiveVolumes =
+        volumes.isEmpty ? EconomyVolume.values.toSet() : volumes;
     final prompt = _buildPrompt(
       context: context,
       targetLanguage: targetLanguage,
@@ -49,7 +51,8 @@ class Part5Source {
     required Language targetLanguage,
     required Set<EconomyVolume> volumes,
   }) {
-    final volumeHints = volumes.map((v) => '${v.label}: ${v.promptHint}').join('; ');
+    final volumeHints =
+        volumes.map((v) => '${v.label}: ${v.promptHint}').join('; ');
     return 'You are creating a TOEIC Part 5 (Incomplete Sentences) practice set for a '
         'Vietnamese speaker learning ${targetLanguage.label}, in a ${context.label} '
         'register/setting, calibrated to the Economy TOEIC difficulty volumes below '

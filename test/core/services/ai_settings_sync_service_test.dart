@@ -18,7 +18,8 @@ class _FakeCaller implements CloudFunctionCaller {
   Object? error;
 
   @override
-  Future<Map<String, dynamic>> call(String name, Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> call(
+      String name, Map<String, dynamic> data) async {
     if (error != null) throw error!;
     return response!;
   }
@@ -41,19 +42,30 @@ Future<ProviderContainer> _makeContainer({
 
 void main() {
   group('AiSettingsSyncService.bootstrapSync', () {
-    test('remote wins: overwrites local provider config, active provider, and language', () async {
+    test(
+        'remote wins: overwrites local provider config, active provider, and language',
+        () async {
       final firestore = FakeFirebaseFirestore();
-      await firestore.collection('users').doc(_uid).collection('settings').doc('config').set({
+      await firestore
+          .collection('users')
+          .doc(_uid)
+          .collection('settings')
+          .doc('config')
+          .set({
         'activeProvider': 'groq',
         'providers': {
-          'groq': {'model': 'remote-model', 'apiKeyCiphertext': 'remote-cipher'},
+          'groq': {
+            'model': 'remote-model',
+            'apiKeyCiphertext': 'remote-cipher'
+          },
         },
         'targetLanguage': 'chinese',
       });
 
       final container = await _makeContainer(initialValues: {
         'ai_active_provider': 'gemini',
-        'ai_config_gemini': jsonEncode({'apiKeyCiphertext': 'local-cipher', 'model': 'local-model'}),
+        'ai_config_gemini': jsonEncode(
+            {'apiKeyCiphertext': 'local-cipher', 'model': 'local-model'}),
       });
       addTearDown(container.dispose);
       final notifier = container.read(userSettingsNotifierProvider.notifier);
@@ -66,14 +78,22 @@ void main() {
 
       final state = container.read(userSettingsNotifierProvider);
       expect(state.activeProvider, AiProvider.groq);
-      expect(state.providerConfigs[AiProvider.groq]?.apiKeyCiphertext, 'remote-cipher');
+      expect(state.providerConfigs[AiProvider.groq]?.apiKeyCiphertext,
+          'remote-cipher');
       expect(state.providerConfigs[AiProvider.groq]?.model, 'remote-model');
       expect(state.targetLanguage, Language.chinese);
     });
 
-    test('a remote entry with a null apiKeyCiphertext does not blank an existing local key', () async {
+    test(
+        'a remote entry with a null apiKeyCiphertext does not blank an existing local key',
+        () async {
       final firestore = FakeFirebaseFirestore();
-      await firestore.collection('users').doc(_uid).collection('settings').doc('config').set({
+      await firestore
+          .collection('users')
+          .doc(_uid)
+          .collection('settings')
+          .doc('config')
+          .set({
         'providers': {
           'gemini': {'model': 'gemini-2.5-flash', 'apiKeyCiphertext': null},
         },
@@ -81,8 +101,10 @@ void main() {
 
       final container = await _makeContainer(initialValues: {
         'ai_active_provider': 'gemini',
-        'ai_config_gemini':
-            jsonEncode({'apiKeyCiphertext': 'local-real-cipher', 'model': 'gemini-2.5-flash'}),
+        'ai_config_gemini': jsonEncode({
+          'apiKeyCiphertext': 'local-real-cipher',
+          'model': 'gemini-2.5-flash'
+        }),
       });
       addTearDown(container.dispose);
       final notifier = container.read(userSettingsNotifierProvider.notifier);
@@ -94,11 +116,15 @@ void main() {
       await service.bootstrapSync(_uid, notifier);
 
       final state = container.read(userSettingsNotifierProvider);
-      expect(state.providerConfigs[AiProvider.gemini]?.apiKeyCiphertext, 'local-real-cipher');
+      expect(state.providerConfigs[AiProvider.gemini]?.apiKeyCiphertext,
+          'local-real-cipher');
     });
 
-    test('local plaintext migrates when Firestore has nothing for that provider, and pushes the result', () async {
-      final firestore = FakeFirebaseFirestore(); // no settings doc — first-ever bootstrap
+    test(
+        'local plaintext migrates when Firestore has nothing for that provider, and pushes the result',
+        () async {
+      final firestore =
+          FakeFirebaseFirestore(); // no settings doc — first-ever bootstrap
       final caller = _FakeCaller(response: {'ciphertext': 'newly-encrypted'});
       final service = AiSettingsSyncService(
         firestore: firestore,
@@ -109,7 +135,8 @@ void main() {
         initialValues: {
           'ai_active_provider': 'gemini',
           // Pre-migration shape: plaintext under the old 'apiKey' field.
-          'ai_config_gemini': jsonEncode({'apiKey': 'plaintext-key', 'model': 'gemini-2.5-pro'}),
+          'ai_config_gemini': jsonEncode(
+              {'apiKey': 'plaintext-key', 'model': 'gemini-2.5-pro'}),
         },
         extraOverrides: [
           currentUidProvider.overrideWithValue(_uid),
@@ -125,12 +152,18 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       final state = container.read(userSettingsNotifierProvider);
-      expect(state.providerConfigs[AiProvider.gemini]?.apiKeyCiphertext, 'newly-encrypted');
+      expect(state.providerConfigs[AiProvider.gemini]?.apiKeyCiphertext,
+          'newly-encrypted');
       expect(state.providerConfigs[AiProvider.gemini]?.model, 'gemini-2.5-pro');
 
-      final doc =
-          await firestore.collection('users').doc(_uid).collection('settings').doc('config').get();
-      expect(doc.data()?['providers']?['gemini']?['apiKeyCiphertext'], 'newly-encrypted');
+      final doc = await firestore
+          .collection('users')
+          .doc(_uid)
+          .collection('settings')
+          .doc('config')
+          .get();
+      expect(doc.data()?['providers']?['gemini']?['apiKeyCiphertext'],
+          'newly-encrypted');
     });
 
     test('both empty: no-op, no crash', () async {
@@ -149,11 +182,14 @@ void main() {
       expect(state.providerConfigs, isEmpty);
     });
 
-    test('an encryptApiKey failure during legacy migration is swallowed — key stays un-migrated, no crash', () async {
+    test(
+        'an encryptApiKey failure during legacy migration is swallowed — key stays un-migrated, no crash',
+        () async {
       final firestore = FakeFirebaseFirestore();
       final container = await _makeContainer(initialValues: {
         'ai_active_provider': 'gemini',
-        'ai_config_gemini': jsonEncode({'apiKey': 'plaintext-key', 'model': 'gemini-2.5-pro'}),
+        'ai_config_gemini':
+            jsonEncode({'apiKey': 'plaintext-key', 'model': 'gemini-2.5-pro'}),
       });
       addTearDown(container.dispose);
       final notifier = container.read(userSettingsNotifierProvider.notifier);
@@ -167,13 +203,16 @@ void main() {
       await expectLater(service.bootstrapSync(_uid, notifier), completes);
 
       final state = container.read(userSettingsNotifierProvider);
-      expect(state.providerConfigs[AiProvider.gemini]?.apiKeyCiphertext, isNull);
-      expect(notifier.legacyPlaintextApiKey(AiProvider.gemini), 'plaintext-key');
+      expect(
+          state.providerConfigs[AiProvider.gemini]?.apiKeyCiphertext, isNull);
+      expect(
+          notifier.legacyPlaintextApiKey(AiProvider.gemini), 'plaintext-key');
     });
   });
 
   group('AiSettingsSyncService.pushProviderSettings', () {
-    test('writes activeProvider/providers/targetLanguage to Firestore', () async {
+    test('writes activeProvider/providers/targetLanguage to Firestore',
+        () async {
       final firestore = FakeFirebaseFirestore();
       final service = AiSettingsSyncService(
         firestore: firestore,
@@ -183,19 +222,29 @@ void main() {
       await service.pushProviderSettings(
         _uid,
         AiProvider.openRouter,
-        {AiProvider.openRouter: const ProviderConfig(apiKeyCiphertext: 'cipher-or', model: 'model-or')},
+        {
+          AiProvider.openRouter: const ProviderConfig(
+              apiKeyCiphertext: 'cipher-or', model: 'model-or')
+        },
         Language.japanese,
       );
 
-      final doc =
-          await firestore.collection('users').doc(_uid).collection('settings').doc('config').get();
+      final doc = await firestore
+          .collection('users')
+          .doc(_uid)
+          .collection('settings')
+          .doc('config')
+          .get();
       final data = doc.data()!;
       expect(data['activeProvider'], 'openrouter');
-      expect(data['providers']['openrouter'], {'model': 'model-or', 'apiKeyCiphertext': 'cipher-or'});
+      expect(data['providers']['openrouter'],
+          {'model': 'model-or', 'apiKeyCiphertext': 'cipher-or'});
       expect(data['targetLanguage'], 'japanese');
     });
 
-    test('merges into an existing doc without clobbering unrelated fields (e.g. theme/fontSize)', () async {
+    test(
+        'merges into an existing doc without clobbering unrelated fields (e.g. theme/fontSize)',
+        () async {
       final firestore = FakeFirebaseFirestore();
       await firestore
           .collection('users')
@@ -211,23 +260,40 @@ void main() {
       await service.pushProviderSettings(
         _uid,
         AiProvider.gemini,
-        {AiProvider.gemini: const ProviderConfig(apiKeyCiphertext: 'c', model: 'm')},
+        {
+          AiProvider.gemini:
+              const ProviderConfig(apiKeyCiphertext: 'c', model: 'm')
+        },
         Language.english,
       );
 
-      final doc =
-          await firestore.collection('users').doc(_uid).collection('settings').doc('config').get();
+      final doc = await firestore
+          .collection('users')
+          .doc(_uid)
+          .collection('settings')
+          .doc('config')
+          .get();
       final data = doc.data()!;
       expect(data['theme'], 'dark');
       expect(data['fontSize'], 'large');
       expect(data['activeProvider'], 'gemini');
     });
 
-    test('a local null apiKeyCiphertext does not clobber a real remote ciphertext', () async {
+    test(
+        'a local null apiKeyCiphertext does not clobber a real remote ciphertext',
+        () async {
       final firestore = FakeFirebaseFirestore();
-      await firestore.collection('users').doc(_uid).collection('settings').doc('config').set({
+      await firestore
+          .collection('users')
+          .doc(_uid)
+          .collection('settings')
+          .doc('config')
+          .set({
         'providers': {
-          'gemini': {'model': 'gemini-2.5-flash', 'apiKeyCiphertext': 'remote-real-cipher'},
+          'gemini': {
+            'model': 'gemini-2.5-flash',
+            'apiKeyCiphertext': 'remote-real-cipher'
+          },
         },
       });
 
@@ -238,14 +304,22 @@ void main() {
       await service.pushProviderSettings(
         _uid,
         AiProvider.gemini,
-        {AiProvider.gemini: const ProviderConfig(apiKeyCiphertext: null, model: 'gemini-2.5-pro')},
+        {
+          AiProvider.gemini: const ProviderConfig(
+              apiKeyCiphertext: null, model: 'gemini-2.5-pro')
+        },
         Language.english,
       );
 
-      final doc =
-          await firestore.collection('users').doc(_uid).collection('settings').doc('config').get();
+      final doc = await firestore
+          .collection('users')
+          .doc(_uid)
+          .collection('settings')
+          .doc('config')
+          .get();
       final data = doc.data()!;
-      expect(data['providers']['gemini']['apiKeyCiphertext'], 'remote-real-cipher');
+      expect(data['providers']['gemini']['apiKeyCiphertext'],
+          'remote-real-cipher');
       expect(data['providers']['gemini']['model'], 'gemini-2.5-pro');
     });
   });

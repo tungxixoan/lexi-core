@@ -72,7 +72,8 @@ class HiveMigrationService {
     final prefs = _prefs ?? await SharedPreferences.getInstance();
     if (prefs.getBool(_migratedFlagKey(uid)) ?? false) return false;
 
-    final topicsCol = _firestore.collection('users').doc(uid).collection('topics');
+    final topicsCol =
+        _firestore.collection('users').doc(uid).collection('topics');
 
     // Only ever migrate into a genuinely empty account — if this uid
     // already has vocab data on Firestore, this is a returning user whose

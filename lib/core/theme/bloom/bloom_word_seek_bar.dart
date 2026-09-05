@@ -32,8 +32,10 @@ class BloomWordSeekBar extends StatelessWidget {
       children: [
         if (label != null)
           Padding(
-            padding: const EdgeInsets.only(bottom: BloomSpacing.xs, left: BloomSpacing.sm),
-            child: Text(label!, style: TextStyle(fontSize: 12.5, color: c.inkSoft)),
+            padding: const EdgeInsets.only(
+                bottom: BloomSpacing.xs, left: BloomSpacing.sm),
+            child: Text(label!,
+                style: TextStyle(fontSize: 12.5, color: c.inkSoft)),
           ),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(

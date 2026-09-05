@@ -114,9 +114,11 @@ final class VocabRecord {
         examples: List<String>.from(json['examples'] as List),
         personalNotes: json['personalNotes'] as String? ?? '',
         topicIds: List<String>.from(json['topicIds'] as List),
-        targetLanguage: Language.values.byName(json['targetLanguage'] as String),
+        targetLanguage:
+            Language.values.byName(json['targetLanguage'] as String),
         cefrLevel: CEFRLevel.values.byName(json['cefrLevel'] as String),
-        activeContext: AppContext.values.byName(json['activeContext'] as String),
+        activeContext:
+            AppContext.values.byName(json['activeContext'] as String),
         createdAt: DateTime.parse(json['createdAt'] as String),
         updatedAt: DateTime.parse(json['updatedAt'] as String),
         nextReviewAt: json['nextReviewAt'] != null

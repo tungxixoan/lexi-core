@@ -58,7 +58,8 @@ final class Part5SessionState {
 
   bool get canSubmit => selectedAnswers.every((a) => a != null);
 
-  Part5SessionState copyWith({List<int?>? selectedAnswers, bool? isSubmitted}) =>
+  Part5SessionState copyWith(
+          {List<int?>? selectedAnswers, bool? isSubmitted}) =>
       Part5SessionState(
         set: set,
         selectedAnswers: selectedAnswers ?? this.selectedAnswers,

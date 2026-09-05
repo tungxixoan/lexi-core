@@ -14,7 +14,8 @@ class FakeGenerativeModelClient implements GenerativeModelClient {
   String? lastPrompt;
 
   @override
-  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) async {
+  Future<GenerateContentResponse> generateContent(
+      Iterable<Content> prompt) async {
     lastPrompt = (prompt.first.parts.first as TextPart).text;
     return GenerateContentResponse(
       [Candidate(Content.text(_responseText), null, null, null, null)],
@@ -113,7 +114,8 @@ void main() {
     expect(passage.vocabIds, isEmpty);
   });
 
-  test('normalizes smart quotes and ellipsis in target and vietnamese', () async {
+  test('normalizes smart quotes and ellipsis in target and vietnamese',
+      () async {
     // Curly punctuation as \u escapes so the fixture survives tool pipelines:
     // \u2019 apostrophe, \u201C / \u201D double quotes, \u2026 ellipsis.
     final smartJson = jsonEncode({
@@ -138,7 +140,8 @@ void main() {
     expect(passage.sentences.single.vietnamese, '"Tot"...');
   });
 
-  test('resolves a vocabId when the AI returns a differently-cased word', () async {
+  test('resolves a vocabId when the AI returns a differently-cased word',
+      () async {
     final record = _makeRecord('rid1', 'Report');
     final casedJson = jsonEncode({
       'sentences': [
@@ -201,7 +204,8 @@ void main() {
       expect(fake.lastPrompt, contains('about 6 sentences'));
     });
 
-    test('asks for more sentences (capped at 12) for a 20-word selection', () async {
+    test('asks for more sentences (capped at 12) for a 20-word selection',
+        () async {
       final manyWords = List.generate(
         20,
         (i) => _makeRecord('id$i', 'word$i'),
@@ -217,7 +221,8 @@ void main() {
       expect(fake.lastPrompt, contains('about 12 sentences'));
     });
 
-    test('asks the model to weave in extra level-appropriate vocabulary beyond the given list',
+    test(
+        'asks the model to weave in extra level-appropriate vocabulary beyond the given list',
         () async {
       final fake = FakeGenerativeModelClient(fakeJson);
       final source = ReadingPassageSource.withModel(fake);

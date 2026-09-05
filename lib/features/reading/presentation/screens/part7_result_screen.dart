@@ -34,7 +34,9 @@ class _Part7ResultScreenState extends ConsumerState<Part7ResultScreen> {
 
   Future<void> _recordPracticeSession() async {
     try {
-      await ref.read(statsServiceProvider).recordPracticeSession(_totalQuestions);
+      await ref
+          .read(statsServiceProvider)
+          .recordPracticeSession(_totalQuestions);
     } catch (_) {
       // best-effort: don't crash the result screen on a stats update failure
     }
@@ -80,7 +82,9 @@ class _Part7ResultScreenState extends ConsumerState<Part7ResultScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      for (var g = 0; g < result.set.passageGroups.length; g++) ...[
+                      for (var g = 0;
+                          g < result.set.passageGroups.length;
+                          g++) ...[
                         if (g > 0) const SizedBox(height: 16),
                         _PassageGroupBreakdown(
                           groupIndex: g,
@@ -163,8 +167,11 @@ class _PassageGroupBreakdown extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isDouble ? 'Đoạn ${groupIndex + 1} (2 văn bản liên quan)' : 'Đoạn ${groupIndex + 1}',
-            style: TextStyle(fontWeight: FontWeight.w700, color: context.bloom.ink),
+            isDouble
+                ? 'Đoạn ${groupIndex + 1} (2 văn bản liên quan)'
+                : 'Đoạn ${groupIndex + 1}',
+            style: TextStyle(
+                fontWeight: FontWeight.w700, color: context.bloom.ink),
           ),
           const SizedBox(height: 8),
           for (var d = 0; d < group.documents.length; d++) ...[
@@ -180,7 +187,8 @@ class _PassageGroupBreakdown extends StatelessWidget {
             _QuestionBreakdown(
               questionNumber: q + 1,
               question: group.questions[q],
-              selected: selectedAnswers[Part7SessionState.flatIndex(allGroups, groupIndex, q)],
+              selected: selectedAnswers[
+                  Part7SessionState.flatIndex(allGroups, groupIndex, q)],
             ),
         ],
       ),
@@ -189,7 +197,10 @@ class _PassageGroupBreakdown extends StatelessWidget {
 }
 
 class _QuestionBreakdown extends StatelessWidget {
-  const _QuestionBreakdown({required this.questionNumber, required this.question, required this.selected});
+  const _QuestionBreakdown(
+      {required this.questionNumber,
+      required this.question,
+      required this.selected});
 
   final int questionNumber;
   final Part7Question question;
@@ -216,7 +227,8 @@ class _QuestionBreakdown extends StatelessWidget {
               Expanded(
                 child: Text(
                   '$questionNumber. ${question.question}',
-                  style: webScaled(theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
+                  style: webScaled(theme.textTheme.titleSmall ??
+                          const TextStyle(fontSize: 14))
                       .copyWith(color: context.bloom.ink),
                 ),
               ),
@@ -232,14 +244,17 @@ class _QuestionBreakdown extends StatelessWidget {
                 onTap: null,
                 state: i == question.correctIndex
                     ? BloomMcState.correct
-                    : (i == selected ? BloomMcState.wrong : BloomMcState.neutral),
+                    : (i == selected
+                        ? BloomMcState.wrong
+                        : BloomMcState.neutral),
               ),
             );
           }),
           Text(
             'Giải thích: ${question.explanation}',
             style: webScaled(
-              (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)).copyWith(
+              (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+                  .copyWith(
                 fontStyle: FontStyle.italic,
                 color: context.bloom.inkSoft,
               ),

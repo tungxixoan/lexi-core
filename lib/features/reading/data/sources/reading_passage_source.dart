@@ -12,7 +12,8 @@ import '../../../../features/vocabulary/domain/entities/vocab_record.dart';
 import '../../domain/entities/reading_passage.dart';
 
 // Re-export so existing test imports (from this file) continue to resolve.
-export '../../../../core/services/ai_client_factory.dart' show GenerativeModelClient;
+export '../../../../core/services/ai_client_factory.dart'
+    show GenerativeModelClient;
 
 class ReadingPassageSource {
   ReadingPassageSource(UserSettingsState settings)
@@ -54,8 +55,9 @@ class ReadingPassageSource {
     // crammed into a handful of sentences — bounded so a large/"all" selection
     // doesn't produce an unreasonably long typing session.
     final rawSentenceCount = (headwords.length * 0.75).ceil();
-    final sentenceCount =
-        rawSentenceCount < 6 ? 6 : (rawSentenceCount > 12 ? 12 : rawSentenceCount);
+    final sentenceCount = rawSentenceCount < 6
+        ? 6
+        : (rawSentenceCount > 12 ? 12 : rawSentenceCount);
     return 'You are a language learning assistant helping a Vietnamese speaker learn '
         '${targetLanguage.label}. '
         'Write a passage of about $sentenceCount sentences in ${targetLanguage.label} at ${level.label} level. '
@@ -99,8 +101,7 @@ class ReadingPassageSource {
       );
     }).toList();
 
-    final allVocabIds =
-        sentences.expand((s) => s.vocabIds).toSet().toList();
+    final allVocabIds = sentences.expand((s) => s.vocabIds).toSet().toList();
 
     return ReadingPassage(
       id: _uuid.v4(),

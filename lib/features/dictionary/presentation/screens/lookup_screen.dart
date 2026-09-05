@@ -46,8 +46,7 @@ class LookupScreen extends ConsumerWidget {
                   },
                 );
               },
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, _) => Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),

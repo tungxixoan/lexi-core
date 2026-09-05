@@ -65,7 +65,8 @@ void main() {
     when(() => mockRepo.getAll(language: any(named: 'language')))
         .thenAnswer((_) async => []);
     when(() => mockRepo.getTopics()).thenAnswer((_) async => []);
-    when(() => mockRepo.existsByHeadword(any(), any())).thenAnswer((_) async => false);
+    when(() => mockRepo.existsByHeadword(any(), any()))
+        .thenAnswer((_) async => false);
   });
 
   group('SaveVocabUseCase', () {
@@ -75,13 +76,15 @@ void main() {
     });
 
     test('saves valid phrase record', () async {
-      await SaveVocabUseCase(mockRepo).execute(makeRecord(type: InputType.phrase));
+      await SaveVocabUseCase(mockRepo)
+          .execute(makeRecord(type: InputType.phrase));
       verify(() => mockRepo.save(any())).called(1);
     });
 
     test('throws VocabException for sentence inputType', () async {
       expect(
-        () async => await SaveVocabUseCase(mockRepo).execute(makeRecord(type: InputType.sentence)),
+        () async => await SaveVocabUseCase(mockRepo)
+            .execute(makeRecord(type: InputType.sentence)),
         throwsA(isA<VocabException>()),
       );
       verifyNever(() => mockRepo.save(any()));
@@ -89,23 +92,28 @@ void main() {
 
     test('throws VocabException when topicIds.length > 2', () async {
       expect(
-        () async => await SaveVocabUseCase(mockRepo).execute(makeRecord(topicIds: ['a', 'b', 'c'])),
+        () async => await SaveVocabUseCase(mockRepo)
+            .execute(makeRecord(topicIds: ['a', 'b', 'c'])),
         throwsA(isA<VocabException>()),
       );
       verifyNever(() => mockRepo.save(any()));
     });
 
     test('allows exactly 2 topic ids', () async {
-      await SaveVocabUseCase(mockRepo).execute(makeRecord(topicIds: ['a', 'b']));
+      await SaveVocabUseCase(mockRepo)
+          .execute(makeRecord(topicIds: ['a', 'b']));
       verify(() => mockRepo.save(any())).called(1);
     });
 
-    test('capitalizes the headword before checking for duplicates and saving', () async {
-      await SaveVocabUseCase(mockRepo).execute(makeRecord(headword: 'follow up'));
-      final saved =
-          verify(() => mockRepo.save(captureAny())).captured.single as VocabRecord;
+    test('capitalizes the headword before checking for duplicates and saving',
+        () async {
+      await SaveVocabUseCase(mockRepo)
+          .execute(makeRecord(headword: 'follow up'));
+      final saved = verify(() => mockRepo.save(captureAny())).captured.single
+          as VocabRecord;
       expect(saved.headword, 'Follow up');
-      verify(() => mockRepo.existsByHeadword('Follow up', Language.english)).called(1);
+      verify(() => mockRepo.existsByHeadword('Follow up', Language.english))
+          .called(1);
     });
 
     test('throws VocabException when headword already exists', () async {
@@ -123,7 +131,8 @@ void main() {
   group('UpdateVocabUseCase', () {
     test('throws VocabException when topicIds.length > 2', () async {
       expect(
-        () async => await UpdateVocabUseCase(mockRepo).execute(makeRecord(topicIds: ['a', 'b', 'c'])),
+        () async => await UpdateVocabUseCase(mockRepo)
+            .execute(makeRecord(topicIds: ['a', 'b', 'c'])),
         throwsA(isA<VocabException>()),
       );
       verifyNever(() => mockRepo.update(any()));
@@ -133,9 +142,12 @@ void main() {
       final before = DateTime.now();
       await UpdateVocabUseCase(mockRepo).execute(makeRecord());
       final after = DateTime.now();
-      final captured = verify(() => mockRepo.update(captureAny())).captured.first as VocabRecord;
+      final captured = verify(() => mockRepo.update(captureAny()))
+          .captured
+          .first as VocabRecord;
       expect(
-        captured.updatedAt.isAfter(before.subtract(const Duration(seconds: 1))) &&
+        captured.updatedAt
+                .isAfter(before.subtract(const Duration(seconds: 1))) &&
             captured.updatedAt.isBefore(after.add(const Duration(seconds: 1))),
         isTrue,
       );
@@ -144,8 +156,10 @@ void main() {
 
   group('DeleteVocabUseCase', () {
     test('calls repo.delete with given id', () async {
-      await DeleteVocabUseCase(mockRepo).execute('my-id', language: Language.english);
-      verify(() => mockRepo.delete('my-id', language: Language.english)).called(1);
+      await DeleteVocabUseCase(mockRepo)
+          .execute('my-id', language: Language.english);
+      verify(() => mockRepo.delete('my-id', language: Language.english))
+          .called(1);
     });
   });
 
@@ -153,16 +167,20 @@ void main() {
     test('delegates to repo with no filters', () async {
       when(() => mockRepo.getAll(language: any(named: 'language')))
           .thenAnswer((_) async => [makeRecord()]);
-      final result = await GetVocabListUseCase(mockRepo).execute(language: Language.english);
+      final result = await GetVocabListUseCase(mockRepo)
+          .execute(language: Language.english);
       expect(result.length, 1);
     });
 
     test('passes topicId filter to repo', () async {
-      when(() => mockRepo.getAll(language: Language.english, topicId: 'business'))
+      when(() =>
+              mockRepo.getAll(language: Language.english, topicId: 'business'))
           .thenAnswer((_) async => []);
       await GetVocabListUseCase(mockRepo)
           .execute(language: Language.english, topicId: 'business');
-      verify(() => mockRepo.getAll(language: Language.english, topicId: 'business')).called(1);
+      verify(() =>
+              mockRepo.getAll(language: Language.english, topicId: 'business'))
+          .called(1);
     });
   });
 
@@ -185,14 +203,16 @@ void main() {
   group('DeleteTopicUseCase', () {
     test('throws VocabException for predefined topic', () async {
       expect(
-        () async => await DeleteTopicUseCase(mockRepo).execute('daily-life', isPredefined: true),
+        () async => await DeleteTopicUseCase(mockRepo)
+            .execute('daily-life', isPredefined: true),
         throwsA(isA<VocabException>()),
       );
       verifyNever(() => mockRepo.deleteTopic(any()));
     });
 
     test('allows deleting custom topic', () async {
-      await DeleteTopicUseCase(mockRepo).execute('my-custom-id', isPredefined: false);
+      await DeleteTopicUseCase(mockRepo)
+          .execute('my-custom-id', isPredefined: false);
       verify(() => mockRepo.deleteTopic('my-custom-id')).called(1);
     });
   });
@@ -200,14 +220,16 @@ void main() {
   group('AddTopicUseCase', () {
     test('throws VocabException for empty name', () async {
       expect(
-        () async => await AddTopicUseCase(mockRepo).execute(name: '   ', emoji: '⭐'),
+        () async =>
+            await AddTopicUseCase(mockRepo).execute(name: '   ', emoji: '⭐'),
         throwsA(isA<VocabException>()),
       );
       verifyNever(() => mockRepo.addTopic(any()));
     });
 
     test('creates topic with non-empty UUID and trimmed name', () async {
-      final topic = await AddTopicUseCase(mockRepo).execute(name: '  My Topic  ', emoji: '⭐');
+      final topic = await AddTopicUseCase(mockRepo)
+          .execute(name: '  My Topic  ', emoji: '⭐');
       expect(topic.id, isNotEmpty);
       expect(topic.id.length, greaterThan(4)); // UUID v4 is 36 chars
       expect(topic.name, 'My Topic');
@@ -217,7 +239,8 @@ void main() {
     });
 
     test('uses default emoji when empty', () async {
-      final topic = await AddTopicUseCase(mockRepo).execute(name: 'Test', emoji: '');
+      final topic =
+          await AddTopicUseCase(mockRepo).execute(name: 'Test', emoji: '');
       expect(topic.emoji, '📌');
     });
   });

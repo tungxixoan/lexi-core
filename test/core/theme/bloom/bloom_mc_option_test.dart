@@ -39,7 +39,8 @@ void main() {
       const BloomMcOption(label: 'x', onTap: null, state: BloomMcState.correct),
     ));
     final box = tester.widget<Container>(_decoratedContainer().first);
-    expect((box.decoration as BoxDecoration).color, BloomColors.light.successBg);
+    expect(
+        (box.decoration as BoxDecoration).color, BloomColors.light.successBg);
   });
 
   testWidgets('wrong state paints a danger ground; selected uses surface3',
@@ -48,19 +49,24 @@ void main() {
       BloomMcOption(label: 'w', onTap: null, state: BloomMcState.wrong),
       BloomMcOption(label: 's', onTap: null, state: BloomMcState.selected),
     ])));
-    final boxes = tester.widgetList<Container>(
-      find.descendant(
-        of: find.byType(BloomMcOption),
-        matching: find.byWidgetPredicate(
-          (w) => w is Container && w.decoration is BoxDecoration,
-        ),
-      ),
-    ).toList();
-    expect((boxes.first.decoration as BoxDecoration).color, BloomColors.light.dangerBg);
-    expect((boxes.last.decoration as BoxDecoration).color, BloomColors.light.surface3);
+    final boxes = tester
+        .widgetList<Container>(
+          find.descendant(
+            of: find.byType(BloomMcOption),
+            matching: find.byWidgetPredicate(
+              (w) => w is Container && w.decoration is BoxDecoration,
+            ),
+          ),
+        )
+        .toList();
+    expect((boxes.first.decoration as BoxDecoration).color,
+        BloomColors.light.dangerBg);
+    expect((boxes.last.decoration as BoxDecoration).color,
+        BloomColors.light.surface3);
   });
 
-  testWidgets('interactive option paints its fill in the widget layer with a '
+  testWidgets(
+      'interactive option paints its fill in the widget layer with a '
       'real ripple above it', (tester) async {
     await tester.pumpWidget(_host(
       BloomMcOption(label: 'x', onTap: () {}),
@@ -68,16 +74,19 @@ void main() {
     final box = tester.widget<Container>(_decoratedContainer().first);
     expect((box.decoration as BoxDecoration).color, BloomColors.light.surface2);
     final material = tester.widget<Material>(
-      find.descendant(of: _decoratedContainer(), matching: find.byType(Material)),
+      find.descendant(
+          of: _decoratedContainer(), matching: find.byType(Material)),
     );
     expect(material.color, Colors.transparent);
     expect(
-      find.descendant(of: find.byType(Material), matching: find.byType(InkWell)),
+      find.descendant(
+          of: find.byType(Material), matching: find.byType(InkWell)),
       findsOneWidget,
     );
   });
 
-  testWidgets('regression: interactive option on a BloomScaffold still paints '
+  testWidgets(
+      'regression: interactive option on a BloomScaffold still paints '
       'its ground, not the page gradient', (tester) async {
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.light,

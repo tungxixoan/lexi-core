@@ -28,7 +28,6 @@ final class WordPhraseResult extends LookupResult {
   final String definition; // English definition (optional)
   final List<String> synonyms;
   final CEFRLevel? cefrLevel; // AI-sourced level, when available
-
 }
 
 final class SentenceResult extends LookupResult {

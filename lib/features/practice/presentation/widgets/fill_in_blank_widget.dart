@@ -5,7 +5,8 @@ import '../../domain/entities/exercise.dart';
 import '../../domain/entities/exercise_result.dart';
 
 class FillInBlankWidget extends StatefulWidget {
-  const FillInBlankWidget({super.key, required this.exercise, required this.onResult});
+  const FillInBlankWidget(
+      {super.key, required this.exercise, required this.onResult});
   final FillInBlankExercise exercise;
   final void Function(ExerciseResult) onResult;
 
@@ -26,7 +27,8 @@ class _FillInBlankWidgetState extends State<FillInBlankWidget> {
 
   void _submit() {
     if (_submitted) return;
-    final correct = _ctrl.text.toLowerCase().trim() == widget.exercise.answer.toLowerCase().trim();
+    final correct = _ctrl.text.toLowerCase().trim() ==
+        widget.exercise.answer.toLowerCase().trim();
     setState(() {
       _submitted = true;
       _isCorrect = correct;
@@ -54,7 +56,8 @@ class _FillInBlankWidgetState extends State<FillInBlankWidget> {
         RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
-            style: webScaled(theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16)),
+            style: webScaled(
+                theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16)),
             children: [
               TextSpan(text: parts.first),
               WidgetSpan(
@@ -79,7 +82,9 @@ class _FillInBlankWidgetState extends State<FillInBlankWidget> {
           suffix: _submitted
               ? Icon(
                   _isCorrect! ? Icons.check_circle : Icons.cancel,
-                  color: _isCorrect! ? context.bloom.success : context.bloom.danger,
+                  color: _isCorrect!
+                      ? context.bloom.success
+                      : context.bloom.danger,
                 )
               : null,
         ),

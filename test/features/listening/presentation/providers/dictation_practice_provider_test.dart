@@ -35,16 +35,22 @@ DictationItem _item(String target) => DictationItem(
 void main() {
   group('seekPenaltyFraction', () {
     test('returns the 1% floor when reheardRatio is at or below 20%', () {
-      expect(seekPenaltyFraction(wordIndex: 8, totalWords: 10), closeTo(0.01, 0.0001)); // ratio 0.2 exactly
-      expect(seekPenaltyFraction(wordIndex: 9, totalWords: 10), closeTo(0.01, 0.0001)); // ratio 0.1
+      expect(seekPenaltyFraction(wordIndex: 8, totalWords: 10),
+          closeTo(0.01, 0.0001)); // ratio 0.2 exactly
+      expect(seekPenaltyFraction(wordIndex: 9, totalWords: 10),
+          closeTo(0.01, 0.0001)); // ratio 0.1
     });
 
-    test('scales linearly from 1% to 5% as reheardRatio grows from 20% to 100%', () {
-      expect(seekPenaltyFraction(wordIndex: 5, totalWords: 10), closeTo(0.025, 0.0001)); // ratio 0.5
-      expect(seekPenaltyFraction(wordIndex: 0, totalWords: 10), closeTo(0.05, 0.0001)); // ratio 1.0
+    test('scales linearly from 1% to 5% as reheardRatio grows from 20% to 100%',
+        () {
+      expect(seekPenaltyFraction(wordIndex: 5, totalWords: 10),
+          closeTo(0.025, 0.0001)); // ratio 0.5
+      expect(seekPenaltyFraction(wordIndex: 0, totalWords: 10),
+          closeTo(0.05, 0.0001)); // ratio 1.0
     });
 
-    test('returns 0 when totalWords is 0 (guards against division by zero)', () {
+    test('returns 0 when totalWords is 0 (guards against division by zero)',
+        () {
       expect(seekPenaltyFraction(wordIndex: 0, totalWords: 0), 0.0);
     });
   });
@@ -86,7 +92,9 @@ void main() {
       expect(result.finalScore, closeTo(0.90, 0.0001)); // 1.0 - 2*0.05
     });
 
-    test('finalScore also subtracts seekPenaltyTotal on top of the replay penalty', () {
+    test(
+        'finalScore also subtracts seekPenaltyTotal on top of the replay penalty',
+        () {
       final result = DictationSessionResult(
         item: _item('Hello world.'),
         typed: 'Hello world.',
@@ -108,7 +116,8 @@ void main() {
     });
 
     test('sm2Quality maps finalScore to the 0-5 SM-2 scale', () {
-      DictationSessionResult withScoreInputs(int replayCount) => DictationSessionResult(
+      DictationSessionResult withScoreInputs(int replayCount) =>
+          DictationSessionResult(
             item: _item('Hello world.'),
             typed: 'Hello world.',
             replayCount: replayCount,
@@ -180,7 +189,9 @@ void main() {
       expect(result.blockAccuracy, 0.5);
     });
 
-    test('finalScore uses blockAccuracy (not charAccuracy) when difficulty is not hard', () {
+    test(
+        'finalScore uses blockAccuracy (not charAccuracy) when difficulty is not hard',
+        () {
       final result = DictationSessionResult(
         item: easyItem,
         typed: 'completely different text that would score low on charAccuracy',
@@ -191,10 +202,12 @@ void main() {
         blankAnswers: const ['quick', 'fox'], // both correct
       );
       expect(result.blockAccuracy, 1.0);
-      expect(result.finalScore, 1.0); // ignores the garbage `typed` field entirely
+      expect(
+          result.finalScore, 1.0); // ignores the garbage `typed` field entirely
     });
 
-    test('finalScore still uses charAccuracy when difficulty is hard (default), '
+    test(
+        'finalScore still uses charAccuracy when difficulty is hard (default), '
         'even if blanks/blankAnswers happen to be set', () {
       final result = DictationSessionResult(
         item: _item('Hello world.'),
@@ -202,10 +215,13 @@ void main() {
         replayCount: 0,
         duration: const Duration(seconds: 1),
       );
-      expect(result.finalScore, 1.0); // via charAccuracy, unaffected by this task
+      expect(
+          result.finalScore, 1.0); // via charAccuracy, unaffected by this task
     });
 
-    test('sm2Quality maps blockAccuracy-derived finalScore using the same thresholds', () {
+    test(
+        'sm2Quality maps blockAccuracy-derived finalScore using the same thresholds',
+        () {
       final allCorrect = DictationSessionResult(
         item: easyItem,
         typed: '',
@@ -229,7 +245,9 @@ void main() {
       expect(halfCorrect.sm2Quality, 2); // blockAccuracy 0.5 >= 0.40
     });
 
-    test('isBlankCorrect strips trailing punctuation attached to the target word', () {
+    test(
+        'isBlankCorrect strips trailing punctuation attached to the target word',
+        () {
       // "fox," has a comma glued on by whitespace-only tokenization; typing
       // "fox" without the comma should still be graded correct.
       final result = DictationSessionResult(
@@ -244,7 +262,9 @@ void main() {
       expect(result.isBlankCorrect(0), isTrue);
     });
 
-    test('isBlankCorrect strips leading/trailing quotes and sentence-ending periods', () {
+    test(
+        'isBlankCorrect strips leading/trailing quotes and sentence-ending periods',
+        () {
       final quoted = DictationSessionResult(
         item: _item('She said "hello" loudly'),
         typed: '',
@@ -268,7 +288,9 @@ void main() {
       expect(sentenceEnd.isBlankCorrect(0), isTrue);
     });
 
-    test('isBlankCorrect does NOT strip internal punctuation (apostrophes/hyphens)', () {
+    test(
+        'isBlankCorrect does NOT strip internal punctuation (apostrophes/hyphens)',
+        () {
       // Target word itself is "don't" — an answer missing the apostrophe
       // must still be marked incorrect, proving we only strip edges.
       final result = DictationSessionResult(
@@ -333,15 +355,13 @@ void main() {
       ).thenAnswer((_) async => fixedItem);
 
       when(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
-              rate: any(named: 'rate')))
-          .thenAnswer((_) async {});
+          rate: any(named: 'rate'))).thenAnswer((_) async {});
       when(() => mockTts.stop()).thenAnswer((_) async {});
     });
 
     ProviderContainer makeContainer() => ProviderContainer(
           overrides: [
-            generateDictationItemUseCaseProvider
-                .overrideWithValue(mockUseCase),
+            generateDictationItemUseCaseProvider.overrideWithValue(mockUseCase),
             ttsServiceProvider.overrideWithValue(mockTts),
           ],
         );
@@ -383,9 +403,9 @@ void main() {
       final state = c.read(dictationPracticeNotifierProvider).value!;
       expect(state.hasPlayedOnce, true);
       expect(state.replayCount, 0);
-      verify(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
-              rate: 1.0))
-          .called(1);
+      verify(() => mockTts.synthesize(
+          fixedItem.target, fixedItem.targetLanguage,
+          rate: 1.0)).called(1);
     });
 
     test(
@@ -402,9 +422,9 @@ void main() {
       final state = c.read(dictationPracticeNotifierProvider).value!;
       expect(state.hasPlayedOnce, true);
       expect(state.replayCount, 1);
-      verify(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
-              rate: 1.0))
-          .called(2);
+      verify(() => mockTts.synthesize(
+          fixedItem.target, fixedItem.targetLanguage,
+          rate: 1.0)).called(2);
     });
 
     test('updateTypedText() updates typedText without completing', () async {
@@ -484,8 +504,7 @@ void main() {
         ),
       ).thenAnswer((_) async => fixedItem);
       when(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
-              rate: any(named: 'rate')))
-          .thenAnswer((_) async {});
+          rate: any(named: 'rate'))).thenAnswer((_) async {});
       when(() => mockTts.stop()).thenAnswer((_) async {});
     });
 
@@ -496,7 +515,8 @@ void main() {
           ],
         );
 
-    test('generate() without difficulty defaults to hard with no blanks', () async {
+    test('generate() without difficulty defaults to hard with no blanks',
+        () async {
       final c = makeContainer();
       addTearDown(c.dispose);
       final notifier = c.read(dictationPracticeNotifierProvider.notifier);
@@ -515,7 +535,9 @@ void main() {
       expect(state.isClozeMode, isFalse);
     });
 
-    test('generate() with difficulty: easy populates exactly 2 blanks and matching blankAnswers', () async {
+    test(
+        'generate() with difficulty: easy populates exactly 2 blanks and matching blankAnswers',
+        () async {
       final c = makeContainer();
       addTearDown(c.dispose);
       final notifier = c.read(dictationPracticeNotifierProvider.notifier);
@@ -535,7 +557,9 @@ void main() {
       expect(state.isClozeMode, isTrue);
     });
 
-    test('updateBlankAnswer() updates only the targeted blank without completing', () async {
+    test(
+        'updateBlankAnswer() updates only the targeted blank without completing',
+        () async {
       final c = makeContainer();
       addTearDown(c.dispose);
       final notifier = c.read(dictationPracticeNotifierProvider.notifier);
@@ -555,7 +579,8 @@ void main() {
       expect(state.isComplete, false);
     });
 
-    test('updateBlankAnswer() with an out-of-range blankIndex is a no-op', () async {
+    test('updateBlankAnswer() with an out-of-range blankIndex is a no-op',
+        () async {
       final c = makeContainer();
       addTearDown(c.dispose);
       final notifier = c.read(dictationPracticeNotifierProvider.notifier);
@@ -575,7 +600,8 @@ void main() {
       expect(state.isComplete, false);
     });
 
-    test('allBlanksFilled is true only once every blank has non-empty text', () async {
+    test('allBlanksFilled is true only once every blank has non-empty text',
+        () async {
       final c = makeContainer();
       addTearDown(c.dispose);
       final notifier = c.read(dictationPracticeNotifierProvider.notifier);
@@ -587,13 +613,16 @@ void main() {
         difficulty: DictationDifficulty.easy,
       );
 
-      expect(c.read(dictationPracticeNotifierProvider).value!.allBlanksFilled, isFalse);
+      expect(c.read(dictationPracticeNotifierProvider).value!.allBlanksFilled,
+          isFalse);
 
       notifier.updateBlankAnswer(0, 'quick');
-      expect(c.read(dictationPracticeNotifierProvider).value!.allBlanksFilled, isFalse);
+      expect(c.read(dictationPracticeNotifierProvider).value!.allBlanksFilled,
+          isFalse);
 
       notifier.updateBlankAnswer(1, 'fox');
-      expect(c.read(dictationPracticeNotifierProvider).value!.allBlanksFilled, isTrue);
+      expect(c.read(dictationPracticeNotifierProvider).value!.allBlanksFilled,
+          isTrue);
     });
   });
 
@@ -657,7 +686,9 @@ void main() {
           targetLanguage: Language.english,
         );
 
-    test('first seekTo() sets hasPlayedOnce and seekCount without adding a penalty', () async {
+    test(
+        'first seekTo() sets hasPlayedOnce and seekCount without adding a penalty',
+        () async {
       final c = makeContainer();
       addTearDown(c.dispose);
       final notifier = c.read(dictationPracticeNotifierProvider.notifier);
@@ -670,22 +701,27 @@ void main() {
       expect(state.seekCount, 1);
       expect(state.seekPenaltyTotal, 0.0);
       verify(() => mockTts.stop()).called(1);
-      verify(() => mockTts.synthesize('world.', fixedItem.targetLanguage, rate: 1.0)).called(1);
+      verify(() =>
+              mockTts.synthesize('world.', fixedItem.targetLanguage, rate: 1.0))
+          .called(1);
     });
 
-    test('seekTo() after the first listen adds the correct penalty fraction', () async {
+    test('seekTo() after the first listen adds the correct penalty fraction',
+        () async {
       final c = makeContainer();
       addTearDown(c.dispose);
       final notifier = c.read(dictationPracticeNotifierProvider.notifier);
       await generateSession(notifier);
 
       await notifier.seekTo(1); // first listen via seek: free
-      await notifier.seekTo(0); // "Hello world." — wordsReheard 2/2 = 100% ratio -> max 5%
+      await notifier.seekTo(
+          0); // "Hello world." — wordsReheard 2/2 = 100% ratio -> max 5%
 
       final state = c.read(dictationPracticeNotifierProvider).value!;
       expect(state.seekCount, 2);
       expect(state.seekPenaltyTotal, closeTo(0.05, 0.0001));
-      verify(() => mockTts.synthesize('Hello world.', fixedItem.targetLanguage, rate: 1.0)).called(1);
+      verify(() => mockTts.synthesize('Hello world.', fixedItem.targetLanguage,
+          rate: 1.0)).called(1);
     });
 
     test('seekTo() with an out-of-range wordIndex is a no-op', () async {
@@ -695,13 +731,15 @@ void main() {
       await generateSession(notifier);
 
       await notifier.seekTo(-1);
-      await notifier.seekTo(2); // only indices 0-1 are valid for a 2-word sentence
+      await notifier
+          .seekTo(2); // only indices 0-1 are valid for a 2-word sentence
 
       final state = c.read(dictationPracticeNotifierProvider).value!;
       expect(state.hasPlayedOnce, false);
       expect(state.seekCount, 0);
       expect(state.seekPenaltyTotal, 0.0);
-      verifyNever(() => mockTts.synthesize(any(), any(), rate: any(named: 'rate')));
+      verifyNever(
+          () => mockTts.synthesize(any(), any(), rate: any(named: 'rate')));
     });
   });
 
@@ -758,7 +796,8 @@ void main() {
           targetLanguage: Language.english,
         );
 
-    test('setSpeed() while idle only updates speedMultiplier, plays nothing, '
+    test(
+        'setSpeed() while idle only updates speedMultiplier, plays nothing, '
         'and does not touch hasPlayedOnce/replayCount', () async {
       final c = makeContainer();
       addTearDown(c.dispose);
@@ -771,12 +810,14 @@ void main() {
       expect(state.speedMultiplier, 0.75);
       expect(state.hasPlayedOnce, false);
       expect(state.replayCount, 0);
-      verifyNever(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
+      verifyNever(() => mockTts.synthesize(
+          fixedItem.target, fixedItem.targetLanguage,
           rate: any(named: 'rate')));
       verifyNever(() => mockTts.stop());
     });
 
-    test('setSpeed() while speaking stops, replays the sentence at the new rate, '
+    test(
+        'setSpeed() while speaking stops, replays the sentence at the new rate, '
         'and counts as a replay', () async {
       final c = makeContainer();
       addTearDown(c.dispose);
@@ -785,8 +826,7 @@ void main() {
 
       final completer = Completer<void>();
       when(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
-              rate: any(named: 'rate')))
-          .thenAnswer((_) => completer.future);
+          rate: any(named: 'rate'))).thenAnswer((_) => completer.future);
       when(() => mockTts.stop()).thenAnswer((_) async {});
 
       final playFuture = notifier.play(); // starts speaking, hangs on completer
@@ -800,29 +840,30 @@ void main() {
       expect(state.replayCount, 1);
       expect(state.isSpeaking, false);
       verify(() => mockTts.stop()).called(1);
-      verify(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
-              rate: 1.0))
+      verify(() => mockTts.synthesize(
+              fixedItem.target, fixedItem.targetLanguage, rate: 1.0))
           .called(1); // the original play(), at the default 1x rate
-      verify(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
-              rate: 0.75))
+      verify(() => mockTts.synthesize(
+              fixedItem.target, fixedItem.targetLanguage, rate: 0.75))
           .called(1); // the setSpeed()-triggered replay, at the new 0.75x rate
     });
 
-    test('setSpeed() passes 0.75x/1x/1.25x straight through as the playback rate for the next play()', () async {
+    test(
+        'setSpeed() passes 0.75x/1x/1.25x straight through as the playback rate for the next play()',
+        () async {
       final c = makeContainer();
       addTearDown(c.dispose);
       final notifier = c.read(dictationPracticeNotifierProvider.notifier);
       await generateSession(notifier);
       when(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
-              rate: any(named: 'rate')))
-          .thenAnswer((_) async {});
+          rate: any(named: 'rate'))).thenAnswer((_) async {});
 
       await notifier.setSpeed(1.25); // idle: just stores the choice
       await notifier.play();
 
-      verify(() => mockTts.synthesize(fixedItem.target, fixedItem.targetLanguage,
-              rate: 1.25))
-          .called(1);
+      verify(() => mockTts.synthesize(
+          fixedItem.target, fixedItem.targetLanguage,
+          rate: 1.25)).called(1);
     });
   });
 
@@ -864,7 +905,8 @@ void main() {
       when(() => mockTts.stop()).thenAnswer((_) async {});
     });
 
-    test('disposing the provider (e.g. navigating away mid-playback) stops TTS', () async {
+    test('disposing the provider (e.g. navigating away mid-playback) stops TTS',
+        () async {
       final container = ProviderContainer(
         overrides: [
           generateDictationItemUseCaseProvider.overrideWithValue(mockUseCase),
@@ -976,7 +1018,8 @@ void main() {
       expect(state.generationFilters, isNull);
     });
 
-    test('generate(generationFilters:) carries the map onto the state', () async {
+    test('generate(generationFilters:) carries the map onto the state',
+        () async {
       final c = makeContainer();
       addTearDown(c.dispose);
       final notifier = c.read(dictationPracticeNotifierProvider.notifier);

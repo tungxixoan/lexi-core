@@ -13,7 +13,8 @@ class FakeGenerativeModelClient implements GenerativeModelClient {
   final String _responseText;
 
   @override
-  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) async {
+  Future<GenerateContentResponse> generateContent(
+      Iterable<Content> prompt) async {
     return GenerateContentResponse(
       [Candidate(Content.text(_responseText), null, null, null, null)],
       null,
@@ -76,7 +77,9 @@ void main() {
     expect(r.cefrLevel, isNull);
   });
 
-  test('tolerates the AI returning a bare string instead of a one-item array for suggestedTopics', () async {
+  test(
+      'tolerates the AI returning a bare string instead of a one-item array for suggestedTopics',
+      () async {
     // Real observed AI response shape: {"suggestedTopics": "Daily Life"}
     // instead of {"suggestedTopics": ["Daily Life"]} — must not crash the
     // lookup with a TypeError.

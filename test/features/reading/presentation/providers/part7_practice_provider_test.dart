@@ -9,7 +9,8 @@ import 'package:lexi_core/features/reading/domain/entities/part7_passage.dart';
 import 'package:lexi_core/features/reading/domain/use_cases/generate_part7_set_use_case.dart';
 import 'package:lexi_core/features/reading/presentation/providers/part7_practice_provider.dart';
 
-class MockGeneratePart7SetUseCase extends Mock implements GeneratePart7SetUseCase {}
+class MockGeneratePart7SetUseCase extends Mock
+    implements GeneratePart7SetUseCase {}
 
 Part7PassageGroup _singleGroup(int i, int questionCount) => Part7PassageGroup(
       documents: ['Document $i'],
@@ -69,18 +70,22 @@ void main() {
     ).thenAnswer((_) async => fixedSet);
 
     container = ProviderContainer(
-      overrides: [generatePart7SetUseCaseProvider.overrideWithValue(mockUseCase)],
+      overrides: [
+        generatePart7SetUseCaseProvider.overrideWithValue(mockUseCase)
+      ],
     );
     addTearDown(container.dispose);
   });
 
-  Future<void> generateFixed() => container.read(part7PracticeNotifierProvider.notifier).generate(
+  Future<void> generateFixed() =>
+      container.read(part7PracticeNotifierProvider.notifier).generate(
         context: AppContext.general,
         targetLanguage: Language.english,
         volumes: const {EconomyVolume.vol4},
       );
 
-  test('generate() populates state with all 12 answers unselected (3+4+5)', () async {
+  test('generate() populates state with all 12 answers unselected (3+4+5)',
+      () async {
     await generateFixed();
     final state = container.read(part7PracticeNotifierProvider).valueOrNull!;
     expect(state.set, same(fixedSet));
@@ -89,20 +94,27 @@ void main() {
     expect(state.canSubmit, false);
   });
 
-  test('flatIndex sums each preceding group\'s actual question count, not a fixed multiplier', () {
+  test(
+      'flatIndex sums each preceding group\'s actual question count, not a fixed multiplier',
+      () {
     final groups = fixedSet.passageGroups;
     expect(Part7SessionState.flatIndex(groups, 0, 0), 0);
     expect(Part7SessionState.flatIndex(groups, 0, 2), 2);
-    expect(Part7SessionState.flatIndex(groups, 1, 0), 3); // group 0 has 3 questions, not 4
+    expect(Part7SessionState.flatIndex(groups, 1, 0),
+        3); // group 0 has 3 questions, not 4
     expect(Part7SessionState.flatIndex(groups, 1, 3), 6);
-    expect(Part7SessionState.flatIndex(groups, 2, 0), 7); // groups 0+1 = 3+4 = 7
+    expect(
+        Part7SessionState.flatIndex(groups, 2, 0), 7); // groups 0+1 = 3+4 = 7
     expect(Part7SessionState.flatIndex(groups, 2, 4), 11);
   });
 
-  test('selectAnswer() records an answer at the correct dynamically-computed flat index', () async {
+  test(
+      'selectAnswer() records an answer at the correct dynamically-computed flat index',
+      () async {
     await generateFixed();
     final notifier = container.read(part7PracticeNotifierProvider.notifier);
-    notifier.selectAnswer(1, 2, 3); // group 1 (offset 3), question 2 -> flat index 5
+    notifier.selectAnswer(
+        1, 2, 3); // group 1 (offset 3), question 2 -> flat index 5
     final state = container.read(part7PracticeNotifierProvider).valueOrNull!;
     expect(state.selectedAnswers[5], 3);
     expect(state.selectedAnswers.where((a) => a != null).length, 1);
@@ -118,16 +130,20 @@ void main() {
         notifier.selectAnswer(g, q, 0);
       }
     }
-    expect(container.read(part7PracticeNotifierProvider).valueOrNull!.canSubmit, false);
+    expect(container.read(part7PracticeNotifierProvider).valueOrNull!.canSubmit,
+        false);
     notifier.selectAnswer(2, 4, 0);
-    expect(container.read(part7PracticeNotifierProvider).valueOrNull!.canSubmit, true);
+    expect(container.read(part7PracticeNotifierProvider).valueOrNull!.canSubmit,
+        true);
   });
 
   test('submit() is a no-op until canSubmit is true', () async {
     await generateFixed();
     final notifier = container.read(part7PracticeNotifierProvider.notifier);
     notifier.submit();
-    expect(container.read(part7PracticeNotifierProvider).valueOrNull!.isSubmitted, false);
+    expect(
+        container.read(part7PracticeNotifierProvider).valueOrNull!.isSubmitted,
+        false);
     final groups = fixedSet.passageGroups;
     for (var g = 0; g < groups.length; g++) {
       for (var q = 0; q < groups[g].questions.length; q++) {
@@ -135,7 +151,9 @@ void main() {
       }
     }
     notifier.submit();
-    expect(container.read(part7PracticeNotifierProvider).valueOrNull!.isSubmitted, true);
+    expect(
+        container.read(part7PracticeNotifierProvider).valueOrNull!.isSubmitted,
+        true);
   });
 
   test('reset() returns state to null', () async {
@@ -144,7 +162,9 @@ void main() {
     expect(container.read(part7PracticeNotifierProvider).valueOrNull, isNull);
   });
 
-  test('Part7SessionResult.correctCount counts matching answers across non-uniform groups', () {
+  test(
+      'Part7SessionResult.correctCount counts matching answers across non-uniform groups',
+      () {
     // Every group's correctIndexes cycle 0,1,2,3,0(,1). Answer everything with 0:
     // group0 (3 Q) gets 1 right (q0); group1 (4 Q) gets 1 right (q0); group2 (5 Q)
     // gets 2 right (q0 and q4, since correctIndex cycles back to 0 at q4) -> 4 total.
@@ -179,14 +199,18 @@ void main() {
       expect(state.generationFilters, filters);
     });
 
-    test('loadSaved leaves reusedFromId + generationFilters null when omitted', () {
-      container.read(part7PracticeNotifierProvider.notifier).loadSaved(fixedSet);
+    test('loadSaved leaves reusedFromId + generationFilters null when omitted',
+        () {
+      container
+          .read(part7PracticeNotifierProvider.notifier)
+          .loadSaved(fixedSet);
       final state = container.read(part7PracticeNotifierProvider).valueOrNull!;
       expect(state.reusedFromId, isNull);
       expect(state.generationFilters, isNull);
     });
 
-    test('generate(generationFilters:) carries the map onto the state', () async {
+    test('generate(generationFilters:) carries the map onto the state',
+        () async {
       await container.read(part7PracticeNotifierProvider.notifier).generate(
             context: AppContext.general,
             targetLanguage: Language.english,

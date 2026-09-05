@@ -10,7 +10,8 @@ import '../../../vocabulary/domain/entities/vocab_record.dart';
 import '../../domain/entities/dictation_item.dart';
 
 // Re-export so test imports (from this file) continue to resolve.
-export '../../../../core/services/ai_client_factory.dart' show GenerativeModelClient;
+export '../../../../core/services/ai_client_factory.dart'
+    show GenerativeModelClient;
 
 class DictationSource {
   DictationSource(UserSettingsState settings)
@@ -35,7 +36,8 @@ class DictationSource {
       targetLanguage: targetLanguage,
     );
     final response = await _client.generateContent([Content.text(prompt)]);
-    final text = response.text ?? '{"target":"","vietnamese":"","vocabWords":[]}';
+    final text =
+        response.text ?? '{"target":"","vietnamese":"","vocabWords":[]}';
     final json = parseAiJsonObject(text);
     return _parse(json, wordMap, level, context, targetLanguage);
   }

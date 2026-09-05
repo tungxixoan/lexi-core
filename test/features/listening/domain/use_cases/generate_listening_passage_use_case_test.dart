@@ -7,7 +7,8 @@ import 'package:lexi_core/features/listening/data/sources/listening_passage_sour
 import 'package:lexi_core/features/listening/domain/entities/listening_passage.dart';
 import 'package:lexi_core/features/listening/domain/use_cases/generate_listening_passage_use_case.dart';
 
-class MockListeningPassageSource extends Mock implements ListeningPassageSource {}
+class MockListeningPassageSource extends Mock
+    implements ListeningPassageSource {}
 
 void main() {
   setUpAll(() {

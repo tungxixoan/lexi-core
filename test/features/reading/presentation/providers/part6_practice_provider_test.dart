@@ -9,7 +9,8 @@ import 'package:lexi_core/features/reading/domain/entities/part6_passage.dart';
 import 'package:lexi_core/features/reading/domain/use_cases/generate_part6_set_use_case.dart';
 import 'package:lexi_core/features/reading/presentation/providers/part6_practice_provider.dart';
 
-class MockGeneratePart6SetUseCase extends Mock implements GeneratePart6SetUseCase {}
+class MockGeneratePart6SetUseCase extends Mock
+    implements GeneratePart6SetUseCase {}
 
 Part6Passage _passage(int i) => Part6Passage(
       passageText: 'Passage $i (1)___ (2)___ (3)___ (4)___.',
@@ -53,12 +54,15 @@ void main() {
     ).thenAnswer((_) async => fixedSet);
 
     container = ProviderContainer(
-      overrides: [generatePart6SetUseCaseProvider.overrideWithValue(mockUseCase)],
+      overrides: [
+        generatePart6SetUseCaseProvider.overrideWithValue(mockUseCase)
+      ],
     );
     addTearDown(container.dispose);
   });
 
-  Future<void> generateFixed() => container.read(part6PracticeNotifierProvider.notifier).generate(
+  Future<void> generateFixed() =>
+      container.read(part6PracticeNotifierProvider.notifier).generate(
         context: AppContext.general,
         targetLanguage: Language.english,
         volumes: const {EconomyVolume.vol4},
@@ -73,7 +77,9 @@ void main() {
     expect(state.canSubmit, false);
   });
 
-  test('flatIndex maps (passageIndex, questionIndex) to passageIndex*4 + questionIndex', () {
+  test(
+      'flatIndex maps (passageIndex, questionIndex) to passageIndex*4 + questionIndex',
+      () {
     expect(Part6SessionState.flatIndex(0, 0), 0);
     expect(Part6SessionState.flatIndex(0, 3), 3);
     expect(Part6SessionState.flatIndex(1, 0), 4);
@@ -98,23 +104,29 @@ void main() {
         notifier.selectAnswer(p, q, 0);
       }
     }
-    expect(container.read(part6PracticeNotifierProvider).valueOrNull!.canSubmit, false);
+    expect(container.read(part6PracticeNotifierProvider).valueOrNull!.canSubmit,
+        false);
     notifier.selectAnswer(2, 3, 0);
-    expect(container.read(part6PracticeNotifierProvider).valueOrNull!.canSubmit, true);
+    expect(container.read(part6PracticeNotifierProvider).valueOrNull!.canSubmit,
+        true);
   });
 
   test('submit() is a no-op until canSubmit is true', () async {
     await generateFixed();
     final notifier = container.read(part6PracticeNotifierProvider.notifier);
     notifier.submit();
-    expect(container.read(part6PracticeNotifierProvider).valueOrNull!.isSubmitted, false);
+    expect(
+        container.read(part6PracticeNotifierProvider).valueOrNull!.isSubmitted,
+        false);
     for (var p = 0; p < 3; p++) {
       for (var q = 0; q < 4; q++) {
         notifier.selectAnswer(p, q, 0);
       }
     }
     notifier.submit();
-    expect(container.read(part6PracticeNotifierProvider).valueOrNull!.isSubmitted, true);
+    expect(
+        container.read(part6PracticeNotifierProvider).valueOrNull!.isSubmitted,
+        true);
   });
 
   test('reset() returns state to null', () async {
@@ -123,7 +135,9 @@ void main() {
     expect(container.read(part6PracticeNotifierProvider).valueOrNull, isNull);
   });
 
-  test('Part6SessionResult.correctCount counts matching answers across all passages', () {
+  test(
+      'Part6SessionResult.correctCount counts matching answers across all passages',
+      () {
     // Passage 0's correctIndexes are [0,1,2,3]; passage 1's are [0,1,2,3]; passage 2's are [0,1,2,3].
     // Answer everything with 0: passage 0 gets 1 right (q0), passage 1 gets 1 right (q0),
     // passage 2 gets 1 right (q0) -> 3 total.
@@ -157,14 +171,18 @@ void main() {
       expect(state.generationFilters, filters);
     });
 
-    test('loadSaved leaves reusedFromId + generationFilters null when omitted', () {
-      container.read(part6PracticeNotifierProvider.notifier).loadSaved(fixedSet);
+    test('loadSaved leaves reusedFromId + generationFilters null when omitted',
+        () {
+      container
+          .read(part6PracticeNotifierProvider.notifier)
+          .loadSaved(fixedSet);
       final state = container.read(part6PracticeNotifierProvider).valueOrNull!;
       expect(state.reusedFromId, isNull);
       expect(state.generationFilters, isNull);
     });
 
-    test('generate(generationFilters:) carries the map onto the state', () async {
+    test('generate(generationFilters:) carries the map onto the state',
+        () async {
       await container.read(part6PracticeNotifierProvider.notifier).generate(
             context: AppContext.general,
             targetLanguage: Language.english,

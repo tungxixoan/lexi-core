@@ -31,13 +31,16 @@ class _Part5ResultScreenState extends ConsumerState<Part5ResultScreen> {
 
   Future<void> _recordPracticeSession() async {
     try {
-      await ref.read(statsServiceProvider).recordPracticeSession(result.set.questions.length);
+      await ref
+          .read(statsServiceProvider)
+          .recordPracticeSession(result.set.questions.length);
     } catch (_) {
       // best-effort: don't crash the result screen on a stats update failure
     }
   }
 
-  String get _questionsText => result.set.questions.map((q) => q.sentenceWithBlank).join(' ');
+  String get _questionsText =>
+      result.set.questions.map((q) => q.sentenceWithBlank).join(' ');
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +140,8 @@ class _Part5ResultScreenState extends ConsumerState<Part5ResultScreen> {
 }
 
 class _QuestionBreakdown extends StatelessWidget {
-  const _QuestionBreakdown({required this.index, required this.question, required this.selected});
+  const _QuestionBreakdown(
+      {required this.index, required this.question, required this.selected});
 
   final int index;
   final Part5Question question;
@@ -157,16 +161,15 @@ class _QuestionBreakdown extends StatelessWidget {
             children: [
               Icon(
                 isCorrect ? Icons.check_circle : Icons.cancel,
-                color: isCorrect
-                    ? context.bloom.success
-                    : context.bloom.danger,
+                color: isCorrect ? context.bloom.success : context.bloom.danger,
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   '${index + 1}. ${question.sentenceWithBlank}',
                   style: webScaled(
-                    (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
+                    (theme.textTheme.titleSmall ??
+                            const TextStyle(fontSize: 14))
                         .copyWith(color: context.bloom.ink),
                   ),
                 ),

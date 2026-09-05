@@ -20,13 +20,14 @@ const _realItems = [
 ];
 
 void main() {
-  testWidgets('bottom nav renders all labels, taps report index', (tester) async {
+  testWidgets('bottom nav renders all labels, taps report index',
+      (tester) async {
     int? tapped;
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.light,
       home: Scaffold(
         bottomNavigationBar: BloomBottomNav(
-          items: _items, selectedIndex: 0, onSelected: (i) => tapped = i),
+            items: _items, selectedIndex: 0, onSelected: (i) => tapped = i),
       ),
     ));
     for (final it in _items) {
@@ -40,8 +41,8 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.light,
       home: Scaffold(
-        bottomNavigationBar: BloomBottomNav(
-          items: _items, selectedIndex: 1, onSelected: (_) {}),
+        bottomNavigationBar:
+            BloomBottomNav(items: _items, selectedIndex: 1, onSelected: (_) {}),
       ),
     ));
     final label = tester.widget<Text>(find.text('Từ vựng'));
@@ -74,8 +75,8 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.light,
       home: Scaffold(
-        bottomNavigationBar: BloomBottomNav(
-            items: _items, selectedIndex: 2, onSelected: (_) {}),
+        bottomNavigationBar:
+            BloomBottomNav(items: _items, selectedIndex: 2, onSelected: (_) {}),
       ),
     ));
     expect(
@@ -90,7 +91,8 @@ void main() {
       theme: AppTheme.light,
       home: Scaffold(
         body: Row(children: [
-          BloomNavRail(items: _items, selectedIndex: 0, onSelected: (i) => tapped = i),
+          BloomNavRail(
+              items: _items, selectedIndex: 0, onSelected: (i) => tapped = i),
           const Expanded(child: SizedBox()),
         ]),
       ),

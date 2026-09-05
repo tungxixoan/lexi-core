@@ -56,7 +56,8 @@ void main() {
     });
 
     test('progressFill runs sage -> accent', () {
-      final g = BloomGradients.progressFill(BloomColors.light) as LinearGradient;
+      final g =
+          BloomGradients.progressFill(BloomColors.light) as LinearGradient;
       expect(g.colors.first, BloomColors.light.sage);
       expect(g.colors.last, BloomColors.light.accent);
     });

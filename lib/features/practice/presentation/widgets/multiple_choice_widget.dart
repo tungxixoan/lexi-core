@@ -5,7 +5,8 @@ import '../../domain/entities/exercise.dart';
 import '../../domain/entities/exercise_result.dart';
 
 class MultipleChoiceWidget extends StatefulWidget {
-  const MultipleChoiceWidget({super.key, required this.exercise, required this.onResult});
+  const MultipleChoiceWidget(
+      {super.key, required this.exercise, required this.onResult});
   final MultipleChoiceExercise exercise;
   final void Function(ExerciseResult) onResult;
 
@@ -39,7 +40,8 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
       children: [
         Text(
           widget.exercise.question,
-          style: webScaled(theme.textTheme.titleLarge ?? const TextStyle(fontSize: 22)),
+          style: webScaled(
+              theme.textTheme.titleLarge ?? const TextStyle(fontSize: 22)),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),

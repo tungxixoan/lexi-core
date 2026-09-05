@@ -47,9 +47,8 @@ final class DictationSessionResult {
 
   int get correctChars {
     int correct = 0;
-    final limit = typed.length < item.target.length
-        ? typed.length
-        : item.target.length;
+    final limit =
+        typed.length < item.target.length ? typed.length : item.target.length;
     for (int i = 0; i < limit; i++) {
       if (typed[i] == item.target[i]) correct++;
     }
@@ -62,10 +61,8 @@ final class DictationSessionResult {
       item.target.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
 
   /// The correct text for [blank] — one or more words joined by a single space.
-  String targetTextFor(BlankSpan blank) => _targetWords
-      .skip(blank.startWordIndex)
-      .take(blank.wordCount)
-      .join(' ');
+  String targetTextFor(BlankSpan blank) =>
+      _targetWords.skip(blank.startWordIndex).take(blank.wordCount).join(' ');
 
   static final RegExp _edgePunctuation =
       RegExp(r'^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$', unicode: true);
@@ -79,7 +76,8 @@ final class DictationSessionResult {
       .join(' ');
 
   bool isBlankCorrect(int index) =>
-      _normalize(blankAnswers[index]) == _normalize(targetTextFor(blanks[index]));
+      _normalize(blankAnswers[index]) ==
+      _normalize(targetTextFor(blanks[index]));
 
   double get blockAccuracy {
     if (blanks.isEmpty) return 1.0;
@@ -271,7 +269,8 @@ class DictationPracticeNotifier extends _$DictationPracticeNotifier {
     final current = state.valueOrNull;
     if (current == null) return;
     final updated = current.hasPlayedOnce
-        ? current.copyWith(replayCount: current.replayCount + 1, isSpeaking: true)
+        ? current.copyWith(
+            replayCount: current.replayCount + 1, isSpeaking: true)
         : current.copyWith(hasPlayedOnce: true, isSpeaking: true);
     state = AsyncData(updated);
     await ref.read(ttsServiceProvider).synthesize(
@@ -297,11 +296,14 @@ class DictationPracticeNotifier extends _$DictationPracticeNotifier {
         ? current.copyWith(
             seekCount: current.seekCount + 1,
             seekPenaltyTotal: current.seekPenaltyTotal +
-                seekPenaltyFraction(wordIndex: wordIndex, totalWords: words.length),
+                seekPenaltyFraction(
+                    wordIndex: wordIndex, totalWords: words.length),
             isSpeaking: true,
           )
         : current.copyWith(
-            hasPlayedOnce: true, seekCount: current.seekCount + 1, isSpeaking: true);
+            hasPlayedOnce: true,
+            seekCount: current.seekCount + 1,
+            isSpeaking: true);
     state = AsyncData(updated);
 
     await ref.read(ttsServiceProvider).stop();

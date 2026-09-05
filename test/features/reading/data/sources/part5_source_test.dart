@@ -12,7 +12,8 @@ class FakeGenerativeModelClient implements GenerativeModelClient {
   Iterable<Content>? lastPrompt;
 
   @override
-  Future<GenerateContentResponse> generateContent(Iterable<Content> prompt) async {
+  Future<GenerateContentResponse> generateContent(
+      Iterable<Content> prompt) async {
     lastPrompt = prompt;
     return GenerateContentResponse(
       [Candidate(Content.text(_responseText), null, null, null, null)],
@@ -66,7 +67,8 @@ void main() {
     );
   });
 
-  test('empty volumes selection sends all 4 volume labels in the prompt', () async {
+  test('empty volumes selection sends all 4 volume labels in the prompt',
+      () async {
     final client = FakeGenerativeModelClient(
       jsonEncode({'questions': List.generate(15, _question)}),
     );
@@ -85,7 +87,8 @@ void main() {
     expect(part.text, contains('Vol 5'));
   });
 
-  test('non-empty volumes selection sends only the selected volume labels', () async {
+  test('non-empty volumes selection sends only the selected volume labels',
+      () async {
     final client = FakeGenerativeModelClient(
       jsonEncode({'questions': List.generate(15, _question)}),
     );
@@ -104,7 +107,8 @@ void main() {
     expect(part.text, isNot(contains('Vol 5')));
   });
 
-  test('prompt instructs the AI to keep explanations in Vietnamese script only', () async {
+  test('prompt instructs the AI to keep explanations in Vietnamese script only',
+      () async {
     final client = FakeGenerativeModelClient(
       jsonEncode({'questions': List.generate(15, _question)}),
     );

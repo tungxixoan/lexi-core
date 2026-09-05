@@ -7,14 +7,16 @@ void main() {
   testWidgets('shows the title and an 800-weight style', (tester) async {
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.light,
-      home: const Scaffold(appBar: BloomAppBar(title: 'Tra từ'), body: SizedBox()),
+      home: const Scaffold(
+          appBar: BloomAppBar(title: 'Tra từ'), body: SizedBox()),
     ));
     expect(find.text('Tra từ'), findsOneWidget);
     final txt = tester.widget<Text>(find.text('Tra từ'));
     expect(txt.style?.fontWeight, FontWeight.w800);
   });
 
-  testWidgets('default (automaticallyImplyLeading: true) shows a back button '
+  testWidgets(
+      'default (automaticallyImplyLeading: true) shows a back button '
       'when the route can pop', (tester) async {
     final key = GlobalKey<NavigatorState>();
     await tester.pumpWidget(MaterialApp(
@@ -32,7 +34,8 @@ void main() {
     expect(find.byType(BackButton), findsOneWidget);
   });
 
-  testWidgets('automaticallyImplyLeading: false shows NO back button even when '
+  testWidgets(
+      'automaticallyImplyLeading: false shows NO back button even when '
       'the route can pop', (tester) async {
     final key = GlobalKey<NavigatorState>();
     await tester.pumpWidget(MaterialApp(

@@ -101,7 +101,8 @@ class _FakeVocabRepository implements VocabRepository {
       false;
 
   @override
-  Future<VocabRecord?> getByHeadword(String headword, Language language) async =>
+  Future<VocabRecord?> getByHeadword(
+          String headword, Language language) async =>
       null;
 
   @override
@@ -149,7 +150,8 @@ Future<Widget> _buildScreen(
         initialLocation: '/',
         routes: [
           GoRoute(
-              path: '/', builder: (ctx, state) => const Scaffold(body: Text('home'))),
+              path: '/',
+              builder: (ctx, state) => const Scaffold(body: Text('home'))),
           GoRoute(
             path: '/vocab/:id',
             builder: (ctx, state) =>
@@ -207,7 +209,8 @@ void main() {
         ),
       ],
     );
-    await tester.pumpWidget(await _buildScreen([_record('v1')], router: router));
+    await tester
+        .pumpWidget(await _buildScreen([_record('v1')], router: router));
     await tester.pumpAndSettle();
 
     expect(find.byType(BloomTextField), findsNothing);
@@ -253,7 +256,8 @@ void main() {
     expect(bank.updatedRecord!.meaning, 'nghĩa đã sửa');
   });
 
-  testWidgets('delete flow shows the Vietnamese confirm dialog', (tester) async {
+  testWidgets('delete flow shows the Vietnamese confirm dialog',
+      (tester) async {
     await tester
         .pumpWidget(await _buildScreen([_record('v1', headword: 'ephemeral')]));
     await tester.pumpAndSettle();
@@ -265,8 +269,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Xoá khỏi Ngân hàng từ?'), findsOneWidget);
-    expect(
-        find.text('"ephemeral" sẽ bị xoá. Không thể hoàn tác.'), findsOneWidget);
+    expect(find.text('"ephemeral" sẽ bị xoá. Không thể hoàn tác.'),
+        findsOneWidget);
   });
 
   testWidgets('confirming delete removes the record and pops the route',

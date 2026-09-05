@@ -83,7 +83,8 @@ void main() {
       expect(decoded.generatedAt, set.generatedAt);
     });
 
-    test('fromJson decodes a web-shaped passage sub-object without throwing', () {
+    test('fromJson decodes a web-shaped passage sub-object without throwing',
+        () {
       // apps/web savedReadingExercises.ts writes only the web `Part5Set` keys
       // (`questions`) — no id/volumes/context/targetLanguage/generatedAt.
       final json = <String, dynamic>{

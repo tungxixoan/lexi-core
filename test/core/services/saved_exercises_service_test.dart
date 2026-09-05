@@ -612,7 +612,8 @@ void main() {
     expect(got.generationFilters, {'context': 'business', 'level': 'b1'});
   });
 
-  test('a web-saved bilingual doc loads and decodes via ReadingPassage.fromJson',
+  test(
+      'a web-saved bilingual doc loads and decodes via ReadingPassage.fromJson',
       () async {
     final fs = FakeFirebaseFirestore();
     // Doc as apps/web savedReadingExercises.ts writes it: the `passage`
@@ -626,7 +627,11 @@ void main() {
       'type': 'bilingual',
       'passage': {
         'sentences': [
-          {'target': 'Hi.', 'vietnamese': 'Chào.', 'vocabWords': ['hi']},
+          {
+            'target': 'Hi.',
+            'vietnamese': 'Chào.',
+            'vocabWords': ['hi']
+          },
         ],
         'vocabIds': <String>[],
       },

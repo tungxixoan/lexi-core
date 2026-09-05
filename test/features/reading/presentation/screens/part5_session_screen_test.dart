@@ -73,25 +73,31 @@ void main() {
     expect(find.textContaining('Sentence 2 ___.'), findsOneWidget);
   });
 
-  testWidgets('Nộp bài is disabled until all answers are selected', (tester) async {
+  testWidgets('Nộp bài is disabled until all answers are selected',
+      (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
     final button = tester.widget<BloomPillButton>(find.byType(BloomPillButton));
     expect(button.onPressed, isNull);
   });
 
-  testWidgets('Nộp bài is enabled once all answers are selected', (tester) async {
+  testWidgets('Nộp bài is enabled once all answers are selected',
+      (tester) async {
     await tester.pumpWidget(_buildSession(
-      session: Part5SessionState(set: _testSet, selectedAnswers: const [0, 1, 2], isSubmitted: false),
+      session: Part5SessionState(
+          set: _testSet, selectedAnswers: const [0, 1, 2], isSubmitted: false),
     ));
     await tester.pumpAndSettle();
     final button = tester.widget<BloomPillButton>(find.byType(BloomPillButton));
     expect(button.onPressed, isNotNull);
   });
 
-  testWidgets('selecting an option and submitting navigates to the result screen', (tester) async {
+  testWidgets(
+      'selecting an option and submitting navigates to the result screen',
+      (tester) async {
     await tester.pumpWidget(_buildSession(
-      session: Part5SessionState(set: _testSet, selectedAnswers: const [0, 1, 2], isSubmitted: false),
+      session: Part5SessionState(
+          set: _testSet, selectedAnswers: const [0, 1, 2], isSubmitted: false),
     ));
     await tester.pumpAndSettle();
     await tester.tap(find.byType(BloomPillButton));
@@ -99,12 +105,15 @@ void main() {
     expect(find.text('Result screen'), findsOneWidget);
   });
 
-  testWidgets('tapping an option writes only that question slot', (tester) async {
+  testWidgets('tapping an option writes only that question slot',
+      (tester) async {
     await tester.pumpWidget(_buildSession());
     await tester.pumpAndSettle();
 
     final optionB = find.descendant(
-      of: find.byType(BloomCard).at(2), // question index 2 — distinct from option index 1
+      of: find
+          .byType(BloomCard)
+          .at(2), // question index 2 — distinct from option index 1
       matching: find.text('b'),
     );
     expect(optionB, findsOneWidget);

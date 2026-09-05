@@ -23,7 +23,8 @@ void main() {
     );
   });
 
-  testWidgets('defaults to ThemeMode.system when no pref stored', (tester) async {
+  testWidgets('defaults to ThemeMode.system when no pref stored',
+      (tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final dummyRouter = GoRouter(

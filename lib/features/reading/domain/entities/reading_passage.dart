@@ -13,7 +13,8 @@ final class BilingualSentence {
   final String target;
   final String vietnamese;
   final List<String> vocabIds; // VocabRecord.id values used in this sentence
-  final List<String> vocabWords; // raw headwords — web reads this key, not vocabIds
+  final List<String>
+      vocabWords; // raw headwords — web reads this key, not vocabIds
 
   factory BilingualSentence.fromJson(Map<String, dynamic> json) =>
       BilingualSentence(
@@ -27,7 +28,8 @@ final class BilingualSentence {
         'target': target,
         'vietnamese': vietnamese,
         'vocabIds': vocabIds, // Flutter's own reuse path reads this
-        'vocabWords': vocabWords, // web's PassageReview reads this (highlightVocabWords)
+        'vocabWords':
+            vocabWords, // web's PassageReview reads this (highlightVocabWords)
       };
 }
 

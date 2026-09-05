@@ -1,4 +1,4 @@
-﻿import 'package:cloud_functions/cloud_functions.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 /// Thin seam over a Cloud Functions `onCall` invocation, injectable for
 /// testing — this codebase's established pattern is to test through an
@@ -13,8 +13,8 @@ abstract interface class CloudFunctionCaller {
 /// region, or httpsCallable silently targets the wrong endpoint.
 class FirebaseCloudFunctionCaller implements CloudFunctionCaller {
   FirebaseCloudFunctionCaller({FirebaseFunctions? functions})
-      : _functions =
-            functions ?? FirebaseFunctions.instanceFor(region: 'asia-southeast1');
+      : _functions = functions ??
+            FirebaseFunctions.instanceFor(region: 'asia-southeast1');
 
   final FirebaseFunctions _functions;
 

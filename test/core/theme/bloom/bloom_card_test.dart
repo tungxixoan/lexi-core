@@ -41,13 +41,15 @@ void main() {
     var taps = 0;
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.light,
-      home: Scaffold(body: BloomCard(onTap: () => taps++, child: const Text('x'))),
+      home: Scaffold(
+          body: BloomCard(onTap: () => taps++, child: const Text('x'))),
     ));
     await tester.tap(find.text('x'));
     expect(taps, 1);
   });
 
-  testWidgets('tappable card paints its fill in the widget layer (Container '
+  testWidgets(
+      'tappable card paints its fill in the widget layer (Container '
       'decoration) with a real ripple above it', (tester) async {
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.light,
@@ -59,11 +61,13 @@ void main() {
     expect(deco.borderRadius, BorderRadius.circular(BloomRadii.md));
     // Ripple comes from a fresh transparent Material + InkWell above the fill.
     final material = tester.widget<Material>(
-      find.descendant(of: _decoratedContainer(), matching: find.byType(Material)),
+      find.descendant(
+          of: _decoratedContainer(), matching: find.byType(Material)),
     );
     expect(material.color, Colors.transparent);
     expect(
-      find.descendant(of: find.byType(Material), matching: find.byType(InkWell)),
+      find.descendant(
+          of: find.byType(Material), matching: find.byType(InkWell)),
       findsOneWidget,
     );
   });
@@ -82,7 +86,8 @@ void main() {
     expect(deco.color, BloomColors.light.surface3);
   });
 
-  testWidgets('regression: tappable card on a BloomScaffold still paints '
+  testWidgets(
+      'regression: tappable card on a BloomScaffold still paints '
       'surface, not the page gradient', (tester) async {
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.light,
@@ -101,7 +106,8 @@ void main() {
       home: const Scaffold(body: BloomCard(child: Text('x'))),
     ));
     expect(
-      find.descendant(of: find.byType(BloomCard), matching: find.byType(InkWell)),
+      find.descendant(
+          of: find.byType(BloomCard), matching: find.byType(InkWell)),
       findsNothing,
     );
   });

@@ -14,10 +14,11 @@ class VocabRepositoryImpl implements VocabRepository {
   final String uid;
   final FirebaseFirestore _firestore;
 
-  CollectionReference<Map<String, dynamic>> _vocabCol(Language language) => _firestore
-      .collection('users')
-      .doc(uid)
-      .collection('vocab_records_${language.name}');
+  CollectionReference<Map<String, dynamic>> _vocabCol(Language language) =>
+      _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('vocab_records_${language.name}');
   CollectionReference<Map<String, dynamic>> get _topicsCol =>
       _firestore.collection('users').doc(uid).collection('topics');
 

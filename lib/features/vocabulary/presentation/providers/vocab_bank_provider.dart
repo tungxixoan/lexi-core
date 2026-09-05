@@ -64,8 +64,8 @@ List<VocabRecord> vocabBank(Ref ref) {
 /// family provider is torn down and refetched on that same signal, so a
 /// saved/updated/deleted word is reflected immediately instead of returning
 /// a list cached from the first read.
-final vocabListForLanguageProvider =
-    FutureProvider.autoDispose.family<List<VocabRecord>, Language>((ref, language) {
+final vocabListForLanguageProvider = FutureProvider.autoDispose
+    .family<List<VocabRecord>, Language>((ref, language) {
   ref.watch(vocabBankNotifierProvider);
   return ref.watch(getVocabListUseCaseProvider).execute(language: language);
 });

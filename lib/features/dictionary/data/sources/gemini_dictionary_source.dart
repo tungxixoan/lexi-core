@@ -9,7 +9,8 @@ import '../../domain/entities/user_settings_state.dart';
 import '../../../vocabulary/domain/entities/cefr_level.dart';
 
 // Re-export so existing test imports (from this file) continue to resolve.
-export '../../../../core/services/ai_client_factory.dart' show GenerativeModelClient;
+export '../../../../core/services/ai_client_factory.dart'
+    show GenerativeModelClient;
 
 class GeminiDictionarySource {
   GeminiDictionarySource(UserSettingsState settings)
