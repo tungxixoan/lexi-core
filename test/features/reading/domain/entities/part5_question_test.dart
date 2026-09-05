@@ -102,5 +102,15 @@ void main() {
       expect(decoded.targetLanguage, Language.english);
       expect(decoded.context, AppContext.general);
     });
+
+    test('fromJson skips an unrecognized volume string instead of throwing',
+        () {
+      final json = <String, dynamic>{
+        'questions': const <dynamic>[],
+        'volumes': ['vol3', 'vol9'], // 'vol9' doesn't exist
+      };
+      final decoded = Part5Set.fromJson(json);
+      expect(decoded.volumes, {EconomyVolume.vol3});
+    });
   });
 }

@@ -14,7 +14,7 @@ final class BlankSpan {
       };
 
   factory BlankSpan.fromJson(Map<String, dynamic> json) => BlankSpan(
-        startWordIndex: json['startWordIndex'] as int,
-        wordCount: json['wordCount'] as int,
+        startWordIndex: json['startWordIndex'] as int? ?? 0,
+        wordCount: json['wordCount'] as int? ?? 1,
       );
 }

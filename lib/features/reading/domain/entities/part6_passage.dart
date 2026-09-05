@@ -85,7 +85,8 @@ final class Part6Set {
             .map((p) => Part6Passage.fromJson(p as Map<String, dynamic>))
             .toList(),
         volumes: (json['volumes'] as List? ?? const [])
-            .map((v) => EconomyVolume.values.byName(v as String))
+            .map((v) => EconomyVolume.tryParse(v as String))
+            .whereType<EconomyVolume>()
             .toSet(),
         context: json['context'] != null
             ? AppContext.values.byName(json['context'] as String)

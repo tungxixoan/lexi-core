@@ -26,5 +26,14 @@ void main() {
         expect(v.promptHint.toLowerCase(), isNot(contains('part 6')));
       }
     });
+
+    test('tryParse resolves a known wire value', () {
+      expect(EconomyVolume.tryParse('vol3'), EconomyVolume.vol3);
+    });
+
+    test('tryParse returns null for an unrecognized value instead of throwing',
+        () {
+      expect(EconomyVolume.tryParse('vol9'), isNull);
+    });
   });
 }

@@ -134,7 +134,9 @@ describe("WordRadarPage (scan)", () => {
     const textarea = await screen.findByPlaceholderText("Dán văn bản vào đây…");
     fireEvent.change(textarea, { target: { value: "Some text." } });
     fireEvent.click(screen.getByRole("button", { name: "Quét" }));
-    expect(screen.getByText("Bật AI trong Cài đặt để nhận gợi ý từ mới.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Chưa có API key cho nhà cung cấp AI đang chọn — vào Cài đặt để thêm và nhận gợi ý từ mới.")
+    ).toBeInTheDocument();
     expect(screen.queryByTestId("suggestions-section")).not.toBeInTheDocument();
   });
 

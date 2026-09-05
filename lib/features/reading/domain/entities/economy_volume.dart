@@ -23,4 +23,11 @@ enum EconomyVolume {
         EconomyVolume.vol5 =>
           'very high difficulty, dense advanced vocabulary and the deepest grammar traps',
       };
+
+  /// Safe wire-value lookup for `fromJson` — an unrecognized/old string (e.g.
+  /// a future volume added on the other platform) returns `null` instead of
+  /// throwing, so a saved-exercise doc with one bad `volumes` entry still
+  /// loads (matching this codebase's tolerant-parsing convention).
+  static EconomyVolume? tryParse(String name) =>
+      EconomyVolume.values.asNameMap()[name];
 }

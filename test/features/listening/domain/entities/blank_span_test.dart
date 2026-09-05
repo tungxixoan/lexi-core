@@ -16,4 +16,10 @@ void main() {
     expect(decoded.startWordIndex, 3);
     expect(decoded.wordCount, 2);
   });
+
+  test('fromJson tolerates missing fields instead of throwing', () {
+    final decoded = BlankSpan.fromJson(const {});
+    expect(decoded.startWordIndex, 0);
+    expect(decoded.wordCount, 1);
+  });
 }

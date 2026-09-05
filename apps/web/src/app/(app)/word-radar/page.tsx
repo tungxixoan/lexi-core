@@ -106,7 +106,9 @@ export default function WordRadarPage() {
               includeTranslation
             />
           ) : (
-            <p className="word-radar-ai-hint">Bật AI trong Cài đặt để nhận gợi ý từ mới.</p>
+            <p className="word-radar-ai-hint">
+              Chưa có API key cho nhà cung cấp AI đang chọn — vào Cài đặt để thêm và nhận gợi ý từ mới.
+            </p>
           )}
         </>
       )}
