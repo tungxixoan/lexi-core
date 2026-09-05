@@ -16,7 +16,7 @@ import { MultipleChoiceCard } from "@/components/practice/MultipleChoiceCard";
 import { FillInBlankCard } from "@/components/practice/FillInBlankCard";
 import { TranslationCard } from "@/components/practice/TranslationCard";
 import { generateExercise, type PracticeExercise } from "@/lib/practiceExercise";
-import { shouldUseFlashcard } from "@/lib/pickExercise";
+import { drawSessionAiRatio, shouldUseFlashcard } from "@/lib/pickExercise";
 import { PronunciationButton } from "@/components/shared/PronunciationButton";
 import { ttsLanguageCode } from "@/lib/pronunciation";
 import { computeSm2, type Sm2Fields } from "@/lib/sm2";
@@ -74,6 +74,8 @@ function PracticePageContent() {
   const [exercises, setExercises] = useState<(PracticeExercise | null)[]>([]);
   const exercisesRef = useRef<(PracticeExercise | null)[]>([]);
   const sessionTokenRef = useRef(0);
+  const [practiceMode, setPracticeMode] = useState<"flashcard" | "mixed">("flashcard");
+  const aiRatioRef = useRef(0);
 
   useEffect(() => {
     exercisesRef.current = exercises;
@@ -85,7 +87,7 @@ function PracticePageContent() {
       if (exercisesRef.current[index]) return;
       const word = words[index];
       let ex: PracticeExercise;
-      if (shouldUseFlashcard(word, aiAvailable)) {
+      if (shouldUseFlashcard(word, aiAvailable, aiRatioRef.current)) {
         ex = { type: "flashcard", record: word };
       } else if (activeConfig?.apiKeyCiphertext) {
         ex = await generateExercise(word, {
@@ -130,12 +132,13 @@ function PracticePageContent() {
     setSessionResults([]);
     sm2WrittenRef.current = false;
     setPhase("session");
+    aiRatioRef.current = practiceMode === "flashcard" ? 0 : drawSessionAiRatio();
     const token = ++sessionTokenRef.current;
     setExercises(new Array(words.length).fill(null));
     exercisesRef.current = new Array(words.length).fill(null);
     void generateAt(0, words, token);
     void generateAt(1, words, token);
-  }, [action, records, generateAt]);
+  }, [action, records, generateAt, practiceMode]);
 
   useEffect(() => {
     if (phase !== "result" || sm2WrittenRef.current || !user) return;
@@ -179,6 +182,7 @@ function PracticePageContent() {
     setSessionResults([]);
     sm2WrittenRef.current = false;
     setPhase("session");
+    aiRatioRef.current = practiceMode === "flashcard" ? 0 : drawSessionAiRatio();
     const token = ++sessionTokenRef.current;
     setExercises(new Array(words.length).fill(null));
     exercisesRef.current = new Array(words.length).fill(null);
@@ -253,6 +257,22 @@ function PracticePageContent() {
             onChange={(v) => setWordCount(v === "all" ? null : Number(v))}
             active={wordCount !== DEFAULT_WORD_COUNT}
           />
+        </div>
+        <div className="chip-row" role="group" aria-label="Kiểu bài">
+          <button
+            type="button"
+            className={`vb-chip${practiceMode === "flashcard" ? " active" : ""}`}
+            onClick={() => setPracticeMode("flashcard")}
+          >
+            Flashcard
+          </button>
+          <button
+            type="button"
+            className={`vb-chip${practiceMode === "mixed" ? " active" : ""}`}
+            onClick={() => setPracticeMode("mixed")}
+          >
+            Trộn AI
+          </button>
         </div>
         <p className="practice-preview-count">{previewWords.length} từ khớp bộ lọc hiện tại.</p>
         <button className="btn-primary" onClick={handleStart} disabled={previewWords.length === 0}>

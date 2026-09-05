@@ -442,6 +442,7 @@ describe("PracticePage (AI exercise types)", () => {
     });
 
     render(<PracticePage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Trộn AI" }));
     fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
 
     fireEvent.click(
@@ -474,6 +475,7 @@ describe("PracticePage (AI exercise types)", () => {
     vi.mocked(generateExercise).mockResolvedValue({ type: "flashcard", record });
 
     render(<PracticePage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Trộn AI" }));
     fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
 
     fireEvent.click(await screen.findByTestId("flashcard-card"));
@@ -518,6 +520,7 @@ describe("PracticePage (AI exercise types)", () => {
     });
 
     render(<PracticePage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Trộn AI" }));
     fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
 
     // Word 1 — MC, pick a WRONG option (correctIndex 0) → quality 1.
@@ -566,5 +569,31 @@ describe("PracticePage (AI exercise types)", () => {
 
     await screen.findByTestId("flashcard-card");
     expect(generateExercise).not.toHaveBeenCalled();
+  });
+
+  it("the mode toggle defaults to Flashcard and never calls generateExercise for a reviewed word with a key set", async () => {
+    mockSignedIn();
+    mockSettingsWithKey();
+    const record = makeRecord({ id: "1", headword: "steady", sm2Repetitions: 5 });
+    vi.mocked(getVocabRecords).mockResolvedValue([record]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<PracticePage />);
+    expect(await screen.findByRole("button", { name: "Flashcard" })).toHaveClass("active");
+    fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
+
+    await screen.findByTestId("flashcard-card");
+    expect(generateExercise).not.toHaveBeenCalled();
+  });
+
+  it("switching to Trộn AI deselects Flashcard", async () => {
+    mockSignedIn();
+    vi.mocked(getVocabRecords).mockResolvedValue([]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+
+    render(<PracticePage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Trộn AI" }));
+    expect(screen.getByRole("button", { name: "Trộn AI" })).toHaveClass("active");
+    expect(screen.getByRole("button", { name: "Flashcard" })).not.toHaveClass("active");
   });
 });

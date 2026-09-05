@@ -10,14 +10,14 @@ import type { VocabRecord } from "./vocabRecords";
  * A never-reviewed word (`sm2Repetitions === 0`) or a session with no AI key
  * always gets a flashcard regardless of `aiRatio`.
  *
- * `aiRatio` defaults to 0.7 — the historical hardcoded 30/70 split — so the
- * current caller (`practice/page.tsx`, still on the 2-arg call) keeps its
- * existing behavior until it's wired up to pass a real per-session ratio.
+ * `aiRatio` is required — the caller (`practice/page.tsx`) always passes the
+ * current session's ratio (`aiRatioRef.current`, seeded from the "Flashcard"/
+ * "Trộn AI" toggle at session start), so there's no meaningful default.
  */
 export function shouldUseFlashcard(
   record: Pick<VocabRecord, "sm2Repetitions">,
   aiAvailable: boolean,
-  aiRatio: number = 0.7,
+  aiRatio: number,
   rng: () => number = Math.random,
 ): boolean {
   if (record.sm2Repetitions === 0 || !aiAvailable) return true;
