@@ -7,10 +7,12 @@ import 'package:lexi_core/core/services/stats_service.dart';
 import 'package:lexi_core/core/theme/app_theme.dart';
 import 'package:lexi_core/core/widgets/filter_tile.dart';
 import 'package:lexi_core/core/theme/bloom/bloom.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/app_context.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/input_type.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
+import 'package:lexi_core/features/practice/domain/entities/exercise_result.dart';
 import 'package:lexi_core/features/practice/domain/entities/learning_stats.dart';
 import 'package:lexi_core/features/practice/presentation/screens/practice_home_screen.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
@@ -39,7 +41,23 @@ class _FakeGetVocabListUseCase implements GetVocabListUseCase {
     CEFRLevel? maxCefrLevel,
     bool dueOnly = false,
   }) async =>
-      const [];
+      [
+        VocabRecord(
+          id: 'w1',
+          headword: 'word',
+          inputType: InputType.word,
+          ipa: '',
+          meaning: 'nghĩa',
+          examples: const [],
+          personalNotes: '',
+          topicIds: const [],
+          targetLanguage: language,
+          cefrLevel: CEFRLevel.b1,
+          activeContext: AppContext.general,
+          createdAt: DateTime(2026),
+          updatedAt: DateTime(2026),
+        ),
+      ];
 }
 
 class _FakeStatsService implements StatsService {
@@ -58,9 +76,12 @@ class _FakeStatsService implements StatsService {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+SessionConfig? capturedConfig;
+
 Future<Widget> _buildScreen() async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
+  capturedConfig = null;
   final router = GoRouter(
     initialLocation: '/practice/vocab',
     routes: [
@@ -74,7 +95,10 @@ Future<Widget> _buildScreen() async {
       ),
       GoRoute(
         path: '/practice/session',
-        builder: (ctx, state) => const Scaffold(body: Text('Session screen')),
+        builder: (ctx, state) {
+          capturedConfig = state.extra as SessionConfig?;
+          return const Scaffold(body: Text('Session screen'));
+        },
       ),
     ],
   );
@@ -113,5 +137,41 @@ void main() {
       find.widgetWithText(BloomPillButton, 'Hôm nay đã ôn xong ✓'),
     );
     expect(button.onPressed, isNull);
+  });
+
+  testWidgets('renders both mode labels, Flashcard and Trộn AI', (tester) async {
+    await tester.pumpWidget(await _buildScreen());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Flashcard'), findsOneWidget);
+    expect(find.text('Trộn AI'), findsOneWidget);
+  });
+
+  testWidgets(
+      'starting without touching the toggle produces aiRatio 0 (Flashcard is the default)',
+      (tester) async {
+    await tester.pumpWidget(await _buildScreen());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(BloomPillButton, 'Bắt đầu luyện tập'));
+    await tester.pumpAndSettle();
+
+    expect(capturedConfig!.aiRatio, 0);
+    expect(find.text('Session screen'), findsOneWidget);
+  });
+
+  testWidgets(
+      'tapping Trộn AI before starting produces an aiRatio in [0.20, 0.80]',
+      (tester) async {
+    await tester.pumpWidget(await _buildScreen());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Trộn AI'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(BloomPillButton, 'Bắt đầu luyện tập'));
+    await tester.pumpAndSettle();
+
+    expect(capturedConfig!.aiRatio, greaterThanOrEqualTo(0.20));
+    expect(capturedConfig!.aiRatio, lessThanOrEqualTo(0.80));
   });
 }

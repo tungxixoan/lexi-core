@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +14,8 @@ import '../../../vocabulary/domain/entities/vocab_record.dart';
 import '../../../vocabulary/presentation/providers/topics_provider.dart';
 import '../../domain/entities/exercise_result.dart';
 
+enum _PracticeMode { flashcard, mixed }
+
 class PracticeHomeScreen extends ConsumerStatefulWidget {
   const PracticeHomeScreen({super.key});
 
@@ -24,6 +28,7 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
   int? _wordLimit = 10; // null = All
   CEFRLevel? _maxCefrLevel; // null = show all levels
   int _dueCount = 0;
+  _PracticeMode _mode = _PracticeMode.flashcard;
 
   static const _limits = [5, 10, 20, null];
   static const _limitLabels = ['5', '10', '20', 'Tất cả'];
@@ -94,6 +99,10 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
     }
   }
 
+  double _resolveAiRatio() => _mode == _PracticeMode.flashcard
+      ? 0.0
+      : drawSessionAiRatio(Random().nextDouble());
+
   Future<void> _start() async {
     final language = ref.read(userSettingsNotifierProvider).targetLanguage;
     final words = await ref.read(getVocabListUseCaseProvider).execute(
@@ -115,7 +124,7 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
     if (mounted) {
       context.go(
         '/practice/session',
-        extra: SessionConfig(words: limited, aiRatio: 0),
+        extra: SessionConfig(words: limited, aiRatio: _resolveAiRatio()),
       );
     }
   }
@@ -137,7 +146,7 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
     if (mounted) {
       context.go(
         '/practice/session',
-        extra: SessionConfig(words: shuffled, aiRatio: 0),
+        extra: SessionConfig(words: shuffled, aiRatio: _resolveAiRatio()),
       );
     }
   }
@@ -192,6 +201,17 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
               label: 'Số từ mỗi session',
               value: _wordLimit?.toString() ?? 'Tất cả',
               onTap: _pickWordLimit,
+            ),
+            const SizedBox(height: 16),
+            const BloomSectionHeader('Kiểu bài'),
+            const SizedBox(height: 8),
+            BloomSegmented<_PracticeMode>(
+              segments: const [
+                BloomSegment(value: _PracticeMode.flashcard, label: 'Flashcard'),
+                BloomSegment(value: _PracticeMode.mixed, label: 'Trộn AI'),
+              ],
+              selected: _mode,
+              onChanged: (m) => setState(() => _mode = m),
             ),
             const Spacer(),
             BloomPillButton(
