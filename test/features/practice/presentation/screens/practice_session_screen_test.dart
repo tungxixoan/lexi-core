@@ -61,7 +61,9 @@ Future<Widget> _buildScreen() async {
     ],
     child: MaterialApp(
       theme: AppTheme.light,
-      home: PracticeSessionScreen(config: SessionConfig(words: [_record])),
+      home: PracticeSessionScreen(
+        config: SessionConfig(words: [_record], aiRatio: 0),
+      ),
     ),
   );
 }

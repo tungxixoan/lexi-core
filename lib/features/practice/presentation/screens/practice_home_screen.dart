@@ -113,7 +113,10 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
     final limited =
         _wordLimit == null ? shuffled : shuffled.take(_wordLimit!).toList();
     if (mounted) {
-      context.go('/practice/session', extra: SessionConfig(words: limited));
+      context.go(
+        '/practice/session',
+        extra: SessionConfig(words: limited, aiRatio: 0),
+      );
     }
   }
 
@@ -132,7 +135,10 @@ class _PracticeHomeScreenState extends ConsumerState<PracticeHomeScreen> {
     }
     final shuffled = List<VocabRecord>.from(words)..shuffle();
     if (mounted) {
-      context.go('/practice/session', extra: SessionConfig(words: shuffled));
+      context.go(
+        '/practice/session',
+        extra: SessionConfig(words: shuffled, aiRatio: 0),
+      );
     }
   }
 

@@ -220,7 +220,10 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           .execute(language: language, dueOnly: true);
       if (words.isEmpty || !context.mounted) return;
       final shuffled = List<VocabRecord>.from(words)..shuffle();
-      context.push('/practice/session', extra: SessionConfig(words: shuffled));
+      context.push(
+        '/practice/session',
+        extra: SessionConfig(words: shuffled, aiRatio: 0.0),
+      );
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
