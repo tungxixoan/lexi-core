@@ -25,7 +25,7 @@ itself being a fixed, hardcoded 70%.
 - **Not persisted.** The setup screen always opens on Flashcard; picking
   Trộn AI only applies to the session about to start.
 - **The mix ratio is not user-facing.** When Trộn AI is chosen, the app
-  draws **one random ratio in [0.20, 0.80] once per session** (not exposed in
+  draws **one random ratio in [0.20, 0.80) once per session** (not exposed in
   the UI, not re-drawn mid-session) and uses it for every word's per-word
   coin flip. Flashcard mode is equivalent to ratio `0`.
 - **The `sm2Repetitions == 0` / no-AI-key override is unchanged** — a
@@ -112,7 +112,7 @@ useAi = eligible && rng() < aiRatio    // rng() ∈ [0, 1)
   seeded/injected RNG hits both branches. `SessionConfig` requires
   `aiRatio` — update all existing test call sites. Widget test: the setup
   screen defaults to "Flashcard" selected; switching to "Trộn AI" and
-  starting produces a `SessionConfig.aiRatio` in `[0.20, 0.80]` (mock the
+  starting produces a `SessionConfig.aiRatio` in `[0.20, 0.80)` (mock the
   RNG or assert the range across repeated runs).
 - Web: `shouldUseFlashcard` — same four cases as Flutter, with `aiRatio` as
   an explicit param now (existing tests updated to pass it). Page test: the

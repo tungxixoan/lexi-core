@@ -172,7 +172,12 @@ function PracticePageContent() {
     );
   }, [phase, sessionResults, sessionWords, user]);
 
-  function handleStart() {
+  // `mode` defaults to the current toggle state (the normal "Bắt đầu" path);
+  // "Ôn tập lại ngay" (result phase) passes "flashcard" explicitly so this
+  // session honors the reset immediately — `setPracticeMode` is async, so the
+  // `practiceMode` closure here would otherwise still read the stale value in
+  // the same tick a sibling `setPracticeMode("flashcard")` call is made.
+  function handleStart(mode: "flashcard" | "mixed" = practiceMode) {
     if (!records) return;
     const filters: SessionWordFilters = { topicIds: selectedTopicIds, maxCefr, count: wordCount };
     const words = selectSessionWords(records, filters);
@@ -182,7 +187,7 @@ function PracticePageContent() {
     setSessionResults([]);
     sm2WrittenRef.current = false;
     setPhase("session");
-    aiRatioRef.current = practiceMode === "flashcard" ? 0 : drawSessionAiRatio();
+    aiRatioRef.current = mode === "flashcard" ? 0 : drawSessionAiRatio();
     const token = ++sessionTokenRef.current;
     setExercises(new Array(words.length).fill(null));
     exercisesRef.current = new Array(words.length).fill(null);
@@ -262,6 +267,7 @@ function PracticePageContent() {
           <button
             type="button"
             className={`vb-chip${practiceMode === "flashcard" ? " active" : ""}`}
+            aria-pressed={practiceMode === "flashcard"}
             onClick={() => setPracticeMode("flashcard")}
           >
             Flashcard
@@ -269,13 +275,14 @@ function PracticePageContent() {
           <button
             type="button"
             className={`vb-chip${practiceMode === "mixed" ? " active" : ""}`}
+            aria-pressed={practiceMode === "mixed"}
             onClick={() => setPracticeMode("mixed")}
           >
             Trộn AI
           </button>
         </div>
         <p className="practice-preview-count">{previewWords.length} từ khớp bộ lọc hiện tại.</p>
-        <button className="btn-primary" onClick={handleStart} disabled={previewWords.length === 0}>
+        <button className="btn-primary" onClick={() => handleStart()} disabled={previewWords.length === 0}>
           Bắt đầu
         </button>
       </div>
@@ -347,10 +354,24 @@ function PracticePageContent() {
         })}
       </ul>
       <div className="practice-result-actions">
-        <button type="button" className="btn-secondary" onClick={() => setPhase("setup")}>
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() => {
+            setPracticeMode("flashcard");
+            setPhase("setup");
+          }}
+        >
           Về Ôn tập
         </button>
-        <button type="button" className="btn-primary" onClick={handleStart}>
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={() => {
+            setPracticeMode("flashcard");
+            handleStart("flashcard");
+          }}
+        >
           Ôn tập lại ngay
         </button>
       </div>

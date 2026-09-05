@@ -2237,7 +2237,7 @@ Commit b5f757f (57 files).
 
 ---
 # SM-2 practice mode toggle (Flashcard vs Trộn AI) — plan f620112, 6 tasks.
-# Formula fix note: shouldUseFlashcard = roll < (1 - aiRatio); aiRatio=0.7 reproduces old 30/70 exactly.
+# Formula: shouldUseFlashcard = roll + aiRatio < 1.0 (fp-safe form shipped; naive `roll < (1 - aiRatio)` has a double-precision bug at aiRatio=0.7,roll=0.3 — see Task 1 note below). aiRatio=0.7 reproduces old 30/70 exactly.
 # Not persisted; setup screen always defaults to Flashcard. progress_screen.dart quick-start permanently aiRatio:0.0.
 Task 1: impl 855271c. SessionConfig.aiRatio + shouldUseFlashcard/drawSessionAiRatio in exercise_result.dart. 917 tests (+8), analyze 0.
   IMPLEMENTER CAUGHT: `roll < (1-aiRatio)` fp bug at aiRatio=0.7,roll=0.3 (1-0.7=0.300...04) -> fixed as `roll + aiRatio < 1.0` (0.3+0.7 rounds exactly to 1.0). PROPAGATED FIX to plan's Task 4 web formula (same bug would've hit TS) before dispatching Task 4.
@@ -2252,3 +2252,9 @@ Task 5: impl a095e9c. page.tsx: practiceMode state + aiRatioRef (set in both han
   Review: Approved (spec ✅, quality Approved, no findings). complete (52db31a..a095e9c). Web side DONE (Tasks 4-5). ALL 5 IMPL TASKS COMPLETE.
 Task 6 (gate + docs): DONE (controller). flutter analyze 0 / test 923; web typecheck clean / vitest 802. README updated (Luyện tập cách khoảng section + roadmap checkbox).
 # ALL 6 TASKS COMPLETE. Range 855271c..a095e9c + docs. Flutter 923 tests (was 909), web 802 (was 795). Whole-branch review next.
+
+## SM-2 practice mode toggle whole-branch review (opus) — Ready: YES, no Critical. 2 Important + 5 minors.
+I1 (process note, no code fix): my review-package base 952a510 was AFTER Task 1's impl 855271c — reviewer independently re-verified exercise_result.dart/progress_screen.dart/exercise_result_test.dart directly from cc581aa~1..f4647a0, all correct. Future review-package bases must be the spec commit's PARENT, not a mid-feature docs commit.
+I2: web page.tsx "Về Ôn tập" (line ~350) and "Ôn tập lại ngay" (~353) do NOT reset practiceMode -> setup screen can re-open on Trộn AI, contradicts spec "always opens on Flashcard" + diverges from Flutter (which resets via full remount on every context.go back to /practice/vocab). FIX: reset practiceMode to "flashcard" on both.
+Minors: M1 plan/ledger docs still show naive `roll < 1-aiRatio` in a few spots (code is correct, fp-safe form only propagated to web task snippet) - fix docs; M2 `[0.20,0.80]` vs `[0.20,0.80)` doc wording mismatch - fix; M3 practice_home_screen.dart uses fresh Random() per call vs provider's shared _random field - harmless, SKIP; M4 no "not persisted across Về Ôn tập/Ôn tập lại ngay" regression test - ADD one (this is what would've caught I2); M5 web toggle buttons have no aria-pressed/radio semantics (Flutter's BloomSegmented handles this) - ADD aria-pressed.
+FIX WAVE: DISPATCHED (I2 + M1 + M2 + M4 + M5; M3 skipped).

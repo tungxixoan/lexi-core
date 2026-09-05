@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** The SM-2 practice setup screen (Flutter `practice_home_screen.dart`, web `/practice`) gains a session-level "Flashcard" (default) vs "Trộn AI" toggle. Flashcard forces every word to the flashcard exercise; Trộn AI draws one random AI-mix ratio in [0.20, 0.80] per session and uses it for the existing per-word coin flip. The choice is never persisted — the setup screen always opens on Flashcard.
+**Goal:** The SM-2 practice setup screen (Flutter `practice_home_screen.dart`, web `/practice`) gains a session-level "Flashcard" (default) vs "Trộn AI" toggle. Flashcard forces every word to the flashcard exercise; Trộn AI draws one random AI-mix ratio in [0.20, 0.80) per session and uses it for the existing per-word coin flip. The choice is never persisted — the setup screen always opens on Flashcard.
 
 **Architecture:** Replace the hardcoded 30%-flashcard/70%-AI literal on both platforms with an explicit `aiRatio` (0.0–1.0) value threaded from the setup screen into the session. `aiRatio = 0` for Flashcard mode; `aiRatio` = one random draw in [0.20, 0.80] for Trộn AI, computed once at session start. The `sm2Repetitions == 0` / no-AI-key override is untouched. Both the ratio-decision (`shouldUseFlashcard`) and the ratio-draw (`drawSessionAiRatio`) become small pure functions, so they're unit-testable with plain numbers (no RNG mocking needed on the Flutter side; the existing `rng: () => number` convention is kept on web).
 
@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - **Formula (both platforms), replacing the old `roll < 0.30` / `rng() < 0.3` literal:**
-  `flashcardProb = 1 - aiRatio`; word is flashcard iff `roll < flashcardProb` (after the rep/AI-availability override). With `aiRatio = 0.7` this reproduces today's exact 30/70 behavior — confirms the refactor is behavior-preserving for existing tests.
+  word is flashcard iff `roll + aiRatio < 1` (after the rep/AI-availability override) — the fp-safe form of the mathematically-equivalent `roll < (1 - aiRatio)`, which hits a double-precision rounding bug at `aiRatio = 0.7, roll = 0.3` (`1 - 0.7` is `0.30000000000000004`, not exactly `0.3`, misclassifying that exact boundary). With `aiRatio = 0.7` this reproduces today's exact 30/70 behavior — confirms the refactor is behavior-preserving for existing tests.
 - **`aiRatio` draw:** `0.20 + roll * 0.60` where `roll` is a fresh random value in `[0, 1)`, drawn **once per session** (not per word, not re-drawn on a later grade).
 - **The `sm2Repetitions == 0 || !aiAvailable → always flashcard` override is unchanged** and is checked *before* consulting `aiRatio`.
 - **Not persisted anywhere** (no Settings, no SharedPreferences/localStorage) — every fresh mount of the setup screen defaults to Flashcard.
@@ -141,8 +141,11 @@ final class SessionConfig {
 /// Decides flashcard vs AI for one word. `roll` is a single random value in
 /// [0, 1) supplied by the caller (keeps this pure/testable — no RNG inside).
 /// A never-reviewed word or no AI key always wins regardless of `aiRatio`;
-/// otherwise the word is flashcard iff `roll` falls in the `(1 - aiRatio)`
-/// slice. At `aiRatio == 0.7` this reproduces the historical 30/70 split.
+/// otherwise the word is flashcard iff `roll + aiRatio < 1.0` — the fp-safe
+/// form of the mathematically-equivalent `roll < (1 - aiRatio)`, which hits a
+/// double-precision rounding bug at `aiRatio == 0.7, roll == 0.3` (`1 - 0.7`
+/// is `0.30000000000000004`, not exactly `0.3`). At `aiRatio == 0.7` this
+/// reproduces the historical 30/70 split.
 bool shouldUseFlashcard(
   VocabRecord word,
   bool aiAvailable,
@@ -150,11 +153,11 @@ bool shouldUseFlashcard(
   double roll,
 ) {
   if (word.sm2Repetitions == 0 || !aiAvailable) return true;
-  return roll < (1 - aiRatio);
+  return roll + aiRatio < 1.0;
 }
 
 /// Maps a single random `roll` in [0, 1) to a session AI-mix ratio in
-/// [0.20, 0.80] — used once per "Trộn AI" session, never per word.
+/// [0.20, 0.80) — used once per "Trộn AI" session, never per word.
 double drawSessionAiRatio(double roll) => 0.20 + roll * 0.60;
 ```
 - [ ] **Step 4: fix the 4 broken call sites** (SessionConfig now requires `aiRatio`):

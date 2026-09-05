@@ -596,4 +596,69 @@ describe("PracticePage (AI exercise types)", () => {
     expect(screen.getByRole("button", { name: "Trộn AI" })).toHaveClass("active");
     expect(screen.getByRole("button", { name: "Flashcard" })).not.toHaveClass("active");
   });
+
+  it('"Về Ôn tập" resets the mode back to Flashcard after a Trộn AI session', async () => {
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.99);
+    mockSignedIn();
+    mockSettingsWithKey();
+    const record = makeRecord({ id: "1", headword: "ephemeral", sm2Repetitions: 1 });
+    vi.mocked(getVocabRecords).mockResolvedValue([record]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(generateExercise).mockResolvedValue({
+      type: "multiple_choice",
+      record,
+      question: "What does 'ephemeral' mean?",
+      options: ["short-lived", "eternal", "loud", "green"],
+      correctIndex: 0,
+    });
+
+    render(<PracticePage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Trộn AI" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "short-lived" }, { timeout: 3000 })
+    );
+    await screen.findByText("100%");
+
+    fireEvent.click(screen.getByRole("button", { name: "Về Ôn tập" }));
+
+    expect(await screen.findByRole("button", { name: "Flashcard" })).toHaveClass("active");
+    expect(screen.getByRole("button", { name: "Trộn AI" })).not.toHaveClass("active");
+
+    randomSpy.mockRestore();
+  });
+
+  it('"Ôn tập lại ngay" resets the mode to Flashcard for the session it starts', async () => {
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.99);
+    mockSignedIn();
+    mockSettingsWithKey();
+    const record = makeRecord({ id: "1", headword: "ephemeral", sm2Repetitions: 1 });
+    vi.mocked(getVocabRecords).mockResolvedValue([record]);
+    vi.mocked(getTopics).mockResolvedValue([]);
+    vi.mocked(generateExercise).mockResolvedValue({
+      type: "multiple_choice",
+      record,
+      question: "What does 'ephemeral' mean?",
+      options: ["short-lived", "eternal", "loud", "green"],
+      correctIndex: 0,
+    });
+
+    render(<PracticePage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Trộn AI" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Bắt đầu" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "short-lived" }, { timeout: 3000 })
+    );
+    await screen.findByText("100%");
+    vi.mocked(generateExercise).mockClear();
+
+    fireEvent.click(screen.getByRole("button", { name: "Ôn tập lại ngay" }));
+
+    // The next session is forced to Flashcard by the reset — a reviewed word
+    // with an AI key still set never reaches generateExercise.
+    await screen.findByTestId("flashcard-card");
+    expect(generateExercise).not.toHaveBeenCalled();
+
+    randomSpy.mockRestore();
+  });
 });
