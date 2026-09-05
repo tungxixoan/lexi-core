@@ -2228,3 +2228,9 @@ Commit b5f757f (57 files).
 # SP-6 dd64a5d..1b65df2, SP-7 803dbe2..a8d8be7, SP-8 b5f757f. All pushed except SP-8 (pushing now).
 # Flutter 903 tests / analyze 0. Web 795 tests / typecheck clean. Both build.
 # ============================================================
+
+---
+# dart format cleanup (ae3a0c0): repo-wide `dart format lib test` (118 files), + fixed the 3
+# curly_braces_in_flow_control_structures lints the tall-style formatter's line-splitting
+# exposed (listening_comprehension_provider.dart x2, part7_source.dart). analyze 0, 903 tests
+# unchanged. Standing debt from SP-5..8 resolved.
