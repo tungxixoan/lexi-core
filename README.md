@@ -27,11 +27,14 @@
 
 ### Luyện tập cách khoảng (Spaced Repetition Practice)
 - Thuật toán **SM-2** tính lịch ôn tập tối ưu
-- Tự động tạo bài tập bằng AI theo cấp độ CEFR của từng từ — **giống nhau trên cả app Flutter và web** (web trước đây chỉ có Flashcard):
+- **Kiểu bài chọn mỗi phiên tại màn Ôn tập** (không lưu, luôn mặc định Flashcard khi mở lại) — cả 2 nền tảng:
+  - **Flashcard** (mặc định) — toàn bộ phiên chỉ dùng flashcard, không gọi AI
+  - **Trộn AI** — mỗi phiên tự bốc ngẫu nhiên 1 tỉ lệ AI trong khoảng 20–80%, dùng cố định cho cả phiên đó
+- Khi ở chế độ Trộn AI, tự động tạo bài tập bằng AI theo cấp độ CEFR của từng từ — **giống nhau trên cả app Flutter và web**:
   - **Multiple Choice** (A1/A2)
   - **Fill in the Blank** (B1/B2)
   - **Translation** (C1/C2) — tự chấm (Đúng rồi / Sai rồi)
-  - **Flashcard** — luôn dùng cho từ chưa ôn lần nào, khi chưa có API key, ~30% số lượt còn lại, và làm fallback khi AI lỗi
+  - **Flashcard** — luôn dùng cho từ chưa ôn lần nào, khi chưa có API key, và làm fallback khi AI lỗi (kể cả ở chế độ Trộn AI)
 - Phiên luyện tập có điểm số và tổng kết kết quả
 - Bộ lọc luyện tập theo cấp độ CEFR mục tiêu
 
@@ -531,6 +534,7 @@ users/
 - [x] **Đồng bộ IA app ↔ web** — tab "Tiến độ" riêng trên app; tùy chọn loại bài hiện ngay trong hub Luyện đọc/Luyện nghe; Word Radar lên sidebar web; bộ lọc Ngân hàng từ (tìm kiếm + Cần ôn + chủ đề + CEFR) giống nhau hai nền tảng
 - [x] **AI exercise types trên web Ôn tập** — web giờ trộn Multiple Choice / Fill-in-blank / Translation vào phiên SM-2 giống app Flutter (trước đây chỉ Flashcard)
 - [x] **App icon** — biểu tượng LexiCore (Bloom leaf mark) cho Android/iOS/web + favicon/PWA React web; sinh từ `scripts/gen-icons.mjs` + `flutter_launcher_icons`
+- [x] **Kiểu bài Flashcard/Trộn AI ở SM-2** — tùy chọn mỗi phiên tại màn Ôn tập (mặc định Flashcard, không lưu); Trộn AI bốc ngẫu nhiên 1 tỉ lệ AI 20–80%/phiên thay vì cố định 70% — cả app Flutter và web
 
 **Ý tưởng khác đã brainstorm (chưa xếp lịch):**
 

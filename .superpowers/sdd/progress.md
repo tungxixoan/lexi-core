@@ -2200,7 +2200,7 @@ Task 2 (pickExercise.ts): impl b4e0a3f (controller, trivial). shouldUseFlashcard
 Tasks 3-5 (MC/Fill/Translation cards): impl 2177b93. All "use client", prop = Extract<PracticeExercise,{type}> + onGrade(1|5). MC 800ms auto, Fill 1200ms auto (Enter submits), Translation manual self-grade. .pe-* CSS. 16 tests, typecheck clean.
   Review (3-5): Approved (matches Flutter UX, contract exact). complete (b4e0a3f..2177b93). 16 tests. Minor: input aria-label (fold into Task 6).
 Task 6 (wire practice page): impl d149be4. exercises: (PracticeExercise|null)[] parallel to sessionWords; generateAt reads exercisesRef (no stale closure) + sessionTokenRef guard; lookahead: start seeds 0+1, each non-final grade seeds current+1 & current+2. Render 4-way type switch, .pe-loading spinner while null. aria-labels added to Fill input + Translation textarea. web 791 pass (was ~757), typecheck clean.
-  Review: PENDING.
+  Review: Approved (spec ✅, quality Approved). Re-derived fp boundary math independently, confirmed correct (round-half-to-even lands 0.3+0.7 on exactly 1.0). complete (f620112..855271c).
 Task 6 review: Approved (spec ✅, quality Approved; stale-closure + token guards verified correct, SM-2/result effect byte-unchanged). complete (2177b93..d149be4). web 791 tests. Minors: handleGrade seeds +1 AND +2 (dup generateExercise call possible if +1 in-flight — wasted BYOK only), activeConfig not memoized, .pe-loading no aria-live.
 Task 7 (gate + docs): DONE (controller). web typecheck clean / test 791. README "Luyện tập cách khoảng" updated (types now on web too, flashcard-mix rule spelled out) + roadmap entry.
 # SP-7 ALL 7 TASKS COMPLETE. Range 803dbe2..<task7> on master. web 791 tests (was ~757), typecheck clean. Flutter untouched. Whole-branch review next.
@@ -2241,4 +2241,14 @@ Commit b5f757f (57 files).
 # Not persisted; setup screen always defaults to Flashcard. progress_screen.dart quick-start permanently aiRatio:0.0.
 Task 1: impl 855271c. SessionConfig.aiRatio + shouldUseFlashcard/drawSessionAiRatio in exercise_result.dart. 917 tests (+8), analyze 0.
   IMPLEMENTER CAUGHT: `roll < (1-aiRatio)` fp bug at aiRatio=0.7,roll=0.3 (1-0.7=0.300...04) -> fixed as `roll + aiRatio < 1.0` (0.3+0.7 rounds exactly to 1.0). PROPAGATED FIX to plan's Task 4 web formula (same bug would've hit TS) before dispatching Task 4.
-  Review: PENDING.
+  Review: Approved (spec ✅, quality Approved). Re-derived fp boundary math independently, confirmed correct (round-half-to-even lands 0.3+0.7 on exactly 1.0). complete (f620112..855271c).
+Task 2: impl a97d63a. PracticeSessionState.aiRatio (required, copyWith passthrough, empty=0); startSession passes config.aiRatio; _pickExercise deleted, _generateAt calls shouldUseFlashcard(word, aiAvailable, aiRatio, _random.nextDouble()) directly. 920 tests (+3), analyze 0.
+  Review: Approved (spec ✅, quality Approved, no findings). complete (855271c..a97d63a).
+Task 3: impl 25e7c65. _PracticeMode{flashcard,mixed} enum (private), _mode default flashcard, _resolveAiRatio() = 0.0 or drawSessionAiRatio(Random().nextDouble()), BloomSectionHeader+BloomSegmented toggle inserted after word-count filter. Both _start()/_startDueSession() wired. 923 tests (+3), analyze 0.
+  Review: Approved (spec ✅, quality Approved, no findings). complete (a97d63a..25e7c65). Flutter side DONE (Tasks 1-3), 923 tests, analyze 0.
+Task 4: impl 52db31a. pickExercise.ts: shouldUseFlashcard(record, aiAvailable, aiRatio=0.7, rng?) [default 0.7 added by implementer so practice/page.tsx's still-2-arg call keeps typechecking until Task 5 rewires it — sensible interim], drawSessionAiRatio(rng?). Same fp-safe `rng()+aiRatio<1` formula as Flutter. 800 tests (+5 net: was 795, pickExercise 5->10 = +5), typecheck clean.
+  Review: Approved (spec ✅ w/ 1 flagged deviation: aiRatio default=0.7 is interim, MUST be removed in Task 5). complete (25e7c65..52db31a).
+Task 5: impl a095e9c. page.tsx: practiceMode state + aiRatioRef (set in both handleStart + auto-start effect), shouldUseFlashcard(word, aiAvailable, aiRatioRef.current), toggle via existing .chip-row/.vb-chip. pickExercise.ts's interim `=0.7` default REMOVED (confirmed only caller was page.tsx, already updated). 802 tests (+2), typecheck clean.
+  Review: Approved (spec ✅, quality Approved, no findings). complete (52db31a..a095e9c). Web side DONE (Tasks 4-5). ALL 5 IMPL TASKS COMPLETE.
+Task 6 (gate + docs): DONE (controller). flutter analyze 0 / test 923; web typecheck clean / vitest 802. README updated (Luyện tập cách khoảng section + roadmap checkbox).
+# ALL 6 TASKS COMPLETE. Range 855271c..a095e9c + docs. Flutter 923 tests (was 909), web 802 (was 795). Whole-branch review next.
