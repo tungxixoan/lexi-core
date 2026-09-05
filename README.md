@@ -1,6 +1,10 @@
 # LexiCore
 
-Ứng dụng học ngôn ngữ cá nhân xây dựng bằng Flutter — tập trung vào từ vựng chủ động, luyện tập cách khoảng (spaced repetition), và đọc hiểu song ngữ có trợ giúp của AI.
+Ứng dụng học ngôn ngữ cá nhân — tập trung vào từ vựng chủ động, luyện tập cách khoảng (spaced repetition), và đọc hiểu song ngữ có trợ giúp của AI.
+
+- **App mobile:** Flutter (Android/iOS) — repo gốc (`lib/`, `android/`, `ios/`).
+- **Web:** app React/Next.js ở [`apps/web/`](apps/web/), deploy trên Firebase App Hosting. (Flutter Web đã ngừng từ 2026-09-05.)
+- Cả hai dùng chung Firebase (Firestore + Auth) và Cloud Functions proxy cho AI.
 
 > Dự án cá nhân — dành cho người Việt học tiếng Anh, Trung, Nhật, Hàn.
 
@@ -104,15 +108,15 @@ Tab riêng trên thanh điều hướng ("Tiến độ", giữa "Luyện tập" 
 - Từ đến hạn ôn tập hôm nay
 - Thống kê phân bố cấp độ CEFR
 
-### Đồng bộ đám mây (Firebase Sync)
-- **Offline-first:** Hive (IndexedDB trên web) là nguồn dữ liệu chính
+### Đồng bộ đám mây (Firebase Sync) — app mobile
+- **Offline-first:** Hive là nguồn dữ liệu chính (app mobile; app web React đọc/ghi Firestore trực tiếp, không có lớp lưu cục bộ)
 - Đăng nhập Google để đồng bộ tự động lên Firestore
 - Đồng bộ hai chiều thời gian thực (Hive ↔ Firestore)
 - Ngăn echo-loop: guard set chặn lại Firestore write do chính sync tạo ra
 - Phát hiện từ trùng lặp O(1) bằng headword-index (`headword|language → id`)
 - Xử lý xung đột: giữ phiên bản mới hơn theo `updatedAt`
 - Cô lập tài khoản: xóa Hive khi đăng nhập tài khoản khác (không xóa khi đăng xuất)
-- API key và cấu hình AI **không bao giờ** được ghi lên Firestore
+- Cấu hình AI (provider, model) + API key **đã mã hoá** đồng bộ lên `users/{uid}/settings/config` — **dùng chung với app web**. Key dạng plaintext không bao giờ ghi lên Firestore / không bao giờ log.
 
 ### AI đa nhà cung cấp (Multi-Provider AI)
 Hỗ trợ 3 nhà cung cấp LLM, có thể chuyển đổi trong Cài đặt:
@@ -126,7 +130,7 @@ Hỗ trợ 3 nhà cung cấp LLM, có thể chuyển đổi trong Cài đặt:
 - Mỗi provider nhớ riêng API key và model đã chọn
 - Chuyển provider không mất cấu hình của provider cũ
 - Model preset cho từng provider + nhập tên model tùy ý ("Khác...")
-- Tất cả key lưu ở **SharedPreferences** — không đồng bộ lên đám mây
+- Key lưu cục bộ (SharedPreferences) + đồng bộ lên Firestore ở dạng ciphertext (xem mục Đồng bộ đám mây); mọi lệnh gọi LLM đi qua Cloud Function `generateContent` (BYOK, key chỉ dùng in-memory phía server)
 
 ### Thông báo nhắc nhở
 - Thông báo hàng ngày khi có từ đến hạn ôn
@@ -141,10 +145,11 @@ Hỗ trợ 3 nhà cung cấp LLM, có thể chuyển đổi trong Cài đặt:
 
 | Lớp | Công nghệ |
 |-----|-----------|
-| Framework | Flutter 3.x (Dart ≥3.4) |
+| Framework (mobile) | Flutter 3.x (Dart ≥3.4) |
+| Framework (web) | Next.js / React — [`apps/web/`](apps/web/), deploy Firebase App Hosting |
 | State Management | [Riverpod](https://riverpod.dev/) + `riverpod_annotation` + `build_runner` |
 | Routing | [go_router](https://pub.dev/packages/go_router) |
-| Local Storage | [Hive](https://pub.dev/packages/hive) + `hive_flutter` (hoạt động cả web/mobile) |
+| Local Storage | [Hive](https://pub.dev/packages/hive) + `hive_flutter` (app mobile) |
 | User Preferences | [shared_preferences](https://pub.dev/packages/shared_preferences) |
 | Auth & Cloud | Firebase Auth + Cloud Firestore + Google Sign-In |
 | AI — Gemini | [google_generative_ai](https://pub.dev/packages/google_generative_ai) |
@@ -295,10 +300,9 @@ Hive (local)  ←─────────────────────
 
 ### Yêu cầu
 
-- Flutter SDK ≥ 3.4.0
-- Dart SDK ≥ 3.4.0
-- Firebase project (Auth + Firestore)
-- Google Cloud OAuth 2.0 Web Client (cho web)
+- Flutter SDK ≥ 3.4.0, Dart SDK ≥ 3.4.0 (app mobile)
+- Node.js (app web — xem [`apps/web/`](apps/web/))
+- Firebase project trên gói Blaze (Auth + Firestore + Functions + App Hosting)
 
 ### 1. Clone và cài dependencies
 
@@ -314,7 +318,7 @@ flutter pub get
 # Cài FlutterFire CLI nếu chưa có
 dart pub global activate flutterfire_cli
 
-# Cấu hình — chọn Android, iOS, Web tùy nhu cầu
+# Cấu hình — chọn Android, iOS
 flutterfire configure
 ```
 
@@ -333,12 +337,11 @@ service cloud.firestore {
 }
 ```
 
-### 3. Cấu hình Google Sign-In (Web)
+### 3. Bật Google Sign-In
 
-1. Vào [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
-2. Tạo **OAuth 2.0 Client ID** loại **Web application**
-3. Thêm Authorized JavaScript Origins: `http://localhost:5000` (hoặc domain deploy của bạn)
-4. Vào Firebase Console → Authentication → Sign-in method → Google → bật lên
+1. Firebase Console → Authentication → Sign-in method → **Google** → bật lên
+2. App mobile: đăng nhập hoạt động qua `google-services.json` / `GoogleService-Info.plist` (từ `flutterfire configure`)
+3. App web React: thêm domain phục vụ web (URL App Hosting `*.hosted.app`, và `localhost` khi dev) vào Authentication → Settings → **Authorized domains**
 
 ### 4. Chạy ứng dụng
 
@@ -346,7 +349,7 @@ service cloud.firestore {
 # App mobile
 flutter run
 
-# Web (app React) — xem apps/web/
+# App web (React) — cấu hình env ở apps/web/.env.local, xem apps/web/
 cd apps/web && npm install && npm run dev
 ```
 
@@ -418,7 +421,7 @@ flutter test test/features/dictionary/presentation/providers/user_settings_notif
 flutter test --reporter expanded
 ```
 
-Hiện tại: **764 tests** — domain entities, use cases, sources, providers, UI widgets, services.
+App mobile: **~920 tests** (`flutter test`), `flutter analyze` sạch. App web: **~800 tests** (`npm test` trong `apps/web/`).
 
 ### Phân tích code
 
@@ -439,7 +442,7 @@ flutter build appbundle --release
 flutter build ipa --release
 ```
 
-> Flutter Web đã ngừng từ 2026-09-05 — bản web giờ là app React ở [`apps/web/`](apps/web/), deploy trên Firebase App Hosting (backend `lexicore-web`). Xem [`apps/web/README`](apps/web/) và `docs/superpowers/specs/2026-08-11-react-web-redesign-design.md`.
+> Flutter Web đã ngừng từ 2026-09-05 — bản web giờ là app React ở [`apps/web/`](apps/web/), deploy trên Firebase App Hosting (backend `lexicore-web`), phục vụ ở URL `*.hosted.app` (classic Hosting `lexi-core.web.app` đã `hosting:disable`). Bối cảnh: `docs/superpowers/specs/2026-08-11-react-web-redesign-design.md`.
 
 ### Deploy web (React / Firebase App Hosting)
 
@@ -524,6 +527,7 @@ users/
 - [x] **AI exercise types trên web Ôn tập** — web giờ trộn Multiple Choice / Fill-in-blank / Translation vào phiên SM-2 giống app Flutter (trước đây chỉ Flashcard)
 - [x] **App icon** — biểu tượng LexiCore (Bloom leaf mark) cho Android/iOS/web + favicon/PWA React web; sinh từ `scripts/gen-icons.mjs` + `flutter_launcher_icons`
 - [x] **Kiểu bài Flashcard/Trộn AI ở SM-2** — tùy chọn mỗi phiên tại màn Ôn tập (mặc định Flashcard, không lưu); Trộn AI bốc ngẫu nhiên 1 tỉ lệ AI 20–80%/phiên thay vì cố định 70% — cả app Flutter và web
+- [x] **Cutover web sang React** (2026-09-05) — Flutter Web ngừng hẳn: xoá thư mục `web/`, bỏ `hosting` block, `firebase hosting:disable`. App React trên App Hosting là bản web duy nhất, phục vụ ở URL `*.hosted.app`. App mobile Flutter không đổi.
 
 **Ý tưởng khác đã brainstorm (chưa xếp lịch):**
 
