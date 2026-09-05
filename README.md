@@ -343,11 +343,11 @@ service cloud.firestore {
 ### 4. Chạy ứng dụng
 
 ```bash
-# Android / iOS
+# App mobile
 flutter run
 
-# Web (port cố định để khớp OAuth origin)
-flutter run -d chrome --web-port 5000
+# Web (app React) — xem apps/web/
+cd apps/web && npm install && npm run dev
 ```
 
 ---
@@ -426,7 +426,7 @@ Hiện tại: **764 tests** — domain entities, use cases, sources, providers, 
 flutter analyze
 ```
 
-### Build release
+### Build release (mobile)
 
 ```bash
 # Android APK
@@ -435,33 +435,22 @@ flutter build apk --release
 # Android App Bundle
 flutter build appbundle --release
 
-# Web
-flutter build web --release
+# iOS
+flutter build ipa --release
 ```
 
-### Deploy Web (Firebase Hosting)
+> Flutter Web đã ngừng từ 2026-09-05 — bản web giờ là app React ở [`apps/web/`](apps/web/), deploy trên Firebase App Hosting (backend `lexicore-web`). Xem [`apps/web/README`](apps/web/) và `docs/superpowers/specs/2026-08-11-react-web-redesign-design.md`.
 
-Web app được host trên Firebase Hosting (project `lexi-core`), cấu hình tại [firebase.json](firebase.json).
+### Deploy web (React / Firebase App Hosting)
+
+Push lên nhánh đã kết nối → Firebase App Hosting tự build & deploy `apps/web/`. Cấu hình tại [firebase.json](firebase.json) block `apphosting` + `apps/web/apphosting.yaml`.
+
+### Deploy Cloud Functions
 
 ```bash
-# 1. (tuỳ chọn) test nhanh trên trình duyệt trước khi build
-flutter run -d chrome
-
-# 2. Build bản release + deploy
-flutter build web --release
-firebase deploy --only hosting
+firebase emulators:start          # test cục bộ trước
+firebase deploy --only functions
 ```
-
-Live tại: [lexi-core.web.app](https://lexi-core.web.app)
-
-**Preview trước khi lên live** (khuyến nghị cho thay đổi lớn) — deploy lên URL tạm, không ảnh hưởng bản chính thức:
-
-```bash
-flutter build web --release
-firebase hosting:channel:deploy preview
-```
-
-**Rollback**: Firebase Console → Hosting → Release history → chọn version cũ → Rollback (không cần build lại).
 
 ---
 

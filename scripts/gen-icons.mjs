@@ -1,8 +1,7 @@
 // Generates the LexiCore app icon assets from the Bloom leaf mark.
 //
-//   dart run flutter_launcher_icons   # regenerate Android/iOS/Flutter-web first —
-//   node scripts/gen-icons.mjs        # then this, LAST — it overwrites web/favicon.png
-//                                      # with the flat favicon variant (see below).
+//   dart run flutter_launcher_icons   # regenerate the Android/iOS launcher icons first,
+//   node scripts/gen-icons.mjs        # then this for the React web favicon/PWA icons.
 //
 // Requires `sharp` — resolved from apps/web/node_modules (the only place it is
 // installed). Run from the repo root. Not part of any build; re-run whenever a
@@ -10,12 +9,12 @@
 // apps/web/src/styles/bloom.css :root).
 //
 // The gradient leaf mark (accent -> sage) is the brand mark everywhere it's
-// rendered at a real size — app icons, adaptive/launcher icons, the
-// apple-touch icon, PWA manifest icons. At browser-favicon sizes (16-32px)
-// the gradient blends into an illegible muddy blob, so the favicon
-// specifically uses a FLAT single-colour rendering of the same shape — this
-// is the only place that differs; BloomGradients.leafMark and the web
-// `.brand .leaf` in-app renderings are untouched.
+// rendered at a real size — Android/iOS app icons, the apple-touch icon, PWA
+// manifest icons. At browser-favicon sizes (16-32px) the gradient blends into
+// an illegible muddy blob, so the favicon (React app's `icon.svg`) uses a FLAT
+// single-colour rendering of the same shape — this is the only place that
+// differs; BloomGradients.leafMark and the web `.brand .leaf` in-app
+// renderings are untouched.
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -111,8 +110,7 @@ async function main() {
   await write("assets/branding/icon-foreground.svg", FOREGROUND_SVG);
   await write("assets/branding/icon-favicon.svg", FAVICON_SVG);
 
-  // Master PNGs for flutter_launcher_icons (Android/iOS/Flutter-web icons —
-  // NOT the favicon, see below).
+  // Master PNGs for flutter_launcher_icons (Android/iOS launcher icons).
   await write("assets/branding/icon-master.png", await png(MASTER_SVG, 1024));
   await write("assets/branding/icon-foreground.png", await png(FOREGROUND_SVG, 1024));
 
@@ -122,12 +120,9 @@ async function main() {
   await write("apps/web/public/icon-maskable-512.png", await png(FOREGROUND_SVG, 512));
   await write("apps/web/src/app/apple-icon.png", await png(MASTER_SVG, 180));
 
-  // Favicons (flat) — Next's `icon.svg` file convention drives the browser-tab
-  // favicon link; Flutter's web/favicon.png is a plain PNG. Run this script
-  // AFTER `dart run flutter_launcher_icons`, which overwrites web/favicon.png
-  // from the gradient master — this write must come last to win.
+  // Favicon (flat) — Next's `icon.svg` file convention drives the browser-tab
+  // favicon link.
   await write("apps/web/src/app/icon.svg", FAVICON_SVG);
-  await write("web/favicon.png", await png(FAVICON_SVG, 32));
 }
 
 main().catch((err) => {

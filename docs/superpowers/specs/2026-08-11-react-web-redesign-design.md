@@ -105,6 +105,8 @@ Moved server-side for **security/control, not speed** (one extra network hop cos
 
 Flutter Web (`lexi-core.web.app`) **stays live and unchanged** throughout development. The React app deploys to a non-production preview URL first (exact mechanism per §3.1's verification note — App Hosting's preview-deploy flow, checked at implementation time). The production domain only cuts over to React after it's been tested thoroughly — this is a deliberate, explicit gate, not an incidental detail.
 
+> **STATUS — cutover DONE 2026-09-05.** All 3 React Web plans + the Flutter Bloom redesign + the post-device-test punch list shipped; the user confirmed testing complete. Flutter Web retired: the top-level `web/` scaffold deleted, `firebase.json`'s `hosting` block removed, `flutter build web` support dropped. The React app on Firebase App Hosting (backend `lexicore-web`) is the sole web client; classic Firebase Hosting (`lexi-core.web.app`) disabled. The Flutter **mobile** app is unaffected and remains the only mobile client.
+
 ---
 
 ## 4. Design System — "Bloom" (Warm Modern)

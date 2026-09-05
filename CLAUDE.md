@@ -4,18 +4,16 @@ Personal Vietnamese-first language-learning app. Full feature list lives in `REA
 
 ## Monorepo structure (as of 2026-08-11)
 
-This is one GitHub repo hosting two apps:
+This is one GitHub repo hosting:
 
-- **Flutter app** (mobile + legacy web) — repo root: `lib/`, `pubspec.yaml`, `android/`, `ios/`, `web/`. Unchanged by the React redesign; still the only client for the mobile app indefinitely.
-- **React web app** (new, replaces Flutter Web) — `apps/web/` (Next.js, deployed on **Firebase App Hosting**, backend id `lexicore-web`). Config lives in `firebase.json`'s `"apphosting"` block (`backendId`/`rootDir`) plus `apps/web/apphosting.yaml` (Cloud Run `runConfig` + `env:` list — non-secret env vars like Firebase Web config are committed there directly). Not Vercel — considered, then dropped mid-spec-review once the backend's role shrank to thin proxies that Cloud Functions does natively (see spec §3.1 for the full reasoning/trade-off).
-- **Backend functions** — `functions/` (Firebase CLI convention, Node.js/TypeScript), a third sibling directory alongside `web/` and `apps/web/`. Deployed with `firebase deploy --only functions` (manual CLI push, same pattern as Flutter Web's deploy — not git-triggered auto-deploy). Test locally first with the Firebase Local Emulator Suite (`firebase emulators:start`).
+- **Flutter app** (mobile only) — repo root: `lib/`, `pubspec.yaml`, `android/`, `ios/`. The only client for the mobile app indefinitely. **Flutter Web was retired 2026-09-05** (`flutter build web` support / the top-level `web/` scaffold are gone) — the React app is now the only web client.
+- **React web app** — `apps/web/` (Next.js, deployed on **Firebase App Hosting**, backend id `lexicore-web`). Config lives in `firebase.json`'s `"apphosting"` block (`backendId`/`rootDir`) plus `apps/web/apphosting.yaml` (Cloud Run `runConfig` + `env:` list — non-secret env vars like Firebase Web config are committed there directly). Not Vercel — considered, then dropped mid-spec-review once the backend's role shrank to thin proxies that Cloud Functions does natively (see spec §3.1 for the full reasoning/trade-off).
+- **Backend functions** — `functions/` (Firebase CLI convention, Node.js/TypeScript), a sibling directory alongside `apps/web/`. Deployed with `firebase deploy --only functions` (manual CLI push — not git-triggered auto-deploy). Test locally first with the Firebase Local Emulator Suite (`firebase emulators:start`).
 - **Region: `asia-southeast1`** (Singapore) for both App Hosting and every Cloud Function (`onCall({region: "asia-southeast1"}, handler)`) — not the Firebase default `us-central1`. Chosen for Vietnam latency (~30-50ms vs ~200-250ms RTT). Client and server must agree on region or `httpsCallable` silently targets the wrong endpoint — `apps/web/src/lib/firebase.ts`'s `getFunctions(app, "asia-southeast1")` call must stay in sync with every `onCall(...)` in `functions/src/`.
 
-**Naming gotcha — do not confuse these two:**
-- `web/` (top-level, no `apps/` prefix) is Flutter's own web-platform scaffold — `index.html`, `manifest.json`, icons. `flutter build web` compiles from `lib/` + this folder into `build/web`, which `firebase.json`'s `hosting.public` points at. **Never put the Next.js app here.**
-- `apps/web/` is the Next.js app. Its `node_modules`/`.next` are gitignored.
+`apps/web/` is the Next.js app (its `node_modules`/`.next` are gitignored). There is no top-level `web/` any more — it was Flutter's web-platform scaffold, deleted at the cutover.
 
-Both classic Firebase Hosting (Flutter Web, `build/web`) and Firebase App Hosting (Next.js, `apps/web/`) are Firebase Hosting-family products deploying from this same repo/Firebase project, and coexist during the migration — see `docs/superpowers/specs/2026-08-11-react-web-redesign-design.md` §3.6 for the rollout plan. Firebase Web stays live until the Next.js app has been tested and the production domain is deliberately cut over; don't touch that cutover without explicit confirmation.
+**Cutover DONE 2026-09-05:** the React app (Firebase App Hosting, backend `lexicore-web`) fully replaced Flutter Web. `firebase.json` no longer has a `hosting` block; classic Firebase Hosting is disabled (`lexi-core.web.app` no longer serves the app). History: `docs/superpowers/specs/2026-08-11-react-web-redesign-design.md` §3.6.
 
 ## Theme (Flutter)
 
@@ -53,6 +51,6 @@ Development follows the superpowers SDD flow: spec (`docs/superpowers/specs/`) �
 
 ## Deploy
 
-- **Flutter Web:** `flutter build web --release` then `firebase deploy --only hosting` (from repo root).
-- **Next.js web app:** push to the connected branch; Firebase App Hosting auto-deploys `apps/web/`. Production cutover is a manual, explicit step — not automatic on merge.
+- **Web app (Next.js):** push to the connected branch; Firebase App Hosting auto-deploys `apps/web/`. It serves from its own App Hosting URL (Firebase Console → App Hosting → backend `lexicore-web`). The old `lexi-core.web.app` (classic Firebase Hosting / Flutter Web) is disabled since the 2026-09-05 cutover.
 - **Cloud Functions:** test locally with `firebase emulators:start`, then `firebase deploy --only functions` — manual CLI push, not auto-deployed on git push (unless a CI workflow is added later).
+- **Mobile app:** `flutter build apk --release` / `flutter build appbundle --release` / `flutter build ipa`. No web build.
