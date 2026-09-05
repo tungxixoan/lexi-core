@@ -38,6 +38,7 @@ final _fakeState = PracticeSessionState(
   currentIndex: 0,
   results: const [],
   isComplete: false,
+  aiRatio: 0,
 );
 
 /// Fake that skips the real `startSession` (which would hit AI/settings

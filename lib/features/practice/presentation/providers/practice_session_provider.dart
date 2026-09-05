@@ -16,6 +16,7 @@ final class PracticeSessionState {
     required this.currentIndex,
     required this.results,
     required this.isComplete,
+    required this.aiRatio,
   });
 
   final List<VocabRecord> words;
@@ -23,6 +24,7 @@ final class PracticeSessionState {
   final int currentIndex;
   final List<ExerciseResult> results;
   final bool isComplete;
+  final double aiRatio; // fixed for the whole session, set once in startSession
 
   Exercise? get currentExercise =>
       currentIndex < exercises.length ? exercises[currentIndex] : null;
@@ -42,6 +44,7 @@ final class PracticeSessionState {
         currentIndex: currentIndex ?? this.currentIndex,
         results: results ?? this.results,
         isComplete: isComplete ?? this.isComplete,
+        aiRatio: aiRatio,
       );
 
   static const empty = PracticeSessionState(
@@ -50,6 +53,7 @@ final class PracticeSessionState {
     currentIndex: 0,
     results: [],
     isComplete: false,
+    aiRatio: 0,
   );
 }
 
@@ -70,6 +74,7 @@ class PracticeSessionNotifier extends _$PracticeSessionNotifier {
       currentIndex: 0,
       results: const [],
       isComplete: false,
+      aiRatio: config.aiRatio,
     ));
     await _generateAt(0, words);
     _generateAt(1, words); // background, don't await
@@ -79,23 +84,17 @@ class PracticeSessionNotifier extends _$PracticeSessionNotifier {
     if (index >= words.length) return;
     final word = words[index];
     final aiAvailable = ref.read(userSettingsNotifierProvider).aiAvailable;
-    final exercise = await _pickExercise(word, aiAvailable);
+    final aiRatio = state.valueOrNull?.aiRatio ?? 0;
+    final exercise = shouldUseFlashcard(
+            word, aiAvailable, aiRatio, _random.nextDouble())
+        ? FlashcardExercise(vocabRecord: word)
+        : await ref.read(generateExerciseUseCaseProvider).execute(word);
 
     final current = state.valueOrNull;
     if (current == null) return;
     final updated = List<Exercise?>.from(current.exercises);
     updated[index] = exercise;
     state = AsyncValue.data(current.copyWith(exercises: updated));
-  }
-
-  Future<Exercise> _pickExercise(VocabRecord word, bool aiAvailable) async {
-    if (word.sm2Repetitions == 0 || !aiAvailable) {
-      return FlashcardExercise(vocabRecord: word);
-    }
-    if (_random.nextDouble() < 0.30) {
-      return FlashcardExercise(vocabRecord: word);
-    }
-    return ref.read(generateExerciseUseCaseProvider).execute(word);
   }
 
   Future<void> recordAndAdvance(ExerciseResult result) async {
