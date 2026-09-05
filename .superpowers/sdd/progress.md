@@ -2234,3 +2234,11 @@ Commit b5f757f (57 files).
 # curly_braces_in_flow_control_structures lints the tall-style formatter's line-splitting
 # exposed (listening_comprehension_provider.dart x2, part7_source.dart). analyze 0, 903 tests
 # unchanged. Standing debt from SP-5..8 resolved.
+
+---
+# SM-2 practice mode toggle (Flashcard vs Trộn AI) — plan f620112, 6 tasks.
+# Formula fix note: shouldUseFlashcard = roll < (1 - aiRatio); aiRatio=0.7 reproduces old 30/70 exactly.
+# Not persisted; setup screen always defaults to Flashcard. progress_screen.dart quick-start permanently aiRatio:0.0.
+Task 1: impl 855271c. SessionConfig.aiRatio + shouldUseFlashcard/drawSessionAiRatio in exercise_result.dart. 917 tests (+8), analyze 0.
+  IMPLEMENTER CAUGHT: `roll < (1-aiRatio)` fp bug at aiRatio=0.7,roll=0.3 (1-0.7=0.300...04) -> fixed as `roll + aiRatio < 1.0` (0.3+0.7 rounds exactly to 1.0). PROPAGATED FIX to plan's Task 4 web formula (same bug would've hit TS) before dispatching Task 4.
+  Review: PENDING.

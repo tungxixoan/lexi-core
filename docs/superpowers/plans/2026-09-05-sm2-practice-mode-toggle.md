@@ -641,7 +641,12 @@ export function shouldUseFlashcard(
   rng: () => number = Math.random,
 ): boolean {
   if (record.sm2Repetitions === 0 || !aiAvailable) return true;
-  return rng() < 1 - aiRatio;
+  // Written as `roll + aiRatio < 1` rather than `roll < 1 - aiRatio`: same
+  // Flutter port (exercise_result.dart) hit a double-precision boundary bug
+  // here — `1 - 0.7` is `0.30000000000000004`, not exactly `0.3` — which
+  // misclassifies the `aiRatio == 1 - roll` boundary. `roll + aiRatio < 1`
+  // avoids it (`0.3 + 0.7` rounds to exactly `1` in IEEE 754 double).
+  return rng() + aiRatio < 1;
 }
 
 /**
