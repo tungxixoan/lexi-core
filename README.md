@@ -343,6 +343,12 @@ service cloud.firestore {
 2. App mobile: đăng nhập hoạt động qua `google-services.json` / `GoogleService-Info.plist` (từ `flutterfire configure`)
 3. App web React: thêm domain phục vụ web (URL App Hosting `*.hosted.app`, và `localhost` khi dev) vào Authentication → Settings → **Authorized domains**
 
+> **Lưu ý (Android — Google Sign-In):** đăng nhập Google trên Android **bắt buộc** phải đăng ký SHA-1 fingerprint của keystore ký app vào Firebase Console → Project settings → app Android → **Add fingerprint**. Thiếu SHA-1 thì màn hình chọn tài khoản Google mở ra rồi đóng ngay lập tức (`ApiException: 10` / `DEVELOPER_ERROR`), không có lỗi hiển thị trong app. iOS không bị ảnh hưởng vì xác thực qua bundle ID + reversed-client-ID, không dùng SHA-1.
+>
+> - Lấy SHA-1: `cd android && ./gradlew signingReport` (hoặc `keytool -list -v -keystore ~/.android/debug.keystore -storepass android`).
+> - Sau khi thêm, tải lại `google-services.json` (file mới sẽ có block `client_type: 1` với `certificate_hash`), thay vào `android/app/`, rồi `flutter clean && flutter run`. Chờ vài phút để Google propagate.
+> - Cần thêm **cả** SHA-1 của debug keystore (máy dev), release/upload keystore, **và** SHA-1 của Play App Signing (Play Console → Release → Setup → App signing) — nếu không bản trên Play Store cũng lỗi đăng nhập.
+
 ### 4. Chạy ứng dụng
 
 ```bash
