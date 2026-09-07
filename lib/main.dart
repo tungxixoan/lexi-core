@@ -40,14 +40,6 @@ class LexiCoreApp extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
       routerConfig: routerConfig ?? appRouter,
-      // SelectionArea needs an Overlay ancestor, but the router's own
-      // Overlay (inside its Navigator) sits *below* this builder's child,
-      // not above it — so we supply an explicit one here.
-      builder: (context, child) => Overlay(
-        initialEntries: [
-          OverlayEntry(builder: (context) => SelectionArea(child: child!)),
-        ],
-      ),
     );
   }
 }

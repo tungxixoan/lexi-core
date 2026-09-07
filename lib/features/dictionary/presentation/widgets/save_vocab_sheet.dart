@@ -120,160 +120,150 @@ class _SaveVocabSheetState extends ConsumerState<SaveVocabSheet> {
     final topicsAsync = ref.watch(topicsNotifierProvider);
     final c = context.bloom;
 
-    // Own SelectionArea: the app-wide one (main.dart) and this modal's
-    // content both sit under the same Navigator, but modal routes render in
-    // a separate OverlayEntry stacked visually on top — the outer
-    // SelectionArea attributes drag-select pointer events to whichever
-    // content is earliest in paint/traversal order (the screen behind the
-    // sheet), not what's visually on top. A nested SelectionArea gives this
-    // sheet its own independent selection scope so drag-select targets its
-    // own text instead of the screen underneath.
-    return SelectionArea(
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => Column(
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 4, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Lưu "${widget.result.headword}"',
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.w800),
-                    ),
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollController) => Column(
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 4, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Lưu "${widget.result.headword}"',
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.w800),
                   ),
-                  if (ref
-                          .read(userSettingsNotifierProvider)
-                          .targetLanguage
-                          .ttsCloudCode !=
-                      null)
-                    PronounceButton(
-                      onPressed: () => ref.read(ttsServiceProvider).pronounce(
-                          widget.result.headword,
-                          ref.read(userSettingsNotifierProvider).targetLanguage,
-                          tier: PronunciationTier.word),
-                    ),
-                  BloomIconButton(
-                    icon: Icons.close,
-                    onPressed: () => Navigator.of(context).pop(false),
+                ),
+                if (ref
+                        .read(userSettingsNotifierProvider)
+                        .targetLanguage
+                        .ttsCloudCode !=
+                    null)
+                  PronounceButton(
+                    onPressed: () => ref.read(ttsServiceProvider).pronounce(
+                        widget.result.headword,
+                        ref.read(userSettingsNotifierProvider).targetLanguage,
+                        tier: PronunciationTier.word),
+                  ),
+                BloomIconButton(
+                  icon: Icons.close,
+                  onPressed: () => Navigator.of(context).pop(false),
+                ),
+              ],
+            ),
+          ),
+          const Divider(),
+          // Scrollable content
+          Expanded(
+            child: ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.all(16),
+              children: [
+                // Meaning
+                const BloomSectionHeader('Nghĩa'),
+                BloomTextField(
+                  controller: _meaningCtrl,
+                  maxLines: 3,
+                  minLines: 2,
+                ),
+                // Definition (English) — read-only
+                if (widget.result.definition.isNotEmpty) ...[
+                  const BloomSectionHeader('Định nghĩa'),
+                  Text(widget.result.definition,
+                      style: TextStyle(color: c.inkSoft)),
+                ],
+                // Synonyms — read-only
+                if (widget.result.synonyms.isNotEmpty) ...[
+                  const BloomSectionHeader('Từ đồng nghĩa'),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final s in widget.result.synonyms)
+                        BloomChip(label: s),
+                    ],
                   ),
                 ],
-              ),
-            ),
-            const Divider(),
-            // Scrollable content
-            Expanded(
-              child: ListView(
-                controller: scrollController,
-                padding: const EdgeInsets.all(16),
-                children: [
-                  // Meaning
-                  const BloomSectionHeader('Nghĩa'),
-                  BloomTextField(
-                    controller: _meaningCtrl,
-                    maxLines: 3,
-                    minLines: 2,
-                  ),
-                  // Definition (English) — read-only
-                  if (widget.result.definition.isNotEmpty) ...[
-                    const BloomSectionHeader('Định nghĩa'),
-                    Text(widget.result.definition,
-                        style: TextStyle(color: c.inkSoft)),
-                  ],
-                  // Synonyms — read-only
-                  if (widget.result.synonyms.isNotEmpty) ...[
-                    const BloomSectionHeader('Từ đồng nghĩa'),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        for (final s in widget.result.synonyms)
-                          BloomChip(label: s),
-                      ],
-                    ),
-                  ],
-                  // Examples
-                  const BloomSectionHeader('Ví dụ'),
-                  ..._exampleCtrls.asMap().entries.map(
-                        (e) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: BloomTextField(controller: e.value),
-                              ),
-                              BloomIconButton(
-                                icon: Icons.close,
-                                onPressed: () => setState(
-                                    () => _exampleCtrls.removeAt(e.key)),
-                              ),
-                            ],
-                          ),
+                // Examples
+                const BloomSectionHeader('Ví dụ'),
+                ..._exampleCtrls.asMap().entries.map(
+                      (e) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: BloomTextField(controller: e.value),
+                            ),
+                            BloomIconButton(
+                              icon: Icons.close,
+                              onPressed: () => setState(
+                                  () => _exampleCtrls.removeAt(e.key)),
+                            ),
+                          ],
                         ),
                       ),
-                  BloomPillButton(
-                    label: 'Thêm ví dụ',
-                    icon: Icons.add,
-                    variant: BloomButtonVariant.link,
-                    onPressed: () => setState(
-                        () => _exampleCtrls.add(TextEditingController())),
-                  ),
-                  // Topics
-                  const BloomSectionHeader('Chủ đề'),
-                  topicsAsync.when(
-                    data: (topics) {
-                      if (!_topicsPreselected) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          setState(() => _preSelectTopics(topics));
-                        });
-                      }
-                      final selectedTopics = topics
-                          .where((t) => _selectedTopicIds.contains(t.id))
-                          .toList();
-                      return FilterTile(
-                        icon: Icons.sell_outlined,
-                        label: 'Chủ đề (tối đa 2)',
-                        value: selectedTopics.isEmpty
-                            ? 'Chưa chọn'
-                            : selectedTopics
-                                .map((t) => '${t.emoji} ${t.name}')
-                                .join(', '),
-                        onTap: () => _pickTopics(topics),
-                      );
-                    },
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Text(e.toString()),
-                  ),
-                  // Personal notes
-                  const BloomSectionHeader('Ghi chú cá nhân'),
-                  BloomTextField(
-                    controller: _notesCtrl,
-                    maxLines: 4,
-                    minLines: 3,
-                    hintText: 'Thêm ghi chú để dễ nhớ…',
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
+                    ),
+                BloomPillButton(
+                  label: 'Thêm ví dụ',
+                  icon: Icons.add,
+                  variant: BloomButtonVariant.link,
+                  onPressed: () => setState(
+                      () => _exampleCtrls.add(TextEditingController())),
+                ),
+                // Topics
+                const BloomSectionHeader('Chủ đề'),
+                topicsAsync.when(
+                  data: (topics) {
+                    if (!_topicsPreselected) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        setState(() => _preSelectTopics(topics));
+                      });
+                    }
+                    final selectedTopics = topics
+                        .where((t) => _selectedTopicIds.contains(t.id))
+                        .toList();
+                    return FilterTile(
+                      icon: Icons.sell_outlined,
+                      label: 'Chủ đề (tối đa 2)',
+                      value: selectedTopics.isEmpty
+                          ? 'Chưa chọn'
+                          : selectedTopics
+                              .map((t) => '${t.emoji} ${t.name}')
+                              .join(', '),
+                      onTap: () => _pickTopics(topics),
+                    );
+                  },
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Text(e.toString()),
+                ),
+                // Personal notes
+                const BloomSectionHeader('Ghi chú cá nhân'),
+                BloomTextField(
+                  controller: _notesCtrl,
+                  maxLines: 4,
+                  minLines: 3,
+                  hintText: 'Thêm ghi chú để dễ nhớ…',
+                ),
+                const SizedBox(height: 24),
+              ],
             ),
-            // Save button pinned at bottom
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                  16, 8, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
-              child: BloomPillButton(
-                label: 'Lưu vào Ngân hàng từ',
-                block: true,
-                onPressed: _save,
-              ),
+          ),
+          // Save button pinned at bottom
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+                16, 8, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
+            child: BloomPillButton(
+              label: 'Lưu vào Ngân hàng từ',
+              block: true,
+              onPressed: _save,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
