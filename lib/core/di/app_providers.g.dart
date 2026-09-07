@@ -601,6 +601,85 @@ final getVocabSuggestionsForTextUseCaseProvider =
 // ignore: unused_element
 typedef GetVocabSuggestionsForTextUseCaseRef
     = AutoDisposeProviderRef<GetVocabSuggestionsForTextUseCase>;
+String _$knowledgeStarterLibraryHash() =>
+    r'6fc0df620bc5d047afeacd35a6b5d8ab706e277a';
+
+/// See also [knowledgeStarterLibrary].
+@ProviderFor(knowledgeStarterLibrary)
+final knowledgeStarterLibraryProvider =
+    AutoDisposeProvider<KnowledgeStarterLibrary>.internal(
+  knowledgeStarterLibrary,
+  name: r'knowledgeStarterLibraryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$knowledgeStarterLibraryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef KnowledgeStarterLibraryRef
+    = AutoDisposeProviderRef<KnowledgeStarterLibrary>;
+String _$knowledgeNotesServiceHash() =>
+    r'85a0d8e8110d90877f182b4819d2ee110ca88957';
+
+/// See also [knowledgeNotesService].
+@ProviderFor(knowledgeNotesService)
+final knowledgeNotesServiceProvider =
+    AutoDisposeProvider<KnowledgeNotesService>.internal(
+  knowledgeNotesService,
+  name: r'knowledgeNotesServiceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$knowledgeNotesServiceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef KnowledgeNotesServiceRef
+    = AutoDisposeProviderRef<KnowledgeNotesService>;
+String _$knowledgeNoteSourceHash() =>
+    r'f0d1aa88ee57f589eab9759494e7436e833ea2a6';
+
+/// See also [knowledgeNoteSource].
+@ProviderFor(knowledgeNoteSource)
+final knowledgeNoteSourceProvider =
+    AutoDisposeProvider<KnowledgeNoteSource>.internal(
+  knowledgeNoteSource,
+  name: r'knowledgeNoteSourceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$knowledgeNoteSourceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef KnowledgeNoteSourceRef = AutoDisposeProviderRef<KnowledgeNoteSource>;
+String _$generateKnowledgeNoteUseCaseHash() =>
+    r'58022fb1c1138077067452bf7ee1211688c1c06c';
+
+/// See also [generateKnowledgeNoteUseCase].
+@ProviderFor(generateKnowledgeNoteUseCase)
+final generateKnowledgeNoteUseCaseProvider =
+    AutoDisposeProvider<GenerateKnowledgeNoteUseCase>.internal(
+  generateKnowledgeNoteUseCase,
+  name: r'generateKnowledgeNoteUseCaseProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$generateKnowledgeNoteUseCaseHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GenerateKnowledgeNoteUseCaseRef
+    = AutoDisposeProviderRef<GenerateKnowledgeNoteUseCase>;
 String _$part5SourceHash() => r'0a8bceff0ccdd17ae3cad624b7bf1b5bca5db2a6';
 
 /// See also [part5Source].

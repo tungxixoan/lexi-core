@@ -49,6 +49,11 @@ import '../../features/word_radar/data/sources/word_radar_source.dart';
 import '../../features/word_radar/domain/use_cases/find_known_headwords_use_case.dart';
 import '../../features/word_radar/domain/use_cases/generate_word_suggestions_use_case.dart';
 import '../../features/word_radar/domain/use_cases/get_vocab_suggestions_for_text_use_case.dart';
+// --- Knowledge Notes ("Kiến thức") DI ---
+import '../../features/knowledge/data/knowledge_notes_service.dart';
+import '../../features/knowledge/data/knowledge_starter_library.dart';
+import '../../features/knowledge/data/sources/knowledge_note_source.dart';
+import '../../features/knowledge/domain/use_cases/generate_knowledge_note_use_case.dart';
 
 part 'app_providers.g.dart';
 
@@ -230,6 +235,28 @@ GetVocabSuggestionsForTextUseCase getVocabSuggestionsForTextUseCase(
       ref.watch(findKnownHeadwordsUseCaseProvider),
       ref.watch(generateWordSuggestionsUseCaseProvider),
     );
+
+@riverpod
+KnowledgeStarterLibrary knowledgeStarterLibrary(KnowledgeStarterLibraryRef ref) =>
+    KnowledgeStarterLibrary();
+
+@riverpod
+KnowledgeNotesService knowledgeNotesService(KnowledgeNotesServiceRef ref) =>
+    KnowledgeNotesService(
+      currentUid: () => ref.read(currentUidProvider),
+      starterLibrary: ref.watch(knowledgeStarterLibraryProvider),
+    );
+
+@riverpod
+KnowledgeNoteSource knowledgeNoteSource(KnowledgeNoteSourceRef ref) {
+  final settings = ref.watch(userSettingsNotifierProvider);
+  return KnowledgeNoteSource(settings);
+}
+
+@riverpod
+GenerateKnowledgeNoteUseCase generateKnowledgeNoteUseCase(
+        GenerateKnowledgeNoteUseCaseRef ref) =>
+    GenerateKnowledgeNoteUseCase(ref.watch(knowledgeNoteSourceProvider));
 
 @riverpod
 Part5Source part5Source(Part5SourceRef ref) {
