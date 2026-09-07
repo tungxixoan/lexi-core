@@ -76,7 +76,7 @@ void main() {
     final svc = FakeKnowledgeService();
     final created = DateTime.utc(2020, 5, 1);
     final note = noteFixture(
-      'n1',
+      id: 'n1',
       origin: KnowledgeNoteOrigin.starter,
       groupId: 'en_conditionals',
       createdAt: created,

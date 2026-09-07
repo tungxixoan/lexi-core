@@ -16,7 +16,7 @@ void main() {
   test('build() seeds then loads notes for the active language', () async {
     final svc = FakeKnowledgeService()
       ..store.addAll(
-          [noteFixture('a'), noteFixture('b', language: Language.chinese)]);
+          [noteFixture(id: 'a'), noteFixture(id: 'b', language: Language.chinese)]);
     final c = _container(svc);
     final notes = await c.read(knowledgeNotesNotifierProvider.future);
     expect(svc.seedCalls, 1);
@@ -29,13 +29,13 @@ void main() {
     await c.read(knowledgeNotesNotifierProvider.future);
     await c
         .read(knowledgeNotesNotifierProvider.notifier)
-        .saveNote(noteFixture('x'));
+        .saveNote(noteFixture(id: 'x'));
     final notes = await c.read(knowledgeNotesNotifierProvider.future);
     expect(notes.map((n) => n.id), contains('x'));
   });
 
   test('deleteNote removes from state', () async {
-    final svc = FakeKnowledgeService()..store.add(noteFixture('x'));
+    final svc = FakeKnowledgeService()..store.add(noteFixture(id: 'x'));
     final c = _container(svc);
     await c.read(knowledgeNotesNotifierProvider.future);
     await c.read(knowledgeNotesNotifierProvider.notifier).deleteNote('x');
