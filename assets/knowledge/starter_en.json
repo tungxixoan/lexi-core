@@ -1,0 +1,42 @@
+[
+  {
+    "id": "starter_en_present_simple",
+    "title": "Hiện tại đơn",
+    "summary": "Diễn tả thói quen, sự thật hiển nhiên, lịch trình cố định.",
+    "explanation": "Dùng **hiện tại đơn** cho thói quen và sự thật.\n\nNgôi thứ ba số ít thêm **-s/-es** vào động từ.",
+    "patterns": ["S + V(s/es) + O", "S + do/does + not + V", "Do/Does + S + V?"],
+    "examples": [
+      {"text": "She works in a bank.", "translation": "Cô ấy làm việc ở ngân hàng."},
+      {"text": "Water boils at 100°C.", "translation": "Nước sôi ở 100°C."}
+    ],
+    "pitfalls": ["Quên **-s** ở ngôi thứ ba số ít.", "Dùng hiện tại đơn cho việc đang diễn ra ngay lúc nói."],
+    "groupId": "en_tenses",
+    "tags": ["ngu-phap-co-ban"],
+    "cefrLevel": "a1",
+    "targetLanguage": "english",
+    "source": "starter",
+    "sourcePrompt": null,
+    "createdAt": "2026-09-07T00:00:00.000Z",
+    "updatedAt": "2026-09-07T00:00:00.000Z"
+  },
+  {
+    "id": "starter_en_conditionals_2_3",
+    "title": "Câu điều kiện loại 2 và 3",
+    "summary": "Loại 2: giả định trái hiện tại. Loại 3: giả định trái quá khứ.",
+    "explanation": "**Loại 2** nói về điều không có thật ở hiện tại: *If + quá khứ đơn, would + V*.\n\n**Loại 3** nói về điều đã không xảy ra trong quá khứ: *If + had + P.P, would have + P.P*.",
+    "patterns": ["If + S + V-past, S + would + V", "If + S + had + P.P, S + would have + P.P"],
+    "examples": [
+      {"text": "If I had more time, I would learn piano.", "translation": "Nếu tôi có nhiều thời gian hơn, tôi sẽ học piano."},
+      {"text": "If she had studied, she would have passed.", "translation": "Nếu cô ấy đã học, cô ấy đã đậu rồi."}
+    ],
+    "pitfalls": ["Dùng \"would\" trong mệnh đề if.", "Nhầm loại 2 với loại 3 khi mốc thời gian là quá khứ."],
+    "groupId": "en_conditionals",
+    "tags": ["ngu-phap-co-ban"],
+    "cefrLevel": "b1",
+    "targetLanguage": "english",
+    "source": "starter",
+    "sourcePrompt": null,
+    "createdAt": "2026-09-07T00:00:00.000Z",
+    "updatedAt": "2026-09-07T00:00:00.000Z"
+  }
+]
