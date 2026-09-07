@@ -79,6 +79,9 @@ class HighlightedText extends StatelessWidget {
     if (origCursor < text.length) {
       spans.add(TextSpan(text: text.substring(origCursor), style: base));
     }
-    return RichText(text: TextSpan(children: spans));
+    return RichText(
+      textScaler: MediaQuery.textScalerOf(context),
+      text: TextSpan(children: spans),
+    );
   }
 }

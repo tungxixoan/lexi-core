@@ -18,6 +18,7 @@ class BoldText extends StatelessWidget {
         for (var i = 0; i < paragraphs.length; i++) ...[
           if (i > 0) const SizedBox(height: 8),
           RichText(
+            textScaler: MediaQuery.textScalerOf(context),
             text: TextSpan(
               style: base,
               children: [

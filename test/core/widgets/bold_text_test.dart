@@ -8,6 +8,10 @@ void main() {
       home: Scaffold(body: BoldText(source: 'para **one**\n\npara two')),
     ));
     expect(find.byType(RichText), findsNWidgets(2));
+    expect(
+      find.byWidgetPredicate((w) => w is SizedBox && w.height == 8),
+      findsOneWidget,
+    );
   });
 
   testWidgets('bold run gets FontWeight.bold', (tester) async {
