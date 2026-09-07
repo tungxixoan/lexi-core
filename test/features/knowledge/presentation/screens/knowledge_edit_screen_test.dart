@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lexi_core/core/theme/app_theme.dart';
 import 'package:lexi_core/features/knowledge/data/sources/knowledge_note_source.dart';
+import 'package:lexi_core/features/knowledge/domain/entities/knowledge_note.dart';
 import 'package:lexi_core/features/knowledge/presentation/screens/knowledge_edit_screen.dart';
 
 import '../../_fakes.dart';
@@ -68,5 +69,26 @@ void main() {
     await tester.pumpAndSettle();
     expect(svc.store, isEmpty);
     expect(find.textContaining('Nhập tiêu đề'), findsOneWidget);
+  });
+
+  testWidgets('edit mode preserves origin + createdAt when the list is empty',
+      (tester) async {
+    final svc = FakeKnowledgeService();
+    final created = DateTime.utc(2020, 5, 1);
+    final note = noteFixture(
+      'n1',
+      origin: KnowledgeNoteOrigin.starter,
+      groupId: 'en_conditionals',
+      createdAt: created,
+    );
+    // Notifier list deliberately NOT pre-loaded — svc.store is empty.
+    await _pump(tester, svc, KnowledgeEditScreen(initial: note));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Lưu'));
+    await tester.pumpAndSettle();
+    expect(svc.store.single.id, 'n1');
+    expect(svc.store.single.origin.name, 'starter');
+    expect(svc.store.single.createdAt, created);
   });
 }

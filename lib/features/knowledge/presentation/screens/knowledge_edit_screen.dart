@@ -50,6 +50,7 @@ class _KnowledgeEditScreenState extends ConsumerState<KnowledgeEditScreen> {
   CEFRLevel? _cefr;
   late final List<String> _tags;
   String? _error;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -100,6 +101,8 @@ class _KnowledgeEditScreenState extends ConsumerState<KnowledgeEditScreen> {
   }
 
   Future<void> _save() async {
+    if (_saving) return;
+    setState(() => _error = null);
     final language =
         ref.read(userSettingsNotifierProvider.select((s) => s.targetLanguage));
     if (_title.text.trim().isEmpty) {
@@ -122,6 +125,10 @@ class _KnowledgeEditScreenState extends ConsumerState<KnowledgeEditScreen> {
         }
       }
     }
+    // Fall back to the note handed to us when the provider list hasn't
+    // loaded yet — otherwise a plain edit would lose its origin/createdAt.
+    existing ??= widget.initial;
+    setState(() => _saving = true);
 
     final now = DateTime.now();
     final origin = widget.draft != null
@@ -157,8 +164,17 @@ class _KnowledgeEditScreenState extends ConsumerState<KnowledgeEditScreen> {
       updatedAt: now,
     );
 
-    await ref.read(knowledgeNotesNotifierProvider.notifier).saveNote(note);
-    if (mounted) context.go('/knowledge/note/${note.id}');
+    try {
+      await ref.read(knowledgeNotesNotifierProvider.notifier).saveNote(note);
+      if (mounted) context.go('/knowledge/note/${note.id}');
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _error = 'Không lưu được ghi chú. Thử lại.';
+        });
+      }
+    }
   }
 
   void _pickGroup(List<KnowledgeGroup> groups) async {
@@ -376,9 +392,9 @@ class _KnowledgeEditScreenState extends ConsumerState<KnowledgeEditScreen> {
                     const SizedBox(height: 8),
                   ],
                   BloomPillButton(
-                    label: 'Lưu',
+                    label: _saving ? 'Đang lưu…' : 'Lưu',
                     block: true,
-                    onPressed: _save,
+                    onPressed: _saving ? null : _save,
                   ),
                 ],
               ),
