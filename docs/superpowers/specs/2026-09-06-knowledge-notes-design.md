@@ -71,7 +71,9 @@ groupId: string                     // stable key from the targetLanguage taxono
                                     //   (§3), e.g. "en_tenses"
 tags: string[]                      // free-form; compared accent-folded
 cefrLevel: string | null            // "a1".."c2" (lowercase, matches CEFRLevel.name)
-targetLanguage: string              // "en" | "zh" | "ko" | "ja" | "vi"
+targetLanguage: string              // Language.name — "english" | "chinese" |
+                                    //   "korean" | "japanese" | "vietnamese",
+                                    //   matching reading_exercises/listening_exercises
 source: "ai" | "manual" | "starter"
 sourcePrompt: string | null         // most recent request that created/edited it
                                     //   (reference only; no prompt history)
@@ -91,15 +93,20 @@ Notes:
 - Firestore security rules already cover this: `users/{uid}/{document=**}` —
   **no rules change needed.**
 
-### Seeded flag: `users/{uid}/settings/user`
+### Seeded flag: `users/{uid}/knowledge_meta/seed`
 
-Add one field:
+A dedicated one-document collection (the existing `settings/config` doc is
+owned by `AiSettingsSyncService` and merged by both platforms — keep the
+seeding flag out of it). Shape:
 
 ```
-knowledgeSeeded: { en?: boolean, zh?: boolean, ko?: boolean, ja?: boolean, vi?: boolean }
+{ english?: boolean, chinese?: boolean, korean?: boolean,
+  japanese?: boolean, vietnamese?: boolean }
 ```
 
-Only English has starter content in v1, so in practice only `en` is ever set.
+Keyed by `Language.name`. Only English has starter content in v1, so in
+practice only `english` is ever set. Covered by the existing
+`users/{uid}/{document=**}` rule — no rules change.
 
 ---
 
