@@ -2329,7 +2329,7 @@ FOLLOW-UPS (not gating this branch — for a later chore):
 **Web test baseline:** 804 pass (occasionally 1 async-media flake — re-run before assuming regression)
 
 ## Status
-- Task 1: pending
+- Task 1: ✅ complete (commit e5ffff2, 4 tests, suite 808, review clean)
 - Task 2: pending
 - Task 3: pending
 - Task 4: pending
