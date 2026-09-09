@@ -2318,3 +2318,31 @@ FOLLOW-UPS (not gating this branch — for a later chore):
 - #16 sheet→router seam tested in halves (assert lastPushedExtra type).
 - #17 knowledge_note_source prompt interpolates Map.toString() not jsonEncode for extendingNote.
 - Task 8: 2 stale .g.dart provider hashes (listening/practice) — clean build_runner + commit.
+
+---
+
+# Knowledge Notes (Kiến thức) — WEB Plan
+
+**Plan:** docs/superpowers/plans/2026-09-09-knowledge-notes-web.md
+**BASE commit (plan start):** 317ff54
+**Branch:** master
+**Web test baseline:** 804 pass (occasionally 1 async-media flake — re-run before assuming regression)
+
+## Status
+- Task 1: pending
+- Task 2: pending
+- Task 3: pending
+- Task 4: pending
+- Task 5: pending
+- Task 6: pending
+- Task 7: pending
+- Task 8: pending
+- Task 9: pending
+- Task 10: pending
+- Task 11: pending
+- Task 12: pending
+- Task 13: pending
+- Task 14: pending
+
+## Minor Findings (for final review)
+(none yet)
