@@ -11,10 +11,13 @@ import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/knowledge/data/knowledge_notes_service.dart';
+import 'package:lexi_core/features/knowledge/data/sources/knowledge_note_source.dart';
 import 'package:lexi_core/features/knowledge/domain/entities/knowledge_note.dart';
+import 'package:lexi_core/features/knowledge/domain/use_cases/generate_knowledge_note_use_case.dart';
 import 'package:lexi_core/features/knowledge/presentation/screens/knowledge_detail_screen.dart';
 import 'package:lexi_core/features/knowledge/presentation/screens/knowledge_group_screen.dart';
 import 'package:lexi_core/features/knowledge/presentation/screens/knowledge_home_screen.dart';
+import 'package:lexi_core/features/knowledge/presentation/widgets/knowledge_ai_request_sheet.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/vocab_record.dart';
 import 'package:lexi_core/features/vocabulary/presentation/providers/vocab_bank_provider.dart';
@@ -236,3 +239,125 @@ Future<void> pumpGroup(
   Language language = Language.english,
 }) =>
     _pumpKnowledge(tester, svc, '/knowledge/group/$groupId', language: language);
+
+// ---------------------------------------------------------------------------
+// "Nhờ AI soạn" draft flow (Task 14)
+// ---------------------------------------------------------------------------
+
+/// A [GenerateKnowledgeNoteUseCase] that returns a fixed [KnowledgeNoteDraft]
+/// without touching an AI client.
+class StubUseCase implements GenerateKnowledgeNoteUseCase {
+  StubUseCase(this._draft);
+  final KnowledgeNoteDraft _draft;
+
+  @override
+  Future<KnowledgeNoteDraft> execute({
+    required String request,
+    required Language targetLanguage,
+    String? hintGroupId,
+    CEFRLevel? hintCefr,
+    required List<KnowledgeNote> existingInScope,
+    KnowledgeNote? extendingNote,
+  }) async =>
+      _draft;
+}
+
+/// A [GenerateKnowledgeNoteUseCase] whose [execute] always throws.
+class ThrowingUseCase implements GenerateKnowledgeNoteUseCase {
+  @override
+  Future<KnowledgeNoteDraft> execute({
+    required String request,
+    required Language targetLanguage,
+    String? hintGroupId,
+    CEFRLevel? hintCefr,
+    required List<KnowledgeNote> existingInScope,
+    KnowledgeNote? extendingNote,
+  }) async =>
+      throw Exception('boom');
+}
+
+/// A minimal valid AI draft for assertions.
+const okDraft = KnowledgeNoteDraft(
+  title: 'Câu điều kiện loại 2 và 3',
+  summary: 'Tóm tắt',
+  explanation: 'Giải thích',
+);
+
+/// ProviderContainer wiring the fake service, a fixed language and a stubbed
+/// use-case into the knowledge draft providers.
+ProviderContainer draftContainer(
+  FakeKnowledgeService svc, {
+  GenerateKnowledgeNoteUseCase? useCase,
+  Language language = Language.english,
+}) =>
+    ProviderContainer(
+      overrides: [
+        ...knowledgeTestOverrides(svc, language: language),
+        generateKnowledgeNoteUseCaseProvider
+            .overrideWithValue(useCase ?? StubUseCase(okDraft)),
+      ],
+    );
+
+/// Route location + extra recorded by [pumpRequestSheet]'s stub `/knowledge/new`.
+String? lastPushedLocation;
+Object? lastPushedExtra;
+
+/// Pumps a page whose single button opens [showKnowledgeAiRequestSheet], behind
+/// a GoRouter that records navigation to `/knowledge/new`.
+Future<void> pumpRequestSheet(
+  WidgetTester tester,
+  FakeKnowledgeService svc, {
+  GenerateKnowledgeNoteUseCase? useCase,
+  Language language = Language.english,
+}) async {
+  lastPushedLocation = null;
+  lastPushedExtra = null;
+  final router = GoRouter(
+    initialLocation: '/knowledge',
+    routes: [
+      GoRoute(
+        path: '/knowledge',
+        builder: (_, __) => Scaffold(
+          body: Builder(
+            builder: (context) => Center(
+              child: ElevatedButton(
+                onPressed: () => showKnowledgeAiRequestSheet(context),
+                child: const Text('mở sheet'),
+              ),
+            ),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/knowledge/new',
+        builder: (_, s) {
+          lastPushedLocation = '/knowledge/new';
+          lastPushedExtra = s.extra;
+          return const Scaffold(body: Text('ghi chú mới'));
+        },
+      ),
+      GoRoute(
+        path: '/knowledge/note/:id',
+        builder: (_, s) =>
+            Scaffold(body: Text('ghi chú ${s.pathParameters['id']}')),
+      ),
+    ],
+  );
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        ...knowledgeTestOverrides(svc, language: language),
+        generateKnowledgeNoteUseCaseProvider
+            .overrideWithValue(useCase ?? StubUseCase(okDraft)),
+        vocabBankNotifierProvider.overrideWith(() => FakeVocabBank()),
+      ],
+      child: MaterialApp.router(
+        theme: AppTheme.light,
+        routerConfig: router,
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('mở sheet'));
+  await tester.pumpAndSettle();
+}

@@ -9,6 +9,7 @@ import '../../domain/entities/knowledge_group.dart';
 import '../../domain/entities/knowledge_note.dart';
 import '../../domain/knowledge_filters.dart';
 import '../providers/knowledge_notes_provider.dart';
+import '../widgets/knowledge_ai_request_sheet.dart';
 import '../widgets/knowledge_note_row.dart';
 
 /// Languages that ship a starter knowledge library — only these show the
@@ -58,8 +59,7 @@ class _KnowledgeHomeScreenState extends ConsumerState<KnowledgeHomeScreen> {
     );
   }
 
-  // TODO(Task 14): replace with showKnowledgeAiRequestSheet(context)
-  void _composeWithAi() => context.go('/knowledge/new');
+  void _composeWithAi() => showKnowledgeAiRequestSheet(context);
 
   @override
   Widget build(BuildContext context) {
@@ -104,10 +104,23 @@ class _KnowledgeHomeScreenState extends ConsumerState<KnowledgeHomeScreen> {
     Language language,
   ) {
     if (allNotes.isEmpty) {
+      // The centered empty state already offers "Nhờ AI soạn"; only surface
+      // "Tự viết" below it so the AI button isn't double-rendered.
       return Column(
         children: [
           Expanded(child: _emptyState(context)),
-          _bottomActions(context),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: BloomPillButton(
+                label: '+ Tự viết',
+                variant: BloomButtonVariant.secondary,
+                block: true,
+                onPressed: () => context.go('/knowledge/new'),
+              ),
+            ),
+          ),
         ],
       );
     }
