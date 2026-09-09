@@ -114,7 +114,7 @@
     ],
     "pitfalls": [
       "Dịch \"đang\" một cách máy móc thành tiếp diễn với động từ trạng thái: sai \"I am understanding now\", đúng \"I understand now\".",
-      "Dùng tiếp diễn cho sự thật khoa học hoặc quy luật: sai \"The sun is rising in the east\", đúng \"The sun rises in the east\".",
+      "Dùng tiếp diễn khi nói về quy luật hoặc sự thật khoa học: khi phát biểu một quy luật chung, hãy nói \"The sun rises in the east\", không phải \"The sun is rising in the east\" (dạng -ing chỉ hợp khi thật sự đang tả cảnh mặt trời mọc lúc bình minh).",
       "Dùng hiện tại đơn cho việc rõ ràng đang diễn ra trước mắt: nếu ai đó đang gọi bạn, hãy nói \"Someone is calling you\", không phải \"Someone calls you\"."
     ],
     "groupId": "en_tenses",
@@ -265,7 +265,7 @@
       "If + S + V(s/es), + câu mệnh lệnh"
     ],
     "examples": [
-      {"text": "If you press this button, the machine stops.", "translation": "Nếu bạn nhấn nút này, máy sẽ dừng. (loại 0, luôn đúng)"},
+      {"text": "If you press this button, the machine stops.", "translation": "Nếu bạn nhấn nút này thì máy dừng lại. (loại 0, luôn đúng)"},
       {"text": "Water boils if you heat it to 100 degrees.", "translation": "Nước sôi nếu bạn đun nó đến 100 độ."},
       {"text": "If it rains tomorrow, we will cancel the picnic.", "translation": "Nếu ngày mai trời mưa, chúng tôi sẽ hủy buổi dã ngoại. (loại 1)"},
       {"text": "If you study hard, you can pass the exam.", "translation": "Nếu bạn học chăm, bạn có thể đậu kỳ thi."},
@@ -301,7 +301,7 @@
       {"text": "If I were you, I would take the job.", "translation": "Nếu tôi là bạn, tôi sẽ nhận công việc đó."},
       {"text": "If she had studied, she would have passed the test.", "translation": "Nếu cô ấy đã học bài, cô ấy đã đậu bài kiểm tra rồi."},
       {"text": "We would have arrived on time if we had left earlier.", "translation": "Chúng tôi đã đến đúng giờ nếu chúng tôi rời đi sớm hơn."},
-      {"text": "If he had saved money, he would not be in debt now.", "translation": "Nếu anh ấy đã tiết kiệm tiền thì bây giờ anh ấy đã không nợ nần. (câu hỗn hợp)"}
+      {"text": "If he had saved money, he would not be in debt now.", "translation": "Nếu anh ấy đã tiết kiệm tiền thì bây giờ anh ấy không nợ nần. (câu hỗn hợp)"}
     ],
     "pitfalls": [
       "Dùng **would** trong mệnh đề if: sai \"If I would have time\", đúng \"If I had time\".",
