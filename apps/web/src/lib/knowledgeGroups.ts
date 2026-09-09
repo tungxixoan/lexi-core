@@ -78,16 +78,16 @@ const BY_LANGUAGE: Record<TargetLanguage, KnowledgeGroup[]> = {
   vietnamese: VI,
 };
 
-export function knowledgeGroupsFor(language: TargetLanguage): KnowledgeGroup[] {
+export function knowledgeGroupsFor(language: TargetLanguage): readonly KnowledgeGroup[] {
   return BY_LANGUAGE[language];
 }
 
-const LABEL_BY_ID: Record<string, string> = Object.fromEntries(
-  [...EN, ...ZH, ...KO, ...JA, ...VI].map((g) => [g.id, g.label]),
+const LABEL_BY_ID: Map<string, string> = new Map(
+  [...EN, ...ZH, ...KO, ...JA, ...VI].map((g) => [g.id, g.label] as const),
 );
 
 export function knowledgeGroupLabel(groupId: string): string {
-  return LABEL_BY_ID[groupId] ?? groupId;
+  return LABEL_BY_ID.get(groupId) ?? groupId;
 }
 
 export function knowledgeOtherGroupId(language: TargetLanguage): string {

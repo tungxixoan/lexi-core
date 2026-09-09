@@ -32,6 +32,10 @@ describe("knowledgeGroups", () => {
     expect(knowledgeGroupLabel("en_tenses")).toBe("Thì");
     expect(knowledgeGroupLabel("nope_nope")).toBe("nope_nope");
   });
+  it("label lookup is immune to prototype keys", () => {
+    expect(knowledgeGroupLabel("toString")).toBe("toString");
+    expect(knowledgeGroupLabel("constructor")).toBe("constructor");
+  });
 
   it("Vietnamese labels carry CJK annotations byte-for-byte", () => {
     const label = (id: string) => knowledgeGroupLabel(id);
