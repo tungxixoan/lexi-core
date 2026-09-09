@@ -2261,3 +2261,60 @@ FIX WAVE: DISPATCHED (I2 + M1 + M2 + M4 + M5; M3 skipped).
 FIX WAVE 16fc1c1: I2 fixed (handleStart gained explicit `mode` param to avoid async-setState stale-closure; also fixed a latent bug where onClick={handleStart} passed the click event as an arg) + both result buttons reset practiceMode. M1/M2 docs fixed. M4: 2 new regression tests (one would fail against the naive fix). M5: aria-pressed added. M3 skipped as planned. 804 tests (+2), typecheck clean.
 FIX WAVE re-review: all FIXED (incl. both I2 sub-bugs independently re-derived), no regressions. Ready YES.
 # SM-2 PRACTICE MODE TOGGLE COMPLETE. Range 855271c..16fc1c1 on master. Flutter 923 tests (was 909), analyze 0. Web 804 tests (was 795), typecheck clean.
+
+---
+
+# Knowledge Notes (Kiến thức) — Flutter Plan
+
+**Plan:** docs/superpowers/plans/2026-09-07-knowledge-notes-flutter.md
+**BASE commit (plan start):** 09a906b
+**Branch:** master (per user)
+
+## Status
+
+- Task 1: ✅ complete (commit 1c10f35, 4/4 tests, review clean)
+- Task 2: ✅ complete (commit 4ea4c69, 15/15 tests, review clean)
+- Task 3: ✅ complete (commits 7ff04e9..d75943c, 4/4 tests, review clean — 1 Important fixed: textScaler regression)
+- Task 4: ✅ complete (commits 416492a..21296a8, 7/7 tests, review clean — Minors: taxonomy test-strengthening applied)
+- Task 5: ✅ complete (commit a538a7f, 5/5 tests, review clean — Minor: one misleading test comment inherited from brief (thi is a stopword))
+- Task 6: ✅ complete (commit b9f7f6a, 9/9 tests, review clean)
+- Task 7: ✅ complete (commit 3cea979, 4/4 tests, review clean)
+- Task 8: ✅ complete (commit b1f4d23, analyze+971 clean, review clean)
+- Task 9: ✅ complete (commit 34ad62a, 3/3 tests, review clean)
+- Task 10: ✅ complete (commit fd3c467, 4/4 tests, full suite 978, review clean)
+- Task 11: ✅ complete (commits 8ae9c31..6e30e82, 6 tests, full suite 981, review clean — 1 Important fixed: edit-mode origin/createdAt fallback)
+- Task 12: ✅ complete (commit 25892ee, 10 tests, full suite 991, review clean)
+- Task 13: ✅ complete (commit c75dc74, 3 tests, full suite 994, review clean)
+- Task 14: ✅ complete (commits 8e45a63..944d66e, 7 tests, full suite 1001, review clean — 1 Important fixed: extend() request loss on Layer-2 path)
+- Task 15: ✅ complete (commits f01e9af..4632184, 7 tests, full suite 1008, review clean — 1 Important fixed: /knowledge tab alias)
+- Task 16: ✅ complete (commits 8f23614..4eec8f9, 2 new tests, full suite 1010, review clean — 3 Minor translation tweaks applied)
+- Task 17: ✅ complete (commit 36ef02c, docs, full suite 1010, review clean)
+
+## Minor Findings (for final review)
+
+- Task 2 (Minor): bold_markup_test.dart could assert `expect(vectors, hasLength(14))` to guard the shared fixture contract against silent truncation.
+- Task 2 (Minor): bold_markup.dart:44 has an unreachable `runs.isEmpty` fallback branch (harmless, defensive).
+
+- Task 6 (Minor, for Task 9): KnowledgeNotesService.all() returns `const []` on empty/error paths — the Task 9 notifier MUST copy (`[...list]`) before mutating, or it throws on the empty case.
+- Task 6 (Minor): seed path does two full-collection get()s (one redundant).
+- Task 8 (Minor, follow-up chore): listening_comprehension_provider.g.dart + practice_session_provider.g.dart carry stale provider hashes — a clean `build_runner build` should be run once and the legit regen committed so future diffs stop surfacing this.
+- Task 12 (Minor): KnowledgeDetailScreen BloomAppBar title is always '' (vocab_detail shows the headword) — echo note.title.
+- Task 12 (Minor): group-screen row-tap test is weak (title on screen before+after nav); noteFixture carries redundant group+groupId alias.
+- Task 13 (Minor, fold into Task 14): empty-state shows 3 AI/write buttons (centered 'Nhờ AI soạn' + bottom row's two). Task 14 should suppress the bottom row (or its AI button) in the empty branch.
+
+## Whole-branch review (opus) — verdict: With fixes
+
+FIX BATCH — landed in d270504, re-verified (opus review → 'ready to merge: Yes'), full suite 1022 green: C#1 swallowed write errors in upsert/delete; I#2 no aiAvailable gate in AI sheet; I#3 unvalidated suggestedGroupId; I#4 non-defensive DateTime.parse empties whole list (web-plan landmine); I#5 README over-promises (reworded); m#6 Bổ sung always rewrites source->ai (spec: unchanged unless starter); m#7 stopwords eat "thi"/"the".
+
+FOLLOW-UPS (not gating this branch — for a later chore):
+- #8 retire private _HighlightedText in reading_session_screen.dart, adopt shared widget w/ style param.
+- #9 HighlightedText misses multi-word terms across double-space/newline (single-word headwords unaffected).
+- #10 HighlightedText per-char regex perf — fine at current vocab sizes.
+- #11 dead code: KnowledgeFilter.isActive, KnowledgeNote.copyWith(clearCefr) still unused after fix batch.
+- #12 _KnowledgeEditRoute not-found returns blank "Ghi chú mới" (silent); detail screen shows "not found" on provider error state too.
+- #13 restore snackbar always claims success — make it "Đã khôi phục N" / "Không có gì để khôi phục".
+- #14 _knowledgeHasStarter hardcodes English vs asset-driven library; seedIfNeeded sets flag even for no-starter langs (spec-correct but means a future starter_zh never seeds existing accounts).
+- #15 spec/plan flaw: starter_en_comparatives filed under en_articles_nouns — odd for browsing.
+- #16 sheet→router seam tested in halves (assert lastPushedExtra type).
+- #17 knowledge_note_source prompt interpolates Map.toString() not jsonEncode for extendingNote.
+- Task 8: 2 stale .g.dart provider hashes (listening/practice) — clean build_runner + commit.
