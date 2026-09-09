@@ -14,6 +14,7 @@ import 'package:lexi_core/features/knowledge/data/knowledge_notes_service.dart';
 import 'package:lexi_core/features/knowledge/domain/entities/knowledge_note.dart';
 import 'package:lexi_core/features/knowledge/presentation/screens/knowledge_detail_screen.dart';
 import 'package:lexi_core/features/knowledge/presentation/screens/knowledge_group_screen.dart';
+import 'package:lexi_core/features/knowledge/presentation/screens/knowledge_home_screen.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/vocab_record.dart';
 import 'package:lexi_core/features/vocabulary/presentation/providers/vocab_bank_provider.dart';
@@ -41,6 +42,7 @@ class FakeVocabBank extends VocabBankNotifier {
 class FakeKnowledgeService implements KnowledgeNotesService {
   final List<KnowledgeNote> store = [];
   int seedCalls = 0;
+  int restoreCalls = 0;
 
   @override
   Future<List<KnowledgeNote>> all(Language language) async =>
@@ -63,8 +65,10 @@ class FakeKnowledgeService implements KnowledgeNotesService {
   }
 
   @override
-  Future<List<KnowledgeNote>> restoreStarters(Language language) async =>
-      const [];
+  Future<List<KnowledgeNote>> restoreStarters(Language language) async {
+    restoreCalls++;
+    return const [];
+  }
 }
 
 /// A minimal valid [KnowledgeNote] for assertions.
@@ -178,6 +182,51 @@ Future<void> pumpDetail(
 }) =>
     _pumpKnowledge(tester, svc, '/knowledge/note/$id',
         language: language, vocab: vocab);
+
+/// Pumps [KnowledgeHomeScreen] behind a minimal GoRouter (group / note / new
+/// destinations are stubbed).
+Future<void> pumpHome(
+  WidgetTester tester,
+  FakeKnowledgeService svc, {
+  Language language = Language.english,
+}) async {
+  final router = GoRouter(
+    initialLocation: '/knowledge',
+    routes: [
+      GoRoute(
+        path: '/knowledge',
+        builder: (_, __) => const KnowledgeHomeScreen(),
+      ),
+      GoRoute(
+        path: '/knowledge/group/:groupId',
+        builder: (_, s) =>
+            Scaffold(body: Text('nhóm ${s.pathParameters['groupId']}')),
+      ),
+      GoRoute(
+        path: '/knowledge/note/:id',
+        builder: (_, s) =>
+            Scaffold(body: Text('ghi chú ${s.pathParameters['id']}')),
+      ),
+      GoRoute(
+        path: '/knowledge/new',
+        builder: (_, __) => const Scaffold(body: Text('ghi chú mới')),
+      ),
+    ],
+  );
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        ...knowledgeTestOverrides(svc, language: language),
+        vocabBankNotifierProvider.overrideWith(() => FakeVocabBank()),
+      ],
+      child: MaterialApp.router(
+        theme: AppTheme.light,
+        routerConfig: router,
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
 
 /// Pumps [KnowledgeGroupScreen] for [groupId] behind a minimal GoRouter.
 Future<void> pumpGroup(
