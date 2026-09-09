@@ -22,6 +22,10 @@ function toRuns(out: { t: string; b: boolean }[][]): TextRun[][] {
 }
 
 describe("parseBoldMarkup — shared vectors", () => {
+  it("loads every shared fixture vector (guards a truncated/corrupted file)", () => {
+    expect(vectors).toHaveLength(14);
+  });
+
   for (const v of vectors) {
     it(`vector: ${v.name}`, () => {
       expect(parseBoldMarkup(v.in)).toEqual(toRuns(v.out));
