@@ -43,6 +43,13 @@ import '../../features/listening/presentation/screens/comprehension_home_screen.
 import '../../features/listening/presentation/screens/comprehension_session_screen.dart';
 import '../../features/listening/presentation/screens/comprehension_result_screen.dart';
 import '../../features/listening/presentation/providers/listening_comprehension_provider.dart';
+import '../../features/knowledge/data/sources/knowledge_note_source.dart';
+import '../../features/knowledge/presentation/providers/knowledge_notes_provider.dart';
+import '../../features/knowledge/presentation/screens/knowledge_detail_screen.dart';
+import '../../features/knowledge/presentation/screens/knowledge_edit_screen.dart';
+import '../../features/knowledge/presentation/screens/knowledge_group_screen.dart';
+import '../../features/knowledge/presentation/screens/knowledge_home_screen.dart';
+import '../theme/bloom/bloom.dart';
 
 /// Pure redirect decision, extracted so it's unit-testable without a full
 /// widget tree or a faked FirebaseAuth — see test/core/router/auth_redirect_test.dart.
@@ -141,6 +148,78 @@ class _SplashScreenState extends ConsumerState<_SplashScreen> {
       const Scaffold(body: Center(child: CircularProgressIndicator()));
 }
 
+/// The `/knowledge` route subtree ("Kiến thức"). Lives at top level so both
+/// [appRouter] (spread into the `ShellRoute`) and the router tests can mount
+/// exactly the same routes.
+final knowledgeRoutes = <RouteBase>[
+  GoRoute(
+    path: '/knowledge',
+    builder: (context, state) => const KnowledgeHomeScreen(),
+    routes: [
+      GoRoute(
+        path: 'new',
+        builder: (context, state) {
+          final extra = state.extra;
+          if (extra
+              is ({
+                KnowledgeNoteDraft draft,
+                String request,
+                String? overwriteNoteId
+              })) {
+            return KnowledgeEditScreen(
+              draft: extra.draft,
+              overwriteNoteId: extra.overwriteNoteId,
+              sourcePrompt: extra.request,
+            );
+          }
+          return const KnowledgeEditScreen();
+        },
+      ),
+      GoRoute(
+        path: 'group/:groupId',
+        builder: (context, state) =>
+            KnowledgeGroupScreen(groupId: state.pathParameters['groupId']!),
+      ),
+      GoRoute(
+        path: 'note/:id',
+        builder: (context, state) =>
+            KnowledgeDetailScreen(id: state.pathParameters['id']!),
+        routes: [
+          GoRoute(
+            path: 'edit',
+            builder: (context, state) =>
+                _KnowledgeEditRoute(id: state.pathParameters['id']!),
+          ),
+        ],
+      ),
+    ],
+  ),
+];
+
+/// Resolves `/knowledge/note/:id/edit` by reading the note out of
+/// [knowledgeNotesNotifierProvider] and handing it to [KnowledgeEditScreen] as
+/// `initial`. Kept here (rather than a constructor variant on the screen) so
+/// Task 11's tests stay green.
+class _KnowledgeEditRoute extends ConsumerWidget {
+  const _KnowledgeEditRoute({required this.id});
+
+  final String id;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notes = ref.watch(knowledgeNotesNotifierProvider).valueOrNull;
+    if (notes == null) {
+      return const BloomScaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    for (final n in notes) {
+      if (n.id == id) return KnowledgeEditScreen(initial: n);
+    }
+    return const KnowledgeEditScreen();
+  }
+}
+
 final _authRefreshStream = _AuthRefreshStream();
 
 final appRouter = GoRouter(
@@ -217,6 +296,7 @@ final appRouter = GoRouter(
           path: '/progress',
           builder: (context, state) => const ProgressScreen(),
         ),
+        ...knowledgeRoutes,
         GoRoute(
           path: '/reading',
           builder: (context, state) => const ReadingHubScreen(),

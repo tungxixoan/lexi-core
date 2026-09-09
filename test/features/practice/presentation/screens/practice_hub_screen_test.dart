@@ -27,6 +27,10 @@ Widget _buildHub() {
         builder: (ctx, state) =>
             const Scaffold(body: Text('Word Radar screen')),
       ),
+      GoRoute(
+        path: '/knowledge',
+        builder: (ctx, state) => const Scaffold(body: Text('Knowledge home')),
+      ),
     ],
   );
   return MaterialApp.router(routerConfig: router, theme: AppTheme.light);
@@ -41,8 +45,17 @@ void main() {
     expect(find.text('Luyện đọc'), findsOneWidget);
     expect(find.text('Luyện nghe'), findsOneWidget);
     expect(find.text('Quét từ vựng'), findsOneWidget);
+    expect(find.text('Kiến thức'), findsOneWidget);
     expect(find.text('Tiến độ học tập'), findsNothing);
     expect(find.byType(BloomScaffold), findsOneWidget);
+  });
+
+  testWidgets('tapping Kiến thức navigates to /knowledge', (tester) async {
+    await tester.pumpWidget(_buildHub());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Kiến thức'));
+    await tester.pumpAndSettle();
+    expect(find.text('Knowledge home'), findsOneWidget);
   });
 
   testWidgets('tapping Quét từ vựng navigates to /practice/radar',

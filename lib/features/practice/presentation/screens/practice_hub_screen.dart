@@ -41,6 +41,14 @@ class PracticeHubScreen extends StatelessWidget {
                 'Dán văn bản bất kỳ để tìm từ đã học và gợi ý từ mới đáng học.',
             onTap: () => context.go('/practice/radar'),
           ),
+          const SizedBox(height: 12),
+          BloomNavCard(
+            icon: Icons.auto_stories_outlined,
+            title: 'Kiến thức',
+            subtitle:
+                'Thư viện ngữ pháp & cấu trúc câu theo ngôn ngữ — tự viết hoặc nhờ AI soạn.',
+            onTap: () => context.go('/knowledge'),
+          ),
         ],
       ),
     );
