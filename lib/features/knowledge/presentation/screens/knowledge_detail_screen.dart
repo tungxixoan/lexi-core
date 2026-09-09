@@ -38,7 +38,15 @@ class KnowledgeDetailScreen extends ConsumerWidget {
       ),
     );
     if (confirmed == true && context.mounted) {
-      await ref.read(knowledgeNotesNotifierProvider.notifier).deleteNote(id);
+      final messenger = ScaffoldMessenger.of(context);
+      try {
+        await ref.read(knowledgeNotesNotifierProvider.notifier).deleteNote(id);
+      } catch (_) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Không xoá được. Thử lại.')),
+        );
+        return;
+      }
       if (context.mounted) context.go('/knowledge');
     }
   }

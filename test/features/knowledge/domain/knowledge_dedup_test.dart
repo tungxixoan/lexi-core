@@ -47,6 +47,13 @@ void main() {
     expect(hits, isEmpty);
   });
 
+  test('"thì" / "thể" are content words, not stopwords', () {
+    final notes = [_n(id: 'a', title: 'Thì thể')];
+    // The only overlap is "thi"/"the" — if they were stopwords this scores 0.
+    final hits = findRelatedNotes(prompt: 'thì thể', notes: notes);
+    expect(hits.single.id, 'a');
+  });
+
   test('caps at 3, sorted by score desc', () {
     final notes = [
       _n(id: 'a', title: 'thì hiện tại đơn'),
@@ -57,6 +64,8 @@ void main() {
     final hits = findRelatedNotes(
         prompt: 'thì hiện tại đơn giải thích', notes: notes);
     expect(hits.length, 3);
-    expect(hits.first.id, 'a'); // full phrase "thi hien tai don" in title
+    // "thi" (thì) is no longer a stopword, so note a matches the whole
+    // "thi hien tai don" phrase and outscores the partial-phrase matches.
+    expect(hits.first.id, 'a');
   });
 }

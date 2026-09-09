@@ -61,6 +61,22 @@ void main() {
     expect(svc.store, isEmpty);
   });
 
+  testWidgets('delete failure shows a snackbar and keeps the note',
+      (tester) async {
+    final svc = FakeKnowledgeService(throwOnDelete: true)
+      ..store.add(noteFixture(id: 'n1', title: 'Giữ nguyên'));
+    await pumpDetail(tester, svc, id: 'n1');
+
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Xoá'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Không xoá được. Thử lại.'), findsOneWidget);
+    expect(find.text('Giữ nguyên'), findsOneWidget); // still on the detail screen
+    expect(svc.store, isNotEmpty);
+  });
+
   testWidgets('cancelling the delete dialog keeps the note', (tester) async {
     final svc = FakeKnowledgeService()..store.add(noteFixture(id: 'n1'));
     await pumpDetail(tester, svc, id: 'n1');

@@ -2,10 +2,12 @@ import '../../../core/utils/text_normalize.dart';
 import 'entities/knowledge_note.dart';
 import 'entities/knowledge_group.dart';
 
+// NB: "thi" (thì = tense) and "the" (thể = aspect) are deliberately NOT
+// stopwords — they're group labels and the highest-signal dedup terms.
 const _stopwords = {
-  'va', 'khi', 'nao', 'cho', 'cua', 'la', 'cac', 'mot', 'voi', 'thi',
+  'va', 'khi', 'nao', 'cho', 'cua', 'la', 'cac', 'mot', 'voi',
   'dung', 'giai', 'thich', 'vi', 'du', 'doi', 'thuong', 'cach', 'nay',
-  'the', 'a', 'an', 'and', 'or', 'when', 'how', 'what', 'explain', 'give',
+  'a', 'an', 'and', 'or', 'when', 'how', 'what', 'explain', 'give',
   'example',
 };
 

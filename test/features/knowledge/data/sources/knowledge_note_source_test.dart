@@ -59,6 +59,29 @@ void main() {
     );
   });
 
+  test('a bogus suggestedGroupId is funnelled to the language\'s "other" group',
+      () async {
+    final client = _FakeClient(
+      '{"title":"T","summary":"S","explanation":"E","suggestedGroupId":"en_bogus"}',
+    );
+    final draft = await KnowledgeNoteSource.withModel(client).draft(
+        request: 'x',
+        targetLanguage: Language.english,
+        existingInScope: const []);
+    expect(draft.suggestedGroupId, 'en_other');
+  });
+
+  test('a valid suggestedGroupId passes through unchanged', () async {
+    final client = _FakeClient(
+      '{"title":"T","summary":"S","explanation":"E","suggestedGroupId":"en_modals"}',
+    );
+    final draft = await KnowledgeNoteSource.withModel(client).draft(
+        request: 'x',
+        targetLanguage: Language.english,
+        existingInScope: const []);
+    expect(draft.suggestedGroupId, 'en_modals');
+  });
+
   test('missing optional fields default safely', () async {
     final client = _FakeClient('{"title":"T","summary":"S","explanation":"E"}');
     final draft = await KnowledgeNoteSource.withModel(client).draft(

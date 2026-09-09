@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/bloom/bloom.dart';
+import '../../../../core/widgets/ai_key_missing_card.dart';
 import '../../../../core/widgets/filter_tile.dart';
 import '../../../../core/widgets/selection_sheets.dart';
 import '../../../dictionary/presentation/providers/user_settings_provider.dart';
@@ -227,11 +228,27 @@ class _KnowledgeAiRequestSheetState
   }
 
   Widget _form(BuildContext context, ScrollController scrollController) {
+    final aiAvailable = ref.watch(
+      userSettingsNotifierProvider.select((s) => s.aiAvailable),
+    );
     final language = ref.read(
       userSettingsNotifierProvider.select((s) => s.targetLanguage),
     );
     final groups = knowledgeGroupsFor(language);
     final c = context.bloom;
+
+    if (!aiAvailable) {
+      return ListView(
+        controller: scrollController,
+        padding: EdgeInsets.fromLTRB(
+            16, 8, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
+        children: const [
+          BloomSectionHeader('Nhờ AI soạn'),
+          SizedBox(height: 8),
+          AiKeyMissingCard(),
+        ],
+      );
+    }
 
     return ListView(
       controller: scrollController,

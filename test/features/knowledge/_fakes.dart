@@ -7,7 +7,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lexi_core/core/di/app_providers.dart';
 import 'package:lexi_core/core/theme/app_theme.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/ai_provider.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
+import 'package:lexi_core/features/dictionary/domain/entities/provider_config.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/user_settings_state.dart';
 import 'package:lexi_core/features/dictionary/presentation/providers/user_settings_provider.dart';
 import 'package:lexi_core/features/knowledge/data/knowledge_notes_service.dart';
@@ -43,6 +45,13 @@ class FakeVocabBank extends VocabBankNotifier {
 /// In-memory [KnowledgeNotesService]: `store` is the backing list, `seedCalls`
 /// counts `seedIfNeeded` invocations.
 class FakeKnowledgeService implements KnowledgeNotesService {
+  FakeKnowledgeService({this.throwOnUpsert = false, this.throwOnDelete = false});
+
+  /// When set, [upsert] / [delete] throw — mirrors a real Firestore write
+  /// failure now that the service lets writes propagate.
+  final bool throwOnUpsert;
+  final bool throwOnDelete;
+
   final List<KnowledgeNote> store = [];
   int seedCalls = 0;
   int restoreCalls = 0;
@@ -54,12 +63,16 @@ class FakeKnowledgeService implements KnowledgeNotesService {
 
   @override
   Future<void> upsert(KnowledgeNote note) async {
+    if (throwOnUpsert) throw Exception('upsert failed');
     store.removeWhere((n) => n.id == note.id);
     store.add(note);
   }
 
   @override
-  Future<void> delete(String id) async => store.removeWhere((n) => n.id == id);
+  Future<void> delete(String id) async {
+    if (throwOnDelete) throw Exception('delete failed');
+    store.removeWhere((n) => n.id == id);
+  }
 
   @override
   Future<List<KnowledgeNote>> seedIfNeeded(Language language) async {
@@ -118,12 +131,28 @@ KnowledgeNote noteFixture({
 List<Override> knowledgeTestOverrides(
   FakeKnowledgeService svc, {
   Language language = Language.english,
+  bool aiAvailable = true,
 }) =>
     [
       knowledgeNotesServiceProvider.overrideWithValue(svc),
       userSettingsNotifierProvider.overrideWith(
         () => FakeSettings(
-          UserSettingsState.defaults.copyWith(targetLanguage: language),
+          UserSettingsState.defaults.copyWith(
+            targetLanguage: language,
+            providerConfigs: aiAvailable
+                ? const {
+                    AiProvider.gemini: ProviderConfig(
+                      apiKeyCiphertext: 'cipher',
+                      model: 'gemini-2.5-flash',
+                    ),
+                  }
+                : const {
+                    AiProvider.gemini: ProviderConfig(
+                      apiKeyCiphertext: null,
+                      model: 'gemini-2.5-flash',
+                    ),
+                  },
+          ),
         ),
       ),
     ];
@@ -319,6 +348,7 @@ Future<void> pumpRequestSheet(
   FakeKnowledgeService svc, {
   GenerateKnowledgeNoteUseCase? useCase,
   Language language = Language.english,
+  bool aiAvailable = true,
 }) async {
   lastPushedLocation = null;
   lastPushedExtra = null;
@@ -356,7 +386,8 @@ Future<void> pumpRequestSheet(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        ...knowledgeTestOverrides(svc, language: language),
+        ...knowledgeTestOverrides(svc,
+            language: language, aiAvailable: aiAvailable),
         generateKnowledgeNoteUseCaseProvider
             .overrideWithValue(useCase ?? StubUseCase(okDraft)),
         vocabBankNotifierProvider.overrideWith(() => FakeVocabBank()),

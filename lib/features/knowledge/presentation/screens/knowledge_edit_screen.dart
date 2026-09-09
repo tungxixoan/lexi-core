@@ -131,9 +131,17 @@ class _KnowledgeEditScreenState extends ConsumerState<KnowledgeEditScreen> {
     setState(() => _saving = true);
 
     final now = DateTime.now();
-    final origin = widget.draft != null
-        ? KnowledgeNoteOrigin.ai
-        : (existing?.origin ?? KnowledgeNoteOrigin.manual);
+    // Spec §5.1 step 6: a fresh AI note is `ai`; an AI overwrite via "Bổ sung"
+    // keeps the existing note's source UNLESS it was `starter` (→ ai); a plain
+    // manual edit keeps whatever it was.
+    final KnowledgeNoteOrigin origin;
+    if (widget.draft != null) {
+      origin = existing == null || existing.origin == KnowledgeNoteOrigin.starter
+          ? KnowledgeNoteOrigin.ai
+          : existing.origin;
+    } else {
+      origin = existing?.origin ?? KnowledgeNoteOrigin.manual;
+    }
     final note = KnowledgeNote(
       id: targetId ?? const Uuid().v4(),
       title: _title.text.trim(),

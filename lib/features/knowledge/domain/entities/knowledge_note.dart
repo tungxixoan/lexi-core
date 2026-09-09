@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
+
 import '../../../dictionary/domain/entities/language.dart';
 import '../../../vocabulary/domain/entities/cefr_level.dart';
 
@@ -65,6 +67,23 @@ class KnowledgeNote {
   static List<String> _stringList(Object? raw) =>
       raw is List ? raw.whereType<String>().toList() : const [];
 
+  /// Parses a stored date defensively. Accepts an ISO-8601 [String] (what this
+  /// app writes), a Firestore [Timestamp] or an `int` of epoch millis (either
+  /// of which a future web client might write). Anything else — including
+  /// `null` — falls back to the Unix epoch (UTC) so a single malformed doc
+  /// sorts to the bottom rather than throwing.
+  static DateTime _parseDate(Object? raw) {
+    if (raw is Timestamp) return raw.toDate().toUtc();
+    if (raw is int) {
+      return DateTime.fromMillisecondsSinceEpoch(raw, isUtc: true);
+    }
+    if (raw is String) {
+      final parsed = DateTime.tryParse(raw);
+      if (parsed != null) return parsed.toUtc();
+    }
+    return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+  }
+
   factory KnowledgeNote.fromJson(Map<String, dynamic> j) => KnowledgeNote(
         id: j['id'] as String? ?? '',
         title: j['title'] as String? ?? '',
@@ -84,8 +103,8 @@ class KnowledgeNote {
             Language.english,
         origin: _originFrom(j['source']),
         sourcePrompt: j['sourcePrompt'] as String?,
-        createdAt: DateTime.parse(j['createdAt'] as String),
-        updatedAt: DateTime.parse(j['updatedAt'] as String),
+        createdAt: _parseDate(j['createdAt']),
+        updatedAt: _parseDate(j['updatedAt']),
       );
 
   Map<String, dynamic> toJson() => {

@@ -67,6 +67,19 @@ class KnowledgeNoteSource {
     );
     final response = await _client.generateContent([Content.text(prompt)]);
     final json = parseAiJsonObject(response.text ?? '');
+    final rawGroupId =
+        (json['suggestedGroupId'] as String?)?.trim().isEmpty ?? true
+            ? null
+            : (json['suggestedGroupId'] as String).trim();
+    final validGroupIds =
+        knowledgeGroupsFor(targetLanguage).map((g) => g.id).toSet();
+    // A hallucinated / wrong-language id would land the note in no group card
+    // (the grid only iterates this language's taxonomy) — funnel it to "Khác".
+    final suggestedGroupId = rawGroupId == null
+        ? null
+        : (validGroupIds.contains(rawGroupId)
+            ? rawGroupId
+            : knowledgeOtherGroupId(targetLanguage));
     return KnowledgeNoteDraft(
       title: json['title'] as String? ?? '',
       summary: json['summary'] as String? ?? '',
@@ -77,10 +90,7 @@ class KnowledgeNoteSource {
           .map(KnowledgeExample.fromJson)
           .toList(),
       pitfalls: _stringList(json['pitfalls']),
-      suggestedGroupId:
-          (json['suggestedGroupId'] as String?)?.trim().isEmpty ?? true
-              ? null
-              : (json['suggestedGroupId'] as String).trim(),
+      suggestedGroupId: suggestedGroupId,
       suggestedCefr: CEFRLevel.values
           .asNameMap()[(json['suggestedCefr'] as String?)?.trim().toLowerCase()],
       suggestedTags: _stringList(json['suggestedTags']),

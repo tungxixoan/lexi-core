@@ -45,6 +45,27 @@ void main() {
     expect(en.map((n) => n.id), ['a']);
   });
 
+  test('all() skips an undecodable doc and keeps the good ones', () async {
+    final fs = FakeFirebaseFirestore();
+    final svc = _svc(fs);
+    await svc.upsert(_note('good1'));
+    await svc.upsert(_note('good2'));
+    await fs
+        .collection('users')
+        .doc(_uid)
+        .collection('knowledge_notes')
+        .doc('bad')
+        .set({
+      'id': 'bad',
+      'targetLanguage': 'english',
+      'examples': 'not-a-list', // `as List?` throws → doc is undecodable
+      'createdAt': '2026-01-01T00:00:00.000Z',
+      'updatedAt': '2026-01-01T00:00:00.000Z',
+    });
+    final all = await svc.all(Language.english);
+    expect(all.map((n) => n.id).toSet(), {'good1', 'good2'});
+  });
+
   test('all() sorts by updatedAt desc', () async {
     final fs = FakeFirebaseFirestore();
     final svc = _svc(fs);

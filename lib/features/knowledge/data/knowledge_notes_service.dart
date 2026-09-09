@@ -10,9 +10,12 @@ import 'knowledge_starter_library.dart';
 /// per-language "already seeded" flag lives in
 /// `users/{uid}/knowledge_meta/seed` (one bool field per [Language.name]).
 ///
-/// All methods no-op / return a safe default when signed out, and every
-/// Firestore read is wrapped in try/catch so an offline failure degrades to
-/// an empty result rather than throwing.
+/// All methods no-op / return a safe default when signed out. Reads/seeding
+/// ([all], [seedIfNeeded], [restoreStarters]) are wrapped in try/catch so an
+/// offline failure degrades to an empty result rather than throwing. Writes
+/// ([upsert], [delete]) deliberately let the failure propagate — the UI needs
+/// to know a save of hand-authored content was lost (mirrors
+/// [SavedExercisesService.save]).
 class KnowledgeNotesService {
   KnowledgeNotesService({
     FirebaseFirestore? firestore,
@@ -49,33 +52,36 @@ class KnowledgeNotesService {
     if (col == null) return const [];
     try {
       final snap = await col.get();
-      final notes = snap.docs
-          .map((d) => d.data())
-          .where((m) => m['targetLanguage'] == language.name)
-          .map(KnowledgeNote.fromJson)
-          .toList()
-        ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      final notes = <KnowledgeNote>[];
+      for (final m in snap.docs.map((d) => d.data())) {
+        if (m['targetLanguage'] != language.name) continue;
+        try {
+          notes.add(KnowledgeNote.fromJson(m));
+        } catch (_) {
+          // Skip a single undecodable doc rather than losing the whole list.
+        }
+      }
+      notes.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
       return notes;
     } catch (_) {
       return const [];
     }
   }
 
-  /// Creates or replaces the note at `knowledge_notes/{note.id}`.
+  /// Creates or replaces the note at `knowledge_notes/{note.id}`. Throws on a
+  /// write failure so the caller can surface it — a lost save of hand-authored
+  /// content must not look successful.
   Future<void> upsert(KnowledgeNote note) async {
     final col = _notes();
     if (col == null) return;
-    try {
-      await col.doc(note.id).set(note.toJson());
-    } catch (_) {/* best-effort */}
+    await col.doc(note.id).set(note.toJson());
   }
 
+  /// Deletes `knowledge_notes/{id}`. Throws on a write failure (see [upsert]).
   Future<void> delete(String id) async {
     final col = _notes();
     if (col == null) return;
-    try {
-      await col.doc(id).delete();
-    } catch (_) {/* best-effort */}
+    await col.doc(id).delete();
   }
 
   /// First-run seeding for [language]: if the seed flag is not `true` and the

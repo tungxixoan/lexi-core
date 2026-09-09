@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexi_core/features/dictionary/domain/entities/language.dart';
 import 'package:lexi_core/features/vocabulary/domain/entities/cefr_level.dart';
@@ -52,5 +53,37 @@ void main() {
     expect(note.tags, isEmpty);
     expect(note.cefrLevel, isNull);
     expect(note.origin, KnowledgeNoteOrigin.manual); // fallback
+  });
+
+  group('fromJson parses dates defensively', () {
+    Map<String, dynamic> withDate(Object? d) => {
+          'id': 'n',
+          'title': 't',
+          'summary': 's',
+          'explanation': 'e',
+          'groupId': 'en_other',
+          'targetLanguage': 'english',
+          'source': 'manual',
+          'createdAt': d,
+          'updatedAt': d,
+        };
+
+    test('null → epoch, does not throw', () {
+      final note = KnowledgeNote.fromJson(withDate(null));
+      expect(note.createdAt,
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true));
+    });
+
+    test('a Firestore Timestamp', () {
+      final ts = Timestamp.fromDate(DateTime.utc(2026, 3, 4));
+      expect(KnowledgeNote.fromJson(withDate(ts)).createdAt,
+          DateTime.utc(2026, 3, 4));
+    });
+
+    test('an int of epoch millis', () {
+      final millis = DateTime.utc(2025, 1, 2).millisecondsSinceEpoch;
+      expect(KnowledgeNote.fromJson(withDate(millis)).createdAt,
+          DateTime.utc(2025, 1, 2));
+    });
   });
 }
