@@ -127,9 +127,13 @@ export async function getKnowledgeNotes(
     const snapshot = await getDocs(notesCol(uid));
     const notes: KnowledgeNote[] = [];
     for (const d of snapshot.docs) {
+      const raw = d.data() as Record<string, unknown>;
+      // Filter on the RAW value first (mirrors the Dart `all()`), so a corrupt
+      // doc with a missing/invalid `targetLanguage` is excluded rather than
+      // coerced to "english" and wrongly returned in an english query.
+      if (raw.targetLanguage !== language) continue;
       try {
-        const n = parseKnowledgeNote({ ...(d.data() as object), id: d.id });
-        if (n.targetLanguage === language) notes.push(n);
+        notes.push(parseKnowledgeNote({ ...raw, id: d.id }));
       } catch {
         /* skip one undecodable doc rather than losing the whole list */
       }

@@ -124,7 +124,7 @@ describe("getKnowledgeNotes", () => {
   it("skips an undecodable doc, keeps the rest; returns [] on a getDocs throw", async () => {
     vi.mocked(getDocs).mockResolvedValueOnce({
       docs: [
-        { id: "bad", data: () => ({ examples: "not-a-list", createdAt: {} }) },
+        { id: "bad", data: () => ({ targetLanguage: "english", examples: "not-a-list", createdAt: {} }) },
         { id: "good", data: () => note({ id: "good" }) },
       ],
     } as never);
