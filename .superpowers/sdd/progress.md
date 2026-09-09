@@ -2332,7 +2332,7 @@ FOLLOW-UPS (not gating this branch — for a later chore):
 - Task 1: ✅ complete (commit e5ffff2, 4 tests, suite 808, review clean)
 - Task 2: ✅ complete (commits d6a32ed..ec2f639, 16 tests, suite 824, review clean)
 - Task 3: ✅ complete (commit a4686e9, 3 tests, suite 827, review clean)
-- Task 4: pending
+- Task 4: ✅ complete (commits 0ba2149..4ce73fc, 8 tests, suite 835, review clean — 2 Minor hardening fixes)
 - Task 5: pending
 - Task 6: pending
 - Task 7: pending
