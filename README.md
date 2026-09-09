@@ -99,6 +99,21 @@ Trên app Flutter: tab "Luyện tập" → card "Quét từ vựng". Trên web: 
 - **Bản dịch tiếng Việt** của toàn bộ đoạn văn (cùng 1 lần gọi AI ở trên) — cũng highlight nghĩa tiếng Việt của các từ đã học trong bản dịch (chỉ hiển thị, không bấm được)
 - Không ảnh hưởng SM-2 cho tới khi người dùng chủ động lưu một từ gợi ý
 
+### Kiến thức (Knowledge Notes)
+Thư viện tham khảo ngữ pháp / cấu trúc câu theo ngôn ngữ (truy cập qua tab "Luyện tập" → card "Kiến thức"). Chỉ để tra cứu — **không có SM-2**, không tạo flashcard/bài luyện từ ghi chú.
+
+- **Sắp xếp theo nhóm cố định của từng ngôn ngữ** (do app định nghĩa, người dùng không sửa) — ví dụ tiếng Anh: Thì, Câu điều kiện, Mệnh đề quan hệ, Câu bị động, Câu tường thuật, Động từ khuyết thiếu, Danh động từ & Nguyên mẫu, Mạo từ & Danh từ, Giới từ, Liên từ & Nối câu, Cấu trúc nói thông dụng, Khác. Mỗi ngôn ngữ (Anh/Trung/Nhật/Hàn/Việt) có bộ nhóm riêng; nhóm "Khác" là chỗ chứa những gì không khớp nhóm nào. Ngôn ngữ hiển thị bám theo ngôn ngữ mục tiêu trong Cài đặt (giống Ngân hàng từ).
+- **Thẻ (tags) tự do** để cắt lát chéo nhóm (`#toeic`, `#hay-nhầm`, `#văn-nói`) — so khớp bỏ dấu.
+- **Ghi chú có cấu trúc**, tự viết tay hoặc nhờ AI soạn, gồm các trường: tiêu đề, tóm tắt (1–2 câu), giải thích, mẫu câu (`patterns`, hiển thị nguyên văn), ví dụ song ngữ (`{text, translation}`, tô màu từ đã học), lỗi thường gặp (`pitfalls`), nhóm, thẻ, cấp độ CEFR, ngôn ngữ. Định dạng duy nhất trong phần giải thích và mỗi mục "lỗi thường gặp": `**đậm**` và ngắt đoạn bằng `\n\n` — không hỗ trợ Markdown nào khác.
+- **"Nhờ AI soạn"** — nhập yêu cầu tự do ("Giải thích câu điều kiện loại 2 và 3, khi nào dùng cái nào") kèm gợi ý nhóm / CEFR tùy chọn. Có **kiểm tra trùng hai lớp**:
+  - **Lớp 1 (trước khi gọi AI):** so khớp từ khóa cục bộ (bỏ dấu, tách bigram/trigram, chấm điểm theo tiêu đề/tóm tắt/thẻ/nhãn nhóm, ngưỡng ≥ 3) — nếu có ghi chú liên quan, hiện banner "Bạn đã có N ghi chú liên quan" với tối đa 3 thẻ.
+  - **Lớp 2 (sau khi AI trả về):** AI tự đánh dấu `relatedNoteId` khi phát hiện trùng về nội dung mà so khớp chuỗi bỏ sót (đồng nghĩa, khác cách gọi: "second conditional" vs "câu điều kiện loại 2").
+  - Mỗi lần cảnh báo trùng cho 3 lựa chọn: **Mở** ghi chú đó / **Bổ sung vào ghi chú này** (gọi AI kèm nội dung cũ, lưu đè lên đúng id đó — `starter` chuyển thành `ai`) / **Vẫn tạo mới** (tạo id mới).
+  - Bản nháp AI mở ra trong màn hình soạn thảo (chung form với tự viết / sửa), có banner "nháp chưa lưu"; không ghi gì lên Firestore cho tới khi bấm **Lưu**.
+- **Bộ mẫu tiếng Anh (~12 ghi chú)** về ngữ pháp cơ bản (tổng quan 12 thì, hiện tại đơn/tiếp diễn, quá khứ đơn, hiện tại hoàn thành, các cách nói tương lai, câu điều kiện 0/1 và 2/3, mạo từ, so sánh hơn/nhất...) được seed một lần cho mỗi tài khoản khi mở Kiến thức lần đầu (lazy, theo từng ngôn ngữ, không ghi đè id đã có). Overflow menu có **"Khôi phục ghi chú mẫu"** — dựng lại mọi ghi chú mẫu có id đã bị xóa, không đụng tới ghi chú còn tồn tại (nên phần chỉnh sửa của người dùng an toàn).
+- **Tìm kiếm + lọc giống Ngân hàng từ:** một ô tìm kiếm cục bộ (khớp chuỗi con bỏ dấu trên tiêu đề + tóm tắt + giải thích + mẫu câu + lỗi + thẻ); lọc đa chọn theo nhóm, CEFR, thẻ; ngôn ngữ bám theo Cài đặt. Không có full-text server, không cần Firestore index.
+- Lưu ở Firestore `users/{uid}/knowledge_notes` + cờ seed `users/{uid}/knowledge_meta/seed` — **dùng chung shape với web** (giao diện web sẽ làm ở plan sau; shape dữ liệu đã tương thích sẵn).
+
 ### Tiến độ học tập (Progress Dashboard)
 
 Tab riêng trên thanh điều hướng ("Tiến độ", giữa "Luyện tập" và "Cài đặt") — app Flutter giờ có 5 tab.
@@ -427,7 +442,7 @@ flutter test test/features/dictionary/presentation/providers/user_settings_notif
 flutter test --reporter expanded
 ```
 
-App mobile: **~920 tests** (`flutter test`), `flutter analyze` sạch. App web: **~800 tests** (`npm test` trong `apps/web/`).
+App mobile: **~1010 tests** (`flutter test`), `flutter analyze` sạch. App web: **~800 tests** (`npm test` trong `apps/web/`).
 
 ### Phân tích code
 
@@ -519,6 +534,14 @@ users/
         targetLanguage: string
         createdAt: string       # ISO-8601 UTC
         id: string
+    knowledge_notes/           # ghi chú Kiến thức — dùng chung shape với web
+      {id}/
+        id, title, summary, explanation, patterns[], examples[{text,translation}],
+        pitfalls[], groupId, tags[], cefrLevel, targetLanguage,
+        source (ai|manual|starter), sourcePrompt, createdAt, updatedAt
+    knowledge_meta/
+      seed/
+        english: bool          # cờ chặn seed bộ mẫu theo từng ngôn ngữ
 ```
 
 ---
@@ -534,6 +557,7 @@ users/
 - [x] **App icon** — biểu tượng LexiCore (Bloom leaf mark) cho Android/iOS/web + favicon/PWA React web; sinh từ `scripts/gen-icons.mjs` + `flutter_launcher_icons`
 - [x] **Kiểu bài Flashcard/Trộn AI ở SM-2** — tùy chọn mỗi phiên tại màn Ôn tập (mặc định Flashcard, không lưu); Trộn AI bốc ngẫu nhiên 1 tỉ lệ AI 20–80%/phiên thay vì cố định 70% — cả app Flutter và web
 - [x] **Cutover web sang React** (2026-09-05) — Flutter Web ngừng hẳn: xoá thư mục `web/`, bỏ `hosting` block, `firebase hosting:disable`. App React trên App Hosting là bản web duy nhất, phục vụ ở URL `*.hosted.app`. App mobile Flutter không đổi.
+- [x] **Kiến thức** — thư viện ghi chú ngữ pháp/cấu trúc câu theo ngôn ngữ, tự viết hoặc AI soạn, có bộ mẫu tiếng Anh (app Flutter; web theo sau)
 
 **Ý tưởng khác đã brainstorm (chưa xếp lịch):**
 
