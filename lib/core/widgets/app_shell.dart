@@ -56,11 +56,12 @@ class _AppShellState extends ConsumerState<AppShell>
   static final _navItems =
       _destinations.map((d) => d.navItem).toList(growable: false);
 
-  // `/reading` and `/listening` are top-level shell routes but belong to the
-  // "Luyện tập" tab — the practice hub links out to them.
+  // `/reading`, `/listening` and `/knowledge` are top-level shell routes but
+  // belong to the "Luyện tập" tab — the practice hub links out to them.
   static const _tabAliases = <String, String>{
     '/reading': '/practice',
     '/listening': '/practice',
+    '/knowledge': '/practice',
   };
 
   int _selectedIndex(BuildContext context, List<_Dest> dests) {

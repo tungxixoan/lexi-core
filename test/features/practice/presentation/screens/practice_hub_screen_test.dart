@@ -37,7 +37,7 @@ Widget _buildHub() {
 }
 
 void main() {
-  testWidgets('shows all 4 hub cards (no Tiến độ card — it is a tab now)',
+  testWidgets('shows all 5 hub cards (no Tiến độ card — it is a tab now)',
       (tester) async {
     await tester.pumpWidget(_buildHub());
     await tester.pumpAndSettle();

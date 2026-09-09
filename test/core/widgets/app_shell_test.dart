@@ -39,6 +39,16 @@ Future<Widget> _buildShell({String initialLocation = '/'}) async {
           ),
           GoRoute(
               path: '/listening', builder: (ctx, state) => stub('Listening')),
+          GoRoute(
+            path: '/knowledge',
+            builder: (ctx, state) => stub('Knowledge'),
+            routes: [
+              GoRoute(
+                path: 'group/:groupId',
+                builder: (ctx, state) => stub('Knowledge group'),
+              ),
+            ],
+          ),
           GoRoute(path: '/settings', builder: (ctx, state) => stub('Settings')),
         ],
       ),
@@ -123,12 +133,19 @@ void main() {
     expect(find.text('Tiến độ'), findsOneWidget);
   });
 
-  testWidgets('"Luyện tập" stays selected on /reading and /listening routes',
+  testWidgets(
+      '"Luyện tập" stays selected on /reading, /listening and /knowledge routes',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(400, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    for (final loc in ['/reading', '/reading/part5/session', '/listening']) {
+    for (final loc in [
+      '/reading',
+      '/reading/part5/session',
+      '/listening',
+      '/knowledge',
+      '/knowledge/group/en_tenses',
+    ]) {
       await tester.pumpWidget(await _buildShell(initialLocation: loc));
       await tester.pumpAndSettle();
       expect(
