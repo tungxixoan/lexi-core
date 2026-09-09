@@ -250,6 +250,10 @@ class StubUseCase implements GenerateKnowledgeNoteUseCase {
   StubUseCase(this._draft);
   final KnowledgeNoteDraft _draft;
 
+  /// The `request` / `extendingNote` passed to the most recent [execute] call.
+  String? lastRequest;
+  KnowledgeNote? lastExtendingNote;
+
   @override
   Future<KnowledgeNoteDraft> execute({
     required String request,
@@ -258,8 +262,11 @@ class StubUseCase implements GenerateKnowledgeNoteUseCase {
     CEFRLevel? hintCefr,
     required List<KnowledgeNote> existingInScope,
     KnowledgeNote? extendingNote,
-  }) async =>
-      _draft;
+  }) async {
+    lastRequest = request;
+    lastExtendingNote = extendingNote;
+    return _draft;
+  }
 }
 
 /// A [GenerateKnowledgeNoteUseCase] whose [execute] always throws.
@@ -289,14 +296,17 @@ ProviderContainer draftContainer(
   FakeKnowledgeService svc, {
   GenerateKnowledgeNoteUseCase? useCase,
   Language language = Language.english,
-}) =>
-    ProviderContainer(
-      overrides: [
-        ...knowledgeTestOverrides(svc, language: language),
-        generateKnowledgeNoteUseCaseProvider
-            .overrideWithValue(useCase ?? StubUseCase(okDraft)),
-      ],
-    );
+}) {
+  final c = ProviderContainer(
+    overrides: [
+      ...knowledgeTestOverrides(svc, language: language),
+      generateKnowledgeNoteUseCaseProvider
+          .overrideWithValue(useCase ?? StubUseCase(okDraft)),
+    ],
+  );
+  addTearDown(c.dispose);
+  return c;
+}
 
 /// Route location + extra recorded by [pumpRequestSheet]'s stub `/knowledge/new`.
 String? lastPushedLocation;

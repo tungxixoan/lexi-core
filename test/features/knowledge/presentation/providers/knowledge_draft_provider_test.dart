@@ -74,4 +74,27 @@ void main() {
     final s = c.read(knowledgeDraftNotifierProvider) as KnowledgeDraftReady;
     expect(s.layer2Related?.id, 'z');
   });
+
+  test('extend from the Layer-2 re-banner keeps the original request', () async {
+    final noteZ = noteFixture(id: 'z', title: 'khác hẳn');
+    final svc = FakeKnowledgeService()..store.add(noteZ);
+    final stub = StubUseCase(const KnowledgeNoteDraft(
+      title: 'T',
+      summary: 'S',
+      explanation: 'E',
+      relatedNoteId: 'z',
+    ));
+    final c = draftContainer(svc, useCase: stub);
+    await c.read(knowledgeNotesNotifierProvider.future);
+    await c
+        .read(knowledgeDraftNotifierProvider.notifier)
+        .submit(request: 'chủ đề mới toanh');
+    // State is now KnowledgeDraftReady with layer2Related.id == 'z'.
+    await c.read(knowledgeDraftNotifierProvider.notifier).extend(noteZ);
+
+    expect(stub.lastRequest, 'chủ đề mới toanh');
+    expect(stub.lastExtendingNote?.id, 'z');
+    final s = c.read(knowledgeDraftNotifierProvider) as KnowledgeDraftReady;
+    expect(s.overwriteNoteId, 'z');
+  });
 }

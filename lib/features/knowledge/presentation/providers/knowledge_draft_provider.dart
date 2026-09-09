@@ -96,10 +96,19 @@ class KnowledgeDraftNotifier extends _$KnowledgeDraftNotifier {
 
   Future<void> extend(KnowledgeNote note) async {
     final s = state;
+    // The user can reach `extend` from the Layer-1 banner (state is
+    // KnowledgeDraftRelated) or from the Layer-2 single-note re-banner (state
+    // is already KnowledgeDraftReady) — both carry the original request, and
+    // the AI merge prompt is near-useless without it.
+    final (request, hintGroupId, hintCefr) = switch (s) {
+      KnowledgeDraftRelated s => (s.request, s.hintGroupId, s.hintCefr),
+      KnowledgeDraftReady s => (s.request, null, null),
+      _ => ('', null, null),
+    };
     await _generate(
-      request: s is KnowledgeDraftRelated ? s.request : '',
-      hintGroupId: s is KnowledgeDraftRelated ? s.hintGroupId : null,
-      hintCefr: s is KnowledgeDraftRelated ? s.hintCefr : null,
+      request: request,
+      hintGroupId: hintGroupId,
+      hintCefr: hintCefr,
       extendingNote: note,
       overwriteNoteId: note.id,
       resolveLayer2: false,
