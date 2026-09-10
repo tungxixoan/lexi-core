@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuthUser } from "@/lib/useAuthUser";
 import { useSettingsContext } from "@/lib/SettingsContext";
 import {
   getKnowledgeNotes,
   restoreStarters,
   seedStartersIfNeeded,
+  upsertKnowledgeNote,
   type KnowledgeNote,
 } from "@/lib/knowledgeNotes";
 import { startersFor } from "@/lib/knowledgeStarters";
@@ -19,6 +21,7 @@ import {
 } from "@/lib/knowledgeFilters";
 import { KnowledgeGroupGrid } from "@/components/knowledge/KnowledgeGroupGrid";
 import { KnowledgeNoteCard } from "@/components/knowledge/KnowledgeNoteCard";
+import { AiComposeModal } from "@/components/knowledge/AiComposeModal";
 import { SignInButton } from "@/components/SignInButton";
 
 const EXAMPLE_PROMPTS = [
@@ -28,6 +31,7 @@ const EXAMPLE_PROMPTS = [
 ];
 
 export default function KnowledgePage() {
+  const router = useRouter();
   const { user, loading: authLoading } = useAuthUser();
   const { settings, loading: settingsLoading } = useSettingsContext();
   const [notes, setNotes] = useState<KnowledgeNote[] | null>(null);
@@ -171,7 +175,17 @@ export default function KnowledgePage() {
         </>
       )}
 
-      {composing && null /* TODO(Task 13): render <AiComposeModal .../> here */}
+      {composing && (
+        <AiComposeModal
+          existingNotes={notes}
+          targetLanguage={language}
+          onClose={() => setComposing(false)}
+          onSaved={async (note) => {
+            await upsertKnowledgeNote(user.uid, note);
+            router.push(`/knowledge/note/${note.id}`);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -2476,3 +2476,53 @@ button.btn-google svg {
   color: var(--ink-soft);
   margin-top: 4px;
 }
+
+.compose-ai-hint {
+  background: var(--amber-bg);
+  color: var(--amber);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.compose-loading {
+  text-align: center;
+  padding: 24px 0;
+  color: var(--ink-soft);
+}
+
+.related-notes-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.related-note-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.related-note-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.related-note-title {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.related-note-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
