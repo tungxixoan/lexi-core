@@ -2340,9 +2340,10 @@ FOLLOW-UPS (not gating this branch — for a later chore):
 - Task 9: ✅ complete (commit 66b4574, 5 tests, suite 862, review clean)
 - Task 10: ✅ complete (commits a3c8734..2ab9984, 4 tests, suite 866, review clean — 1 Important test-coverage gap closed + 2 Minor)
 - Task 11: ✅ complete (commits c47b252, 4cc6651, 11 tests, suite 877 (2 pre-existing unrelated flakes — vocab-bank pagination + reading/part7 — both pass in isolation), review fixed — `use(params)`+Suspense hangs in this Vitest/jsdom/React 19 harness (verified via isolated repro), so a `useRouteParams` effect-based unwrap (`src/lib/useRouteParams.ts`) is used instead for all 3 dynamic-route pages; 1 Important fixed: hook didn't reset on `params` identity change (stale note under a new URL), now resets synchronously + regression test added)
-- Task 12: pending
+- Task 12: ✅ complete (commit 15e77b7, 3 tests, suite 880, review clean)
 - Task 13: pending
 - Task 14: pending
 
 ## Minor Findings (for final review)
-(none yet)
+- Web Task 12: `.btn-secondary` on an anchor link (Tự viết) is missing the `background: var(--surface)` fill every button sibling has (bloom.css:2463-472 scoped rule incomplete). Cosmetic.
+- Web Task 12: `knowledge/new/page.tsx` loads the full per-language notes list for `existingNotes` though it's provably unused on the blank-new save path (no initial/overwriteNoteId to match) — harmless extra Firestore read, could pass [] instead.
