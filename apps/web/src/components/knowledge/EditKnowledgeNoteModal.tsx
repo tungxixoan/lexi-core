@@ -141,7 +141,12 @@ export function EditKnowledgeNoteModal({
 
   return (
     <div className="modal-backdrop" role="presentation" onClick={onClose}>
-      <div className="modal" role="dialog" aria-label="Ghi chú kiến thức" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="modal"
+        role="dialog"
+        aria-label={initial ? "Sửa ghi chú" : draft ? "Xem lại bản nháp" : "Ghi chú mới"}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
           <h3>{initial ? `Sửa "${initial.title}"` : "Ghi chú kiến thức"}</h3>
           <button className="closex" onClick={onClose} aria-label="Đóng">
@@ -149,7 +154,7 @@ export function EditKnowledgeNoteModal({
           </button>
         </div>
         <div className="modal-body">
-          {error && <p role="alert">{error}</p>}
+          {error && <p role="alert">Lỗi lưu: {error}</p>}
 
           <label className="modal-field">
             <span>Tiêu đề</span>

@@ -89,4 +89,40 @@ describe("EditKnowledgeNoteModal", () => {
     expect(saved.source).toBe("manual");
     expect(saved.createdAt).toBe("2020-01-01T00:00:00.000Z");
   });
+
+  it("editing an existing note keeps its id/source/createdAt via the initial fallback, even when existingNotes hasn't loaded yet", async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const existingNote: KnowledgeNote = {
+      id: "m2",
+      title: "Ghi chú cũ",
+      summary: "S cũ",
+      explanation: "E cũ",
+      patterns: [],
+      examples: [],
+      pitfalls: [],
+      groupId: "en_conditionals",
+      tags: [],
+      cefrLevel: "b1",
+      targetLanguage: "english",
+      source: "manual",
+      sourcePrompt: null,
+      createdAt: "2019-05-01T00:00:00.000Z",
+      updatedAt: "2019-05-01T00:00:00.000Z",
+    };
+    render(
+      <EditKnowledgeNoteModal
+        initial={existingNote}
+        targetLanguage="english"
+        existingNotes={[]}
+        onClose={() => {}}
+        onSave={onSave}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
+    const saved = onSave.mock.calls[0][0] as KnowledgeNote;
+    expect(saved.id).toBe("m2");
+    expect(saved.source).toBe("manual");
+    expect(saved.createdAt).toBe("2019-05-01T00:00:00.000Z");
+  });
 });
