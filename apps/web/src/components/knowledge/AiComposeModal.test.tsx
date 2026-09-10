@@ -67,6 +67,11 @@ describe("AiComposeModal", () => {
     expect(await screen.findByText(/ghi chú liên quan/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Vẫn tạo mới" }));
     await waitFor(() => expect(generateContent).toHaveBeenCalled());
+    // The whole point of this test: the request typed BEFORE the Layer-1
+    // banner appeared must still be the one that reaches generateContent
+    // after "Vẫn tạo mới" — not dropped/reset across that transition.
+    const call = vi.mocked(generateContent).mock.calls.at(-1)?.[0];
+    expect(call?.prompt).toContain("câu điều kiện loại 2");
     expect(await screen.findByDisplayValue("Câu điều kiện loại 2")).toBeInTheDocument();
   });
 
