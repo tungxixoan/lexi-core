@@ -112,7 +112,7 @@ Thư viện tham khảo ngữ pháp / cấu trúc câu theo ngôn ngữ (truy c�
   - Bản nháp AI mở ra trong màn hình soạn thảo (chung form với tự viết / sửa) — ở chế độ xem lại bản nháp, tiêu đề thanh trên đổi thành "Xem lại bản nháp"; không ghi gì lên Firestore cho tới khi bấm **Lưu**.
 - **Bộ mẫu tiếng Anh (~12 ghi chú)** về ngữ pháp cơ bản (tổng quan 12 thì, hiện tại đơn/tiếp diễn, quá khứ đơn, hiện tại hoàn thành, các cách nói tương lai, câu điều kiện 0/1 và 2/3, mạo từ, so sánh hơn/nhất...) được seed một lần cho mỗi tài khoản khi mở Kiến thức lần đầu (lazy, theo từng ngôn ngữ, không ghi đè id đã có). Overflow menu có **"Khôi phục ghi chú mẫu"** — dựng lại mọi ghi chú mẫu có id đã bị xóa, không đụng tới ghi chú còn tồn tại (nên phần chỉnh sửa của người dùng an toàn).
 - **Tìm kiếm + duyệt theo nhóm:** màn hình chính có một ô tìm kiếm cục bộ (khớp chuỗi con bỏ dấu trên tiêu đề + tóm tắt + giải thích + mẫu câu + lỗi + thẻ) và dải thẻ (tag chip) bấm để lọc; khi không tìm/lọc thì hiện lưới các nhóm ngữ pháp, mở một nhóm để xem ghi chú bên trong (chia mục theo cấp độ CEFR). Ngôn ngữ bám theo Cài đặt. Không có full-text server, không cần Firestore index.
-- Lưu ở Firestore `users/{uid}/knowledge_notes` + cờ seed `users/{uid}/knowledge_meta/seed` — **dùng chung shape với web** (giao diện web sẽ làm ở plan sau; shape dữ liệu đã tương thích sẵn).
+- Lưu ở Firestore `users/{uid}/knowledge_notes` + cờ seed `users/{uid}/knowledge_meta/seed` — **dùng chung shape với web**; app React (`apps/web/`) đã có đầy đủ giao diện Kiến thức (trang chính, nhóm, chi tiết, sửa, luồng "Nhờ AI soạn") ở mục "Kiến thức" trên sidebar.
 
 ### Tiến độ học tập (Progress Dashboard)
 
@@ -442,7 +442,7 @@ flutter test test/features/dictionary/presentation/providers/user_settings_notif
 flutter test --reporter expanded
 ```
 
-App mobile: **~1010 tests** (`flutter test`), `flutter analyze` sạch. App web: **~800 tests** (`npm test` trong `apps/web/`).
+App mobile: **~1010 tests** (`flutter test`), `flutter analyze` sạch. App web: **886 tests** (`npm test` trong `apps/web/`).
 
 ### Phân tích code
 
@@ -557,7 +557,7 @@ users/
 - [x] **App icon** — biểu tượng LexiCore (Bloom leaf mark) cho Android/iOS/web + favicon/PWA React web; sinh từ `scripts/gen-icons.mjs` + `flutter_launcher_icons`
 - [x] **Kiểu bài Flashcard/Trộn AI ở SM-2** — tùy chọn mỗi phiên tại màn Ôn tập (mặc định Flashcard, không lưu); Trộn AI bốc ngẫu nhiên 1 tỉ lệ AI 20–80%/phiên thay vì cố định 70% — cả app Flutter và web
 - [x] **Cutover web sang React** (2026-09-05) — Flutter Web ngừng hẳn: xoá thư mục `web/`, bỏ `hosting` block, `firebase hosting:disable`. App React trên App Hosting là bản web duy nhất, phục vụ ở URL `*.hosted.app`. App mobile Flutter không đổi.
-- [x] **Kiến thức** — thư viện ghi chú ngữ pháp/cấu trúc câu theo ngôn ngữ, tự viết hoặc AI soạn, có bộ mẫu tiếng Anh (app Flutter; web theo sau)
+- [x] **Kiến thức** — thư viện ghi chú ngữ pháp/cấu trúc câu theo ngôn ngữ, tự viết hoặc AI soạn, có bộ mẫu tiếng Anh (cả app Flutter lẫn app React web)
 
 **Ý tưởng khác đã brainstorm (chưa xếp lịch):**
 

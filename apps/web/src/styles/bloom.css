@@ -2526,3 +2526,42 @@ button.btn-google svg {
   gap: 10px;
   flex-shrink: 0;
 }
+
+/* --- Knowledge Notes --- */
+
+.knowledge-detail {
+  max-width: 720px;
+}
+
+.knowledge-detail h2 {
+  margin: 0 0 4px;
+  font-size: 25px;
+}
+
+.knowledge-detail h3 {
+  font-size: 16px;
+  margin: 20px 0 10px;
+}
+
+.bold-text p {
+  margin: 0 0 10px;
+  font-size: 17.5px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.bold-text p:last-child {
+  margin-bottom: 0;
+}
+
+.bold-text strong {
+  color: var(--accent);
+}
+
+.modal-hint {
+  color: var(--ink-faint);
+  font-size: 14px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+}
