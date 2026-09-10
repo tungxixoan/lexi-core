@@ -2337,7 +2337,7 @@ FOLLOW-UPS (not gating this branch — for a later chore):
 - Task 6: ✅ complete (commit d21d9c7, 3 tests, suite 847, review clean)
 - Task 7: ✅ complete (commit 8e4eb50, 6 tests, suite 853, review clean)
 - Task 8: ✅ complete (commit d45bf57, 4 tests, suite 857, review clean)
-- Task 9: pending
+- Task 9: ✅ complete (commit 66b4574, 5 tests, suite 862, review clean)
 - Task 10: pending
 - Task 11: pending
 - Task 12: pending
