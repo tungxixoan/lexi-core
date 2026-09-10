@@ -2341,7 +2341,7 @@ FOLLOW-UPS (not gating this branch — for a later chore):
 - Task 10: ✅ complete (commits a3c8734..2ab9984, 4 tests, suite 866, review clean — 1 Important test-coverage gap closed + 2 Minor)
 - Task 11: ✅ complete (commits c47b252, 4cc6651, 11 tests, suite 877 (2 pre-existing unrelated flakes — vocab-bank pagination + reading/part7 — both pass in isolation), review fixed — `use(params)`+Suspense hangs in this Vitest/jsdom/React 19 harness (verified via isolated repro), so a `useRouteParams` effect-based unwrap (`src/lib/useRouteParams.ts`) is used instead for all 3 dynamic-route pages; 1 Important fixed: hook didn't reset on `params` identity change (stale note under a new URL), now resets synchronously + regression test added)
 - Task 12: ✅ complete (commit 15e77b7, 3 tests, suite 880, review clean)
-- Task 13: pending
+- Task 13: ✅ complete (commits 0930ed4..cefd265, 5 tests, suite 885, review clean — 1 Important test-strengthening fix, mutation-verified)
 - Task 14: pending
 
 ## Minor Findings (for final review)
