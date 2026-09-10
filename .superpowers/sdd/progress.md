@@ -2336,7 +2336,7 @@ FOLLOW-UPS (not gating this branch — for a later chore):
 - Task 5: ✅ complete (commits d888db6..c6c7ed2, 9 tests, suite 844, review clean — 1 Minor: filter-before-parse)
 - Task 6: ✅ complete (commit d21d9c7, 3 tests, suite 847, review clean)
 - Task 7: ✅ complete (commit 8e4eb50, 6 tests, suite 853, review clean)
-- Task 8: pending
+- Task 8: ✅ complete (commit d45bf57, 4 tests, suite 857, review clean)
 - Task 9: pending
 - Task 10: pending
 - Task 11: pending
