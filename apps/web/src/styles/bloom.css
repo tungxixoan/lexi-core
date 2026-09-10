@@ -2377,6 +2377,101 @@ button.btn-google svg {
   margin-bottom: 10px;
 }
 
+.knowledge-header-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.knowledge-group-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 14px 0 24px;
+}
+
+.knowledge-group-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 18px;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.knowledge-group-card:hover {
+  background: var(--surface-2);
+}
+
+.knowledge-group-card-dim {
+  opacity: 0.45;
+}
+
+.knowledge-group-card-label {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.knowledge-group-card-count {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.knowledge-empty {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.knowledge-empty ul {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 16px;
+  color: var(--ink-soft);
+}
+
+.knowledge-write-link {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 11px 20px;
+  font-weight: 700;
+  font-size: 17px;
+  max-width: 240px;
+  margin: 0 auto;
+}
+
+.knowledge-bottom-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.knowledge-bottom-actions > * {
+  flex: 1;
+  text-align: center;
+  text-decoration: none;
+}
+
+.knowledge-bottom-actions .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 11px 20px;
+  font-weight: 700;
+  font-size: 17px;
+}
+
 .ex-translation {
   color: var(--ink-soft);
   margin-top: 4px;
