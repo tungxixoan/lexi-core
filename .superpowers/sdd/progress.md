@@ -2338,7 +2338,7 @@ FOLLOW-UPS (not gating this branch — for a later chore):
 - Task 7: ✅ complete (commit 8e4eb50, 6 tests, suite 853, review clean)
 - Task 8: ✅ complete (commit d45bf57, 4 tests, suite 857, review clean)
 - Task 9: ✅ complete (commit 66b4574, 5 tests, suite 862, review clean)
-- Task 10: pending
+- Task 10: ✅ complete (commits a3c8734..2ab9984, 4 tests, suite 866, review clean — 1 Important test-coverage gap closed + 2 Minor)
 - Task 11: pending
 - Task 12: pending
 - Task 13: pending
