@@ -21,6 +21,12 @@ export function useRouteParams<T>(params: Promise<T>): T | null {
 
   useEffect(() => {
     let cancelled = false;
+    // Clear the previous route's resolved value the instant `params`'
+    // identity changes (e.g. navigating /note/a -> /note/b re-uses the same
+    // component instance/state, no remount) so a stale value is never shown
+    // under the new URL while the new promise is still pending — matches
+    // `use()`'s behavior of suspending immediately on a new pending promise.
+    setResolved(null);
     params.then((value) => {
       if (!cancelled) setResolved(value);
     });
