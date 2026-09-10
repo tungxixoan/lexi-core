@@ -1,0 +1,384 @@
+[
+  {
+    "id": "starter_en_tenses_overview",
+    "title": "Tổng quan 12 thì tiếng Anh",
+    "summary": "Tiếng Anh có 12 thì, ghép từ 3 mốc thời gian (hiện tại, quá khứ, tương lai) với 4 thể (đơn, tiếp diễn, hoàn thành, hoàn thành tiếp diễn). Nắm quy luật ghép này giúp bạn không phải học thuộc từng thì rời rạc.",
+    "explanation": "Mỗi thì trả lời hai câu hỏi: **việc xảy ra khi nào** (hiện tại / quá khứ / tương lai) và **nhìn việc đó như thế nào** (một sự thật gọn, một quá trình đang diễn ra, một kết quả còn liên quan, hay một quá trình kéo dài).\n\nThể **đơn** nhìn hành động như một khối trọn vẹn: thói quen, sự thật, một sự kiện đã kết thúc. Thể **tiếp diễn** (be + V-ing) nhìn hành động đang trong quá trình, chưa xong. Thể **hoàn thành** (have + V3) nối một thời điểm với thời điểm trước đó: việc đã xong nhưng kết quả hoặc kinh nghiệm vẫn còn giá trị lúc ta nói.\n\nTrong giao tiếp hằng ngày bạn dùng nhiều nhất khoảng 6 thì: hiện tại đơn, hiện tại tiếp diễn, quá khứ đơn, hiện tại hoàn thành, tương lai với **will** và **be going to**. Các thì hoàn thành tiếp diễn và tương lai hoàn thành ít gặp hơn, học sau cũng được.\n\nTiếng Việt không chia động từ theo thì mà dùng các từ như đã, đang, sẽ, rồi. Vì vậy khi nói tiếng Anh, hãy dừng lại nghĩ xem mốc thời gian và cách nhìn hành động là gì, rồi mới chọn dạng động từ.",
+    "patterns": [
+      "Hiện tại đơn: S + V(s/es)",
+      "Tiếp diễn: S + am/is/are/was/were + V-ing",
+      "Hoàn thành: S + have/has/had + V3",
+      "Tương lai: S + will + V  /  S + am/is/are going to + V"
+    ],
+    "examples": [
+      {"text": "I work from home.", "translation": "Tôi làm việc ở nhà. (thói quen, hiện tại đơn)"},
+      {"text": "I am working right now.", "translation": "Tôi đang làm việc ngay bây giờ. (hiện tại tiếp diễn)"},
+      {"text": "I worked there last year.", "translation": "Năm ngoái tôi làm ở đó. (quá khứ đơn)"},
+      {"text": "I have worked here since 2020.", "translation": "Tôi làm ở đây từ năm 2020 đến giờ. (hiện tại hoàn thành)"},
+      {"text": "I will work late tomorrow.", "translation": "Ngày mai tôi sẽ làm muộn. (tương lai với will)"}
+    ],
+    "pitfalls": [
+      "Dịch chữ \"đã\" thành hiện tại hoàn thành trong mọi trường hợp. \"Đã\" kèm mốc thời gian quá khứ rõ ràng (yesterday, last week) phải dùng **quá khứ đơn**, không dùng have + V3.",
+      "Nghĩ rằng cứ có \"đang\" là dùng tiếp diễn. Với động từ trạng thái như know, want, believe, tiếng Anh vẫn dùng **hiện tại đơn**.",
+      "Học thuộc bảng 12 thì mà không luyện nói. Hãy tập chọn thì trong câu thật, không chỉ điền vào chỗ trống."
+    ],
+    "groupId": "en_tenses",
+    "tags": ["ngu-phap-co-ban", "tong-quan"],
+    "cefrLevel": "a2",
+    "targetLanguage": "english",
+    "source": "starter",
+    "sourcePrompt": null,
+    "createdAt": "2026-09-07T00:00:00.000Z",
+    "updatedAt": "2026-09-07T00:00:00.000Z"
+  },
+  {
+    "id": "starter_en_present_simple",
+    "title": "Hiện tại đơn",
+    "summary": "Dùng hiện tại đơn cho thói quen, sự thật luôn đúng, và lịch trình cố định. Đây là thì nền tảng, gặp nhiều nhất khi giới thiệu bản thân và nói về cuộc sống hằng ngày.",
+    "explanation": "Hiện tại đơn diễn tả điều gì đó **đúng nói chung**, không gắn với khoảnh khắc đang nói: thói quen (I drink coffee every morning), sự thật hiển nhiên (The sun rises in the east), tính cách và sở thích (She likes jazz), và lịch chạy cố định (The train leaves at 7).\n\nVới **ngôi thứ ba số ít** (he, she, it hoặc một danh từ số ít), động từ thêm **-s / -es**: works, goes, watches. Các ngôi còn lại giữ nguyên động từ nguyên mẫu.\n\nCâu phủ định và câu hỏi mượn trợ động từ **do / does**, và khi đã có do/does thì động từ chính trở lại dạng nguyên mẫu: She does not work here (không phải does not works). Trạng từ tần suất (always, usually, often, sometimes, never) đứng trước động từ thường nhưng sau động từ to be.",
+    "patterns": [
+      "S + V(s/es) + O",
+      "S + do/does + not + V (nguyên mẫu)",
+      "Do/Does + S + V (nguyên mẫu)?",
+      "S + am/is/are + (not) + tính từ / danh từ"
+    ],
+    "examples": [
+      {"text": "She works in a bank.", "translation": "Cô ấy làm việc ở ngân hàng."},
+      {"text": "Water boils at 100 degrees Celsius.", "translation": "Nước sôi ở 100 độ C."},
+      {"text": "I do not eat meat.", "translation": "Tôi không ăn thịt."},
+      {"text": "Does he speak English?", "translation": "Anh ấy có nói tiếng Anh không?"},
+      {"text": "The museum opens at nine every day.", "translation": "Bảo tàng mở cửa lúc chín giờ mỗi ngày."}
+    ],
+    "pitfalls": [
+      "Quên **-s / -es** ở ngôi thứ ba số ít: câu đúng là \"He plays\", không phải \"He play\".",
+      "Thêm -s vào động từ chính sau does: sai \"Does she likes it?\", đúng \"Does she like it?\".",
+      "Dùng hiện tại đơn cho việc đang xảy ra ngay lúc nói. Việc đang diễn ra thì dùng **hiện tại tiếp diễn**."
+    ],
+    "groupId": "en_tenses",
+    "tags": ["ngu-phap-co-ban"],
+    "cefrLevel": "a1",
+    "targetLanguage": "english",
+    "source": "starter",
+    "sourcePrompt": null,
+    "createdAt": "2026-09-07T00:00:00.000Z",
+    "updatedAt": "2026-09-07T00:00:00.000Z"
+  },
+  {
+    "id": "starter_en_present_continuous",
+    "title": "Hiện tại tiếp diễn",
+    "summary": "Dùng hiện tại tiếp diễn cho việc đang xảy ra ngay lúc nói hoặc quanh thời điểm này, và cho kế hoạch đã sắp xếp trong tương lai gần.",
+    "explanation": "Cấu trúc là **am / is / are + V-ing**. Nghĩa cốt lõi là hành động **chưa hoàn tất**, đang trong quá trình: right now (I am reading), hoặc trong giai đoạn này của cuộc sống dù ngay lúc nói không làm (I am learning to drive this month).\n\nHiện tại tiếp diễn còn diễn tả **kế hoạch tương lai gần đã chốt**, thường có thời gian và người liên quan: I am meeting Sara tomorrow. Cách dùng này rất phổ biến trong hội thoại.\n\nMột số động từ chỉ **trạng thái**, không chỉ hành động, thường không chia tiếp diễn: know, understand, like, love, want, need, believe, belong. Nói I want a coffee, không nói I am wanting. Riêng think, have, see đổi nghĩa thì mới dùng được tiếp diễn (I am thinking about it = đang cân nhắc).",
+    "patterns": [
+      "S + am/is/are + V-ing",
+      "S + am/is/are + not + V-ing",
+      "Am/Is/Are + S + V-ing?",
+      "S + am/is/are + V-ing + (mốc thời gian tương lai)"
+    ],
+    "examples": [
+      {"text": "She is talking on the phone right now.", "translation": "Cô ấy đang nói chuyện điện thoại ngay bây giờ."},
+      {"text": "They are building a new bridge this year.", "translation": "Năm nay họ đang xây một cây cầu mới."},
+      {"text": "I am not working today.", "translation": "Hôm nay tôi không đi làm."},
+      {"text": "We are having dinner with my parents on Friday.", "translation": "Thứ Sáu chúng tôi sẽ ăn tối với bố mẹ tôi. (kế hoạch đã sắp xếp)"},
+      {"text": "Why are you laughing?", "translation": "Sao bạn lại cười vậy?"}
+    ],
+    "pitfalls": [
+      "Chia động từ trạng thái ở tiếp diễn: sai \"I am knowing the answer\", đúng \"I know the answer\".",
+      "Bỏ quên động từ **to be**: sai \"She working now\", đúng \"She is working now\".",
+      "Dùng hiện tại tiếp diễn cho thói quen. \"Every day I am going to school\" sai; thói quen dùng **hiện tại đơn**: \"I go to school every day\"."
+    ],
+    "groupId": "en_tenses",
+    "tags": ["ngu-phap-co-ban"],
+    "cefrLevel": "a1",
+    "targetLanguage": "english",
+    "source": "starter",
+    "sourcePrompt": null,
+    "createdAt": "2026-09-07T00:00:00.000Z",
+    "updatedAt": "2026-09-07T00:00:00.000Z"
+  },
+  {
+    "id": "starter_en_present_simple_vs_continuous",
+    "title": "Hiện tại đơn vs. Hiện tại tiếp diễn",
+    "summary": "Hiện tại đơn nói điều gì đó đúng nói chung (thói quen, sự thật). Hiện tại tiếp diễn nói điều đang diễn ra bây giờ hoặc tạm thời trong giai đoạn này.",
+    "explanation": "Hãy hỏi: đây là **quy luật chung** hay **chuyện đang xảy ra**? Quy luật chung, lặp lại, không có điểm kết thúc rõ ràng thì dùng **hiện tại đơn**. Chuyện trước mắt, tạm thời, đang trong quá trình thì dùng **hiện tại tiếp diễn**.\n\nSo sánh: She works in Hanoi (công việc lâu dài của cô ấy) và She is working in Hanoi this month (bình thường ở nơi khác, tháng này mới ở Hanoi). Cùng một động từ, khác cách nhìn.\n\nDấu hiệu thời gian giúp chọn thì: always, every day, usually, on Mondays, twice a week nghiêng về hiện tại đơn; now, right now, at the moment, today, this week nghiêng về hiện tại tiếp diễn. Nhưng dấu hiệu chỉ là gợi ý, ý nghĩa mới quyết định.\n\nNhớ rằng động từ **trạng thái** (know, want, like, need, believe) hầu như luôn dùng hiện tại đơn, kể cả khi nói về lúc này.",
+    "patterns": [
+      "Thói quen / sự thật: S + V(s/es)",
+      "Đang xảy ra / tạm thời: S + am/is/are + V-ing",
+      "Động từ trạng thái: luôn dùng hiện tại đơn"
+    ],
+    "examples": [
+      {"text": "I usually take the bus, but today I am walking.", "translation": "Tôi thường đi xe buýt, nhưng hôm nay tôi đi bộ."},
+      {"text": "He speaks four languages.", "translation": "Anh ấy nói được bốn thứ tiếng. (khả năng, luôn đúng)"},
+      {"text": "Be quiet, please. The baby is sleeping.", "translation": "Làm ơn yên lặng. Em bé đang ngủ."},
+      {"text": "Water freezes at zero degrees.", "translation": "Nước đóng băng ở không độ. (sự thật)"},
+      {"text": "I want to go home now.", "translation": "Bây giờ tôi muốn về nhà. (động từ trạng thái, không dùng am wanting)"}
+    ],
+    "pitfalls": [
+      "Dịch \"đang\" một cách máy móc thành tiếp diễn với động từ trạng thái: sai \"I am understanding now\", đúng \"I understand now\".",
+      "Dùng tiếp diễn khi nói về quy luật hoặc sự thật khoa học: khi phát biểu một quy luật chung, hãy nói \"The sun rises in the east\", không phải \"The sun is rising in the east\" (dạng -ing chỉ hợp khi thật sự đang tả cảnh mặt trời mọc lúc bình minh).",
+      "Dùng hiện tại đơn cho việc rõ ràng đang diễn ra trước mắt: nếu ai đó đang gọi bạn, hãy nói \"Someone is calling you\", không phải \"Someone calls you\"."
+    ],
+    "groupId": "en_tenses",
+    "tags": ["ngu-phap-co-ban", "so-sanh-thi"],
+    "cefrLevel": "a2",
+    "targetLanguage": "english",
+    "source": "starter",
+    "sourcePrompt": null,
+    "createdAt": "2026-09-07T00:00:00.000Z",
+    "updatedAt": "2026-09-07T00:00:00.000Z"
+  },
+  {
+    "id": "starter_en_past_simple",
+    "title": "Quá khứ đơn",
+    "summary": "Dùng quá khứ đơn cho hành động đã bắt đầu và kết thúc trong quá khứ, thường có mốc thời gian rõ ràng. Đây là thì chính để kể chuyện.",
+    "explanation": "Động từ có quy tắc thêm **-ed** (worked, played, wanted). Động từ bất quy tắc phải học riêng từng từ (go - went, see - saw, buy - bought, have - had). Dạng quá khứ dùng chung cho mọi ngôi, không đổi theo he/she/it.\n\nCâu phủ định và câu hỏi mượn trợ động từ **did**, và khi đã có did thì động từ chính quay về **nguyên mẫu**: She did not go (không phải did not went), Did you see it? (không phải Did you saw).\n\nQuá khứ đơn thường đi với dấu hiệu thời gian đã xong: yesterday, last night, in 2010, two days ago, when I was young. Khi kể một chuỗi sự việc nối tiếp nhau trong quá khứ, ta cũng dùng quá khứ đơn cho từng bước: I woke up, made coffee, and left.\n\nĐộng từ **to be** ở quá khứ là was (I / he / she / it) và were (you / we / they), có dạng phủ định wasn't / weren't và không cần did.",
+    "patterns": [
+      "S + V-ed / V2 + O",
+      "S + did + not + V (nguyên mẫu)",
+      "Did + S + V (nguyên mẫu)?",
+      "S + was/were + (not) + ..."
+    ],
+    "examples": [
+      {"text": "We visited Da Nang last summer.", "translation": "Mùa hè năm ngoái chúng tôi đã đến Đà Nẵng."},
+      {"text": "She did not call me yesterday.", "translation": "Hôm qua cô ấy không gọi cho tôi."},
+      {"text": "Did you finish the report?", "translation": "Bạn làm xong báo cáo chưa?"},
+      {"text": "He was tired after the trip.", "translation": "Anh ấy mệt sau chuyến đi."},
+      {"text": "I opened the door, turned on the light, and sat down.", "translation": "Tôi mở cửa, bật đèn, rồi ngồi xuống."}
+    ],
+    "pitfalls": [
+      "Giữ dạng quá khứ của động từ chính sau **did**: sai \"Did he went?\", đúng \"Did he go?\".",
+      "Dùng was/were kèm did: sai \"He didn't was there\", đúng \"He wasn't there\".",
+      "Dùng hiện tại hoàn thành khi có mốc thời gian quá khứ rõ ràng: với \"yesterday\" phải nói \"I saw her yesterday\", không phải \"I have seen her yesterday\"."
+    ],
+    "groupId": "en_tenses",
+    "tags": ["ngu-phap-co-ban"],
+    "cefrLevel": "a1",
+    "targetLanguage": "english",
+    "source": "starter",
+    "sourcePrompt": null,
+    "createdAt": "2026-09-07T00:00:00.000Z",
+    "updatedAt": "2026-09-07T00:00:00.000Z"
+  },
+  {
+    "id": "starter_en_present_perfect",
+    "title": "Hiện tại hoàn thành",
+    "summary": "Dùng hiện tại hoàn thành khi một việc trong quá khứ còn liên quan đến hiện tại: kết quả còn đó, kinh nghiệm tính đến bây giờ, hoặc việc bắt đầu trong quá khứ và vẫn tiếp tục.",
+    "explanation": "Cấu trúc là **have / has + V3** (past participle). Điểm mấu chốt: hiện tại hoàn thành **không cho biết chính xác khi nào** việc xảy ra, vì điều quan trọng là mối liên hệ với hiện tại, không phải thời điểm.\n\nBa nét nghĩa thường gặp: kết quả còn thấy được lúc này (I have lost my keys, nghĩa là bây giờ vẫn chưa tìm ra); kinh nghiệm sống tính đến giờ (I have been to Japan twice); và việc kéo dài từ quá khứ tới hiện tại, dùng với **since** (mốc bắt đầu) và **for** (khoảng thời gian): She has worked here for five years.\n\nCác trạng từ hay đi kèm: already, yet, just, ever, never, so far, recently. Câu hỏi \"đã từng chưa\" dùng ever: Have you ever eaten sushi?\n\nSo với tiếng Việt: nét nghĩa \"đã ... rồi\" (đã xong và giờ vẫn vậy) và \"đã từng\" thường tương ứng với hiện tại hoàn thành, nhưng chỉ khi không nêu thời điểm cụ thể.",
+    "patterns": [
+      "S + have/has + V3",
+      "S + have/has + not + V3 + yet",
+      "Have/Has + S + (ever) + V3?",
+      "S + have/has + V3 + for / since + ..."
+    ],
+    "examples": [
+      {"text": "I have already finished my homework.", "translation": "Tôi làm xong bài tập rồi."},
+      {"text": "She has never seen the ocean.", "translation": "Cô ấy chưa bao giờ nhìn thấy biển."},
+      {"text": "We have lived in this house since 2015.", "translation": "Chúng tôi sống trong ngôi nhà này từ năm 2015 đến giờ."},
+      {"text": "Have you finished yet?", "translation": "Bạn xong chưa?"},
+      {"text": "He has just left the office.", "translation": "Anh ấy vừa rời văn phòng."}
+    ],
+    "pitfalls": [
+      "Dùng **for** thay cho **since** và ngược lại: \"for two years\" (khoảng thời gian) nhưng \"since 2015\" (mốc bắt đầu).",
+      "Kèm mốc thời gian quá khứ xác định: sai \"I have seen him last week\", đúng \"I saw him last week\" (**quá khứ đơn**).",
+      "Quên đổi động từ sang dạng V3: sai \"I have went\", đúng \"I have gone\"."
+    ],
+    "groupId": "en_tenses",
+    "tags": ["ngu-phap-co-ban"],
+    "cefrLevel": "a2",
+    "targetLanguage": "english",
+    "source": "starter",
+    "sourcePrompt": null,
+    "createdAt": "2026-09-07T00:00:00.000Z",
+    "updatedAt": "2026-09-07T00:00:00.000Z"
+  },
+  {
+    "id": "starter_en_present_perfect_vs_past",
+    "title": "Hiện tại hoàn thành vs. Quá khứ đơn",
+    "summary": "Quá khứ đơn gắn với một thời điểm đã xong trong quá khứ. Hiện tại hoàn thành gắn việc đó với hiện tại và không nêu thời điểm cụ thể.",
+    "explanation": "Câu hỏi quyết định: bạn có đang **nghĩ tới một thời điểm quá khứ cụ thể** không? Nếu có (dù nói ra hay ngầm hiểu) thì dùng **quá khứ đơn**. Nếu điều quan trọng là kết quả, kinh nghiệm, hay tin tức còn mới, không phải thời điểm, thì dùng **hiện tại hoàn thành**.\n\nSo sánh: I have finished the report (tin mới, giờ nó đã xong, sẵn sàng gửi) và I finished the report at 5 p.m. (nêu rõ lúc nào). Hoặc: Have you seen this film? (bất kỳ lúc nào trong đời) và Did you see the film last night? (một buổi tối cụ thể).\n\nDấu hiệu quá khứ đơn: yesterday, last week, in 2019, ago, when, what time. Dấu hiệu hiện tại hoàn thành: already, yet, just, ever, never, so far, this week (khi tuần chưa kết thúc), recently.\n\nKhi kể tin bằng hiện tại hoàn thành rồi bổ sung chi tiết, người ta thường chuyển sang quá khứ đơn: I have lost my wallet. I think I left it on the bus.",
+    "patterns": [
+      "Thời điểm quá khứ xác định: S + V-ed / V2",
+      "Liên hệ với hiện tại, không nêu thời điểm: S + have/has + V3",
+      "Câu hỏi \"khi nào\": luôn dùng quá khứ đơn (When did ...?)"
+    ],
+    "examples": [
+      {"text": "I have been to Paris. I went there in 2018.", "translation": "Tôi từng đến Paris. Tôi đến đó năm 2018."},
+      {"text": "She has broken her leg, so she can't walk now.", "translation": "Cô ấy bị gãy chân, nên bây giờ không đi được."},
+      {"text": "He broke his leg last year, but it's fine now.", "translation": "Năm ngoái anh ấy gãy chân, nhưng giờ ổn rồi."},
+      {"text": "Have you ever met a famous person?", "translation": "Bạn đã bao giờ gặp người nổi tiếng chưa?"},
+      {"text": "When did you arrive?", "translation": "Bạn đến lúc nào?"}
+    ],
+    "pitfalls": [
+      "Dùng hiện tại hoàn thành với **ago**: sai \"I have finished it two hours ago\", đúng \"I finished it two hours ago\".",
+      "Dùng quá khứ đơn khi hỏi kinh nghiệm chung chung không mốc thời gian: nên hỏi \"Have you ever tried it?\" thay vì \"Did you ever try it?\" trong ngữ cảnh này (mặc dù tiếng Anh Mỹ đôi khi chấp nhận quá khứ đơn).",
+      "Nghĩ rằng \"just\", \"already\", \"yet\" luôn bắt buộc hiện tại hoàn thành. Chúng là gợi ý mạnh, nhưng ngữ cảnh vẫn là yếu tố quyết định."
+    ],
+    "groupId": "en_tenses",
+    "tags": ["ngu-phap-co-ban", "so-sanh-thi"],
+    "cefrLevel": "b1",
+    "targetLanguage": "english",
+    "source": "starter",
+    "sourcePrompt": null,
+    "createdAt": "2026-09-07T00:00:00.000Z",
+    "updatedAt": "2026-09-07T00:00:00.000Z"
+  },
+  {
+    "id": "starter_en_future_forms",
+    "title": "Các cách nói tương lai (will / be going to / hiện tại tiếp diễn)",
+    "summary": "Tiếng Anh có nhiều cách nói về tương lai. Chọn dạng nào phụ thuộc vào việc đó là quyết định tức thì, dự định đã có sẵn, dự đoán có bằng chứng, hay lịch hẹn đã sắp xếp.",
+    "explanation": "**will + V** dùng cho quyết định ngay lúc nói (I'll help you với hành động vừa nảy ra ý định), lời hứa, lời đề nghị, và dự đoán dựa trên ý kiến chủ quan (I think it will rain). Cũng dùng với các sự thật tương lai không phụ thuộc ý muốn ai (She will be 30 next month).\n\n**be going to + V** dùng cho dự định đã có từ trước (We are going to buy a house) và dự đoán khi có **bằng chứng nhìn thấy ngay** (Look at those clouds. It is going to rain).\n\n**Hiện tại tiếp diễn** dùng cho kế hoạch đã sắp xếp cụ thể, có thời gian và thường có người khác liên quan (I am seeing the dentist at 3). Rất giống be going to, nhưng nhấn mạnh việc đã được chốt lịch.\n\nNgoài ra, **hiện tại đơn** dùng cho thời gian biểu cố định của phương tiện, sự kiện (The flight departs at 6 a.m.). Trong mệnh đề thời gian bắt đầu bằng when, after, before, as soon as, ta dùng hiện tại đơn chứ không dùng will: I will call you when I arrive.",
+    "patterns": [
+      "S + will + V (nguyên mẫu)",
+      "S + am/is/are + going to + V",
+      "S + am/is/are + V-ing + (thời gian tương lai)",
+      "when / after / as soon as + S + V (hiện tại đơn), S + will + V"
+    ],
+    "examples": [
+      {"text": "The phone is ringing. I'll get it.", "translation": "Điện thoại đang reo. Để tôi nghe cho. (quyết định tức thì)"},
+      {"text": "We are going to travel around Vietnam next year.", "translation": "Năm sau chúng tôi định đi vòng quanh Việt Nam. (dự định có sẵn)"},
+      {"text": "Watch out! You are going to fall.", "translation": "Cẩn thận! Bạn sắp ngã kìa. (dự đoán có bằng chứng)"},
+      {"text": "I am meeting the client tomorrow morning.", "translation": "Sáng mai tôi có buổi gặp khách hàng. (lịch đã sắp xếp)"},
+      {"text": "I will text you as soon as I land.", "translation": "Tôi sẽ nhắn cho bạn ngay khi máy bay hạ cánh."}
+    ],
+    "pitfalls": [
+      "Dùng **will** trong mệnh đề bắt đầu bằng when / after / if (nghĩa tương lai): sai \"when I will arrive\", đúng \"when I arrive\".",
+      "Dùng **will** cho dự định đã lên kế hoạch từ trước: nếu đã quyết định rồi thì \"I am going to ...\" tự nhiên hơn \"I will ...\".",
+      "Nói \"I will can\" hoặc \"will to go\": sau **will** luôn là động từ nguyên mẫu không \"to\", và không đặt hai động từ khuyết thiếu cạnh nhau (dùng \"will be able to\")."
+    ],
+    "groupId": "en_tenses",
+    "tags": ["ngu-phap-co-ban", "tuong-lai"],
+    "cefrLevel": "a2",
+    "targetLanguage": "english",
+    "source": "starter",
+    "sourcePrompt": null,
+    "createdAt": "2026-09-07T00:00:00.000Z",
+    "updatedAt": "2026-09-07T00:00:00.000Z"
+  },
+  {
+    "id": "starter_en_conditionals_0_1",
+    "title": "Câu điều kiện loại 0 và 1",
+    "summary": "Loại 0 nói về điều luôn đúng khi có điều kiện (sự thật, quy luật). Loại 1 nói về điều kiện có thật, có khả năng xảy ra trong tương lai và kết quả của nó.",
+    "explanation": "**Loại 0**: If / When + hiện tại đơn, + hiện tại đơn. Dùng cho sự thật khoa học, quy luật tự nhiên, thói quen luôn đúng: If you heat ice, it melts. Ở loại 0, if và when gần như thay thế được cho nhau vì kết quả luôn xảy ra.\n\n**Loại 1**: If + hiện tại đơn, + will / can / may / should + V. Dùng cho tình huống **có thể xảy ra** trong tương lai và hệ quả thực tế của nó: If it rains tomorrow, we will stay home. Mệnh đề if nêu điều kiện, mệnh đề chính nêu kết quả.\n\nMệnh đề if có thể đứng trước hoặc sau mệnh đề chính. Khi đứng trước, có dấu phẩy ngăn cách; khi đứng sau thì thường không cần dấu phẩy: We will stay home if it rains.\n\nĐiểm quan trọng nhất: trong **mệnh đề if không dùng will**, dù ý nghĩa là tương lai. \"Will\" chỉ nằm ở mệnh đề kết quả. Có thể thay will bằng động từ khuyết thiếu khác hoặc bằng câu mệnh lệnh: If you see John, tell him to call me.",
+    "patterns": [
+      "Loại 0: If / When + S + V(s/es), S + V(s/es)",
+      "Loại 1: If + S + V(s/es), S + will + V",
+      "Loại 1 (biến thể): If + S + V(s/es), S + can / may / should + V",
+      "If + S + V(s/es), + câu mệnh lệnh"
+    ],
+    "examples": [
+      {"text": "If you press this button, the machine stops.", "translation": "Nếu bạn nhấn nút này thì máy dừng lại. (loại 0, luôn đúng)"},
+      {"text": "Water boils if you heat it to 100 degrees.", "translation": "Nước sôi nếu bạn đun nó đến 100 độ."},
+      {"text": "If it rains tomorrow, we will cancel the picnic.", "translation": "Nếu ngày mai trời mưa, chúng tôi sẽ hủy buổi dã ngoại. (loại 1)"},
+      {"text": "If you study hard, you can pass the exam.", "translation": "Nếu bạn học chăm, bạn có thể đậu kỳ thi."},
+      {"text": "Call me if you need help.", "translation": "Gọi cho tôi nếu bạn cần giúp đỡ."}
+    ],
+    "pitfalls": [
+      "Dùng **will** trong mệnh đề if: sai \"If it will rain, ...\", đúng \"If it rains, ...\".",
+      "Nhầm loại 1 với loại 2. Loại 1 dùng hiện tại đơn + will cho điều **có thể xảy ra**; loại 2 dùng quá khứ đơn + would cho điều **không có thật** ở hiện tại.",
+      "Quên **-s** ở ngôi thứ ba số ít trong mệnh đề if: \"If he calls\", không phải \"If he call\"."
+    ],
+    "groupId": "en_conditionals",
+    "tags": ["ngu-phap-co-ban", "cau-dieu-kien"],
+    "cefrLevel": "a2",
+    "targetLanguage": "english",
+    "source": "starter",
+    "sourcePrompt": null,
+    "createdAt": "2026-09-07T00:00:00.000Z",
+    "updatedAt": "2026-09-07T00:00:00.000Z"
+  },
+  {
+    "id": "starter_en_conditionals_2_3",
+    "title": "Câu điều kiện loại 2 và 3",
+    "summary": "Loại 2 nói về tình huống không có thật hoặc khó xảy ra ở hiện tại và tương lai. Loại 3 nói về tình huống trái với những gì đã thực sự xảy ra trong quá khứ.",
+    "explanation": "**Loại 2**: If + quá khứ đơn, + would / could / might + V. Dùng để tưởng tượng điều **trái với hiện tại** hoặc rất khó xảy ra: If I had more time, I would learn the piano (thực tế là tôi không có thời gian). Với động từ to be, văn phong chuẩn dùng **were** cho mọi ngôi: If I were you, I would apologize.\n\n**Loại 3**: If + had + V3, + would / could / might + have + V3. Dùng để tưởng tượng điều **trái với quá khứ**, việc đã không diễn ra như thế: If she had studied, she would have passed (thực tế cô ấy không học và đã trượt). Loại 3 thường mang nghĩa tiếc nuối hoặc trách móc.\n\nCả hai loại đều **không dùng would trong mệnh đề if**. Mệnh đề if chỉ chứa quá khứ đơn (loại 2) hoặc past perfect (loại 3); would nằm ở mệnh đề chính.\n\nĐôi khi hai vế lệch mốc thời gian, tạo ra câu điều kiện hỗn hợp: If she had studied medicine, she would be a doctor now (quá khứ không xảy ra, hệ quả ở hiện tại).",
+    "patterns": [
+      "Loại 2: If + S + V-past, S + would / could / might + V",
+      "Loại 2 (to be): If + S + were + ..., S + would + V",
+      "Loại 3: If + S + had + V3, S + would have + V3",
+      "Hỗn hợp: If + S + had + V3, S + would + V (now)"
+    ],
+    "examples": [
+      {"text": "If I had more time, I would learn the piano.", "translation": "Nếu tôi có nhiều thời gian hơn, tôi sẽ học piano. (nhưng thực tế không có)"},
+      {"text": "If I were you, I would take the job.", "translation": "Nếu tôi là bạn, tôi sẽ nhận công việc đó."},
+      {"text": "If she had studied, she would have passed the test.", "translation": "Nếu cô ấy đã học bài, cô ấy đã đậu bài kiểm tra rồi."},
+      {"text": "We would have arrived on time if we had left earlier.", "translation": "Chúng tôi đã đến đúng giờ nếu chúng tôi rời đi sớm hơn."},
+      {"text": "If he had saved money, he would not be in debt now.", "translation": "Nếu anh ấy đã tiết kiệm tiền thì bây giờ anh ấy không nợ nần. (câu hỗn hợp)"}
+    ],
+    "pitfalls": [
+      "Dùng **would** trong mệnh đề if: sai \"If I would have time\", đúng \"If I had time\".",
+      "Nhầm loại 2 với loại 3 khi mốc thời gian là quá khứ: chuyện đã rồi phải dùng **had + V3** ở mệnh đề if.",
+      "Quên **have** trong mệnh đề chính của loại 3: sai \"she would passed\", đúng \"she would have passed\"."
+    ],
+    "groupId": "en_conditionals",
+    "tags": ["ngu-phap-co-ban", "cau-dieu-kien"],
+    "cefrLevel": "b1",
+    "targetLanguage": "english",
+    "source": "starter",
+    "sourcePrompt": null,
+    "createdAt": "2026-09-07T00:00:00.000Z",
+    "updatedAt": "2026-09-07T00:00:00.000Z"
+  },
+  {
+    "id": "starter_en_articles",
+    "title": "Mạo từ a / an / the / mạo từ zero",
+    "summary": "Dùng a / an khi nói tới một thứ chưa xác định, lần đầu nhắc tới. Dùng the khi cả người nói và người nghe đều biết đang nói tới thứ nào. Nhiều trường hợp không dùng mạo từ nào cả.",
+    "explanation": "**a / an** đứng trước danh từ đếm được số ít, khi đối tượng **chưa xác định** hoặc nhắc tới lần đầu: I saw a dog. Chọn **an** khi từ tiếp theo bắt đầu bằng **âm** nguyên âm (an hour, an MBA), chọn **a** khi bắt đầu bằng âm phụ âm (a university, a European).\n\n**the** dùng khi người nghe biết chính xác bạn nói tới thứ nào: vì đã nhắc trước đó (I saw a dog. The dog was barking), vì chỉ có một (the sun, the president), vì có ngữ cảnh xác định (Close the door), hoặc vì được nói rõ ngay sau đó (the book on the table).\n\n**Mạo từ zero** (không dùng mạo từ) đi với danh từ số nhiều hoặc không đếm được khi nói **chung chung**: Dogs are loyal, Water is essential. Cũng không dùng mạo từ với hầu hết tên riêng, tên quốc gia số ít (Vietnam, France), bữa ăn (have lunch), và các cụm như go to school, at home, by car.\n\nTiếng Việt không có mạo từ, nên người học thường bỏ quên hoặc thêm the không cần thiết. Quy tắc gốc: hỏi \"người nghe có biết chính xác thứ nào không?\" trước mỗi danh từ đếm được số ít.",
+    "patterns": [
+      "a / an + danh từ đếm được số ít (chưa xác định)",
+      "the + danh từ (người nghe đã biết là thứ nào)",
+      "không mạo từ + danh từ số nhiều / không đếm được (nghĩa chung)",
+      "an + âm nguyên âm; a + âm phụ âm"
+    ],
+    "examples": [
+      {"text": "I need a pen. Do you have one?", "translation": "Tôi cần một cây bút. Bạn có không?"},
+      {"text": "She works at a hospital. The hospital is near the river.", "translation": "Cô ấy làm ở một bệnh viện. Bệnh viện đó gần con sông."},
+      {"text": "The moon is bright tonight.", "translation": "Tối nay trăng sáng. (chỉ có một mặt trăng)"},
+      {"text": "Children need love and attention.", "translation": "Trẻ em cần tình thương và sự quan tâm. (nghĩa chung, không mạo từ)"},
+      {"text": "We have breakfast at seven and then go to work.", "translation": "Chúng tôi ăn sáng lúc bảy giờ rồi đi làm."}
+    ],
+    "pitfalls": [
+      "Bỏ mạo từ trước danh từ đếm được số ít: sai \"I am teacher\", đúng \"I am **a** teacher\".",
+      "Thêm **the** khi nói chung chung: sai \"The dogs are loyal\" (nếu ý là loài chó nói chung), đúng \"Dogs are loyal\".",
+      "Chọn a / an theo chữ viết thay vì theo âm: đúng là \"an hour\" (h câm) và \"a university\" (đọc là /juː/)."
+    ],
+    "groupId": "en_articles_nouns",
+    "tags": ["ngu-phap-co-ban", "mao-tu"],
+    "cefrLevel": "a2",
+    "targetLanguage": "english",
+    "source": "starter",
+    "sourcePrompt": null,
+    "createdAt": "2026-09-07T00:00:00.000Z",
+    "updatedAt": "2026-09-07T00:00:00.000Z"
+  },
+  {
+    "id": "starter_en_comparatives_superlatives",
+    "title": "So sánh hơn và so sánh nhất",
+    "summary": "So sánh hơn (comparative) so sánh hai đối tượng và thường đi với than. So sánh nhất (superlative) chọn ra một đối tượng nổi bật nhất trong nhóm và thường đi với the.",
+    "explanation": "Với tính từ **ngắn** (một âm tiết, và hai âm tiết kết thúc bằng -y): thêm **-er** cho so sánh hơn và **-est** cho so sánh nhất: cheap - cheaper - the cheapest, happy - happier - the happiest. Lưu ý quy tắc chính tả: gấp đôi phụ âm cuối (big - bigger), đổi -y thành -i (easy - easier).\n\nVới tính từ **dài** (từ hai âm tiết trở lên): dùng **more** và **the most**: expensive - more expensive - the most expensive; carefully - more carefully - the most carefully (trạng từ cũng theo quy tắc này).\n\nMột số dạng **bất quy tắc** phải học riêng: good / well - better - the best; bad / badly - worse - the worst; far - farther/further - the farthest/furthest; many/much - more - the most; little - less - the least.\n\nCấu trúc thường gặp: A + is + comparative + **than** + B (Hanoi is cheaper than Tokyo); A + is + **the** + superlative + (in / of nhóm) (This is the best restaurant in town). Để nói hai bên bằng nhau, dùng **as + tính từ + as**: She is as tall as her brother.",
+    "patterns": [
+      "Tính từ ngắn: adj + -er + than  /  the + adj + -est",
+      "Tính từ dài: more + adj + than  /  the most + adj",
+      "Bằng nhau: as + adj + as",
+      "Bất quy tắc: good - better - the best; bad - worse - the worst"
+    ],
+    "examples": [
+      {"text": "This bag is cheaper than that one.", "translation": "Cái túi này rẻ hơn cái kia."},
+      {"text": "She is the most talented singer in the group.", "translation": "Cô ấy là ca sĩ tài năng nhất trong nhóm."},
+      {"text": "Today is hotter than yesterday.", "translation": "Hôm nay nóng hơn hôm qua."},
+      {"text": "It was the worst film I have ever seen.", "translation": "Đó là bộ phim tệ nhất tôi từng xem."},
+      {"text": "My new phone is as fast as yours.", "translation": "Điện thoại mới của tôi nhanh ngang điện thoại của bạn."}
+    ],
+    "pitfalls": [
+      "Dùng cả -er và more cùng lúc: sai \"more cheaper\", đúng \"cheaper\".",
+      "Quên **than** khi so sánh hai đối tượng: sai \"She is taller me\", đúng \"She is taller **than** me\".",
+      "Quên **the** trước so sánh nhất: sai \"He is best player\", đúng \"He is **the** best player\"."
+    ],
+    "groupId": "en_articles_nouns",
+    "tags": ["ngu-phap-co-ban", "so-sanh"],
+    "cefrLevel": "a1",
+    "targetLanguage": "english",
+    "source": "starter",
+    "sourcePrompt": null,
+    "createdAt": "2026-09-07T00:00:00.000Z",
+    "updatedAt": "2026-09-07T00:00:00.000Z"
+  }
+]
