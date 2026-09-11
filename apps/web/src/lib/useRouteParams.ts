@@ -17,23 +17,39 @@ import { useEffect, useState } from "react";
  * identically for a real (already-settled-by-request-time) params promise.
  */
 export function useRouteParams<T>(params: Promise<T>): T | null {
-  const [resolved, setResolved] = useState<T | null>(null);
+  const [state, setState] = useState<{ promise: Promise<T>; value: T | null }>({
+    promise: params,
+    value: null,
+  });
+
+  // Render-phase reset: if `params`' identity has changed since the last
+  // committed state (e.g. navigating /note/a -> /note/b re-uses the same
+  // component instance, no remount), treat the value as not-yet-resolved
+  // immediately, during THIS render — not after an effect runs. Without
+  // this, there is one commit where the OLD note's data renders under the
+  // NEW url, because `useEffect` runs after paint. Matches `use()`'s
+  // behavior of suspending immediately on a new pending promise.
+  const resolved = state.promise === params ? state.value : null;
 
   useEffect(() => {
     let cancelled = false;
-    // Clear the previous route's resolved value the instant `params`'
-    // identity changes (e.g. navigating /note/a -> /note/b re-uses the same
-    // component instance/state, no remount) so a stale value is never shown
-    // under the new URL while the new promise is still pending — matches
-    // `use()`'s behavior of suspending immediately on a new pending promise.
-    setResolved(null);
-    params.then((value) => {
-      if (!cancelled) setResolved(value);
-    });
+    if (state.promise !== params) {
+      setState({ promise: params, value: null });
+    }
+    params.then(
+      (value) => {
+        if (!cancelled) setState({ promise: params, value });
+      },
+      () => {
+        // A rejected params promise leaves `resolved` as null (the
+        // loading/not-found state pages already render) instead of an
+        // unhandled promise rejection.
+      },
+    );
     return () => {
       cancelled = true;
     };
-  }, [params]);
+  }, [params, state.promise]);
 
   return resolved;
 }

@@ -49,7 +49,7 @@ describe("KnowledgeNoteView", () => {
   });
 
   it("links Sửa to the edit route", () => {
-    render(<KnowledgeNoteView note={noteFixture()} knownHeadwords={[]} onDelete={() => {}} />);
-    expect(screen.getByRole("link", { name: "Sửa" })).toHaveAttribute("href", "./edit");
+    render(<KnowledgeNoteView note={noteFixture({ id: "n1" })} knownHeadwords={[]} onDelete={() => {}} />);
+    expect(screen.getByRole("link", { name: "Sửa" })).toHaveAttribute("href", "/knowledge/note/n1/edit");
   });
 });

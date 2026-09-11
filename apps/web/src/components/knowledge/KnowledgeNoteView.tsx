@@ -19,7 +19,7 @@ export function KnowledgeNoteView({ note, knownHeadwords, onDelete }: KnowledgeN
   return (
     <div className="knowledge-detail">
       <div className="knowledge-detail-actions">
-        <Link href="./edit" className="vb-chip">
+        <Link href={`/knowledge/note/${note.id}/edit`} className="vb-chip">
           Sửa
         </Link>
         {confirmingDelete ? (

@@ -23,7 +23,7 @@ export default function KnowledgeNoteDetailPage({ params }: { params: Promise<{ 
     if (!user || !settings) return;
     Promise.all([
       getKnowledgeNotes(user.uid, settings.targetLanguage),
-      getVocabRecords(user.uid, settings.targetLanguage),
+      getVocabRecords(user.uid, settings.targetLanguage).catch(() => []),
     ]).then(([n, records]) => {
       setNotes(n);
       setKnownHeadwords(records.map((r) => r.headword));
