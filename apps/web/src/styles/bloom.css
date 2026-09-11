@@ -2548,9 +2548,18 @@ button.btn-google svg {
   margin: 20px 0 10px;
 }
 
-.knowledge-detail > .bold-text,
-.knowledge-detail > p.scr-sub {
-  max-width: 760px;
+.knowledge-detail-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 36px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .knowledge-detail-columns {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
 }
 
 .knowledge-patterns-grid,

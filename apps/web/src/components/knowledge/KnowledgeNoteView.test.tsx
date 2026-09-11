@@ -52,4 +52,18 @@ describe("KnowledgeNoteView", () => {
     render(<KnowledgeNoteView note={noteFixture({ id: "n1" })} knownHeadwords={[]} onDelete={() => {}} />);
     expect(screen.getByRole("link", { name: "Sửa" })).toHaveAttribute("href", "/knowledge/note/n1/edit");
   });
+
+  it("back link goes to the note's own group, labeled with the group name", () => {
+    render(
+      <KnowledgeNoteView
+        note={noteFixture({ groupId: "en_conditionals" })}
+        knownHeadwords={[]}
+        onDelete={() => {}}
+      />,
+    );
+    expect(screen.getByRole("link", { name: "← Câu điều kiện" })).toHaveAttribute(
+      "href",
+      "/knowledge/group/en_conditionals",
+    );
+  });
 });
