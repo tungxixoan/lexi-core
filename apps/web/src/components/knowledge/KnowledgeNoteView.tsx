@@ -18,6 +18,10 @@ export function KnowledgeNoteView({ note, knownHeadwords, onDelete }: KnowledgeN
 
   return (
     <div className="knowledge-detail">
+      <Link href="/knowledge" className="link-btn knowledge-back-link">
+        ← Kiến thức
+      </Link>
+
       <div className="knowledge-detail-actions">
         <Link href={`/knowledge/note/${note.id}/edit`} className="vb-chip">
           Sửa
@@ -45,23 +49,27 @@ export function KnowledgeNoteView({ note, knownHeadwords, onDelete }: KnowledgeN
       {note.patterns.length > 0 && (
         <section>
           <h3>Mẫu câu</h3>
-          {note.patterns.map((pattern, i) => (
-            <code key={i} className="knowledge-pattern">
-              {pattern}
-            </code>
-          ))}
+          <div className="knowledge-patterns-grid">
+            {note.patterns.map((pattern, i) => (
+              <code key={i} className="knowledge-pattern">
+                {pattern}
+              </code>
+            ))}
+          </div>
         </section>
       )}
 
       {note.examples.length > 0 && (
         <section>
           <h3>Ví dụ</h3>
-          {note.examples.map((example, i) => (
-            <div key={i} className="knowledge-example">
-              <HighlightedText variant="static" text={example.text} highlights={knownHeadwords} />
-              <p className="ex-translation">{example.translation}</p>
-            </div>
-          ))}
+          <div className="knowledge-examples-grid">
+            {note.examples.map((example, i) => (
+              <div key={i} className="knowledge-example">
+                <HighlightedText variant="static" text={example.text} highlights={knownHeadwords} />
+                <p className="ex-translation">{example.translation}</p>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 

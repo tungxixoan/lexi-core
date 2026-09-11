@@ -2530,7 +2530,12 @@ button.btn-google svg {
 /* --- Knowledge Notes --- */
 
 .knowledge-detail {
-  max-width: 720px;
+  max-width: 1040px;
+}
+
+.knowledge-back-link {
+  display: inline-block;
+  margin-bottom: 14px;
 }
 
 .knowledge-detail h2 {
@@ -2541,6 +2546,23 @@ button.btn-google svg {
 .knowledge-detail h3 {
   font-size: 16px;
   margin: 20px 0 10px;
+}
+
+.knowledge-detail > .bold-text,
+.knowledge-detail > p.scr-sub {
+  max-width: 760px;
+}
+
+.knowledge-patterns-grid,
+.knowledge-examples-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.knowledge-patterns-grid .knowledge-pattern,
+.knowledge-examples-grid .knowledge-example {
+  margin-bottom: 0;
 }
 
 .bold-text p {
