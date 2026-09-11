@@ -2347,3 +2347,20 @@ FOLLOW-UPS (not gating this branch — for a later chore):
 ## Minor Findings (for final review)
 - Web Task 12: `.btn-secondary` on an anchor link (Tự viết) is missing the `background: var(--surface)` fill every button sibling has (bloom.css:2463-472 scoped rule incomplete). Cosmetic.
 - Web Task 12: `knowledge/new/page.tsx` loads the full per-language notes list for `existingNotes` though it's provably unused on the blank-new save path (no initial/overwriteNoteId to match) — harmless extra Firestore read, could pass [] instead.
+
+## Whole-branch review (opus) — Web plan — verdict: With fixes
+
+FIX BATCH (dispatched): C#1 KnowledgeNoteView "Sửa" link uses relative href "./edit" -> resolves to /knowledge/note/edit (edit page unreachable from UI, test only echoed the broken string); I#2 detail page Promise.all has no .catch on getVocabRecords -> one failed vocab fetch bricks the whole page forever; I#3 useRouteParams: reset to loading happens in a passive effect (not synchronous — one stale-content commit possible before the effect fires) + params.then has no .catch (rejected promise = permanent "Đang tải…", unhandled rejection) — patched in place (kept the hook per reviewer's sanctioned fallback), full useParams() migration logged as follow-up.
+
+FOLLOW-UPS (not gating merge):
+- I#4 (plan flaw): AiComposeModal Layer-2 "Vẫn tạo mới" discards the already-generated draft and calls the LLM a second time instead of reusing it (Flutter reuses); costs 2x BYOK calls + user may review a different note than the dedup warning was about. Needs a small state-machine change (carry draft/sourcePrompt in the Layer-2 related state, go straight to ready on proceed-new) — do as a follow-up commit, not blocking merge.
+- Migrate the 3 dynamic-route pages off useRouteParams to Next's documented `useParams()` hook (sync, no Suspense, already works in this harness) and delete useRouteParams.ts + its test — removes the whole class of staleness/rejection risk instead of patching around it.
+- m5 EditKnowledgeNoteModal draft-review header still says "Ghi chú kiến thức" instead of "Xem lại bản nháp" (only the aria-label has the right string).
+- m7 knowledgeNoteSource prompt dropped "Vietnamese-friendly" from the tags instruction (web-generated notes may accumulate English tags).
+- m8 tag input has no Enter-to-add (button-only; Flutter hint says "nhấn Enter").
+- m10 restoreStarters keeps an unused `language` param (void language;).
+- m11 knowledgeStarters.ts hardcodes `language === "english"` vs Flutter's asset-driven startersFor — a future starter_zh.json would only light up on mobile.
+- m12 knowledge pages don't setNotes(null) on targetLanguage change — brief flash of the previous language's notes until refetch resolves.
+- m14 test-quality nits: KnowledgeNoteView.test.tsx asserted the literal (broken) href string instead of route behavior; a couple of test titles/comments slightly mismatch what they assert.
+- m15 stale eslint-disable react-hooks/exhaustive-deps on a complete dep list (knowledge/page.tsx).
+- (carried from Task 12) .btn-secondary on an anchor missing background fill; knowledge/new/page.tsx loads an unused existingNotes list.
